@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story Structure — Flow School</title>
+<link rel="stylesheet" href="global.css">
+<style>
+
+/* ── Arc Builder ─────────────────────────────────────────────────── */
+
+.arc {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 40px;
+}
+
+.arc-step {
+  padding: 28px 32px;
+}
+
+.arc-step-hdr {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.step-num {
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--accent);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.step-title {
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -.025em;
+  color: var(--text-1);
+  line-height: 1;
+}
+
+.step-desc {
+  font-size: var(--text-body-sm);
+  color: var(--text-3);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.story-textarea {
+  width: 100%;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  padding: 13px 16px;
+  color: var(--text-1);
+  font-size: var(--text-body-sm);
+  font-family: var(--font);
+  outline: none;
+  resize: vertical;
+  min-height: 76px;
+  transition: border-color .15s, background .15s;
+  line-height: 1.7;
+}
+.story-textarea:focus {
+  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.055);
+}
+.story-textarea::placeholder { color: var(--text-3); }
+
+.helper-text {
+  font-size: var(--text-small);
+  color: var(--text-3);
+  margin-top: 9px;
+  line-height: 1.55;
+  font-style: italic;
+}
+
+/* ── Prompt chips (Begin) ────────────────────────────────────────── */
+
+.prompt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.prompt-chip {
+  padding: 6px 14px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: var(--rf);
+  font-size: var(--text-small);
+  font-family: var(--font);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
+  line-height: 1.5;
+}
+.prompt-chip:hover {
+  border-color: rgba(255,255,255,.28);
+  color: var(--text-2);
+  background: rgba(255,255,255,.06);
+}
+.prompt-chip.on {
+  background: rgba(221,227,106,.08);
+  border-color: rgba(221,227,106,.28);
+  color: var(--accent);
+}
+
+/* ── Story type chips (Share) ────────────────────────────────────── */
+
+.type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.type-chip {
+  padding: 7px 15px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 8px;
+  font-size: var(--text-ui);
+  font-family: var(--font);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all .15s;
+  line-height: 1.4;
+}
+.type-chip:hover {
+  border-color: rgba(255,255,255,.28);
+  color: var(--text-2);
+  background: rgba(255,255,255,.06);
+}
+.type-chip.on {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.28);
+  color: var(--text-1);
+}
+
+/* ── Story Starter ───────────────────────────────────────────────── */
+
+.starter-wrap {
+  margin-top: 56px;
+}
+
+.starter-card {
+  padding: 32px 36px;
+}
+
+.starter-display {
+  min-height: 80px;
+  padding: 20px 22px;
+  background: rgba(255,255,255,.025);
+  border: 1px solid var(--border-light);
+  border-radius: var(--rs);
+  margin: 20px 0 18px;
+  font-size: var(--text-body-sm);
+  color: var(--text-2);
+  line-height: 1.75;
+  font-style: italic;
+  transition: opacity .2s;
+}
+.starter-display.empty {
+  color: var(--text-3);
+  font-style: normal;
+}
+
+.starter-btns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ── Theme Tags ──────────────────────────────────────────────────── */
+
+.theme-wrap {
+  margin-top: 56px;
+}
+
+.theme-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.theme-tag {
+  padding: 7px 16px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: var(--rf);
+  font-size: var(--text-small);
+  font-family: var(--font);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all .15s;
+}
+.theme-tag:hover {
+  border-color: rgba(255,255,255,.26);
+  color: var(--text-2);
+  background: rgba(255,255,255,.06);
+}
+.theme-tag.on {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+/* ── Section header ──────────────────────────────────────────────── */
+
+.section-hdr { margin-bottom: 4px; }
+.section-hdr h2 { margin-bottom: 5px; }
+.section-hdr p {
+  font-size: var(--text-body-sm);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+/* ── Summary ─────────────────────────────────────────────────────── */
+
+.summary-wrap {
+  margin-top: 56px;
+}
+
+.summary-card {
+  padding: 32px 36px;
+  margin-top: 4px;
+}
+
+.summary-body {
+  margin: 24px 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.summary-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-light);
+  align-items: baseline;
+}
+.summary-row:first-child { padding-top: 0; }
+.summary-row:last-child  { border-bottom: none; padding-bottom: 0; }
+
+.summary-label {
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-3);
+  line-height: 1.7;
+  flex-shrink: 0;
+}
+
+.summary-value {
+  font-size: var(--text-body-sm);
+  color: var(--text-2);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.summary-value.empty { color: var(--text-3); }
+
+.summary-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 580px) {
+  .arc-step      { padding: 22px 20px; }
+  .starter-card  { padding: 24px 20px; }
+  .summary-card  { padding: 24px 20px; }
+  .summary-row   { grid-template-columns: 1fr; gap: 4px; }
+  .summary-label { padding-top: 0; }
+  .arc-step-hdr  { gap: 10px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<header class="hdr">
+  <div class="hdr-i">
+    <a href="index.html" class="btn-ghost">← Tools</a>
+    <a href="index.html" class="hdr-logo">Flow School</a>
+    <div class="hdr-auth" id="hdr-auth"></div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="inner">
+    <p class="page-eyebrow">Shape your class</p>
+    <h1>Story Structure</h1>
+    <p>Stories give class a thread to follow. Use this tool to shape a simple class theme: where you begin, what you share, how it connects to movement, and what students carry with them off the mat.</p>
+  </div>
+</section>
+
+<div class="wrap">
+
+  <!-- ─── 1. Story Arc Builder ───────────────────────────────────── -->
+
+  <div class="arc" id="arc-builder">
+
+    <!-- Step 1: Begin -->
+    <div class="arc-step card">
+      <div class="arc-step-hdr">
+        <span class="step-num">01</span>
+        <span class="step-title">Begin</span>
+      </div>
+      <p class="step-desc">Choose an opening that feels right, then write your line.</p>
+      <div class="prompt-chips">
+        <button class="prompt-chip" data-prompt="I have a story for you…">I have a story for you…</button>
+        <button class="prompt-chip" data-prompt="As we move today, I invite you to think about…">As we move today, I invite you to think about…</button>
+        <button class="prompt-chip" data-prompt="An intention today is…">An intention today is…</button>
+        <button class="prompt-chip" data-prompt="I have been thinking about…">I have been thinking about…</button>
+        <button class="prompt-chip" data-prompt="Recently…">Recently…</button>
+      </div>
+      <textarea class="story-textarea" id="ta-begin" placeholder="Write your opening line…" rows="3"></textarea>
+    </div>
+
+    <!-- Step 2: Share -->
+    <div class="arc-step card">
+      <div class="arc-step-hdr">
+        <span class="step-num">02</span>
+        <span class="step-title">Share</span>
+      </div>
+      <p class="step-desc">What kind of thing are you bringing today?</p>
+      <div class="type-chips">
+        <button class="type-chip" data-type="Something you've learned">Something you've learned</button>
+        <button class="type-chip" data-type="Something you've already processed">Something you've already processed</button>
+        <button class="type-chip" data-type="Something that applies to movement">Something that applies to movement</button>
+        <button class="type-chip" data-type="An idea that's been interesting to think about">An idea that's been interesting</button>
+        <button class="type-chip" data-type="Something you've read recently">Something you've read recently</button>
+        <button class="type-chip" data-type="A thing you're paying attention to">A thing you're paying attention to</button>
+      </div>
+      <textarea class="story-textarea" id="ta-story" placeholder="What is the small story, idea, or observation you want to share?" rows="4"></textarea>
+      <p class="helper-text">Choose something you've already emotionally processed. It is not your students' job to hold you.</p>
+    </div>
+
+    <!-- Step 3: Connect -->
+    <div class="arc-step card">
+      <div class="arc-step-hdr">
+        <span class="step-num">03</span>
+        <span class="step-title">Connect to Movement</span>
+      </div>
+      <textarea class="story-textarea" id="ta-movement" placeholder="How does this connect to movement, breath, attention, effort, pacing, balance, flexibility, strength, play, or experimentation?" rows="4"></textarea>
+    </div>
+
+    <!-- Step 4: During -->
+    <div class="arc-step card">
+      <div class="arc-step-hdr">
+        <span class="step-num">04</span>
+        <span class="step-title">During Class</span>
+      </div>
+      <textarea class="story-textarea" id="ta-words" placeholder="What words, phrases, or images can you sprinkle throughout class?" rows="3"></textarea>
+      <p class="helper-text">Keep it light. Let the story become a thread, not a lecture.</p>
+    </div>
+
+    <!-- Step 5: End -->
+    <div class="arc-step card">
+      <div class="arc-step-hdr">
+        <span class="step-num">05</span>
+        <span class="step-title">End of Class</span>
+      </div>
+      <textarea class="story-textarea" id="ta-end" placeholder="How will you loop back to the original story?" rows="3"></textarea>
+    </div>
+
+    <!-- Step 6: So What -->
+    <div class="arc-step card">
+      <div class="arc-step-hdr">
+        <span class="step-num">06</span>
+        <span class="step-title">The So What</span>
+      </div>
+      <textarea class="story-textarea" id="ta-sowhat" placeholder="What do students take off the mat?" rows="3"></textarea>
+      <p class="helper-text">What does this teach them about practice, attention, effort, or being human?</p>
+    </div>
+
+  </div><!-- /.arc -->
+
+
+  <!-- ─── 2. Story Starter Generator ───────────────────────────── -->
+
+  <div class="starter-wrap">
+    <div class="section-hdr">
+      <p class="card-eyebrow">Need a spark?</p>
+      <h2>Story Starter Generator</h2>
+      <p>A prompt to help you find the story you already have.</p>
+    </div>
+
+    <div class="card starter-card">
+      <div class="starter-display empty" id="starter-display">Hit generate to find a story prompt.</div>
+      <div class="starter-btns">
+        <button class="btn-primary" id="gen-btn">Generate Story Starter</button>
+        <button class="btn-secondary hidden" id="use-btn">Use This Starter</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ─── 3. Theme Tags ──────────────────────────────────────────── -->
+
+  <div class="theme-wrap">
+    <div class="section-hdr">
+      <p class="card-eyebrow">Class theme</p>
+      <h2>Theme Tags</h2>
+      <p>Tag the themes running through your class today. Use these to anchor your language.</p>
+    </div>
+    <div class="theme-tags" id="theme-tags">
+      <button class="theme-tag" data-theme="Balance">Balance</button>
+      <button class="theme-tag" data-theme="Flexibility">Flexibility</button>
+      <button class="theme-tag" data-theme="Confidence">Confidence</button>
+      <button class="theme-tag" data-theme="Experimenting">Experimenting</button>
+      <button class="theme-tag" data-theme="Curiosity">Curiosity</button>
+      <button class="theme-tag" data-theme="Failure as practice">Failure as practice</button>
+      <button class="theme-tag" data-theme="Trusting timing">Trusting timing</button>
+      <button class="theme-tag" data-theme="Play">Play</button>
+      <button class="theme-tag" data-theme="Strength">Strength</button>
+      <button class="theme-tag" data-theme="Bravery">Bravery</button>
+      <button class="theme-tag" data-theme="Paying attention">Paying attention</button>
+      <button class="theme-tag" data-theme="Consistency">Consistency</button>
+      <button class="theme-tag" data-theme="Breath">Breath</button>
+      <button class="theme-tag" data-theme="Presence">Presence</button>
+      <button class="theme-tag" data-theme="Doing something new">Doing something new</button>
+    </div>
+  </div>
+
+
+  <!-- ─── 4. Class Story Thread ──────────────────────────────────── -->
+
+  <div class="summary-wrap">
+    <div class="section-hdr">
+      <p class="card-eyebrow">Your class story</p>
+      <h2>Class Story Thread</h2>
+      <p>Your story arc, compiled. Copy it into your class notes or save it for later.</p>
+    </div>
+
+    <div class="card summary-card">
+      <div class="summary-body">
+
+        <div class="summary-row">
+          <span class="summary-label">Begin</span>
+          <span class="summary-value empty" id="sum-begin">—</span>
+        </div>
+
+        <div class="summary-row">
+          <span class="summary-label">Story</span>
+          <span class="summary-value empty" id="sum-story">—</span>
+        </div>
+
+        <div class="summary-row">
+          <span class="summary-label">Movement</span>
+          <span class="summary-value empty" id="sum-movement">—</span>
+        </div>
+
+        <div class="summary-row">
+          <span class="summary-label">Words to Sprinkle</span>
+          <span class="summary-value empty" id="sum-words">—</span>
+        </div>
+
+        <div class="summary-row">
+          <span class="summary-label">End</span>
+          <span class="summary-value empty" id="sum-end">—</span>
+        </div>
+
+        <div class="summary-row">
+          <span class="summary-label">So What</span>
+          <span class="summary-value empty" id="sum-sowhat">—</span>
+        </div>
+
+        <div class="summary-row" id="sum-themes-row">
+          <span class="summary-label">Themes</span>
+          <span class="summary-value empty" id="sum-themes">—</span>
+        </div>
+
+      </div>
+
+      <div class="summary-actions">
+        <button class="btn-primary" id="copy-btn">Copy Story Thread</button>
+        <button class="btn-secondary" id="save-btn">Save Draft</button>
+        <button class="btn-secondary" id="clear-btn">Clear</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.wrap -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ─── STORY STARTERS ──────────────────────────────────────────────────────────
+
+const STARTERS = [
+  'Think about a time you were learning something brand new and did NOT "succeed" at it the first time. What was the thing? What did you learn? How did you learn how to do it eventually?',
+  'When did you show up and have to trust the timing of a thing?',
+  'What happens if we stop thinking of everything so seriously?',
+  'What if we play?',
+  'How does that inspire our own dedication to do the work?',
+  'There are so many ways to be right. What are some examples?',
+  'What if we embraced what was right, right now — whatever that looks like?',
+  'When have you been so wrapped up in what\'s happened and what\'s to come that you\'ve missed right now?',
+  'Don\'t miss this.',
+  'Where has consistency made a difference?',
+  'How can we reframe failure as practice, as an opportunity to refine our approach?',
+  'When has more curiosity led you to uncover something unexpected?',
+  'When were you stronger than you realized?',
+  'You don\'t have to do this alone.',
+  'Tell me about when you were brave.',
+  'When you realized you had everything you needed.',
+  'When you realized it was okay to do something new and different and not die.',
+  'The practice of paying attention is bigger than movement: it\'s everything.',
+  'What\'s a small story that you\'ve already emotionally processed — it\'s not students\' job to hold you — that you\'ve learned from and can share as a story to set the intention of class?',
+  'Something about balance, flexibility, confidence, experimenting, or remembering to breathe in a moment.',
+  'What do they learn from you and about you by your simple story that makes you real?',
+  'Why can this be a good thing? Why does this aid the experience?',
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let currentStarter   = null;
+let selectedTypes    = new Set();
+let selectedThemes   = new Set();
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+const $ = id => document.getElementById(id);
+
+// ─── SUMMARY ─────────────────────────────────────────────────────────────────
+
+function updateSummary() {
+  [
+    ['sum-begin',    'ta-begin'],
+    ['sum-story',    'ta-story'],
+    ['sum-movement', 'ta-movement'],
+    ['sum-words',    'ta-words'],
+    ['sum-end',      'ta-end'],
+    ['sum-sowhat',   'ta-sowhat'],
+  ].forEach(([sumId, taId]) => {
+    const val  = $( taId).value.trim();
+    const span = $(sumId);
+    span.textContent = val || '—';
+    span.classList.toggle('empty', !val);
+  });
+
+  const themesEl = $('sum-themes');
+  const themes   = [...selectedThemes].join(', ');
+  themesEl.textContent = themes || '—';
+  themesEl.classList.toggle('empty', !themes);
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+
+let toastTimer;
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─── STORY STARTERS ──────────────────────────────────────────────────────────
+
+function generateStarter() {
+  const idx = Math.floor(Math.random() * STARTERS.length);
+  currentStarter = STARTERS[idx];
+  const display  = $('starter-display');
+  display.textContent = currentStarter;
+  display.classList.remove('empty');
+  $('use-btn').classList.remove('hidden');
+}
+
+function useStarter() {
+  if (!currentStarter) return;
+  const ta = $('ta-story');
+  ta.value = currentStarter;
+  updateSummary();
+  ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  ta.focus();
+  showToast('Starter added to your story');
+}
+
+// ─── PROMPT CHIPS ────────────────────────────────────────────────────────────
+
+function initPromptChips() {
+  document.querySelectorAll('.prompt-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const wasOn = btn.classList.contains('on');
+      document.querySelectorAll('.prompt-chip').forEach(b => b.classList.remove('on'));
+      const ta = $('ta-begin');
+      if (!wasOn) {
+        btn.classList.add('on');
+        ta.value = btn.dataset.prompt + ' ';
+        ta.focus();
+        ta.selectionStart = ta.selectionEnd = ta.value.length;
+      } else {
+        ta.value = '';
+      }
+      updateSummary();
+    });
+  });
+}
+
+// ─── TYPE CHIPS ──────────────────────────────────────────────────────────────
+
+function initTypeChips() {
+  document.querySelectorAll('.type-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
+      if (selectedTypes.has(type)) {
+        selectedTypes.delete(type);
+        btn.classList.remove('on');
+      } else {
+        selectedTypes.add(type);
+        btn.classList.add('on');
+      }
+    });
+  });
+}
+
+// ─── THEME TAGS ──────────────────────────────────────────────────────────────
+
+function initThemeTags() {
+  document.querySelectorAll('.theme-tag').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const theme = btn.dataset.theme;
+      if (selectedThemes.has(theme)) {
+        selectedThemes.delete(theme);
+        btn.classList.remove('on');
+      } else {
+        selectedThemes.add(theme);
+        btn.classList.add('on');
+      }
+      updateSummary();
+    });
+  });
+}
+
+// ─── COPY ────────────────────────────────────────────────────────────────────
+
+function copyThread() {
+  const get  = id => $(id).value.trim() || '—';
+  const themes = [...selectedThemes].join(', ') || '—';
+  const text = [
+    'BEGIN',        get('ta-begin'),
+    '\nSTORY',      get('ta-story'),
+    '\nMOVEMENT CONNECTION', get('ta-movement'),
+    '\nWORDS TO SPRINKLE',   get('ta-words'),
+    '\nEND',        get('ta-end'),
+    '\nSO WHAT',    get('ta-sowhat'),
+    '\nTHEMES',     themes,
+  ].join('\n');
+
+  navigator.clipboard.writeText(text)
+    .then(()  => showToast('Story thread copied'))
+    .catch(()  => showToast('Copy failed — try selecting manually'));
+}
+
+// ─── SAVE / LOAD DRAFT ───────────────────────────────────────────────────────
+
+function saveDraft() {
+  const draft = {
+    begin:    $('ta-begin').value,
+    story:    $('ta-story').value,
+    movement: $('ta-movement').value,
+    words:    $('ta-words').value,
+    end:      $('ta-end').value,
+    sowhat:   $('ta-sowhat').value,
+    types:    [...selectedTypes],
+    themes:   [...selectedThemes],
+    prompt:   document.querySelector('.prompt-chip.on')?.dataset.prompt || '',
+  };
+  localStorage.setItem('fs_story_draft', JSON.stringify(draft));
+  showToast('Draft saved');
+}
+
+function loadDraft() {
+  const raw = localStorage.getItem('fs_story_draft');
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    $('ta-begin').value    = d.begin    || '';
+    $('ta-story').value    = d.story    || '';
+    $('ta-movement').value = d.movement || '';
+    $('ta-words').value    = d.words    || '';
+    $('ta-end').value      = d.end      || '';
+    $('ta-sowhat').value   = d.sowhat   || '';
+
+    if (d.prompt) {
+      document.querySelectorAll('.prompt-chip').forEach(btn => {
+        if (btn.dataset.prompt === d.prompt) btn.classList.add('on');
+      });
+    }
+    if (d.types) {
+      d.types.forEach(type => {
+        selectedTypes.add(type);
+        document.querySelectorAll('.type-chip').forEach(btn => {
+          if (btn.dataset.type === type) btn.classList.add('on');
+        });
+      });
+    }
+    if (d.themes) {
+      d.themes.forEach(theme => {
+        selectedThemes.add(theme);
+        document.querySelectorAll('.theme-tag').forEach(btn => {
+          if (btn.dataset.theme === theme) btn.classList.add('on');
+        });
+      });
+    }
+    updateSummary();
+  } catch(e) { /* corrupt draft, ignore */ }
+}
+
+// ─── CLEAR ───────────────────────────────────────────────────────────────────
+
+function clearAll() {
+  ['ta-begin','ta-story','ta-movement','ta-words','ta-end','ta-sowhat']
+    .forEach(id => { $(id).value = ''; });
+  document.querySelectorAll('.prompt-chip, .type-chip, .theme-tag')
+    .forEach(b => b.classList.remove('on'));
+  selectedTypes.clear();
+  selectedThemes.clear();
+  currentStarter = null;
+  $('starter-display').textContent = 'Hit generate to find a story prompt.';
+  $('starter-display').classList.add('empty');
+  $('use-btn').classList.add('hidden');
+  localStorage.removeItem('fs_story_draft');
+  updateSummary();
+  showToast('Cleared');
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+function init() {
+  initPromptChips();
+  initTypeChips();
+  initThemeTags();
+  loadDraft();
+
+  ['ta-begin','ta-story','ta-movement','ta-words','ta-end','ta-sowhat']
+    .forEach(id => $( id).addEventListener('input', updateSummary));
+
+  $('gen-btn').addEventListener('click', generateStarter);
+  $('use-btn').addEventListener('click', useStarter);
+  $('copy-btn').addEventListener('click', copyThread);
+  $('save-btn').addEventListener('click', saveDraft);
+  $('clear-btn').addEventListener('click', clearAll);
+}
+
+init();
+
+</script>
+<script src="lib/nav.js"></script>
+</body>
+</html>

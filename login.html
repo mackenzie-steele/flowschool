@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — Flow School</title>
+<link rel="stylesheet" href="global.css">
+<style>
+
+body { display: flex; flex-direction: column; min-height: 100vh; opacity: 0; transition: opacity .18s; }
+
+.auth-hdr {
+  background: rgba(8,8,8,.72);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  border-bottom: 1px solid var(--border-light);
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  height: 58px;
+}
+
+.auth-main {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 20px 80px;
+  position: relative; z-index: 1;
+}
+
+.auth-card { width: 100%; max-width: 420px; padding: 40px 44px; }
+
+.auth-eyebrow {
+  display: block;
+  font-size: var(--text-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 10px;
+}
+
+.auth-title {
+  font-size: clamp(1.6rem, 4vw, 2rem);
+  font-weight: var(--weight-regular); letter-spacing: var(--ls-tight); line-height: 1.15;
+  background: linear-gradient(155deg, #fff 55%, rgba(255,255,255,.45));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 32px;
+}
+
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field-label {
+  font-size: var(--text-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--text-3);
+}
+
+.field-input-wrap { position: relative; }
+
+.field-input {
+  width: 100%;
+  background: rgba(255,255,255,.04); border: 1px solid var(--border);
+  border-radius: var(--rs); padding: 13px 16px;
+  color: var(--text-1); font-size: var(--text-body-sm); font-family: var(--font);
+  outline: none; transition: border-color .15s, background .15s;
+}
+.field-input:focus { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.055); }
+.field-input::placeholder { color: var(--text-3); }
+
+.pw-toggle {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--text-3);
+  cursor: pointer; padding: 4px; display: flex; align-items: center; transition: color .15s;
+}
+.pw-toggle:hover { color: var(--text-2); }
+
+.auth-error {
+  font-size: var(--text-small); color: rgba(255,100,100,.85); line-height: 1.5;
+  padding: 10px 14px;
+  background: rgba(255,80,80,.06); border: 1px solid rgba(255,80,80,.15);
+  border-radius: var(--rs); display: none;
+}
+.auth-error.show { display: block; }
+
+.auth-submit { width: 100%; justify-content: center; margin-top: 6px; padding: 14px; }
+.auth-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.auth-footer {
+  margin-top: 22px; text-align: center;
+  font-size: var(--text-small); color: var(--text-3);
+}
+.auth-footer a {
+  color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; transition: color .15s;
+}
+.auth-footer a:hover { color: var(--text-1); }
+
+@media (max-width: 480px) { .auth-card { padding: 28px 24px; } }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<header class="auth-hdr">
+  <a href="index.html" class="hdr-logo">Flow School</a>
+</header>
+
+<main class="auth-main">
+  <div class="card auth-card">
+    <span class="auth-eyebrow">Flow School</span>
+    <h1 class="auth-title">Welcome back.</h1>
+
+    <form class="auth-form" id="auth-form" novalidate>
+      <div class="field">
+        <label class="field-label" for="email">Email</label>
+        <div class="field-input-wrap">
+          <input class="field-input" type="email" id="email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="password">Password</label>
+        <div class="field-input-wrap">
+          <input class="field-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+          <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password">
+            <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-error" id="auth-error"></div>
+
+      <button type="submit" class="btn-primary auth-submit" id="submit-btn">Sign in</button>
+    </form>
+
+    <div class="auth-footer">
+      Don't have an account? <a href="signup.html">Create one</a>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="lib/supabase.js"></script>
+<script>
+
+// Redirect if already logged in
+(async () => {
+  const { data: { user } } = await db.auth.getUser();
+  if (user) { window.location.href = 'dashboard.html'; return; }
+  document.body.style.opacity = '1';
+})();
+
+// Password toggle
+document.getElementById('pw-toggle').addEventListener('click', () => {
+  const input = document.getElementById('password');
+  const isText = input.type === 'text';
+  input.type = isText ? 'password' : 'text';
+  document.getElementById('eye-icon').innerHTML = isText
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+});
+
+// Sign in
+document.getElementById('auth-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const errEl    = document.getElementById('auth-error');
+  const btn      = document.getElementById('submit-btn');
+
+  errEl.classList.remove('show');
+  if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.add('show'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  const { error } = await db.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    const msg = error.message || '';
+    errEl.textContent = msg.includes('Invalid login') || msg.includes('invalid_credentials')
+      ? 'Email or password is incorrect.'
+      : msg.includes('Email not confirmed')
+        ? 'Please confirm your email before signing in.'
+        : msg || 'Something went wrong. Please try again.';
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Sign in';
+  } else {
+    window.location.href = 'dashboard.html';
+  }
+});
+
+</script>
+</body>
+</html>

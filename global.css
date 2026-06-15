@@ -819,7 +819,70 @@ input[type=range].range-slider:disabled { opacity: .35; cursor: not-allowed; }
 .toast.show { transform: translateX(-50%) translateY(0); }
 
 
-/* ─── 14. ANIMATIONS ─────────────────────────────────────────── */
+/* ─── 14. NAV AUTH ───────────────────────────────────────────── */
+
+.hdr-auth {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.nav-auth-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-nav-signup {
+  background: none;
+  border: 1px solid rgba(255,255,255,.18);
+  color: var(--text-2);
+  padding: 7px 14px;
+  border-radius: var(--rf);
+  font-size: var(--text-ui);
+  font-weight: var(--weight-medium);
+  font-family: var(--font);
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.btn-nav-signup:hover {
+  border-color: rgba(255,255,255,.35);
+  color: var(--text-1);
+  background: rgba(255,255,255,.05);
+}
+
+.nav-avatar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.nav-initial {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
+  color: var(--accent);
+  transition: background .15s, border-color .15s;
+}
+.nav-avatar-btn:hover .nav-initial {
+  background: rgba(221,227,106,.18);
+  border-color: rgba(221,227,106,.4);
+}
+
+
+/* ─── 15. ANIMATIONS ─────────────────────────────────────────── */
 
 @keyframes drift1 {
   0%   { transform: translate(0,0) }
@@ -852,12 +915,12 @@ input[type=range].range-slider:disabled { opacity: .35; cursor: not-allowed; }
 }
 
 
-/* ─── 15. UTILITIES ──────────────────────────────────────────── */
+/* ─── 16. UTILITIES ──────────────────────────────────────────── */
 
 .hidden { display: none !important; }
 
 
-/* ─── 16. RESPONSIVE ─────────────────────────────────────────── */
+/* ─── 17. RESPONSIVE ─────────────────────────────────────────── */
 
 @media (max-width: 580px) {
   .inner { padding: 0 20px; }

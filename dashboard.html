@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Flow School</title>
+<link rel="stylesheet" href="global.css">
+<style>
+
+body { opacity: 0; transition: opacity .18s; }
+
+/* ── Header ── */
+.hdr-actions { display: flex; align-items: center; gap: 8px; justify-self: end; }
+
+.nav-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface-2); border: 1px solid var(--border);
+  object-fit: cover; display: block;
+}
+.nav-avatar-placeholder {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--accent-dim); border: 1px solid var(--accent-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--text-label); font-weight: var(--weight-bold); color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── Hero ── */
+.dash-hero { padding: 64px 0 0; }
+.dash-welcome {
+  font-size: var(--text-display); font-weight: var(--weight-regular);
+  letter-spacing: var(--ls-tight); line-height: var(--lh-display);
+  background: linear-gradient(155deg, #fff 55%, rgba(255,255,255,.45));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 8px;
+}
+.dash-hero p { font-size: var(--text-body-lg); color: var(--text-3); margin-top: 8px; }
+
+/* ── Profile prompt ── */
+.profile-prompt {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 20px; border: 1px solid var(--accent-border);
+  background: var(--accent-dim); border-radius: var(--rs);
+  margin-bottom: 0;
+}
+.profile-prompt p { font-size: var(--text-body-sm); color: rgba(221,227,106,.85); margin: 0; }
+.profile-prompt a {
+  font-size: var(--text-small); font-weight: var(--weight-semibold);
+  color: var(--accent); white-space: nowrap; text-decoration: none;
+  border: 1px solid var(--accent-border); border-radius: var(--rf);
+  padding: 6px 14px; transition: all .15s; flex-shrink: 0;
+}
+.profile-prompt a:hover { background: rgba(221,227,106,.15); }
+
+/* ── Tools grid ── */
+.tools { padding-bottom: 100px; }
+.tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.tool-card {
+  display: flex; flex-direction: column; padding: 36px;
+  border: 1px solid var(--border); border-radius: var(--r);
+  background: rgba(255,255,255,.018); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  text-decoration: none; color: inherit;
+  transition: border-color .2s, background .2s, transform .18s;
+  min-height: 280px;
+}
+.tool-card:hover { border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.04); transform: translateY(-2px); }
+
+.tool-num  { margin-bottom: 36px; }
+.tool-name { margin-bottom: 12px; }
+.tool-desc { font-size: var(--text-body-sm); color: var(--text-2); line-height: var(--lh-body); flex: 1; margin-bottom: 28px; }
+.tool-cta  { display: flex; align-items: center; gap: 8px; font-size: var(--text-ui); font-weight: var(--weight-semibold); color: var(--accent); transition: gap .15s; }
+.tool-card:hover .tool-cta { gap: 13px; }
+
+@media (max-width: 640px) {
+  .tools-grid { grid-template-columns: 1fr; }
+  .tool-card  { min-height: auto; padding: 28px 24px; }
+  .profile-prompt { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<header class="hdr">
+  <div class="hdr-i">
+    <div></div>
+    <a href="dashboard.html" class="hdr-logo">Flow School</a>
+    <div class="hdr-actions">
+      <a href="profile.html" class="btn-ghost" style="padding:6px 10px">
+        <span class="nav-avatar-placeholder" id="nav-avatar">?</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<section class="dash-hero">
+  <div class="inner">
+    <h1 class="dash-welcome" id="welcome-msg">Good to see you.</h1>
+    <p>Your creative studio for teaching. Everything you need to build classes that sound unmistakably like you.</p>
+  </div>
+</section>
+
+<div class="tools">
+  <div class="inner">
+
+    <!-- Profile prompt — shown until profile is set up -->
+    <div class="profile-prompt hidden" id="profile-prompt" style="margin: 40px 0 24px;">
+      <p>Set up your profile so your students know who you are.</p>
+      <a href="profile.html">Set up profile →</a>
+    </div>
+
+    <div class="tools-grid" style="margin-top: 40px;">
+
+      <a href="playlist-builder.html" class="tool-card">
+        <span class="tool-num text-label">01</span>
+        <h2 class="tool-name">Playlist Builder</h2>
+        <p class="tool-desc">Shape the energy of your class with music that matches the arc you're building. Set the mood, design the curve, and let the music support the flow.</p>
+        <span class="tool-cta">Open tool &nbsp;→</span>
+      </a>
+
+      <a href="movement-experiment-generator.html" class="tool-card">
+        <span class="tool-num text-label">02</span>
+        <h2 class="tool-name">Movement Experiments</h2>
+        <p class="tool-desc">Shuffle through 28 creative constraints by Bonnie Weeks. Break patterns, expand your movement vocabulary, and build a practice that teaches from the inside out.</p>
+        <span class="tool-cta">Open tool &nbsp;→</span>
+      </a>
+
+      <a href="arbitrary-rule-generator.html" class="tool-card">
+        <span class="tool-num text-label">03</span>
+        <h2 class="tool-name">Arbitrary Rules</h2>
+        <p class="tool-desc">Generate creative constraints for your next class. Remove an option. Find a new one. Play before you plan.</p>
+        <span class="tool-cta">Open tool &nbsp;→</span>
+      </a>
+
+      <a href="breath-pace-trainer.html" class="tool-card">
+        <span class="tool-num text-label">04</span>
+        <h2 class="tool-name">Breath Pace Trainer</h2>
+        <p class="tool-desc">Build a consistent breath tempo and train your internal clock. Set your inhale and exhale, follow the pacer, and let breath become your anchor.</p>
+        <span class="tool-cta">Open tool &nbsp;→</span>
+      </a>
+
+      <a href="shorthand-library.html" class="tool-card">
+        <span class="tool-num text-label">05</span>
+        <h2 class="tool-name">Shorthand Library</h2>
+        <p class="tool-desc">Bonnie's canonical shorthand, organized and searchable. Write less, teach more. Save what you use, add your own, and test sequences before class.</p>
+        <span class="tool-cta">Open tool &nbsp;→</span>
+      </a>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="lib/supabase.js"></script>
+<script>
+
+async function init() {
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) { window.location.href = 'login.html'; return; }
+
+  document.body.style.opacity = '1';
+
+  // Load profile
+  const { data: profile } = await db.from('profiles').select('display_name, avatar_url').eq('id', user.id).single();
+
+  // Welcome message
+  const name = profile?.display_name || user.email.split('@')[0];
+  document.getElementById('welcome-msg').textContent = `Good to see you, ${name}.`;
+
+  // Nav avatar
+  const avatarEl = document.getElementById('nav-avatar');
+  if (profile?.avatar_url) {
+    avatarEl.outerHTML = `<img class="nav-avatar" src="${profile.avatar_url}" alt="Profile">`;
+  } else {
+    avatarEl.textContent = name.charAt(0).toUpperCase();
+  }
+
+  // Show profile prompt if no display name set
+  if (!profile?.display_name) {
+    document.getElementById('profile-prompt').classList.remove('hidden');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
