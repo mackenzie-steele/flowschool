@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arbitrary Rule Generator — Flow School</title>
+<title>Arbitrary Rules</title>
 <link rel="stylesheet" href="global.css">
 <style>
 /* ── Controls ── */
 .controls-bar  { padding: 32px 0 28px; border-bottom: 1px solid var(--border-light); margin-bottom: 40px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
-.ctl-label     { font-size: .6875rem; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-3); margin-bottom: 12px; }
+.ctl-label     { margin-bottom: 12px; }
 .count-group   { display: flex; flex-direction: column; gap: 0; }
 .count-btns    { display: flex; gap: 6px; }
 
@@ -17,26 +17,26 @@
 .card-top       { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 
 /* Single rule */
-.rule-text-single { font-size: clamp(1.875rem,4.5vw,2.75rem); font-weight: 700; letter-spacing: -.04em; line-height: 1.1; color: var(--text-1); margin-bottom: 14px; }
-.rule-invite      { font-size: .9375rem; color: var(--text-3); font-style: italic; }
+.rule-text-single { font-family: var(--font); font-size: var(--text-card-title); font-weight: var(--weight-regular); letter-spacing: var(--ls-tight); line-height: var(--lh-tight); color: var(--text-1); margin-bottom: 14px; }
+.rule-invite      { font-size: var(--text-body-sm); color: var(--text-3); font-style: italic; }
 
 /* Multi rules */
-.challenge-label { font-size: .6875rem; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-3); }
+.challenge-label { }
 .rule-items      { display: flex; flex-direction: column; }
 .rule-item       { display: flex; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--border-light); }
 .rule-item:first-child { padding-top: 0; }
 .rule-item:last-child  { border-bottom: none; padding-bottom: 0; }
-.rule-n          { font-size: .75rem; font-weight: 700; color: var(--accent); flex-shrink: 0; min-width: 20px; padding-top: 5px; font-variant-numeric: tabular-nums; }
-.rule-cat-small  { font-size: .5625rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); display: block; margin-bottom: 7px; }
-.rule-text-item  { font-size: clamp(1.125rem,2.5vw,1.375rem); font-weight: 700; letter-spacing: -.025em; line-height: 1.25; color: var(--text-1); }
+.rule-n          { font-size: var(--text-small); font-weight: var(--weight-bold); color: var(--accent); flex-shrink: 0; min-width: 20px; padding-top: 5px; font-variant-numeric: tabular-nums; }
+.rule-cat-small  { font-size: var(--text-nano); font-weight: var(--weight-bold); letter-spacing: var(--ls-micro); text-transform: uppercase; color: var(--text-3); display: block; margin-bottom: 7px; }
+.rule-text-item  { font-size: clamp(1.125rem,2.5vw,1.375rem); font-weight: var(--weight-bold); letter-spacing: var(--ls-heading); line-height: var(--lh-tight); color: var(--text-1); }
 
 /* Card actions */
 .card-actions { display: flex; align-items: center; gap: 10px; margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--border-light); }
 
 /* Saved item content */
 .saved-rules-preview { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.saved-rule-line     { font-size: .875rem; color: var(--text-2); font-weight: 500; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.saved-rule-line + .saved-rule-line     { font-size: .8125rem; color: var(--text-3); }
+.saved-rule-line     { font-size: var(--text-ui); color: var(--text-2); font-weight: var(--weight-medium); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.saved-rule-line + .saved-rule-line     { font-size: var(--text-small); color: var(--text-3); }
 .saved-item:hover .saved-rule-line      { color: var(--text-1); }
 .saved-item:hover .saved-rule-line + .saved-rule-line { color: var(--text-2); }
 
@@ -71,8 +71,8 @@
 
 <section class="hero">
   <div class="inner">
-    <p class="page-eyebrow">Arbitrary Rule Generator</p>
-    <h1>Every constraint is an invitation.</h1>
+    <p class="page-eyebrow">Arbitrary Rules</p>
+    <h1>Arbitrary Rules</h1>
     <p>Creative constraints for curious teachers. Sometimes the fastest path to a new idea is removing an old one. Generate a rule. Build a flow. See what happens.</p>
   </div>
 </section>
@@ -81,7 +81,7 @@
 
   <div class="controls-bar">
     <div class="count-group">
-      <p class="ctl-label">Number of rules</p>
+      <p class="ctl-label text-label">Number of rules</p>
       <div class="count-btns">
         <button class="count-btn active" data-n="1">1</button>
         <button class="count-btn" data-n="2">2</button>
@@ -323,7 +323,7 @@ function renderCard(rules) {
   } else {
     card.innerHTML = `
       <div class="card-top">
-        <div class="challenge-label">Your Challenge</div>
+        <div class="challenge-label text-label">Your Challenge</div>
         ${saveBtn}
       </div>
       <div class="rule-items">

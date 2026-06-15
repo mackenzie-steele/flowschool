@@ -3,32 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Breath Pacer — Flow School</title>
+<title>Breath Pace Trainer</title>
 <link rel="stylesheet" href="global.css">
 <style>
 /* ── Hero override ── */
 .hero   { padding: 64px 0 32px; }
-.hero p { font-size: 1.0625rem; max-width: 560px; }
+.hero p { font-size: 1.0625rem;}
 
 /* ── Pacer visual ── */
 .pacer-section { display: flex; flex-direction: column; align-items: center; padding: 56px 0 44px; position: relative; }
 .pacer-svg     { width: 280px; height: 280px; overflow: visible; }
 #svg-count {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 52px; font-weight: 700; letter-spacing: -.04em;
+  font-family: var(--font-mono);
+  font-size: 52px; font-weight: var(--weight-bold); letter-spacing: var(--ls-tight);
   fill: white; text-anchor: middle; dominant-baseline: central;
   font-variant-numeric: tabular-nums;
 }
 #svg-label {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 11px; font-weight: 700; letter-spacing: .14em;
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: var(--weight-bold); letter-spacing: .14em;
   fill: rgba(255,255,255,.35); text-anchor: middle;
 }
 
 /* ── Controls card ── */
 .controls-card { margin-bottom: 20px; }
 .ctl-grid      { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-.ctl-label     { font-size: .5875rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); margin-bottom: 12px; display: block; }
+.ctl-label     { margin-bottom: 12px; display: block; }
 .time-btns     { display: flex; gap: 6px; }
 
 /* ── Button row ── */
@@ -38,7 +38,7 @@
 .start-btn:active { transform: none; }
 
 /* ── Ghost-small + Audio ── */
-.btn-ghost-sm       { background: none; border: none; color: var(--text-3); padding: 11px 16px; border-radius: var(--rf); font-size: .875rem; font-family: var(--font); cursor: pointer; transition: color .15s; }
+.btn-ghost-sm       { background: none; border: none; color: var(--text-3); padding: 11px 16px; border-radius: var(--rf); font-size: var(--text-ui); font-family: var(--font); cursor: pointer; transition: color .15s; }
 .btn-ghost-sm:hover { color: var(--text-2); }
 .btn-ghost-sm:disabled { opacity: .3; cursor: not-allowed; }
 
@@ -48,7 +48,7 @@
 .audio-btn.off   { opacity: .45; }
 
 /* ── Cards ── */
-.why-card p { font-size: .9375rem; line-height: 1.75; color: var(--text-2); }
+.why-card p { font-size: var(--text-body-sm); line-height: 1.75; color: var(--text-2); }
 
 @media (max-width: 580px) {
   .hero          { padding: 44px 0 32px; }
@@ -94,8 +94,8 @@
 
 <section class="hero">
   <div class="inner">
-    <p class="page-eyebrow">Breath Pace Trainer</p>
-    <h1>Cue at the speed of breath.</h1>
+    <p class="page-eyebrow">Cue at the speed of breath.</p>
+    <h1>Breath Pace Trainer</h1>
     <p>Set your inhale and exhale lengths, press start, and practice cueing movement in rhythm with breath. The goal is not to count forever — it's to train your body to feel the pace until it becomes intuitive.</p>
   </div>
 </section>
@@ -116,16 +116,12 @@
     <button class="audio-btn on" id="audio-btn" title="Toggle sound">
       <svg width="18" height="18"><use id="audio-icon" href="#sound-on"></use></svg>
     </button>
-    <button class="start-btn" id="toggle-btn">
-      <svg width="16" height="16"><use id="toggle-icon" href="#play"></use></svg>
-      <span id="toggle-label">Start</span>
-    </button>
   </div>
   <div class="controls-card">
     <div class="ctl-grid">
 
       <div class="ctl-group">
-        <span class="ctl-label">Inhale</span>
+        <span class="ctl-label text-label">Inhale</span>
         <div class="range-slider-wrap">
           <span class="range-val" id="inhale-val">4s</span>
           <input type="range" class="range-slider" id="inhale-slider" min="4" max="8" step="1" value="4">
@@ -135,7 +131,7 @@
       </div>
 
       <div class="ctl-group">
-        <span class="ctl-label">Exhale</span>
+        <span class="ctl-label text-label">Exhale</span>
         <div class="range-slider-wrap">
           <span class="range-val" id="exhale-val">4s</span>
           <input type="range" class="range-slider" id="exhale-slider" min="4" max="8" step="1" value="4">
@@ -153,6 +149,13 @@
     <p>Breath pace is where sequencing becomes teaching. Instead of stacking poses and cues on top of music, you begin to feel how breath, movement, rhythm, and attention can move together. This tool is here to help you practice that timing until it becomes something you can trust in your body.</p>
   </div>
 
+</div>
+
+<div class="cta-bar">
+  <button class="start-btn" id="toggle-btn">
+    <svg width="16" height="16"><use id="toggle-icon" href="#play"></use></svg>
+    <span id="toggle-label">Start</span>
+  </button>
 </div>
 
 <script>
@@ -417,5 +420,6 @@ document.querySelectorAll('.time-btn').forEach(btn => {
 
 buildTicks();
 </script>
+
 </body>
 </html>

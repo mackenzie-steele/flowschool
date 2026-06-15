@@ -3,17 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Playlist Builder — Flow School</title>
+<title>Playlist Builder</title>
 <link rel="stylesheet" href="global.css">
 <style>
-/* ── Typography (page-specific headings) ── */
-h3 { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; color: var(--text-2); }
-h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); }
-
 /* ── Button overrides ── */
-.btn-primary  { padding: 14px 30px; font-size: 1rem; letter-spacing: -.01em; }
-.btn-ghost.sm { padding: 6px 10px; font-size: .8125rem; }
-.btn-outline  { background: none; border: 1px solid rgba(255,255,255,.20); color: var(--text-2); padding: 10px 22px; font-weight: 500; }
+.btn-primary  { padding: 14px 30px; font-size: var(--text-body); letter-spacing: -.01em; }
+.btn-ghost.sm { padding: 6px 10px; font-size: var(--text-small); }
+.btn-outline  { background: none; border: 1px solid rgba(255,255,255,.20); color: var(--text-2); padding: 10px 22px; font-weight: var(--weight-medium); }
 .btn-outline:hover { border-color: rgba(255,255,255,.48); color: var(--text-1); background: rgba(255,255,255,.05); }
 .btn-saved    { background: rgba(255,255,255,.10) !important; color: #fff !important; border: 1px solid rgba(255,255,255,.28) !important; box-shadow: none !important; }
 
@@ -24,7 +20,7 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
 .cfg          { padding-bottom: 8px; }
 .cfg-step     { display: flex; gap: 28px; padding: 32px 0; border-bottom: 1px solid var(--border-light); }
 .cfg-step:last-child { border-bottom: none; }
-.step-num     { font-size: .6875rem; font-weight: 700; color: var(--text-3); letter-spacing: .08em; padding-top: 3px; min-width: 24px; opacity: .45; }
+.step-num     { padding-top: 3px; min-width: 24px; opacity: .45; }
 .step-body    { flex: 1; }
 .step-body h3 { margin-bottom: 16px; }
 
@@ -34,21 +30,21 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
 .arc-pill:hover { border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.06); }
 .arc-pill.on    { border-color: rgba(255,255,255,.40); background: rgba(255,255,255,.09); }
 .arc-pill-curve { width: 64px; height: 28px; flex-shrink: 0; }
-.arc-pill-name  { font-size: .6875rem; font-weight: 600; color: var(--text-3); white-space: nowrap; letter-spacing: .03em; text-transform: uppercase; }
+.arc-pill-name  { font-size: var(--text-label); font-weight: var(--weight-semibold); color: var(--text-3); white-space: nowrap; letter-spacing: .03em; text-transform: uppercase; }
 .arc-pill.on .arc-pill-name { color: var(--text-1); }
-.arc-active-desc { font-size: .875rem; color: var(--text-3); margin-bottom: 24px; min-height: 20px; font-style: italic; }
+.arc-active-desc { font-size: var(--text-ui); color: var(--text-3); margin-bottom: 24px; min-height: 20px; font-style: italic; }
 
 /* ── Energy curve ── */
 .curve-hdr    { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 #curve-svg    { width: 100%; height: 200px; display: block; overflow: visible; cursor: ns-resize; touch-action: none; }
 
 .curve-section-labels { display: flex; margin-top: 8px; }
-.curve-section-labels span { flex: 1; text-align: center; font-size: .625rem; font-weight: 700; color: rgba(255,255,255,.28); text-transform: uppercase; letter-spacing: .08em; }
+.curve-section-labels span { flex: 1; text-align: center; font-size: var(--text-micro); font-weight: var(--weight-bold); color: rgba(255,255,255,.28); text-transform: uppercase; letter-spacing: var(--ls-label); }
 
 /* ── Generate section ── */
 .gen-sec   { padding: 48px 0; }
 .gen-inner { max-width: 820px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
-.gen-hint  { font-size: .875rem; color: var(--text-3); font-style: italic; }
+.gen-hint  { font-size: var(--text-ui); color: var(--text-3); font-style: italic; }
 
 /* ── Results ── */
 .results       { min-height: 120px; padding-bottom: 100px; }
@@ -57,13 +53,13 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
 .empty       { text-align: center; padding: 72px 28px; border: 1px dashed rgba(255,255,255,.10); border-radius: var(--r); background: rgba(255,255,255,.02); margin-top: 4px; }
 .empty-icon  { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.06); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 .empty h3    { margin-bottom: 8px; color: var(--text-2); }
-.empty p     { font-size: .875rem; color: var(--text-3); max-width: 260px; margin: 0 auto; }
+.empty p     { font-size: var(--text-ui); color: var(--text-3); max-width: 260px; margin: 0 auto; }
 
 .res-hdr     { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 28px 0 24px; border-bottom: 1px solid var(--border-light); }
 .res-stats   { display: flex; gap: 36px; }
 .stat        { display: flex; flex-direction: column; gap: 4px; }
-.stat-val    { font-size: 1.5rem; font-weight: 700; letter-spacing: -.04em; color: var(--text-1); font-variant-numeric: tabular-nums; }
-.stat-lbl    { font-size: .625rem; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.stat-val    { font-size: var(--text-section); font-weight: var(--weight-bold); letter-spacing: var(--ls-tight); color: var(--text-1); font-variant-numeric: tabular-nums; }
+.stat-lbl    { font-size: var(--text-micro); color: var(--text-3); font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: .07em; }
 .res-actions { display: flex; gap: 10px; align-items: center; }
 
 /* ── Playlist section cards ── */
@@ -71,21 +67,21 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
 .sec-hdr     { display: flex; align-items: center; gap: 14px; padding: 18px 0 10px; }
 .sec-dot     { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .sec-meta h4 { margin-bottom: 3px; }
-.sec-meta span { font-size: .75rem; color: var(--text-3); }
+.sec-meta span { font-size: var(--text-small); color: var(--text-3); }
 
 /* ── Song rows ── */
 .song            { display: grid; grid-template-columns: 28px 1fr auto 72px; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.045); transition: opacity .15s; }
 .song:last-child { border-bottom: none; padding-bottom: 18px; }
 .song:hover      { opacity: .6; }
-.song-n          { font-size: .8125rem; color: var(--text-3); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+.song-n          { font-size: var(--text-small); color: var(--text-3); font-weight: var(--weight-medium); text-align: right; font-variant-numeric: tabular-nums; }
 .song-info       { overflow: hidden; }
-.song-title      { display: block; font-size: .875rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-1); }
-.song-artist     { display: block; font-size: .75rem; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.song-title      { display: block; font-size: var(--text-ui); font-weight: var(--weight-semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-1); }
+.song-artist     { display: block; font-size: var(--text-small); color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 .song-meta       { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-.song-bpm        { font-size: .75rem; font-weight: 700; color: var(--text-2); font-variant-numeric: tabular-nums; }
-.song-dur        { font-size: .75rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.song-bpm        { font-size: var(--text-small); font-weight: var(--weight-bold); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.song-dur        { font-size: var(--text-small); color: var(--text-3); font-variant-numeric: tabular-nums; }
 .songs-col-hdr   { display: grid; grid-template-columns: 28px 1fr auto 72px; gap: 14px; padding: 14px 0 8px; border-bottom: 1px solid rgba(255,255,255,.06); margin-bottom: 2px; }
-.songs-col-hdr span { font-size: .5625rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); }
+.songs-col-hdr span { font-size: var(--text-nano); font-weight: var(--weight-bold); letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); }
 .songs-col-hdr .col-energy { text-align: right; }
 .ebar  { height: 2px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; }
 .efill { height: 100%; border-radius: 2px; }
@@ -123,8 +119,8 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
 
 <section class="hero">
   <div class="inner">
-    <p class="page-eyebrow">Playlist Builder</p>
-    <h1>Build the rhythm of the room.</h1>
+    <p class="page-eyebrow">Build the rhythm of the room.</p>
+    <h1>Playlist Builder</h1>
     <p>Start with the feeling. Shape the energy. Let the music support the flow.</p>
   </div>
 </section>
@@ -133,7 +129,7 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
   <div class="inner">
 
     <div class="cfg-step">
-      <div class="step-num">01</div>
+      <div class="step-num text-label">01</div>
       <div class="step-body">
         <h3>Class length</h3>
         <div class="range-slider-wrap">
@@ -149,7 +145,7 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
     </div>
 
     <div class="cfg-step">
-      <div class="step-num">02</div>
+      <div class="step-num text-label">02</div>
       <div class="step-body">
         <h3>Class style</h3>
         <div class="chips" id="style-chips">
@@ -163,7 +159,7 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
     </div>
 
     <div class="cfg-step">
-      <div class="step-num">03</div>
+      <div class="step-num text-label">03</div>
       <div class="step-body">
         <h3>Mood</h3>
         <div class="chips" id="mood-chips">
@@ -178,7 +174,7 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
     </div>
 
     <div class="cfg-step">
-      <div class="step-num">04</div>
+      <div class="step-num text-label">04</div>
       <div class="step-body">
         <div class="curve-hdr">
           <h3>Energy shape</h3>
@@ -194,14 +190,6 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
   </div>
 </section>
 
-<section class="gen-sec">
-  <div class="gen-inner">
-    <button class="btn-primary" id="gen-btn">
-      <svg width="18" height="18"><use href="#music"></use></svg>
-      <span id="gen-label">Build this playlist</span>
-    </button>
-  </div>
-</section>
 
 <section class="results">
   <div class="results-inner" id="results">
@@ -214,6 +202,13 @@ h4 { font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transfor
 </section>
 
 <div class="toast" id="toast"></div>
+
+<div class="cta-bar">
+  <button class="btn-primary" id="gen-btn">
+    <svg width="18" height="18"><use href="#music"></use></svg>
+    <span id="gen-label">Build this playlist</span>
+  </button>
+</div>
 
 <script src="data/songs.js"></script>
 <script>
@@ -707,5 +702,6 @@ document.getElementById('gen-btn').addEventListener('click',()=>{
   }, 550);
 });
 </script>
+
 </body>
 </html>
