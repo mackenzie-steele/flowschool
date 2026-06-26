@@ -7,11 +7,6 @@
   <title>Breath Pace Trainer</title>
   <link rel="stylesheet" href="global.css">
   <style>
-    /* ── Hero override ── */
-    .hero {
-      padding: 64px 0 32px;
-    }
-
     /* ── Pacer visual ── */
     .pacer-section {
       display: flex;
@@ -29,19 +24,18 @@
 
     #svg-count {
       font-family: var(--font);
-  font-size: var(--fs-h3);
-  font-weight: var(--weight-regular)!important;
-  letter-spacing: -.01em;
-      fill: white;
+      font-size: var(--fs-h3);
+      font-weight: var(--weight-regular) !important;
+      letter-spacing: -.01em;
+      fill: #161614;
       text-anchor: middle;
       dominant-baseline: central;
       font-variant-numeric: tabular-nums;
     }
 
     #svg-label {
-      fill: rgba(255, 255, 255, .35);
+      fill: rgba(22, 22, 18, .40);
       text-anchor: middle;
-
     }
 
     /* ── Controls card ── */
@@ -113,22 +107,22 @@
       align-items: center;
       justify-content: center;
       background: none;
-      border: 1px solid rgba(255, 255, 255, .12);
+      border: 1px solid rgba(22, 22, 18, .14);
       color: var(--text-3);
       padding: 10px;
-      border-radius: var(--rf);
+      border-radius: 0;
       cursor: pointer;
       transition: all .15s;
     }
 
     .audio-btn:hover {
       color: var(--text-2);
-      border-color: rgba(255, 255, 255, .25);
+      border-color: rgba(22, 22, 18, .28);
     }
 
     .audio-btn.on {
       color: var(--text-2);
-      border-color: rgba(255, 255, 255, .2);
+      border-color: rgba(22, 22, 18, .22);
     }
 
     .audio-btn.off {
@@ -138,10 +132,6 @@
     /* ── Cards ── */
 
     @media (max-width: 580px) {
-      .hero {
-        padding: 44px 0 32px;
-      }
-
       .pacer-section {
         padding: 44px 0 32px;
       }
@@ -167,20 +157,12 @@
   </style>
 </head>
 
-<body>
+<body class="has-sidebar">
 
 
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
-
-  <header class="hdr">
-    <div class="hdr-i">
-      <a href="index.html" class="btn-ghost">← Tools</a>
-      <div class="hdr-logo-wrap"><a href="index.html" class="hdr-logo">Flow School</a><span class="beta-tag">Beta</span></div>
-      <div class="hdr-auth" id="hdr-auth"></div>
-    </div>
-  </header>
 
   <section class="hero">
     <div class="inner">
@@ -341,7 +323,7 @@
         line.setAttribute('y1', (CY + R_IN * Math.sin(angle)).toFixed(2));
         line.setAttribute('x2', (CX + R_OUT * Math.cos(angle)).toFixed(2));
         line.setAttribute('y2', (CY + R_OUT * Math.sin(angle)).toFixed(2));
-        line.setAttribute('stroke', 'white');
+        line.setAttribute('stroke', 'rgba(22,22,18,.85)');
         line.setAttribute('stroke-width', '2');
         line.setAttribute('stroke-linecap', 'round');
         line.setAttribute('opacity', '0.2');
@@ -364,7 +346,7 @@
       const labelEl = document.getElementById('svg-label');
       countEl.textContent = count;
       labelEl.textContent = phase.label.toUpperCase();
-      labelEl.style.fill = phase.id === 'inhale' ? 'white' : 'rgba(255,255,255,.35)';
+      labelEl.style.fill = phase.id === 'inhale' ? '#161614' : 'rgba(22,22,18,.38)';
     }
 
     function resetDisplay() {
@@ -372,7 +354,7 @@
       const labelEl = document.getElementById('svg-label');
       countEl.textContent = '—';
       labelEl.textContent = 'READY';
-      labelEl.style.fill = 'rgba(255,255,255,.35)';
+      labelEl.style.fill = 'rgba(22,22,18,.38)';
       breathProgress = 0;
       setTickOpacity(0);
     }
@@ -484,7 +466,7 @@
 
     function updateSliderFill(slider) {
       const pct = (slider.value - slider.min) / (slider.max - slider.min) * 100;
-      slider.style.background = `linear-gradient(to right,rgba(255,255,255,.65) ${pct}%,rgba(255,255,255,.15) ${pct}%)`;
+      slider.style.background = `linear-gradient(to right,rgba(22,22,18,.68) ${pct}%,rgba(22,22,18,.12) ${pct}%)`;
     }
 
     ['inhale', 'exhale'].forEach(type => {

@@ -40,37 +40,25 @@ body { opacity: 0; transition: opacity .18s; }
   background: var(--accent-dim); border-radius: var(--rs);
   margin-bottom: 0;
 }
-.profile-prompt p { font-size: var(--text-body-sm); color: rgba(221,227,106,.85); margin: 0; }
+.profile-prompt p { font-size: var(--text-body-sm); color: var(--text-2); margin: 0; }
 .profile-prompt a {
   font-size: var(--text-small); font-weight: var(--weight-semibold);
   color: var(--accent); white-space: nowrap; text-decoration: none;
   border: 1px solid var(--accent-border); border-radius: var(--rf);
   padding: 6px 14px; transition: all .15s; flex-shrink: 0;
 }
-.profile-prompt a:hover { background: rgba(221,227,106,.15); }
+.profile-prompt a:hover { background: rgba(22,22,18,.06); }
 
 @media (max-width: 640px) {
   .profile-prompt { flex-direction: column; align-items: flex-start; gap: 12px; }
 }
 </style>
 </head>
-<body>
+<body class="has-sidebar">
 
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 <div class="orb orb-3"></div>
-
-<header class="hdr">
-  <div class="hdr-i">
-    <div></div>
-    <div class="hdr-logo-wrap"><a href="dashboard.html" class="hdr-logo">Flow School</a><span class="beta-tag">Beta</span></div>
-    <div class="hdr-actions">
-      <a href="profile.html" class="btn-ghost" style="padding:6px 10px">
-        <span class="nav-avatar-placeholder" id="nav-avatar">?</span>
-      </a>
-    </div>
-  </div>
-</header>
 
 <section class="dash-hero">
   <div class="inner">
@@ -162,5 +150,6 @@ async function init() {
 
 init();
 </script>
+<script src="lib/nav.js"></script>
 </body>
 </html>

@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="global.css">
   <style>
     /* ── Hero ── */
-    .hero { padding: 72px 0 56px; }
     .hero-actions { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
 
     /* ── Section spacing ── */
@@ -30,8 +29,8 @@
       gap: 5px;
       padding: 18px 22px;
       border: 1px solid var(--border);
-      border-radius: var(--r);
-      background: rgba(255,255,255,.03);
+      border-radius: 0;
+      background: rgba(22,22,18,.03);
       min-width: 130px;
     }
     .formula-part-label {
@@ -74,16 +73,16 @@
     }
     .f-input, .f-textarea {
       width: 100%;
-      background: rgba(255,255,255,.05);
+      background: rgba(22,22,18,.04);
       border: 1px solid var(--border);
-      border-radius: var(--rs);
+      border-radius: 0;
       padding: 10px 14px;
       font-family: var(--font);
       font-size: var(--text-body-sm);
       color: var(--text-1);
       transition: border-color .15s;
     }
-    .f-input:focus, .f-textarea:focus { outline: none; border-color: rgba(255,255,255,.3); }
+    .f-input:focus, .f-textarea:focus { outline: none; border-color: rgba(22,22,18,.35); }
     .f-input::placeholder, .f-textarea::placeholder { color: var(--text-3); }
     .f-textarea { resize: vertical; min-height: 72px; }
 
@@ -102,9 +101,9 @@
     }
     .cue-preview-wrap {
       padding: 16px 20px;
-      background: rgba(255,255,255,.04);
+      background: rgba(22,22,18,.03);
       border: 1px solid var(--border-light);
-      border-radius: var(--rs);
+      border-radius: 0;
       margin-bottom: 18px;
     }
     .cue-preview-label {
@@ -148,19 +147,39 @@
       min-height: 40px;
     }
     .verb-chip {
-      background: rgba(255,255,255,.06);
-      border: 1px solid var(--border);
-      border-radius: var(--rf);
-      padding: 6px 14px;
+      position: relative;
+      background: transparent;
+      border: 1px solid rgba(22,22,18,.14);
+      border-radius: 0;
+      padding: 6px 14px 6px 24px;
       font-family: var(--font);
       font-size: var(--text-small);
-      color: var(--text-2);
+      color: var(--text-3);
       cursor: pointer;
       transition: all .15s;
       line-height: 1.4;
     }
-    .verb-chip:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); color: var(--text-1); }
-    .verb-chip.selected { background: var(--accent); border-color: var(--accent); color: #080808; font-weight: var(--weight-semibold); }
+    .verb-chip::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      border: 1px solid rgba(22,22,18,.22);
+      background: transparent;
+      transition: all .15s;
+    }
+    .verb-chip:hover { background: rgba(22,22,18,.03); border-color: rgba(22,22,18,.28); color: var(--text-2); }
+    .verb-chip.selected {
+      background: rgba(22,22,18,.06);
+      border-color: rgba(22,22,18,.35);
+      color: var(--text-1);
+      font-weight: var(--weight-semibold);
+    }
+    .verb-chip.selected::before { background: #161614; border-color: #161614; }
     .verb-empty { font-size: var(--text-small); color: var(--text-3); font-style: italic; }
 
     /* ── Check a Cue ── */
@@ -184,8 +203,8 @@
       font-size: 10px;
       transition: all .15s;
     }
-    .check-dot.pass { border-color: #6bdb8a; background: rgba(107,219,138,.15); color: #6bdb8a; }
-    .check-dot.fail { border-color: rgba(255,80,80,.5); background: rgba(255,80,80,.08); color: rgba(255,80,80,.7); }
+    .check-dot.pass { border-color: rgba(40,120,65,.6); background: rgba(40,120,65,.08); color: rgba(40,120,65,.85); }
+    .check-dot.fail { border-color: rgba(160,40,40,.45); background: rgba(160,40,40,.06); color: rgba(160,40,40,.70); }
     .refine-btn-row { display: flex; gap: 10px; margin-top: 16px; }
 
     /* ── Examples accordion ── */
@@ -201,7 +220,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 16px 22px;
-      background: rgba(255,255,255,.025);
+      background: rgba(22,22,18,.02);
       border: none;
       cursor: pointer;
       font-family: var(--font);
@@ -211,7 +230,7 @@
       text-align: left;
       transition: background .15s;
     }
-    .example-trigger:hover { background: rgba(255,255,255,.05); }
+    .example-trigger:hover { background: rgba(22,22,18,.04); }
     .example-arrow { color: var(--text-3); transition: transform .2s; flex-shrink: 0; }
     .example-item.open .example-arrow { transform: rotate(180deg); }
     .example-body { display: none; padding: 0 22px 20px; }
@@ -251,13 +270,13 @@
     .ws-view-tabs {
       display: flex;
       gap: 2px;
-      background: rgba(255,255,255,.04);
-      border-radius: var(--rs);
+      background: rgba(22,22,18,.04);
+      border-radius: 0;
       padding: 3px;
     }
     .ws-tab {
       padding: 7px 14px;
-      border-radius: 7px;
+      border-radius: 0;
       font-family: var(--font);
       font-size: var(--text-small);
       font-weight: var(--weight-medium);
@@ -267,7 +286,7 @@
       cursor: pointer;
       transition: all .15s;
     }
-    .ws-tab.active { background: rgba(255,255,255,.1); color: var(--text-1); }
+    .ws-tab.active { background: rgba(22,22,18,.09); color: var(--text-1); }
     .ws-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .ws-table-wrap { overflow-x: auto; }
     .ws-table {
@@ -319,7 +338,6 @@
 
     /* ── Responsive ── */
     @media (max-width: 640px) {
-      .hero { padding: 48px 0 40px; }
       .formula-equation { gap: 8px; }
       .formula-part { min-width: 90px; padding: 12px 14px; }
       .builder-fields, .drill-parts { grid-template-columns: 1fr; }
@@ -329,20 +347,12 @@
   </style>
 </head>
 
-<body>
+<body class="has-sidebar">
 
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 <div class="orb orb-3"></div>
 <div class="toast" id="toast"></div>
-
-<header class="hdr">
-  <div class="hdr-i">
-    <a href="index.html" class="btn-ghost">← Tools</a>
-    <div class="hdr-logo-wrap"><a href="index.html" class="hdr-logo">Flow School</a><span class="beta-tag">Beta</span></div>
-    <div class="hdr-auth" id="hdr-auth"></div>
-  </div>
-</header>
 
 <!-- ── 1. HERO ───────────────────────────────────────────────── -->
 
@@ -1119,6 +1129,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
 
+  <script src="lib/nav.js"></script>
   <script src="lib/tracker.js"></script>
 </body>
 </html>

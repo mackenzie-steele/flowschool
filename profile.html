@@ -110,12 +110,12 @@ body { opacity: 0; transition: opacity .18s; }
 }
 
 .pf-input {
-  width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--border);
-  border-radius: var(--rs); padding: 12px 16px;
+  width: 100%; background: rgba(22,22,18,.04); border: 1px solid var(--border);
+  border-radius: 0; padding: 12px 16px;
   color: var(--text-1); font-size: var(--text-body-sm); font-family: var(--font);
   outline: none; transition: border-color .15s, background .15s;
 }
-.pf-input:focus { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.055); }
+.pf-input:focus { border-color: rgba(22,22,18,.35); background: rgba(22,22,18,.06); }
 .pf-input::placeholder { color: var(--text-3); }
 
 textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
@@ -131,16 +131,16 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 
 /* ── Error / success ── */
 .pf-error {
-  font-size: var(--text-small); color: rgba(255,100,100,.85); line-height: 1.5;
-  padding: 10px 14px; background: rgba(255,80,80,.06); border: 1px solid rgba(255,80,80,.15);
-  border-radius: var(--rs); margin-bottom: 14px; display: none;
+  font-size: var(--text-small); color: rgba(160,40,40,.85); line-height: 1.5;
+  padding: 10px 14px; background: rgba(160,40,40,.05); border: 1px solid rgba(160,40,40,.14);
+  border-radius: 0; margin-bottom: 14px; display: none;
 }
 .pf-error.show { display: block; }
 
 .pf-success {
-  font-size: var(--text-small); color: var(--accent); line-height: 1.5;
-  padding: 10px 14px; background: rgba(221,227,106,.06); border: 1px solid rgba(221,227,106,.18);
-  border-radius: var(--rs); margin-bottom: 14px; display: none;
+  font-size: var(--text-small); color: var(--text-2); line-height: 1.5;
+  padding: 10px 14px; background: rgba(22,22,18,.05); border: 1px solid rgba(22,22,18,.14);
+  border-radius: 0; margin-bottom: 14px; display: none;
 }
 .pf-success.show { display: block; }
 
@@ -149,7 +149,7 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 28px;
-  background: rgba(8,8,8,.88); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
+  background: rgba(245,244,240,.92); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
   border-top: 1px solid var(--border-light);
 }
 .save-bar-left { font-size: var(--text-small); color: var(--text-3); }
@@ -164,21 +164,11 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 }
 </style>
 </head>
-<body>
+<body class="has-sidebar">
 
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 <div class="orb orb-3"></div>
-
-<header class="hdr">
-  <div class="hdr-i">
-    <a href="dashboard.html" class="btn-ghost">← Dashboard</a>
-    <div class="hdr-logo-wrap"><a href="dashboard.html" class="hdr-logo">Flow School</a><span class="beta-tag">Beta</span></div>
-    <div class="hdr-actions">
-      <button class="btn-ghost" id="signout-btn">Sign out</button>
-    </div>
-  </div>
-</header>
 
 <section class="hero">
   <div class="inner">
@@ -382,13 +372,6 @@ document.getElementById('discard-btn').addEventListener('click', () => {
   document.getElementById('save-status').textContent = 'Unsaved changes';
 });
 
-// ─── SIGN OUT ────────────────────────────────────────────────────────────────
-
-document.getElementById('signout-btn').addEventListener('click', async () => {
-  await db.auth.signOut();
-  window.location.href = 'login.html';
-});
-
 // ─── MESSAGES ────────────────────────────────────────────────────────────────
 
 function showError(msg) {
@@ -415,5 +398,6 @@ function clearMessages() {
 
 init();
 </script>
+<script src="lib/nav.js"></script>
 </body>
 </html>

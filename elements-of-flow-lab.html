@@ -44,9 +44,9 @@
     /* Segmented control */
     .efl-seg {
       display: flex;
-      background: rgba(255, 255, 255, .04);
+      background: rgba(22, 22, 18, .04);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 0;
       padding: 3px;
       gap: 2px;
       margin-bottom: 14px;
@@ -56,7 +56,7 @@
       flex: 1;
       padding: 7px 8px;
       border: none;
-      border-radius: 7px;
+      border-radius: 0;
       background: transparent;
       color: var(--text-3);
       font-size: var(--text-small);
@@ -68,7 +68,7 @@
     }
 
     .efl-seg-btn.active {
-      background: rgba(255, 255, 255, .10);
+      background: rgba(22, 22, 18, .09);
       color: var(--text-1);
     }
 
@@ -83,8 +83,8 @@
       text-align: left;
       padding: 11px 14px;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, .02);
+      border-radius: 0;
+      background: rgba(22, 22, 18, .02);
       color: var(--text-2);
       font-family: var(--font);
       font-size: var(--text-ui);
@@ -112,7 +112,7 @@
     }
 
     .efl-plane-btn.active .efl-plane-sub {
-      color: rgba(221, 227, 106, 0.55);
+      color: var(--text-3);
     }
 
     .efl-plane-caret {
@@ -123,21 +123,21 @@
 
     .efl-plane-btn.active .efl-plane-caret {
       transform: rotate(180deg);
-      color: rgba(221, 227, 106, 0.55);
+      color: var(--text-3);
     }
 
     .efl-plane-btn:hover {
-      border-color: rgba(255, 255, 255, .2);
-      background: rgba(255, 255, 255, .05);
+      border-color: rgba(22, 22, 18, .20);
+      background: rgba(22, 22, 18, .04);
       color: var(--text-1);
     }
 
     .efl-plane-btn.active {
-      background: var(--accent-dim);
-      border-color: var(--accent-border);
-      border-bottom-color: rgba(221, 227, 106, 0.08);
-      color: var(--accent);
-      border-radius: 10px 10px 0 0;
+      background: rgba(22, 22, 18, .05);
+      border-color: rgba(22, 22, 18, .18);
+      border-bottom-color: rgba(22, 22, 18, .06);
+      color: var(--text-1);
+      border-radius: 0;
     }
 
     .efl-plane-item {
@@ -152,8 +152,8 @@
       padding: 0 16px;
       border: 1px solid transparent;
       border-top-color: transparent;
-      border-radius: 0 0 10px 10px;
-      background: var(--accent-dim);
+      border-radius: 0;
+      background: rgba(22, 22, 18, .03);
       transition: max-height 0.28s ease, opacity 0.22s ease, padding 0.28s ease, border-color 0.2s ease;
     }
 
@@ -161,8 +161,8 @@
       max-height: 400px;
       opacity: 1;
       padding: 14px 16px 16px;
-      border-color: var(--accent-border);
-      border-top-color: rgba(221, 227, 106, 0.08);
+      border-color: rgba(22, 22, 18, .10);
+      border-top-color: rgba(22, 22, 18, .04);
     }
 
     /* Explanation card */
@@ -170,8 +170,8 @@
       margin-top: 12px;
       padding: 16px;
       border: 1px solid var(--border-light);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, .015);
+      border-radius: 0;
+      background: rgba(22, 22, 18, .015);
       animation: fadeUp .22s ease both;
     }
 
@@ -262,6 +262,7 @@
       color: rgba(221, 227, 106, .85);
       line-height: 1.6;
       margin: 0;
+      max-width: none;
     }
 
     .efl-peak-callout strong {
@@ -280,8 +281,8 @@
     .efl-b5-card {
       padding: 18px 14px 16px;
       border: 1px solid var(--border);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, .018);
+      border-radius: 0;
+      background: rgba(22, 22, 18, .018);
       cursor: pointer;
       transition: all .2s;
       -webkit-user-select: none;
@@ -289,13 +290,13 @@
     }
 
     .efl-b5-card:hover {
-      border-color: rgba(255, 255, 255, .22);
-      background: rgba(255, 255, 255, .04);
+      border-color: rgba(22, 22, 18, .22);
+      background: rgba(22, 22, 18, .04);
     }
 
     .efl-b5-card.active {
-      border-color: var(--accent-border);
-      background: var(--accent-dim);
+      border-color: rgba(22, 22, 18, .30);
+      background: rgba(22, 22, 18, .07);
     }
 
     .efl-b5-name {
@@ -314,19 +315,19 @@
     }
 
     .efl-b5-card.active .efl-b5-name {
-      color: var(--accent);
+      color: var(--text-1);
     }
 
     .efl-b5-card.active .efl-b5-def {
-      color: rgba(221, 227, 106, .6);
+      color: var(--text-2);
     }
 
     .efl-b5-detail {
       margin-bottom: 8px;
       padding: 18px 20px;
       border: 1px solid var(--border-light);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, .015);
+      border-radius: 0;
+      background: rgba(22, 22, 18, .015);
       display: none;
       animation: fadeUp .22s ease both;
     }
@@ -338,7 +339,7 @@
     .efl-b5-detail-name {
       font-size: var(--text-ui);
       font-weight: var(--weight-semibold);
-      color: var(--accent);
+      color: var(--text-1);
       display: block;
       margin-bottom: 6px;
     }
@@ -360,8 +361,8 @@
     .efl-support-card {
       padding: 16px;
       border: 1px solid var(--border-light);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, .01);
+      border-radius: 0;
+      background: rgba(22, 22, 18, .01);
       cursor: pointer;
       transition: all .15s;
       -webkit-user-select: none;
@@ -369,13 +370,13 @@
     }
 
     .efl-support-card:hover {
-      border-color: rgba(255, 255, 255, .16);
-      background: rgba(255, 255, 255, .03);
+      border-color: rgba(22, 22, 18, .16);
+      background: rgba(22, 22, 18, .03);
     }
 
     .efl-support-card.active {
       border-color: var(--border);
-      background: rgba(255, 255, 255, .04);
+      background: rgba(22, 22, 18, .05);
     }
 
     .efl-support-name {
@@ -452,35 +453,35 @@
     .b5-group:focus, .b5-group:active { outline: none; }
 
     .b5-wedge {
-      fill: rgba(255, 255, 255, 0.06);
-      stroke: white;
+      fill: rgba(22, 22, 18, 0.06);
+      stroke: rgba(22, 22, 18, 0.45);
       stroke-width: 1;
       vector-effect: non-scaling-stroke;
       transition: fill 0.18s ease;
     }
 
     .b5-group:hover .b5-wedge {
-      fill: rgba(255, 255, 255, 0.12);
+      fill: rgba(22, 22, 18, 0.11);
     }
 
     .b5-group.active .b5-wedge {
-      fill: rgba(255, 255, 255, 0.2);
+      fill: rgba(22, 22, 18, 0.18);
     }
 
     .b5-sat-circle {
-      fill: rgba(255, 255, 255, 0.06);
-      stroke: white;
+      fill: rgba(22, 22, 18, 0.06);
+      stroke: rgba(22, 22, 18, 0.20);
       stroke-width: 1;
       vector-effect: non-scaling-stroke;
       transition: fill 0.18s ease;
     }
 
     .b5-group:hover .b5-sat-circle {
-      fill: rgba(255, 255, 255, 0.12);
+      fill: rgba(22, 22, 18, 0.11);
     }
 
     .b5-group.active .b5-sat-circle {
-      fill: rgba(255, 255, 255, 0.2);
+      fill: rgba(22, 22, 18, 0.18);
     }
 
     .b5-label {
@@ -489,12 +490,12 @@
       font-weight: var(--weight-regular);
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      fill: rgba(255,255,255,0.45);
+      fill: rgba(22, 22, 18, 0.40);
       pointer-events: none;
     }
 
     .b5-group.active .b5-label {
-      fill: rgba(255, 255, 255, 0.9);
+      fill: rgba(22, 22, 18, 0.85);
     }
 
     .efl-b5-canvas {}
@@ -560,8 +561,8 @@
     .efl-check-box {
       width: 20px;
       height: 20px;
-      border: 1.5px solid rgba(255, 255, 255, .18);
-      border-radius: 5px;
+      border: 1.5px solid rgba(22, 22, 18, .22);
+      border-radius: 0;
       flex-shrink: 0;
       margin-top: 1px;
       display: flex;
@@ -571,13 +572,13 @@
     }
 
     .efl-check-item.checked .efl-check-box {
-      background: var(--accent);
-      border-color: var(--accent);
+      background: #161614;
+      border-color: #161614;
     }
 
     .efl-check-icon {
       font-size: 13px;
-      color: #080808;
+      color: #F5F4F0;
       opacity: 0;
       transition: opacity .15s;
       font-weight: 700;
@@ -654,7 +655,7 @@
 
     .efl-bp-complete p {
       font-size: var(--text-body-sm);
-      color: rgba(221,227,106,.85);
+      color: var(--text-2);
       margin: 0;
       line-height: 1.5;
     }
@@ -670,8 +671,8 @@
     .efl-gait-note {
       padding: 16px 18px;
       border: 1px solid var(--border-light);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, .015);
+      border-radius: 0;
+      background: rgba(22, 22, 18, .015);
       font-size: var(--text-body-sm);
       color: var(--text-2);
       line-height: 1.65;
@@ -693,8 +694,8 @@
 
     .efl-map-path {
       min-height: 54px;
-      border: 1px dashed rgba(255, 255, 255, .10);
-      border-radius: 10px;
+      border: 1px dashed rgba(22, 22, 18, .14);
+      border-radius: 0;
       padding: 12px 16px;
       display: flex;
       align-items: center;
@@ -706,9 +707,9 @@
     .efl-map-step {
       font-size: var(--text-ui);
       color: var(--text-1);
-      background: rgba(255, 255, 255, .07);
+      background: rgba(22, 22, 18, .06);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 0;
       padding: 5px 12px;
       white-space: nowrap;
       animation: fadeUp .18s ease both;
@@ -748,8 +749,8 @@
       text-align: center;
       padding: 44px 28px;
       border: 1px solid var(--border-light);
-      border-radius: var(--r);
-      background: rgba(255, 255, 255, .01);
+      border-radius: 0;
+      background: rgba(22, 22, 18, .01);
     }
 
     .efl-dots-line {
@@ -827,9 +828,9 @@
 
     .efl-textarea {
       width: 100%;
-      background: rgba(255, 255, 255, .04);
+      background: rgba(22, 22, 18, .04);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 0;
       padding: 16px;
       color: var(--text-1);
       font-size: var(--text-body-sm);
@@ -844,7 +845,7 @@
     }
 
     .efl-textarea:focus {
-      border-color: rgba(255, 255, 255, .22);
+      border-color: rgba(22, 22, 18, .35);
     }
 
     .efl-textarea::placeholder {
@@ -885,38 +886,22 @@
   </style>
 </head>
 
-<body>
+<body class="has-sidebar">
 
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
   <div class="toast" id="toast"></div>
 
-  <!-- ── Header ──────────────────────────────────────────────────── -->
-  <header class="hdr">
-    <div class="hdr-i">
-      <a href="index.html" class="btn-ghost">← Tools</a>
-      <div class="hdr-logo-wrap">
-        <a href="index.html" class="hdr-logo">Flow School</a>
-        <span class="beta-tag">Beta</span>
-      </div>
-      <div class="hdr-auth" id="hdr-auth"></div>
-    </div>
-  </header>
-
   <!-- ── Main ────────────────────────────────────────────────────── -->
   <main>
-    <div class="wrap">
 
-      <!-- 1. Hero ─────────────────────────────────────────────────── -->
-      <div class="hero">
-        <span class="page-eyebrow">Movement Science</span>
-        <h2>Elements of Flow Lab</h2>
-        <p style="margin-top:10px;color:var(--text-2);font-size:var(--text-body-lg)">
-          Learn what makes a flow feel complete, natural, and alive.
-        </p>
-        <p style="margin-top:10px;max-width:580px">
-          A Bonnie class is not just a sequence of poses. It is a complete movement experience — mobility, stability,
+    <section class="hero">
+      <div class="inner">
+        <p class="label-1">Movement Science</p>
+        <h3>Elements of Flow Lab</h3>
+        <p>Learn what makes a flow feel complete, natural, and alive.</p>
+        <p>A Bonnie class is not just a sequence of poses. It is a complete movement experience — mobility, stability,
           strength, conditioning, flow, breath, flexibility, and rest woven together with intention. This lab helps you
           explore the ingredients of Flow School through movement planes, body positions, gait, and the simple reminder
           to move, breathe, and rest.
@@ -926,6 +911,9 @@
             positions and all movement planes.</p>
         </div>
       </div>
+    </section>
+
+    <div class="wrap">
 
       <!-- 2. Movement Planes Lab ───────────────────────────────────── -->
       <section class="efl-section" data-tool="elements-of-flow-lab" data-section="movement-planes">
@@ -945,46 +933,46 @@
               aria-label="Top-down view of yoga mat with movement direction indicators">
               <defs>
                 <marker id="arr" markerWidth="6.4" markerHeight="6.4" refX="4.8" refY="3.2" orient="auto">
-                  <path d="M0,0.8 L4.8,3.2 L0,5.6" fill="none" stroke="white" stroke-width="1" stroke-linecap="round"
+                  <path d="M0,0.8 L4.8,3.2 L0,5.6" fill="none" stroke="rgba(22,22,18,0.75)" stroke-width="1" stroke-linecap="round"
                     stroke-linejoin="round" />
                 </marker>
               </defs>
 
               <!-- ── Mat ── -->
-              <rect x="82" y="43" width="100" height="220" rx="10" fill="rgba(0,0,0,0.22)" />
-              <rect x="80" y="40" width="100" height="220" rx="10" fill="rgba(255,255,255,0.04)"
-                stroke="rgba(255,255,255,0.6)" stroke-width="1" />
-              <line x1="130" y1="40" x2="130" y2="260" stroke="rgba(255,255,255,0.18)" stroke-width=".75"
+              <rect x="82" y="43" width="100" height="220" rx="0" fill="rgba(22,22,18,0.06)" />
+              <rect x="80" y="40" width="100" height="220" rx="0" fill="rgba(22,22,18,0.03)"
+                stroke="rgba(22,22,18,0.45)" stroke-width="1" />
+              <line x1="130" y1="40" x2="130" y2="260" stroke="rgba(22,22,18,0.18)" stroke-width=".75"
                 stroke-dasharray="3,6" stroke-dashoffset="8.5" />
-              <line x1="80" y1="150" x2="180" y2="150" stroke="rgba(255,255,255,0.18)" stroke-width=".75"
+              <line x1="80" y1="150" x2="180" y2="150" stroke="rgba(22,22,18,0.18)" stroke-width=".75"
                 stroke-dasharray="3,6" stroke-dashoffset="5.5" />
-              <circle cx="130" cy="150" r="1.5" fill="white" />
-              <text x="130" y="33" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.75)"
+              <circle cx="130" cy="150" r="1.5" fill="rgba(22,22,18,0.7)" />
+              <text x="130" y="33" text-anchor="middle" font-size="7" fill="rgba(22,22,18,0.55)"
                 font-family="inherit" letter-spacing="0.09em">FOM</text>
-              <text x="130" y="275" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.5)"
+              <text x="130" y="275" text-anchor="middle" font-size="7" fill="rgba(22,22,18,0.38)"
                 font-family="inherit" letter-spacing="0.09em">BOM</text>
 
               <!-- ── Sagittal ── -->
               <g id="indicator-sagittal" class="plane-indicator">
-                <line x1="130" y1="140" x2="130" y2="52" stroke="white" stroke-width="1" marker-end="url(#arr)" />
-                <line x1="130" y1="160" x2="130" y2="248" stroke="white" stroke-width="1" marker-end="url(#arr)" />
-                <circle cx="130" cy="150" r="1.5" fill="white" />
+                <line x1="130" y1="140" x2="130" y2="52" stroke="rgba(22,22,18,0.75)" stroke-width="1" marker-end="url(#arr)" />
+                <line x1="130" y1="160" x2="130" y2="248" stroke="rgba(22,22,18,0.75)" stroke-width="1" marker-end="url(#arr)" />
+                <circle cx="130" cy="150" r="1.5" fill="rgba(22,22,18,0.75)" />
               </g>
 
               <!-- ── Frontal ── -->
               <g id="indicator-frontal" class="plane-indicator">
-                <line x1="120" y1="150" x2="92" y2="150" stroke="white" stroke-width="1" marker-end="url(#arr)" />
-                <line x1="140" y1="150" x2="168" y2="150" stroke="white" stroke-width="1" marker-end="url(#arr)" />
-                <circle cx="130" cy="150" r="1.5" fill="white" />
+                <line x1="120" y1="150" x2="92" y2="150" stroke="rgba(22,22,18,0.75)" stroke-width="1" marker-end="url(#arr)" />
+                <line x1="140" y1="150" x2="168" y2="150" stroke="rgba(22,22,18,0.75)" stroke-width="1" marker-end="url(#arr)" />
+                <circle cx="130" cy="150" r="1.5" fill="rgba(22,22,18,0.75)" />
               </g>
 
               <!-- ── Transverse ── -->
               <g id="indicator-transverse" class="plane-indicator">
-                <path d="M 103,143 A 28,28 0 0,1 157,143" fill="none" stroke="white" stroke-width="1"
+                <path d="M 103,143 A 28,28 0 0,1 157,143" fill="none" stroke="rgba(22,22,18,0.75)" stroke-width="1"
                   marker-end="url(#arr)" />
-                <path d="M 157,157 A 28,28 0 0,1 103,157" fill="none" stroke="white" stroke-width="1"
+                <path d="M 157,157 A 28,28 0 0,1 103,157" fill="none" stroke="rgba(22,22,18,0.75)" stroke-width="1"
                   marker-end="url(#arr)" />
-                <circle cx="130" cy="150" r="1.5" fill="white" />
+                <circle cx="130" cy="150" r="1.5" fill="rgba(22,22,18,0.75)" />
               </g>
 
             </svg>

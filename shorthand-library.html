@@ -16,9 +16,9 @@
 
     .search-input {
       width: 100%;
-      background: rgba(255, 255, 255, .04);
+      background: rgba(22, 22, 18, .04);
       border: 1px solid var(--border);
-      border-radius: var(--rs);
+      border-radius: 0;
       padding: 12px 40px 12px 44px;
       color: var(--text-1);
       font-size: var(--text-body-sm);
@@ -32,8 +32,8 @@
     }
 
     .search-input:focus {
-      border-color: rgba(255, 255, 255, .22);
-      background: rgba(255, 255, 255, .055);
+      border-color: rgba(22, 22, 18, .35);
+      background: rgba(22, 22, 18, .06);
     }
 
     .search-icon {
@@ -66,7 +66,7 @@
 
     .search-clear:hover {
       color: var(--text-1);
-      background: rgba(255, 255, 255, .06);
+      background: rgba(22, 22, 18, .05);
     }
 
     /* ── Filter row ── */
@@ -103,10 +103,10 @@
       font-size: var(--text-nano);
       font-weight: var(--weight-bold);
       padding: 2px 6px;
-      border-radius: var(--rf);
-      background: rgba(255, 255, 255, .10);
+      border-radius: 1px;
+      background: rgba(22, 22, 18, .07);
       color: var(--text-3);
-      border: 1px solid rgba(255, 255, 255, .10);
+      border: 1px solid rgba(22, 22, 18, .10);
       margin-left: 5px;
       vertical-align: middle;
       line-height: 1.5;
@@ -114,19 +114,19 @@
     }
 
     .filter-chip.active .lib-badge {
-      background: rgba(8, 8, 8, .08);
-      color: rgba(8, 8, 8, .40);
-      border-color: rgba(8, 8, 8, .08);
+      background: rgba(22, 22, 18, .08);
+      color: var(--text-2);
+      border-color: rgba(22, 22, 18, .12);
     }
 
     /* ── Library table ── */
     .lib-wrap {
       overflow-x: auto;
       border: 1px solid var(--border-light);
-      border-radius: var(--r);
-      background: rgba(255, 255, 255, .018);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      border-radius: 0;
+      background: rgba(22, 22, 18, .018);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
 
     .lib-table {
@@ -163,24 +163,24 @@
     }
 
     .lib-row:hover td {
-      background: rgba(255, 255, 255, .018);
+      background: rgba(22, 22, 18, .03);
     }
 
     /* Cell content */
     .lib-short {
       font-family: var(--font);
-  font-size: var(--fs-h7);
-  font-weight: var(--weight-regular)!important;
-  line-height: var(--lh-heading);
-  color: #ffffff;
+      font-size: var(--fs-h7);
+      font-weight: var(--weight-regular) !important;
+      line-height: var(--lh-heading);
+      color: var(--text-1);
       white-space: nowrap;
     }
 
     .lib-full {
-  font-family: var(--font);
-  font-size: var(--fs-body);
-  line-height: 1.6;
-  color: rgba(255,255,255,.50);
+      font-family: var(--font);
+      font-size: var(--fs-body);
+      line-height: 1.6;
+      color: var(--text-2);
     }
 
     .lib-notes-text {
@@ -189,42 +189,13 @@
       line-height: 1.5;
     }
 
-    /* Category tag variants */
-    .tag-general {
-      background: rgba(255, 220, 80, .10);
-      color: rgba(255, 225, 110, .90);
-      border-color: rgba(255, 220, 80, .20);
-    }
-
-    .tag-double-leg {
-      background: var(--accent-dim);
-      color: var(--accent);
-      border-color: var(--accent-border);
-    }
-
-    .tag-single-leg {
-      background: rgba(80, 200, 160, .10);
-      color: rgba(100, 210, 170, .90);
-      border-color: rgba(80, 200, 160, .20);
-    }
-
-    .tag-hands-down {
-      background: rgba(80, 160, 255, .10);
-      color: rgba(110, 175, 255, .90);
-      border-color: rgba(80, 160, 255, .20);
-    }
-
-    .tag-floor {
-      background: rgba(255, 155, 80, .10);
-      color: rgba(255, 165, 100, .90);
-      border-color: rgba(255, 155, 80, .20);
-    }
-
-    .tag-custom {
-      background: rgba(190, 130, 255, .10);
-      color: rgba(200, 150, 255, .90);
-      border-color: rgba(190, 130, 255, .20);
-    }
+    /* Category tag variants — monochrome on light bg */
+    .tag-general   { background: rgba(22,22,18,.07); color: var(--text-2); border-color: rgba(22,22,18,.12); }
+    .tag-double-leg{ background: rgba(22,22,18,.10); color: var(--text-1); border-color: rgba(22,22,18,.18); }
+    .tag-single-leg{ background: rgba(22,22,18,.06); color: var(--text-2); border-color: rgba(22,22,18,.10); }
+    .tag-hands-down{ background: rgba(22,22,18,.05); color: var(--text-3); border-color: rgba(22,22,18,.09); }
+    .tag-floor     { background: rgba(22,22,18,.08); color: var(--text-2); border-color: rgba(22,22,18,.14); }
+    .tag-custom    { background: rgba(22,22,18,.06); color: var(--text-3); border-color: rgba(22,22,18,.10); }
 
     .lib-table .tag {
       white-space: nowrap;
@@ -306,15 +277,15 @@
     }
 
     .mode-chip {
-      padding: 7px 14px;
+      padding: 7px 14px 7px 24px;
       font-size: var(--text-small);
     }
 
     .seq-textarea {
       width: 100%;
-      background: rgba(255, 255, 255, .04);
+      background: rgba(22, 22, 18, .04);
       border: 1px solid var(--border);
-      border-radius: var(--rs);
+      border-radius: 0;
       padding: 14px 16px;
       color: var(--text-1);
       font-size: var(--text-body-sm);
@@ -327,8 +298,8 @@
     }
 
     .seq-textarea:focus {
-      border-color: rgba(255, 255, 255, .22);
-      background: rgba(255, 255, 255, .055);
+      border-color: rgba(22, 22, 18, .35);
+      background: rgba(22, 22, 18, .06);
     }
 
     .seq-textarea::placeholder {
@@ -342,9 +313,9 @@
       gap: 8px;
       margin-top: 8px;
       padding: 5px 10px 5px 7px;
-      background: rgba(255, 255, 255, .05);
+      background: rgba(22, 22, 18, .05);
       border: 1px solid var(--border);
-      border-radius: var(--rf);
+      border-radius: 0;
       font-size: var(--text-small);
       opacity: 0;
       pointer-events: none;
@@ -359,9 +330,9 @@
     .ac-key {
       font-family: var(--font-mono);
       font-size: 10px;
-      background: rgba(255, 255, 255, .10);
-      border: 1px solid rgba(255, 255, 255, .18);
-      border-radius: 4px;
+      background: rgba(22, 22, 18, .07);
+      border: 1px solid rgba(22, 22, 18, .14);
+      border-radius: 1px;
       padding: 2px 6px;
       color: var(--text-3);
       line-height: 1.5;
@@ -385,9 +356,9 @@
     .seq-out-wrap {
       margin-top: 14px;
       padding: 16px;
-      background: rgba(255, 255, 255, .025);
+      background: rgba(22, 22, 18, .025);
       border: 1px solid var(--border-light);
-      border-radius: var(--rs);
+      border-radius: 0;
       min-height: 52px;
       font-size: var(--text-body-sm);
       line-height: 1.8;
@@ -413,7 +384,7 @@
     }
 
     .seq-unknown {
-      color: rgba(255, 120, 100, .65);
+      color: rgba(160, 60, 40, .70);
     }
 
     /* ── My Shorthand section ── */
@@ -472,9 +443,9 @@
     }
 
     .form-input {
-      background: rgba(255, 255, 255, .04);
+      background: rgba(22, 22, 18, .04);
       border: 1px solid var(--border);
-      border-radius: var(--rs);
+      border-radius: 0;
       padding: 10px 14px;
       color: var(--text-1);
       font-size: var(--text-ui);
@@ -484,8 +455,8 @@
     }
 
     .form-input:focus {
-      border-color: rgba(255, 255, 255, .22);
-      background: rgba(255, 255, 255, .055);
+      border-color: rgba(22, 22, 18, .35);
+      background: rgba(22, 22, 18, .06);
     }
 
     .form-input::placeholder {
@@ -493,9 +464,9 @@
     }
 
     .form-select {
-      background: rgba(255, 255, 255, .04);
+      background: rgba(22, 22, 18, .04);
       border: 1px solid var(--border);
-      border-radius: var(--rs);
+      border-radius: 0;
       padding: 10px 32px 10px 14px;
       color: var(--text-2);
       font-size: var(--text-ui);
@@ -505,18 +476,18 @@
       transition: border-color .15s;
       -webkit-appearance: none;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.30)' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(22,22,18,0.35)' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 12px center;
     }
 
     .form-select:focus {
-      border-color: rgba(255, 255, 255, .22);
+      border-color: rgba(22, 22, 18, .35);
     }
 
     .form-select option {
-      background: #111;
-      color: #fff;
+      background: #F5F4F0;
+      color: #161614;
     }
 
     .sh-add-btn {
@@ -575,19 +546,11 @@
   </style>
 </head>
 
-<body>
+<body class="has-sidebar">
 
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
-
-  <header class="hdr">
-    <div class="hdr-i">
-      <a href="index.html" class="btn-ghost">← Tools</a>
-      <div class="hdr-logo-wrap"><a href="index.html" class="hdr-logo">Flow School</a><span class="beta-tag">Beta</span></div>
-      <div class="hdr-auth" id="hdr-auth"></div>
-    </div>
-  </header>
 
   <section class="hero">
     <div class="inner">

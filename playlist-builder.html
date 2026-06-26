@@ -7,155 +7,351 @@
   <title>Playlist Builder</title>
   <link rel="stylesheet" href="global.css">
   <style>
-    /* ── Button overrides ── */
-    .btn-ghost.sm {
-      padding: 6px 10px;
-      font-size: var(--text-small);
+
+    /* ── Theme tokens ─────────────────────────────────────────── */
+    :root {
+      --bg:            #F5F4F0;
+      --surface:       rgba(22, 22, 18, .035);
+      --surface-2:     rgba(22, 22, 18, .06);
+      --border:        rgba(22, 22, 18, .13);
+      --border-light:  rgba(22, 22, 18, .07);
+      --text-1:        #161614;
+      --text-2:        #5A5850;
+      --text-3:        #9A9890;
+      --accent:        #161614;
+      --accent-dim:    rgba(22, 22, 18, .06);
+      --accent-border: rgba(22, 22, 18, .18);
+      --r:   0px;
+      --rf:  2px;
+      --rs:  0px;
     }
+
+    /* ── Base overrides (global.css hardcodes white) ──────────── */
+    body    { background: var(--bg); color: var(--text-1); }
+    h1, h2, h3, h4, h5, h6 { color: var(--text-1); }
+    p       { color: var(--text-2); }
+    .label-1 { color: var(--text-2); }
+    .label-2 { color: var(--text-3); }
+
+    /* ── Repurpose orbs as warm paper gradients ───────────────── */
+    .orb { filter: blur(100px); animation: none; }
+    .orb-1 {
+      background: radial-gradient(circle, rgba(215,205,185,.7) 0%, transparent 70%);
+      width: 900px; height: 700px;
+      top: -300px; left: -250px;
+      opacity: .55;
+    }
+    .orb-2 {
+      background: radial-gradient(circle, rgba(198,192,172,.55) 0%, transparent 70%);
+      width: 800px; height: 800px;
+      top: -200px; right: -250px;
+      opacity: .45;
+    }
+    .orb-3 {
+      background: radial-gradient(circle, rgba(205,198,178,.45) 0%, transparent 70%);
+      width: 700px; height: 700px;
+      bottom: -150px; left: 15%;
+      opacity: .40;
+    }
+
+
+    /* ── Header ───────────────────────────────────────────────── */
+    .hdr {
+      background: rgba(245, 244, 240, .88);
+      backdrop-filter: blur(20px) saturate(110%);
+      -webkit-backdrop-filter: blur(20px) saturate(110%);
+      border-bottom: 1px solid rgba(22, 22, 18, .10);
+    }
+    .hdr-logo { color: var(--text-1); }
+    .beta-tag {
+      color: var(--text-3);
+      border-color: rgba(22, 22, 18, .20);
+    }
+
+    /* ── Nav ──────────────────────────────────────────────────── */
+    .btn-ghost { color: var(--text-3); }
+    .btn-ghost:hover { color: var(--text-1); background: rgba(22, 22, 18, .05); }
+
+    .btn-nav-signup {
+      border-color: rgba(22, 22, 18, .18);
+      color: var(--text-2);
+    }
+    .btn-nav-signup:hover {
+      border-color: rgba(22, 22, 18, .35);
+      color: var(--text-1);
+      background: rgba(22, 22, 18, .04);
+    }
+    .nav-initial {
+      background: rgba(22, 22, 18, .06);
+      border-color: rgba(22, 22, 18, .16);
+      color: var(--text-1);
+    }
+    .nav-avatar-btn:hover .nav-initial {
+      background: rgba(22, 22, 18, .10);
+      border-color: rgba(22, 22, 18, .28);
+    }
+
+    /* ── Primary button ───────────────────────────────────────── */
+    .btn-primary {
+      background: #161614;
+      color: #F5F4F0;
+      border-radius: 1px;
+      box-shadow: 0 2px 12px rgba(22, 22, 18, .16);
+    }
+    .btn-primary:hover {
+      background: #2C2C28;
+      opacity: 1;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(22, 22, 18, .20);
+    }
+    .btn-primary:active  { transform: translateY(0); }
+    .btn-primary:disabled {
+      background: rgba(22, 22, 18, .20);
+      color: rgba(245, 244, 240, .55);
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* ── Icon buttons ─────────────────────────────────────────── */
+    .btn-icon {
+      background: transparent;
+      border: 1px solid rgba(22, 22, 18, .14);
+      color: var(--text-3);
+      border-radius: 0;
+    }
+    .btn-icon:hover {
+      background: rgba(22, 22, 18, .05);
+      border-color: rgba(22, 22, 18, .28);
+      color: var(--text-1);
+    }
+    .btn-icon.saved {
+      background: rgba(22, 22, 18, .08);
+      border-color: rgba(22, 22, 18, .30);
+      color: var(--text-1);
+    }
+    .btn-icon[data-tooltip]::before {
+      background: #161614;
+      color: #F5F4F0;
+      border-color: transparent;
+      border-radius: 1px;
+    }
+
+    /* ── Ghost sm + outline + saved ──────────────────────────── */
+    .btn-ghost.sm { padding: 6px 10px; font-size: var(--text-small); }
 
     .btn-outline {
       background: none;
-      border: 1px solid rgba(255, 255, 255, .20);
+      border: 1px solid rgba(22, 22, 18, .18);
       color: var(--text-2);
       padding: 10px 22px;
       font-weight: var(--weight-medium);
+      border-radius: 0;
     }
-
     .btn-outline:hover {
-      border-color: rgba(255, 255, 255, .48);
+      border-color: rgba(22, 22, 18, .35);
       color: var(--text-1);
-      background: rgba(255, 255, 255, .05);
+      background: rgba(22, 22, 18, .04);
     }
-
     .btn-saved {
-      background: rgba(255, 255, 255, .10) !important;
-      color: #fff !important;
-      border: 1px solid rgba(255, 255, 255, .28) !important;
+      background: rgba(22, 22, 18, .08) !important;
+      color: var(--text-1) !important;
+      border: 1px solid rgba(22, 22, 18, .22) !important;
       box-shadow: none !important;
     }
 
-    /* ── Chips ── */
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    /* ── Chip buttons → instrument selectors ─────────────────── */
+    .chip {
+      position: relative;
+      background: transparent;
+      border: 1px solid rgba(22, 22, 18, .13);
+      color: var(--text-3);
+      border-radius: 0;
+      padding: 8px 14px 8px 24px;
+      transition: all .15s;
+    }
+    .chip::before {
+      content: '';
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      border: 1px solid rgba(22, 22, 18, .22);
+      background: transparent;
+      transition: all .15s;
+    }
+    .chip:hover {
+      border-color: rgba(22, 22, 18, .28);
+      background: rgba(22, 22, 18, .03);
+      color: var(--text-2);
+    }
+    .chip:hover::before {
+      border-color: rgba(22, 22, 18, .45);
+    }
+    .chip:active { transform: scale(0.97); }
+    .chip.on {
+      background: rgba(22, 22, 18, .06);
+      border-color: rgba(22, 22, 18, .35);
+      color: var(--text-1);
+    }
+    .chip.on::before {
+      background: #161614;
+      border-color: #161614;
+      box-shadow: 0 0 4px rgba(22, 22, 18, .20);
     }
 
-    /* ── Config steps ── */
-    .cfg {
-      padding-bottom: 8px;
+    /* ── Range slider ─────────────────────────────────────────── */
+    .range-val {
+      font-family: var(--font-mono);
+      font-size: var(--fs-h5);
+      font-weight: var(--weight-regular);
+      color: var(--text-1);
+      letter-spacing: .02em;
     }
+    input[type=range].range-slider { background: rgba(22, 22, 18, .12); }
+    input[type=range].range-slider::-webkit-slider-thumb {
+      background: #161614;
+      box-shadow: 0 1px 6px rgba(22, 22, 18, .25);
+      border-radius: 0;
+    }
+    input[type=range].range-slider::-moz-range-thumb {
+      background: #161614;
+      box-shadow: 0 1px 6px rgba(22, 22, 18, .25);
+      border-radius: 0;
+    }
+    /* major ticks at 30, 45, 60, 75, 90 → positions 1, 4, 7, 10, 13 */
+    .range-ticks span { background: rgba(22, 22, 18, .16); height: 5px; }
+    .range-ticks span:nth-child(1),
+    .range-ticks span:nth-child(4),
+    .range-ticks span:nth-child(7),
+    .range-ticks span:nth-child(10),
+    .range-ticks span:nth-child(13) {
+      background: rgba(22, 22, 18, .38);
+      height: 10px;
+    }
+
+    /* ── Toast ────────────────────────────────────────────────── */
+    .toast {
+      background: #161614;
+      border-color: transparent;
+      color: #F5F4F0;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-radius: 1px;
+    }
+
+    /* ── CTA bar ──────────────────────────────────────────────── */
+    .cta-bar {
+      padding: 14px 28px 18px;
+      gap: 8px;
+    }
+    .cta-bar .btn-primary { box-shadow: 0 2px 12px rgba(22, 22, 18, .16); }
+
+
+/* ── Config steps ─────────────────────────────────────────── */
+    .cfg { padding-bottom: 8px; }
 
     .cfg-step {
-      display: flex;
-      gap: 28px;
-      padding: 32px 0;
-      border-bottom: 1px solid var(--border-light);
+      padding: 36px 0;
     }
 
-    .cfg-step:last-child {
-      border-bottom: none;
-    }
+    .step-body > .label-1 { margin-bottom: 18px; }
 
-    .step-num {
-      padding-top: 3px;
-      min-width: 24px;
-      opacity: .45;
-    }
-
-    .step-body {
-      flex: 1;
-    }
-
-    .step-body h3 {
-      margin-bottom: 16px;
-    }
-
-    /* ── Arc pills ── */
-
+    /* ── Arc pills → waveform selectors ──────────────────────── */
     .arc-pills {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      border: 1px solid rgba(22, 22, 18, .10);
+      background: rgba(22, 22, 18, .10);
+      margin-bottom: 18px;
     }
 
     .arc-pill {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 7px;
-      padding: 12px 16px;
-      border: 1px solid rgba(255, 255, 255, .12);
-      border-radius: 8px;
+      align-items: stretch;
+      gap: 0;
+      padding: 0;
+      border: none;
+      border-radius: 0;
       cursor: pointer;
-      background: rgba(255, 255, 255, .02);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      transition: all .18s;
-      min-width: 90px;
+      background: var(--bg);
+      min-width: unset;
+      overflow: hidden;
+      position: relative;
+      transition: background .18s;
     }
-
-
-    .arc-pill:hover {
-      border-color: rgba(255, 255, 255, .28);
-      background: rgba(255, 255, 255, .06);
-    }
-
-    .arc-pill.on {
-      border-color: rgba(255, 255, 255, .40);
-      background: rgba(255, 255, 255, .09);
-    }
+    .arc-pill:hover { background: rgba(22, 22, 18, .025); }
+    .arc-pill:active { opacity: .78; }
+    .arc-pill.on { background: rgba(22, 22, 18, .022); }
 
     .arc-pill-curve {
-      width: 64px;
-      height: 28px;
+      width: 100%;
+      height: 68px;
+      display: block;
+      border-bottom: 1px solid rgba(22, 22, 18, .07);
       flex-shrink: 0;
     }
 
     .arc-pill-name {
+      padding: 8px 10px 9px;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
       color: var(--text-3);
-      font-family: var(--font);
-      font-size: var(--fs-chip);
-      font-weight: var(--weight-regular);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-
-    .arc-pill.on .arc-pill-name {
-      color: var(--text-1);
-    }
+    .arc-pill.on .arc-pill-name { color: var(--text-1); }
 
     .arc-active-desc {
-      font-size: var(--text-ui);
+      font-family: var(--font-mono);
+      font-size: var(--text-small);
       color: var(--text-3);
-      margin-bottom: 24px;
-      min-height: 20px;
-      font-style: italic;
+      margin-bottom: 18px;
+      min-height: 18px;
+      font-style: normal;
+      letter-spacing: .01em;
     }
 
-    /* ── Energy curve ── */
+    /* ── Curve module ─────────────────────────────────────────── */
     .curve-hdr {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
+    }
+    .curve-module-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .curve-module-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: rgba(22, 22, 18, .22);
     }
 
     #curve-svg {
       width: 100%;
-      height: 200px;
+      height: 236px;
       display: block;
       overflow: visible;
       cursor: ns-resize;
       touch-action: none;
+      border: none;
+      background: transparent;
     }
 
-
-    /* ── Generate section ── */
-    .gen-sec {
-      padding: 48px 0;
-    }
-
+    /* ── Generate section ─────────────────────────────────────── */
+    .gen-sec { padding: 48px 0; }
     .gen-inner {
       max-width: 820px;
       margin: 0 auto;
@@ -165,58 +361,39 @@
       gap: 22px;
       flex-wrap: wrap;
     }
-
     .gen-hint {
       font-size: var(--text-ui);
       color: var(--text-3);
       font-style: italic;
     }
 
-    /* ── Results ── */
-    .results {
-      min-height: 120px;
-      padding-bottom: 100px;
-    }
+    /* ── Results ──────────────────────────────────────────────── */
+    .results { min-height: 120px; padding-bottom: 100px; }
+    .results-inner { max-width: 820px; margin: 0 auto; padding: 0 28px; }
 
-    .results-inner {
-      max-width: 820px;
-      margin: 0 auto;
-      padding: 0 28px;
-    }
-
+    /* ── Empty state ──────────────────────────────────────────── */
     .empty {
       text-align: center;
       padding: 72px 28px;
-      border: 1px dashed rgba(255, 255, 255, .10);
-      border-radius: var(--r);
-      background: rgba(255, 255, 255, .02);
+      border: 1px dashed rgba(22, 22, 18, .12);
+      background: rgba(22, 22, 18, .02);
       margin-top: 4px;
     }
-
     .empty-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, .06);
+      width: 48px; height: 48px;
+      border-radius: 0;
+      border: 1px solid rgba(22, 22, 18, .12);
+      background: rgba(22, 22, 18, .04);
       margin: 0 auto 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
     }
+    .empty h3 { font-size: var(--fs-h4); margin-bottom: 8px; color: var(--text-2); }
+    .empty p  { font-size: var(--fs-body); color: var(--text-3); margin: 0 auto; }
 
-    .empty h3 {
-      font-size: var(--fs-h4);
-      margin-bottom: 8px;
-      color: var(--text-2);
-    }
-
-    .empty p {
-      font-size: var(--fs-body);
-      color: var(--text-3);
-      margin: 0 auto;
-    }
-
+    /* ── Results header ───────────────────────────────────────── */
     .res-hdr {
       display: flex;
       align-items: center;
@@ -224,231 +401,165 @@
       flex-wrap: wrap;
       gap: 16px;
       padding: 28px 0 24px;
+      border-bottom: 1px solid rgba(22, 22, 18, .08);
+      margin-bottom: 2px;
     }
-
-    .res-stats {
-      display: flex;
-      gap: 36px;
-    }
-
-    .stat {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
+    .res-stats { display: flex; gap: 36px; }
+    .stat { display: flex; flex-direction: column; gap: 4px; }
     .stat-val {
       font-family: var(--font);
       font-size: var(--fs-h5);
       font-weight: var(--weight-regular) !important;
       line-height: var(--lh-heading);
-      color: #ffffff;
+      color: var(--text-1);
       font-variant-numeric: tabular-nums;
     }
-
     .stat-lbl {
-      font-family: var(--font);
-      font-size: var(--fs-label-1);
+      font-family: var(--font-mono);
+      font-size: 10px;
       font-weight: var(--weight-regular);
-      color: #ffffff;
+      color: var(--text-3);
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.10em;
     }
+    .res-actions { display: flex; gap: 8px; align-items: center; }
 
-    .res-actions {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    /* ── Playlist section cards ── */
+    /* ── Playlist section cards ───────────────────────────────── */
     .pl-section {
-      border-radius: var(--r);
-      border: 1px solid var(--border-light);
-      background: rgba(255, 255, 255, .025);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      padding: 0 20px;
-      margin-top: 10px;
+      border: 1px solid rgba(22, 22, 18, .09);
+      border-top: none;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      padding: 0;
+      margin-top: 0;
     }
 
     .sec-hdr {
       display: flex;
       align-items: center;
       gap: 14px;
-      padding: 18px 0 10px;
+      padding: 14px 20px 10px;
+      border-bottom: 1px solid rgba(22, 22, 18, .07);
     }
-
-
-
     .sec-meta h4 {
-      font-family: var(--font);
-      font-size: var(--fs-label-1);
+      font-family: var(--font-mono);
+      font-size: 10px;
       font-weight: var(--weight-regular);
-      color: #ffffff;
+      color: var(--text-3);
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.12em;
       margin-bottom: 3px;
     }
-
     .sec-meta span {
       font-family: var(--font-mono);
       font-size: var(--fs-label-2);
-      color: rgba(255, 255, 255, .50);
-      color: var(--text-3);
+      color: rgba(22, 22, 18, .35);
     }
 
-    /* ── Song rows ── */
+    /* ── Song rows ────────────────────────────────────────────── */
     .song {
       display: grid;
       grid-template-columns: 28px 1fr auto 72px auto;
       align-items: center;
       gap: 14px;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, .045);
-      transition: opacity .15s;
+      padding: 10px 20px;
+      border-bottom: 1px solid rgba(22, 22, 18, .06);
+      transition: background .15s;
     }
-
-    .song:last-child {
-      border-bottom: none;
-      padding-bottom: 18px;
-    }
-
-    .song:hover {
-      opacity: .6;
-    }
+    .song:last-child { border-bottom: none; padding-bottom: 18px; }
+    .song:hover { background: rgba(22, 22, 18, .03); opacity: 1; }
 
     .song-n {
       font-family: var(--font-mono);
       font-size: var(--fs-label-2);
-      color: rgba(255, 255, 255, .50);
+      color: rgba(22, 22, 18, .28);
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
-
-    .song-info {
-      overflow: hidden;
-    }
-
+    .song-info { overflow: hidden; }
     .song-title {
       font-family: var(--font);
       font-size: var(--fs-h7);
       font-weight: var(--weight-regular);
       line-height: var(--lh-heading);
-      color: #ffffff;
+      color: var(--text-1);
       display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     .song-artist {
       font-family: var(--font);
       font-size: var(--fs-body);
-      line-height: 1.6;
-      color: rgba(255, 255, 255, .50);
+      line-height: 1.5;
+      color: var(--text-3);
       display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       margin-top: 2px;
     }
-
-    .song-meta {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 3px;
-    }
-
+    .song-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
     .song-bpm {
-      font-family: var(--font);
-      font-size: var(--fs-label-1);
-      font-weight: var(--weight-regular);
-      color: #ffffff;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-2);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-variant-numeric: tabular-nums;
     }
-
     .song-dur {
       font-family: var(--font-mono);
       font-size: var(--fs-label-2);
-      color: rgba(255, 255, 255, .50);
+      color: var(--text-3);
       font-variant-numeric: tabular-nums;
     }
-
-
     .ebar {
       height: 2px;
-      background: rgba(255, 255, 255, .08);
-      border-radius: 2px;
+      background: rgba(22, 22, 18, .08);
+      border-radius: 0;
       overflow: hidden;
     }
+    .efill { height: 100%; border-radius: 0; }
+    .song-copy { display: flex; align-items: center; justify-content: flex-end; }
 
-    .efill {
-      height: 100%;
-      border-radius: 2px;
-    }
-
-    /* ── Per-song copy button ── */
-    .song-copy {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-    }
-
-    /* ── Save title modal ── */
+    /* ── Save modal ───────────────────────────────────────────── */
     .pl-modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, .45);
-      backdrop-filter: blur(12px) saturate(140%);
-      -webkit-backdrop-filter: blur(12px) saturate(140%);
+      background: rgba(245, 244, 240, .65);
+      backdrop-filter: blur(14px) saturate(120%);
+      -webkit-backdrop-filter: blur(14px) saturate(120%);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 300;
     }
-
     .pl-modal-backdrop[hidden] { display: none; }
 
     .pl-modal-card {
       position: relative;
-      background: rgba(10, 10, 12, .82);
-      backdrop-filter: blur(48px) saturate(160%);
-      -webkit-backdrop-filter: blur(48px) saturate(160%);
-      border: 1px solid rgba(255, 255, 255, .09);
-      border-top-color: rgba(255, 255, 255, .2);
-      border-radius: 18px;
-      box-shadow:
-        0 8px 32px rgba(0, 0, 0, .55),
-        0 40px 100px rgba(0, 0, 0, .45),
-        inset 0 1px 0 rgba(255, 255, 255, .07);
+      background: #F5F4F0;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border: 1px solid rgba(22, 22, 18, .16);
+      border-top-color: rgba(22, 22, 18, .30);
+      border-radius: 0;
+      box-shadow: 0 4px 32px rgba(22, 22, 18, .12), 0 20px 60px rgba(22, 22, 18, .08);
       padding: 32px;
       width: min(400px, calc(100vw - 40px));
       display: flex;
       flex-direction: column;
     }
-
-    .pl-modal-card h3 {
-      margin: 0 0 6px;
-      font-size: var(--fs-h6);
-      font-weight: var(--weight-medium);
-    }
-
-    .pl-modal-hint {
-      font-size: var(--fs-body);
-      color: var(--text-3);
-      margin: 0 0 20px;
-    }
-
+    .pl-modal-card h3  { margin: 0 0 6px; font-size: var(--fs-h6); font-weight: var(--weight-medium); color: var(--text-1); }
+    .pl-modal-hint     { font-size: var(--fs-body); color: var(--text-3); margin: 0 0 20px; }
     .pl-modal-input {
       width: 100%;
       box-sizing: border-box;
-      background: rgba(255, 255, 255, .06);
-      border: 1px solid rgba(255, 255, 255, .1);
-      border-radius: 8px;
+      background: rgba(22, 22, 18, .04);
+      border: 1px solid rgba(22, 22, 18, .14);
+      border-radius: 0;
       color: var(--text-1);
       font-family: var(--font);
       font-size: var(--fs-h7);
@@ -456,72 +567,39 @@
       outline: none;
       transition: border-color .18s, background .18s;
     }
-
-    .pl-modal-input::placeholder {
-      color: rgba(255, 255, 255, .25);
-    }
-
+    .pl-modal-input::placeholder { color: rgba(22, 22, 18, .28); }
     .pl-modal-input:focus {
-      border-color: rgba(255, 255, 255, .32);
-      background: rgba(255, 255, 255, .09);
+      border-color: rgba(22, 22, 18, .38);
+      background: rgba(22, 22, 18, .06);
     }
+    .pl-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
-    .pl-modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 680px) {
+      /* 5 columns too cramped — go to 2+3 layout */
+      .arc-pills { grid-template-columns: repeat(3, 1fr); }
     }
-
+    @media (max-width: 480px) {
+      .arc-pills { grid-template-columns: repeat(2, 1fr); }
+      .arc-pill-name { font-size: 7px; padding: 6px 8px 7px; }
+      .arc-pill-curve { height: 52px; }
+    }
     @media (max-width: 580px) {
-      .cfg-step {
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .step-num {
-        display: none;
-      }
-
-      .res-hdr {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .song {
-        grid-template-columns: 24px 1fr auto auto;
-      }
-
-      .ebar {
-        display: none;
-      }
-
-      .arc-pills {
-        gap: 6px;
-      }
-
-      .arc-pill {
-        min-width: 78px;
-        padding: 10px;
-      }
+      .res-hdr  { flex-direction: column; align-items: flex-start; }
+      .song     { grid-template-columns: 24px 1fr auto auto; padding: 10px 16px; }
+      .ebar     { display: none; }
+      .cta-bar  { padding: 12px 16px 16px; }
     }
+
   </style>
 </head>
 
-<body>
+<body class="has-sidebar">
 
 
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
-
-  <header class="hdr">
-    <div class="hdr-i">
-      <a href="index.html" class="btn-ghost">← Tools</a>
-      <div class="hdr-logo-wrap"><a href="index.html" class="hdr-logo">Flow School</a><span class="beta-tag">Beta</span></div>
-      <div class="hdr-auth" id="hdr-auth"></div>
-    </div>
-  </header>
 
   <section class="hero">
     <div class="inner">
@@ -535,9 +613,8 @@
     <div class="inner">
 
       <div class="cfg-step">
-        <div class="step-num label-2">01</div>
         <div class="step-body">
-          <p class="label-1 eyebrow-label">Class length</p>
+          <p class="label-1 eyebrow-label">01. Class length</p>
           <div class="range-slider-wrap">
             <span class="range-val" id="dur-val">60 min</span>
             <input type="range" class="range-slider" id="dur-slider" min="30" max="90" step="5" value="60">
@@ -551,9 +628,8 @@
       </div>
 
       <div class="cfg-step">
-        <div class="step-num label-2">02</div>
         <div class="step-body">
-          <p class="label-1 eyebrow-label">Class style</p>
+          <p class="label-1 eyebrow-label">02. Class style</p>
           <div class="chips" id="style-chips">
             <button class="chip on" data-v="vinyasa">Vinyasa</button>
             <button class="chip" data-v="hatha">Hatha</button>
@@ -565,9 +641,8 @@
       </div>
 
       <div class="cfg-step">
-        <div class="step-num label-2">03</div>
         <div class="step-body">
-          <p class="label-1 eyebrow-label">Mood</p>
+          <p class="label-1 eyebrow-label">03. Mood</p>
           <div class="chips" id="mood-chips">
             <button class="chip on" data-v="grounded">Grounded</button>
             <button class="chip" data-v="flowing">Flowing</button>
@@ -580,12 +655,17 @@
       </div>
 
       <div class="cfg-step">
-        <div class="step-num label-2">04</div>
         <div class="step-body">
-          <p class="label-1 eyebrow-label">Energy shape</p>
+          <p class="label-1 eyebrow-label">04. Energy shape</p>
           <div class="arc-pills" id="arc-opts"></div>
           <p class="arc-active-desc" id="arc-desc"></p>
-          <svg id="curve-svg" viewBox="0 0 600 200"></svg>
+          <div class="curve-hdr">
+            <span class="curve-module-label">Curve Editor</span>
+            <div class="curve-module-meta">
+              <button class="btn-ghost sm" id="reset-curve">Reset</button>
+            </div>
+          </div>
+          <svg id="curve-svg" viewBox="0 0 600 220"></svg>
         </div>
       </div>
 
@@ -629,12 +709,12 @@
     // ─── DATA ────────────────────────────────────────────────────────────────────
 
     const SECTIONS = [
-      { id: 'arrival', label: 'Arrival', color: '#505050' },
-      { id: 'warmup', label: 'Warm Up', color: '#747474' },
-      { id: 'build', label: 'Build', color: '#9A9A9A' },
-      { id: 'peak', label: 'Peak', color: '#ECECEC' },
-      { id: 'downshift', label: 'Downshift', color: '#747474' },
-      { id: 'closing', label: 'Closing', color: '#505050' }
+      { id: 'arrival',   label: 'Arrival',   color: '#C0BCAF' },
+      { id: 'warmup',    label: 'Warm Up',   color: '#9A9688' },
+      { id: 'build',     label: 'Build',     color: '#6E6A60' },
+      { id: 'peak',      label: 'Peak',      color: '#161614' },
+      { id: 'downshift', label: 'Downshift', color: '#9A9688' },
+      { id: 'closing',   label: 'Closing',   color: '#C0BCAF' }
     ];
 
     function getSecDur(min) {
@@ -647,15 +727,17 @@
 
     // Arc shapes defined as (normalizedTime, energy) keypoints — sampled to any N
     const ARC_SHAPES = {
-      'slow-build': { name: 'Slow Build', desc: 'Ease in. Let the energy find you.', keys: [[0, 15], [.60, 88], [.78, 55], [1, 18]] },
-      'bell-curve': { name: 'Bell Curve', desc: 'Rise to the middle. Land softly.', keys: [[0, 20], [.50, 90], [1, 18]] },
-      'strong-start': { name: 'Strong Start', desc: 'Lead with fire. Land with intention.', keys: [[0, 72], [.26, 88], [.62, 45], [1, 18]] },
-      'wave': { name: 'Wave', desc: 'Multiple crests. Keeps them in their bodies.', keys: [[0, 25], [.30, 68], [.50, 35], [.78, 88], [1, 18]] },
-      'gentle-steady': { name: 'Gentle & Steady', desc: 'Consistent, supportive, sustainable.', keys: [[0, 30], [.50, 55], [1, 22]] }
+      // Keypoints are in normalized class time (0–1). Section boundaries for reference:
+      // Arrival ends ~0.08 · Warm Up ends ~0.25 · Build ends ~0.50 · Peak ends ~0.67 · Downshift ends ~0.87
+      'slow-build':    { name: 'Slow Build',      desc: 'Ease in. Let the energy find you.',             keys: [[0, 8],  [.45, 12], [.65, 85], [.82, 38], [1, 12]] },
+      'bell-curve':    { name: 'Bell Curve',       desc: 'Rise to the middle. Land softly.',              keys: [[0, 12], [.25, 52], [.55, 92], [.80, 48], [1, 12]] },
+      'strong-start':  { name: 'Strong Start',     desc: 'Lead with fire. Land with intention.',          keys: [[0, 88], [.08, 92], [.25, 75], [.50, 52], [.67, 32], [.87, 18], [1, 12]] },
+      'wave':          { name: 'Wave',             desc: 'Multiple crests. Keeps them in their bodies.',  keys: [[0, 18], [.25, 75], [.42, 25], [.60, 82], [.80, 28], [1, 14]] },
+      'gentle-steady': { name: 'Gentle & Steady',  desc: 'Consistent, supportive, sustainable.',         keys: [[0, 35], [.25, 42], [.55, 52], [.75, 50], [.90, 40], [1, 30]] }
     };
 
-    // One handle per 5-minute mark: 30min → 7, 60min → 13, 90min → 19
-    function getKnotCount(min) { return Math.floor(min / 5) + 1; }
+    // One handle per 10-minute mark: 30min → 4, 60min → 7, 90min → 10
+    function getKnotCount(min) { return Math.floor(min / 10) + 1; }
 
     // Sample an arc shape to N evenly-spaced points via linear interpolation of keypoints
     function sampleArc(key, n) {
@@ -695,7 +777,7 @@
     // ─── CURVE ───────────────────────────────────────────────────────────────────
 
     let SVG_W = 600;
-    const SVG_H = 200, PAD_T = 14, PAD_B = 26;
+    const SVG_H = 236, PAD_T = 4, PAD_B = 52;
 
     function getXS() {
       const n = S.pts.length;
@@ -751,51 +833,82 @@
       const svg = document.getElementById('curve-svg');
       SVG_W = svg.clientWidth || 600;
       svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
+      svg.setAttribute('height', SVG_H);
       svg.innerHTML = '';
       const xs = getXS(), bxs = getBoundaryXS();
       const durs = getSecDur(S.duration), total = durs.reduce((a, b) => a + b, 0);
       const pts = S.pts.map((e, i) => ({ x: xs[i], y: eToY(e) }));
 
-      // Grid — horizontal line every 10 energy units
+      // ── Grid — horizontal rules ───────────────────────────────
       for (let lvl = 0; lvl <= 100; lvl += 10) {
         const y = eToY(lvl), l = ns('line');
+        const isMajor = [0, 25, 50, 75, 100].includes(lvl);
         l.setAttribute('x1', 0); l.setAttribute('x2', SVG_W);
         l.setAttribute('y1', y); l.setAttribute('y2', y);
-        l.setAttribute('stroke', 'rgba(255,255,255,.06)'); l.setAttribute('stroke-width', '1');
-        if (lvl === 50) l.setAttribute('stroke-dasharray', '4 4');
+        l.setAttribute('stroke', isMajor ? 'rgba(22,22,18,.10)' : 'rgba(22,22,18,.05)');
+        l.setAttribute('stroke-width', isMajor ? '1' : '.75');
+        if (lvl === 50) l.setAttribute('stroke-dasharray', '3 5');
         svg.appendChild(l);
       }
 
-      // Y labels
-      [{ v: 100, lbl: 'High Energy' }, { v: 0, lbl: 'Low Energy' }].forEach(({ v, lbl }) => {
+      // ── Y axis labels ─────────────────────────────────────────
+      [{ v: 100, lbl: 'HIGH' }, { v: 0, lbl: 'LOW' }].forEach(({ v, lbl }) => {
         const t = ns('text');
-        t.setAttribute('x', 4); t.setAttribute('y', eToY(v) + (v === 0 ? -6 : 12));
-        t.setAttribute('font-size', '9'); t.setAttribute('fill', 'rgba(255,255,255,.28)');
+        t.setAttribute('x', 5); t.setAttribute('y', eToY(v) + (v === 0 ? -5 : 11));
+        t.setAttribute('font-size', '8'); t.setAttribute('fill', 'rgba(22,22,18,.25)');
         t.setAttribute('font-family', 'system-ui,sans-serif'); t.setAttribute('font-weight', '700');
-        t.setAttribute('letter-spacing', '0.06em');
+        t.setAttribute('letter-spacing', '0.10em');
         t.textContent = lbl; svg.appendChild(t);
       });
 
-      // 5-minute vertical grid lines, labels every 10 minutes
-      for (let m = 0; m <= S.duration; m += 5) {
-        const x = Math.round(m / S.duration * SVG_W);
-        if (m > 0 && m < S.duration) {
+      // ── Section boundary verticals + labels ───────────────────
+      SECTIONS.forEach((sec, i) => {
+        const x1 = bxs[i], x2 = bxs[i + 1];
+        // boundary line (skip first and last edges)
+        if (i > 0) {
           const l = ns('line');
-          l.setAttribute('x1', x); l.setAttribute('x2', x);
-          l.setAttribute('y1', PAD_T); l.setAttribute('y2', SVG_H - PAD_B);
-          l.setAttribute('stroke', 'rgba(255,255,255,.08)'); l.setAttribute('stroke-width', '1');
+          l.setAttribute('x1', x1); l.setAttribute('x2', x1);
+          l.setAttribute('y1', PAD_T); l.setAttribute('y2', SVG_H - PAD_B + 6);
+          l.setAttribute('stroke', 'rgba(22,22,18,.14)'); l.setAttribute('stroke-width', '1');
+          l.setAttribute('stroke-dasharray', '2 4');
           svg.appendChild(l);
         }
-        if (m % 10 === 0) {
-          const tl = ns('text');
-          tl.setAttribute('x', x);
-          tl.setAttribute('y', SVG_H - 8);
-          tl.setAttribute('text-anchor', m === 0 ? 'start' : m === S.duration ? 'end' : 'middle');
-          tl.setAttribute('font-size', '9'); tl.setAttribute('fill', 'rgba(255,255,255,.30)');
-          tl.setAttribute('font-family', 'system-ui,sans-serif'); tl.setAttribute('font-weight', '700');
-          tl.textContent = m === 0 ? '0' : `${m}m`;
-          svg.appendChild(tl);
-        }
+        // section label
+        const cx = (x1 + x2) / 2;
+        const t = ns('text');
+        t.setAttribute('x', cx); t.setAttribute('y', SVG_H - 10);
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('font-size', '8'); t.setAttribute('fill', 'rgba(22,22,18,.22)');
+        t.setAttribute('font-family', 'system-ui,sans-serif'); t.setAttribute('font-weight', '700');
+        t.setAttribute('letter-spacing', '0.10em');
+        t.textContent = sec.label.toUpperCase();
+        svg.appendChild(t);
+      });
+
+      // ── Time axis labels (every 15 min) ──────────────────────
+      for (let m = 0; m <= S.duration; m += 15) {
+        const x = Math.round(m / S.duration * SVG_W);
+        const tl = ns('text');
+        tl.setAttribute('x', m === 0 ? x + 2 : (m === S.duration ? x - 2 : x));
+        tl.setAttribute('y', SVG_H - 26);
+        tl.setAttribute('text-anchor', m === 0 ? 'start' : (m === S.duration ? 'end' : 'middle'));
+        tl.setAttribute('font-size', '8');
+        tl.setAttribute('fill', 'rgba(22,22,18,.28)');
+        tl.setAttribute('font-family', 'system-ui,sans-serif');
+        tl.setAttribute('font-weight', '600');
+        tl.setAttribute('letter-spacing', '0.04em');
+        tl.textContent = m === 0 ? '0' : m + 'm';
+        svg.appendChild(tl);
+      }
+
+      // ── 5-minute minor ticks on baseline ─────────────────────
+      for (let m = 5; m < S.duration; m += 5) {
+        const x = Math.round(m / S.duration * SVG_W);
+        const tick = ns('line');
+        tick.setAttribute('x1', x); tick.setAttribute('x2', x);
+        tick.setAttribute('y1', SVG_H - PAD_B + 2); tick.setAttribute('y2', SVG_H - PAD_B + 5);
+        tick.setAttribute('stroke', 'rgba(22,22,18,.14)'); tick.setAttribute('stroke-width', '.75');
+        svg.appendChild(tick);
       }
 
       // Fill + line
@@ -803,29 +916,36 @@
       const last = pts[pts.length - 1], first = pts[0];
       const fill = ns('path');
       fill.setAttribute('d', `${d} L ${last.x},${SVG_H - PAD_B} L ${first.x},${SVG_H - PAD_B} Z`);
-      fill.setAttribute('fill', 'rgba(255,255,255,.08)');
+      fill.setAttribute('fill', 'rgba(22,22,18,.04)');
       svg.appendChild(fill);
 
       const line = ns('path');
       line.setAttribute('d', d); line.setAttribute('fill', 'none');
-      line.setAttribute('stroke', 'rgba(255,255,255,.88)'); line.setAttribute('stroke-width', '2');
-      line.setAttribute('stroke-linecap', 'round'); svg.appendChild(line);
+      line.setAttribute('stroke', 'rgba(22,22,18,.82)'); line.setAttribute('stroke-width', '2');
+      line.setAttribute('stroke-linecap', 'round');
+      line.setAttribute('shape-rendering', 'geometricPrecision');
+      svg.appendChild(line);
 
-      // Section labels below graph
-
-      // Drag points
+      // ── Drag handles ──────────────────────────────────────────
       pts.forEach((pt, i) => {
         const g = ns('g');
         g.setAttribute('class', 'cp'); g.setAttribute('data-i', i); g.style.cursor = 'ns-resize';
+        // large invisible hit area
         const hit = ns('circle');
         hit.setAttribute('cx', pt.x); hit.setAttribute('cy', pt.y);
-        hit.setAttribute('r', '20'); hit.setAttribute('fill', 'transparent');
+        hit.setAttribute('r', '18'); hit.setAttribute('fill', 'transparent');
         g.appendChild(hit);
-        const dot = ns('circle');
-        dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y);
-        dot.setAttribute('r', '5'); dot.setAttribute('fill', '#080808');
-        dot.setAttribute('stroke', 'rgba(255,255,255,.85)'); dot.setAttribute('stroke-width', '2');
-        g.appendChild(dot);
+        // outer ring
+        const ring = ns('circle');
+        ring.setAttribute('cx', pt.x); ring.setAttribute('cy', pt.y);
+        ring.setAttribute('r', '5'); ring.setAttribute('fill', '#F5F4F0');
+        ring.setAttribute('stroke', 'rgba(22,22,18,.70)'); ring.setAttribute('stroke-width', '1.5');
+        g.appendChild(ring);
+        // inner dot
+        const center = ns('circle');
+        center.setAttribute('cx', pt.x); center.setAttribute('cy', pt.y);
+        center.setAttribute('r', '1.8'); center.setAttribute('fill', 'rgba(22,22,18,.80)');
+        g.appendChild(center);
         svg.appendChild(g);
       });
 
@@ -872,15 +992,18 @@
 
     // ─── MINI CURVE ──────────────────────────────────────────────────────────────
 
-    function miniCurve(pts) {
-      const W = 64, H = 28, p = 3;
-      const n = pts.length;
-      const mapped = pts.map((e, i) => ({ x: i / (n - 1) * W, y: H - p - (e / 100) * (H - p * 2) }));
+    function miniCurve(keys, isActive) {
+      const W = 120, H = 68, p = 9;
+      // Map raw keypoints ([t, e] pairs) directly — no linear pre-sampling
+      const mapped = keys.map(([t, e]) => ({ x: t * W, y: H - p - (e / 100) * (H - p * 2) }));
       const d = monotonePath(mapped);
       const lp = mapped[mapped.length - 1], fp = mapped[0];
+      const fill   = isActive ? 'rgba(22,22,18,.08)' : 'rgba(22,22,18,.03)';
+      const stroke = isActive ? 'rgba(22,22,18,.90)' : 'rgba(22,22,18,.38)';
+      const sw     = isActive ? '1.8' : '1.2';
       return `<svg class="arc-pill-curve" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-    <path d="${d} L ${lp.x},${H - p} L ${fp.x},${H - p} Z" fill="rgba(255,255,255,.06)"/>
-    <path d="${d}" fill="none" stroke="rgba(255,255,255,.65)" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="${d} L ${lp.x},${H - p} L ${fp.x},${H - p} Z" fill="${fill}"/>
+    <path d="${d}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision"/>
   </svg>`;
     }
 
@@ -893,7 +1016,8 @@
       Object.entries(ARC_SHAPES).forEach(([key, arc]) => {
         const d = document.createElement('div');
         d.className = `arc-pill${S.arcKey === key ? ' on' : ''}`;
-        d.innerHTML = `${miniCurve(sampleArc(key, 6))}<span class="arc-pill-name">${arc.name}</span>`;
+        const active = S.arcKey === key;
+        d.innerHTML = `${miniCurve(arc.keys, active)}<span class="arc-pill-name">${arc.name}</span>`;
         d.addEventListener('click', () => {
           S.arcKey = key; S.pts = sampleArc(key, getKnotCount(S.duration));
           renderArcs(); renderCurve();
@@ -932,7 +1056,6 @@
       });
 
       // Pass 1: seed each section with floor(target/avgDur) songs (min 1)
-      // This gives a predictable starting total well under budget
       const result = SECTIONS.map((sec, i) => {
         const pool = pools[i];
         const target = secDurs[i];
@@ -946,18 +1069,15 @@
         return { sec, songs, target, actual, pool };
       });
 
-      // Pass 2: top up to totalTarget, one song at a time into the most-underfilled section
-      // Pick the shortest song that closes the gap without exceeding totalMax
+      // Pass 2: top up to totalTarget
       let total = result.reduce((a, d) => a + d.actual, 0);
       while (total < totalMin) {
         const remaining = totalMin - total;
         const d = result.slice().sort((a, b) => (b.target - b.actual) - (a.target - a.actual))[0];
-        // Prefer: shortest song that covers remaining (closes gap in one shot)
         const closer = (d.pool.filter(s => !used.has(s.id) && s.dur >= remaining && total + s.dur <= totalMax)
           .sort((a, b) => a.dur - b.dur)[0])
           || (SONGS.filter(s => !used.has(s.id) && s.dur >= remaining && total + s.dur <= totalMax)
             .sort((a, b) => a.dur - b.dur)[0]);
-        // Fallback: longest song under remaining (partial fill, loop continues)
         const filler = (d.pool.filter(s => !used.has(s.id) && s.dur < remaining && total + s.dur <= totalMax)
           .sort((a, b) => b.dur - a.dur)[0])
           || (SONGS.filter(s => !used.has(s.id) && s.dur < remaining && total + s.dur <= totalMax)
@@ -1051,7 +1171,6 @@
       const input = document.getElementById('pl-title-input');
       input.value = defaultTitle();
       modal.removeAttribute('hidden');
-      // Select all so user can immediately type a replacement
       requestAnimationFrame(() => { input.focus(); input.select(); });
     }
 
@@ -1089,7 +1208,7 @@
     }
 
     function handleSave() {
-      if (S.saved) return; // already saved — no action
+      if (S.saved) return;
       openSaveModal();
     }
 
@@ -1127,14 +1246,13 @@
     const durValEl = document.getElementById('dur-val');
     function updateDurSlider() {
       const pct = (durSlider.value - 30) / 60 * 100;
-      durSlider.style.background = `linear-gradient(to right,rgba(255,255,255,.65) ${pct}%,rgba(255,255,255,.15) ${pct}%)`;
+      durSlider.style.background = `linear-gradient(to right,rgba(22,22,18,.68) ${pct}%,rgba(22,22,18,.12) ${pct}%)`;
       durValEl.textContent = durSlider.value + ' min';
     }
     durSlider.addEventListener('input', () => {
       const newDur = parseInt(durSlider.value);
       const newN = getKnotCount(newDur);
       if (newN !== S.pts.length) {
-        // Resample current curve shape to new knot count so the shape is preserved
         S.pts = Array.from({ length: newN }, (_, i) => Math.round(getCurveEnergy(i / (newN - 1))));
       }
       S.duration = newDur;
@@ -1148,6 +1266,7 @@
     document.getElementById('reset-curve')?.addEventListener('click', () => {
       S.pts = sampleArc(S.arcKey, getKnotCount(S.duration)); renderCurve();
     });
+
 
     document.querySelector('.results').addEventListener('click', e => {
       const btn = e.target.closest('.song-copy-btn');

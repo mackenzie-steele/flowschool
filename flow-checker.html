@@ -9,6 +9,33 @@
   <style>
     /* ── Flow Checker — page-specific ─────────────────────────────── */
 
+    /* Results bar */
+    .fc-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 24px;
+    }
+    .res-stats { display: flex; gap: 36px; }
+    .stat { display: flex; flex-direction: column; gap: 4px; }
+    .stat-val {
+      font-family: var(--font);
+      font-size: var(--fs-h5);
+      font-weight: var(--weight-regular);
+      line-height: var(--lh-heading);
+      color: var(--text-1);
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-lbl {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: var(--weight-regular);
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
+    }
+    .res-actions { display: flex; gap: 8px; align-items: center; }
+
     /* Two-column grid */
     .fc-grid {
       display: grid;
@@ -28,7 +55,7 @@
     .fc-section {
       border: 1px solid var(--border);
       border-radius: var(--r);
-      background: rgba(255,255,255,.018);
+      background: rgba(22, 22, 18, .02);
       padding: 24px;
     }
 
@@ -52,21 +79,23 @@
     .fc-counter {
       display: flex;
       align-items: baseline;
-      gap: 4px;
+      gap: 6px;
       flex-shrink: 0;
     }
 
     .fc-count {
-      font-size: 1.5rem;
-      font-weight: var(--weight-semibold);
-      color: var(--accent);
-      line-height: 1;
+      font-family: var(--font);
+      font-size: var(--fs-h5);
+      font-weight: var(--weight-regular);
+      color: var(--text-1);
+      line-height: var(--lh-heading);
       font-variant-numeric: tabular-nums;
-      transition: color 0.25s;
     }
 
     .fc-denom {
+      font-family: var(--font-mono);
       font-size: var(--text-small);
+      font-weight: var(--weight-regular);
       color: var(--text-3);
     }
 
@@ -100,7 +129,7 @@
 
     .fc-complete p {
       font-size: var(--text-small);
-      color: rgba(221,227,106,.85);
+      color: var(--text-2);
       margin: 0;
     }
 
@@ -130,8 +159,8 @@
     .fc-box {
       width: 18px;
       height: 18px;
-      border: 1.5px solid rgba(255,255,255,.18);
-      border-radius: 4px;
+      border: 1.5px solid rgba(22, 22, 18, .22);
+      border-radius: 0;
       flex-shrink: 0;
       margin-top: 1px;
       display: flex;
@@ -141,13 +170,13 @@
     }
 
     .fc-item.checked .fc-box {
-      background: var(--accent);
-      border-color: var(--accent);
+      background: #161614;
+      border-color: #161614;
     }
 
     .fc-icon {
       font-size: 12px;
-      color: #080808;
+      color: #F5F4F0;
       opacity: 0;
       transition: opacity .15s;
       font-weight: 700;
@@ -200,36 +229,37 @@
   </style>
 </head>
 
-<body>
+<body class="has-sidebar">
 
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
 
-  <header class="hdr">
-    <div class="hdr-i">
-      <a href="index.html" class="btn-ghost">← Tools</a>
-      <div class="hdr-logo-wrap">
-        <a href="index.html" class="hdr-logo">Flow School</a>
-        <span class="beta-tag">Beta</span>
-      </div>
-      <div class="hdr-auth" id="hdr-auth"></div>
-    </div>
-  </header>
-
   <main>
+
+    <section class="hero">
+      <div class="inner">
+        <p class="label-1">Flow Design</p>
+        <h3>Flow Checker</h3>
+        <p>Work through your Peak Flow and check off every element.</p>
+        <p>Use this while planning or reviewing a class to make sure nothing is missing. A complete Peak Flow covers all body positions, all three movement planes, natural gait alternation, and each of the Big Five elements.</p>
+      </div>
+    </section>
+
     <div class="wrap">
 
-      <div class="hero">
-        <span class="page-eyebrow">Flow Design</span>
-        <h2>Flow Checker</h2>
-        <p style="margin-top:10px;color:var(--text-2);font-size:var(--text-body-lg)">
-          Work through your Peak Flow and check off every element.
-        </p>
-        <p style="margin-top:10px">
-          Use this while planning or reviewing a class to make sure nothing is missing. A complete Peak Flow covers all body positions, all three movement planes, natural gait alternation, and each of the Big Five elements.
-        </p>
-        <button class="btn-ghost" id="fc-reset-all" style="font-size:var(--text-small);padding:8px 14px;margin-top:20px">New Flow</button>
+      <div class="fc-hdr">
+        <div class="res-stats">
+          <div class="fc-counter">
+            <span class="fc-count" id="fc-total-count">0</span>
+            <span class="fc-denom">/ 30 checked</span>
+          </div>
+        </div>
+        <div class="res-actions">
+          <button class="btn-icon" id="fc-reset-all" data-tooltip="New Flow" title="New Flow">
+            <span class="material-symbols-sharp">refresh</span>
+          </button>
+        </div>
       </div>
 
       <div class="fc-grid">
@@ -319,19 +349,19 @@
       // ── Data ──────────────────────────────────────────────────────────
 
       var BODY_POSITIONS = [
-        { id: 'single-leg',   label: 'Single Leg',                     sub: 'e.g. Tree · Warrior 3 · Revolved Half Moon' },
-        { id: 'double-same',  label: 'Double Leg, Same Direction',      sub: 'e.g. Chair · Tadasana · Wide Leg Forward Fold' },
-        { id: 'diff-dir',     label: 'Double Leg, Different Direction', sub: 'e.g. Skandasana · Triangle · Warrior 2' },
-        { id: 'squat',        label: 'Squat / Bent Leg',               sub: 'e.g. Chair · Skandasana · Lunge' },
-        { id: 'hinge',        label: 'Hinge / Fold / Spine Flexion',   sub: 'e.g. Pyramid · Forward Fold · Triangle' },
-        { id: 'straight-leg', label: 'Straight Leg',                   sub: 'e.g. Tadasana · Half Moon · Low Boat' },
-        { id: 'square-hip',   label: 'Square Hip / Neutral Hip',       sub: 'e.g. Crescent Lunge · Camel · Chair' },
-        { id: 'open-hip',     label: 'Open Hip / External Rotation',   sub: 'e.g. Half Moon · Warrior 2 · Extended Side Angle' },
-        { id: 'twist',        label: 'Twist',                          sub: 'e.g. Revolved Chair · Dancing Anjaneyasana' },
-        { id: 'lean',         label: 'Lean',                           sub: 'e.g. Wild Thing · Runner\'s Lean · Reverse Triangle' },
-        { id: 'single-arm',   label: 'Single Arm',                     sub: 'e.g. Side Plank · Funky Side Plank · Gate' },
-        { id: 'double-arm',   label: 'Double Arm',                     sub: 'e.g. Down Dog · Crow · Chaturanga · Handstand' },
-        { id: 'backbend',     label: 'Spine Extension / Backbend',     sub: 'e.g. Bridge · Wild Thing · Up Dog' },
+        { id: 'single-leg',   label: 'Single Leg',                     sub: 'Tree · Warrior 3 · Revolved Half Moon' },
+        { id: 'double-same',  label: 'Double Leg, Same Direction',      sub: 'Chair · Tadasana · Wide Leg Forward Fold' },
+        { id: 'diff-dir',     label: 'Double Leg, Different Direction', sub: 'Skandasana · Triangle · Warrior 2' },
+        { id: 'squat',        label: 'Squat / Bent Leg',               sub: 'Chair · Skandasana · Lunge' },
+        { id: 'hinge',        label: 'Hinge / Fold / Spine Flexion',   sub: 'Pyramid · Forward Fold · Triangle' },
+        { id: 'straight-leg', label: 'Straight Leg',                   sub: 'Tadasana · Half Moon · Low Boat' },
+        { id: 'square-hip',   label: 'Square Hip / Neutral Hip',       sub: 'Crescent Lunge · Camel · Chair' },
+        { id: 'open-hip',     label: 'Open Hip / External Rotation',   sub: 'Half Moon · Warrior 2 · Extended Side Angle' },
+        { id: 'twist',        label: 'Twist',                          sub: 'Revolved Chair · Dancing Anjaneyasana' },
+        { id: 'lean',         label: 'Lean',                           sub: 'Wild Thing · Runner\'s Lean · Reverse Triangle' },
+        { id: 'single-arm',   label: 'Single Arm',                     sub: 'Side Plank · Funky Side Plank · Gate' },
+        { id: 'double-arm',   label: 'Double Arm',                     sub: 'Down Dog · Crow · Chaturanga · Handstand' },
+        { id: 'backbend',     label: 'Spine Extension / Backbend',     sub: 'Bridge · Wild Thing · Up Dog' },
       ];
 
       var PLANES = [
@@ -386,6 +416,11 @@
 
       // ── Update counter / bar / complete ───────────────────────────────
 
+      function updateTotalCount() {
+        var total = Object.keys(state).reduce(function (sum, k) { return sum + state[k].size; }, 0);
+        document.getElementById('fc-total-count').textContent = total;
+      }
+
       function updateCounter(key) {
         var n   = state[key].size;
         var tot = TOTALS[key];
@@ -393,6 +428,7 @@
         document.getElementById(key + '-fill').style.width     = (n / tot * 100) + '%';
         document.getElementById(key + '-complete').style.display = (n === tot) ? '' : 'none';
         try { localStorage.setItem(KEYS[key], JSON.stringify(Array.from(state[key]))); } catch (_) {}
+        updateTotalCount();
       }
 
       // ── Render a list ─────────────────────────────────────────────────
@@ -461,6 +497,7 @@
           el.setAttribute('aria-checked', 'false');
         });
         Object.keys(TOTALS).forEach(function (key) { updateCounter(key); });
+        updateTotalCount();
       });
 
       // ── Recent tools ──────────────────────────────────────────────────

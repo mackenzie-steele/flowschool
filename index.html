@@ -19,8 +19,8 @@
     /* ── Cards ───────────────────────────────────────────── */
     .db-card {
       border: 1px solid var(--border-light);
-      border-radius: var(--r);
-      background: rgba(255,255,255,.018);
+      border-radius: 0;
+      background: rgba(22,22,18,.018);
       padding: 22px 24px;
     }
 
@@ -93,7 +93,7 @@
 
     .db-streak-lbl {
       font-size: var(--text-small);
-      color: rgba(221,227,106,.7);
+      color: var(--text-3);
       white-space: nowrap;
     }
 
@@ -101,7 +101,7 @@
     .db-prompt {
       display: flex;
       flex-direction: column;
-      background: rgba(255,255,255,.025) !important;
+      background: rgba(22,22,18,.025) !important;
       min-height: 180px;
     }
 
@@ -150,7 +150,7 @@
       align-items: center;
       gap: 10px;
       padding: 8px 10px;
-      border-radius: 8px;
+      border-radius: 0;
       font-size: var(--text-ui);
       color: var(--text-2);
       text-decoration: none;
@@ -158,7 +158,7 @@
     }
 
     .db-quick-link:hover {
-      background: rgba(255,255,255,.06);
+      background: rgba(22,22,18,.05);
       color: var(--text-1);
     }
 
@@ -188,11 +188,11 @@
       flex-shrink: 0;
       width: 192px;
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 0;
       padding: 18px;
       text-decoration: none;
       color: inherit;
-      background: rgba(255,255,255,.022);
+      background: rgba(22,22,18,.022);
       transition: border-color .15s, background .15s;
       display: flex;
       flex-direction: column;
@@ -200,15 +200,15 @@
     }
 
     .db-continue-card:hover {
-      border-color: rgba(255,255,255,.22);
-      background: rgba(255,255,255,.038);
+      border-color: rgba(22,22,18,.22);
+      background: rgba(22,22,18,.038);
     }
 
     .db-cc-icon {
       width: 34px;
       height: 34px;
-      border-radius: 9px;
-      background: rgba(255,255,255,.07);
+      border-radius: 0;
+      background: rgba(22,22,18,.07);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -325,13 +325,13 @@
 
     .db-contrib-day {
       aspect-ratio: 1;
-      border-radius: 3px;
-      background: rgba(255,255,255,.05);
+      border-radius: 0;
+      background: rgba(22,22,18,.08);
     }
 
-    .db-contrib-day.active   { background: rgba(221,227,106,.55); }
-    .db-contrib-day.is-today { box-shadow: 0 0 0 1.5px rgba(255,255,255,.4); }
-    .db-contrib-day.future   { background: rgba(255,255,255,.02); }
+    .db-contrib-day.active   { background: rgba(22,22,18,.45); }
+    .db-contrib-day.is-today { box-shadow: 0 0 0 1.5px rgba(22,22,18,.35); }
+    .db-contrib-day.future   { background: rgba(22,22,18,.03); }
 
     /* ── Score ───────────────────────────────────────────── */
     /* ── Skill Map ───────────────────────────────────────── */
@@ -371,11 +371,11 @@
       color: var(--text-1);
       text-decoration: underline;
       text-underline-offset: 2px;
-      text-decoration-color: rgba(255,255,255,.3);
+      text-decoration-color: rgba(22,22,18,.25);
     }
 
     .db-skillmap-suggest a:hover {
-      text-decoration-color: rgba(255,255,255,.7);
+      text-decoration-color: rgba(22,22,18,.65);
     }
 
     /* ── Saved items ─────────────────────────────────────── */
@@ -396,8 +396,8 @@
     .db-saved-icon {
       width: 32px;
       height: 32px;
-      border-radius: 8px;
-      background: rgba(255,255,255,.06);
+      border-radius: 0;
+      background: rgba(22,22,18,.06);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -598,82 +598,13 @@
 
   </style>
 </head>
-<body>
+<body class="has-sidebar">
 
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
 
-  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Open navigation">
-    <span class="material-symbols-sharp">menu</span>
-  </button>
-
-  <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-  <div class="app-shell">
-
-    <!-- ── Sidebar ─────────────────────────────────────────── -->
-    <aside class="app-sidebar" id="app-sidebar">
-
-      <div class="sidebar-logo-wrap">
-        <a href="index.html" class="sidebar-logo">Flow School</a>
-        <span class="beta-tag">Beta</span>
-      </div>
-
-      <nav class="sidebar-nav">
-
-        <div class="nav-section">
-          <a href="index.html" class="nav-item active">
-            <span class="material-symbols-sharp">space_dashboard</span>
-            Dashboard
-          </a>
-        </div>
-
-        <div class="nav-section">
-          <button class="nav-section-toggle" aria-expanded="true">
-            Learn
-            <span class="material-symbols-sharp nav-chevron">expand_more</span>
-          </button>
-          <div class="nav-section-items">
-            <a href="elements-of-flow-lab.html" class="nav-item">Elements of Flow Lab</a>
-          </div>
-        </div>
-
-        <div class="nav-section">
-          <button class="nav-section-toggle" aria-expanded="true">
-            Practice
-            <span class="material-symbols-sharp nav-chevron">expand_more</span>
-          </button>
-          <div class="nav-section-items">
-            <a href="movement-experiment-generator.html" class="nav-item">Movement Experiments</a>
-            <a href="arbitrary-rule-generator.html" class="nav-item">Arbitrary Rules</a>
-            <a href="breath-pace-trainer.html" class="nav-item">Breath Pacer</a>
-          </div>
-        </div>
-
-        <div class="nav-section">
-          <button class="nav-section-toggle" aria-expanded="true">
-            Create
-            <span class="material-symbols-sharp nav-chevron">expand_more</span>
-          </button>
-          <div class="nav-section-items">
-            <a href="playlist-builder.html" class="nav-item">Playlist Builder</a>
-            <a href="shorthand-library.html" class="nav-item">Shorthand Library</a>
-            <a href="flow-checker.html" class="nav-item">Flow Checker</a>
-          </div>
-        </div>
-
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="hdr-auth" id="hdr-auth"></div>
-      </div>
-
-    </aside>
-
-    <!-- ── Main ────────────────────────────────────────────── -->
-    <main class="app-main">
-      <div class="db-wrap">
+  <div class="db-wrap">
 
         <!-- 1. Welcome -->
         <div class="db-welcome">
@@ -803,9 +734,6 @@
 
 
       </div>
-    </main>
-
-  </div>
 
   <script src="data/dashboard-daily-quotes.js"></script>
   <script src="data/dashboard-weekly-prompts.js"></script>
@@ -971,20 +899,20 @@
 
       var gridSVG = [25, 50, 75, 100].map(function (pct, gi) {
         var pts = data.map(function (_, i) { var p = pt(pct, i); return p[0] + ',' + p[1]; }).join(' ');
-        return '<polygon points="' + pts + '" fill="none" stroke="rgba(255,255,255,' + (0.05 + gi * 0.025).toFixed(3) + ')" stroke-width="0.75"/>';
+        return '<polygon points="' + pts + '" fill="none" stroke="rgba(22,22,18,' + (0.06 + gi * 0.03).toFixed(3) + ')" stroke-width="0.75"/>';
       }).join('');
 
       var axisSVG = data.map(function (_, i) {
         var p = pt(100, i);
-        return '<line x1="' + cx + '" y1="' + cy + '" x2="' + p[0] + '" y2="' + p[1] + '" stroke="rgba(255,255,255,.1)" stroke-width="0.75"/>';
+        return '<line x1="' + cx + '" y1="' + cy + '" x2="' + p[0] + '" y2="' + p[1] + '" stroke="rgba(22,22,18,.12)" stroke-width="0.75"/>';
       }).join('');
 
       var dataPts = data.map(function (d, i) { var p = pt(d.score, i); return p[0] + ',' + p[1]; }).join(' ');
-      var dataSVG = '<polygon points="' + dataPts + '" fill="rgba(221,227,106,.13)" stroke="rgba(221,227,106,.8)" stroke-width="1.5" stroke-linejoin="round"/>';
+      var dataSVG = '<polygon points="' + dataPts + '" fill="rgba(22,22,18,.10)" stroke="rgba(22,22,18,.55)" stroke-width="1.5" stroke-linejoin="round"/>';
 
       var dotsSVG = data.map(function (d, i) {
         var p = pt(d.score, i);
-        return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="2.5" fill="rgba(221,227,106,.95)"/>';
+        return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="2.5" fill="rgba(22,22,18,.80)"/>';
       }).join('');
 
       var LABEL_OFFSET = 20;
@@ -996,9 +924,9 @@
         var anchor = i === 1 ? 'start' : i === 3 ? 'end' : 'middle';
         var dyAdj  = (i === 1 || i === 3) ? 3 : 0;
         if (words.length === 1) {
-          return '<text x="' + lx + '" y="' + (ly + dyAdj) + '" text-anchor="' + anchor + '" fill="rgba(255,255,255,.4)" font-size="9" font-family="inherit" letter-spacing=".04em">' + d.skill + '</text>';
+          return '<text x="' + lx + '" y="' + (ly + dyAdj) + '" text-anchor="' + anchor + '" fill="rgba(22,22,18,.45)" font-size="9" font-family="inherit" letter-spacing=".04em">' + d.skill + '</text>';
         }
-        return '<text x="' + lx + '" text-anchor="' + anchor + '" fill="rgba(255,255,255,.4)" font-size="9" font-family="inherit" letter-spacing=".04em">' +
+        return '<text x="' + lx + '" text-anchor="' + anchor + '" fill="rgba(22,22,18,.45)" font-size="9" font-family="inherit" letter-spacing=".04em">' +
           '<tspan x="' + lx + '" y="' + (ly - 4) + '">' + words[0] + '</tspan>' +
           '<tspan x="' + lx + '" y="' + (ly + 8) + '">' + words.slice(1).join(' ') + '</tspan>' +
           '</text>';
@@ -1095,26 +1023,10 @@
 
 
 
-    function initSidebar() {
-      var sidebar = document.getElementById('app-sidebar');
-      var toggle  = document.getElementById('sidebar-toggle');
-      var overlay = document.getElementById('sidebar-overlay');
-      if (toggle)  toggle.addEventListener('click',  function () { sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
-      if (overlay) overlay.addEventListener('click', function () { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
-      document.querySelectorAll('.nav-section-toggle').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var expanded = btn.getAttribute('aria-expanded') === 'true';
-          btn.setAttribute('aria-expanded', String(!expanded));
-          btn.nextElementSibling.style.display = expanded ? 'none' : '';
-        });
-      });
-    }
-
     // ── Init ────────────────────────────────────────────────────────
     function init() {
       seedDemoData();
       var stats = loadStats();
-      initSidebar();
       renderWelcome(stats);
       renderPrompt();
       renderContinue();
