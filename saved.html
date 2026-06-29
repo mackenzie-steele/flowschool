@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved — Flow School</title>
+  <link rel="stylesheet" href="global.css">
+  <style>
+    .saved-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .saved-header h3 {
+      margin: 0;
+      font-size: var(--fs-h4);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
+    }
+
+    .saved-total {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-3);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* ── Section ── */
+    .sv-section {
+      margin-bottom: 40px;
+    }
+
+    .sv-section-hdr {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 4px;
+    }
+
+    .sv-eyebrow {
+      font-size: 10px;
+      font-weight: var(--weight-semibold);
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .sv-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-3);
+      background: rgba(var(--ink-rgb), .06);
+      border-radius: 2px;
+      padding: 1px 6px;
+    }
+
+    /* ── Item row ── */
+    .sv-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+      text-decoration: none;
+      color: inherit;
+      transition: opacity .15s;
+    }
+
+    .sv-item:last-child { border-bottom: none; }
+    .sv-item:hover { opacity: .65; }
+
+    .sv-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(var(--ink-rgb), .06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .sv-icon .material-symbols-sharp { font-size: 16px; color: var(--text-2); }
+
+    .sv-info { flex: 1; min-width: 0; }
+
+    .sv-name {
+      display: block;
+      font-size: var(--text-ui);
+      color: var(--text-1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sv-time {
+      display: block;
+      font-size: var(--text-small);
+      color: var(--text-3);
+      margin-top: 1px;
+    }
+
+    .sv-arrow {
+      color: var(--text-3);
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+
+    .sv-item:hover .sv-arrow { opacity: 1; }
+
+    /* ── Empty state ── */
+    .sv-empty {
+      padding: 16px 0 8px;
+      font-size: var(--text-ui);
+      color: var(--text-3);
+      font-style: italic;
+    }
+
+    /* ── Global empty ── */
+    .sv-all-empty {
+      padding: 60px 0;
+      text-align: center;
+    }
+
+    .sv-all-empty p {
+      font-size: var(--fs-body);
+      color: var(--text-3);
+      margin: 0 0 20px;
+    }
+  </style>
+</head>
+
+<body class="has-sidebar">
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <section class="hero">
+    <div class="inner">
+      <p class="label-1">Your library</p>
+      <h3>Saved</h3>
+      <p>Everything you've bookmarked, in one place.</p>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div id="sv-root"></div>
+  </div>
+
+  <script>
+  (function () {
+    function timeAgo(ts) {
+      if (!ts) return '';
+      var diff = Date.now() - ts;
+      var m = Math.floor(diff / 60000);
+      if (m < 1)  return 'just now';
+      if (m < 60) return m + 'm ago';
+      var h = Math.floor(m / 60);
+      if (h < 24) return h + 'h ago';
+      var d = Math.floor(h / 24);
+      if (d < 7)  return d + 'd ago';
+      var wk = Math.floor(d / 7);
+      if (wk < 5) return wk + 'w ago';
+      return Math.floor(d / 30) + 'mo ago';
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    var sections = [
+      {
+        key: 'playlists',
+        label: 'Playlists',
+        icon: 'queue_music',
+        load: function () {
+          try {
+            return JSON.parse(localStorage.getItem('flowschool_playlists') || '[]').map(function (p) {
+              return {
+                name: p.title || 'Untitled Playlist',
+                href: 'playlist-builder.html?id=' + p.id,
+                time: p.savedAt ? new Date(p.savedAt).getTime() : 0,
+              };
+            });
+          } catch (_) { return []; }
+        },
+      },
+      {
+        key: 'cue-flows',
+        label: 'Cue Worksheet Flows',
+        icon: 'edit_note',
+        load: function () {
+          try {
+            var flows = JSON.parse(localStorage.getItem('fs-cue-flows') || '{}');
+            return Object.values(flows).map(function (fl) {
+              return {
+                name: fl.name || 'Untitled Flow',
+                href: 'cue-worksheet.html?flow=' + encodeURIComponent(fl.name),
+                time: fl.savedAt ? new Date(fl.savedAt).getTime() : 0,
+              };
+            });
+          } catch (_) { return []; }
+        },
+      },
+      {
+        key: 'movement-experiments',
+        label: 'Movement Experiments',
+        icon: 'gesture',
+        load: function () {
+          try {
+            return JSON.parse(localStorage.getItem('flowschool_favs') || '[]').map(function (f) {
+              return {
+                name: typeof f === 'object' ? (f.title || 'Movement Experiment') : 'Movement Experiment',
+                href: 'movement-experiment-generator.html?exp=' + (typeof f === 'object' ? f.id : f),
+                time: typeof f === 'object' ? (f.savedAt || 0) : 0,
+              };
+            });
+          } catch (_) { return []; }
+        },
+      },
+      {
+        key: 'arbitrary-rules',
+        label: 'Arbitrary Rules',
+        icon: 'casino',
+        load: function () {
+          try {
+            return JSON.parse(localStorage.getItem('flowschool_arules') || '[]').map(function (r) {
+              var name = r.title || 'Saved Challenge';
+              if (name.length > 80) name = name.slice(0, 77) + '…';
+              return {
+                name: name,
+                href: 'arbitrary-rule-generator.html?challenge=' + r.id,
+                time: r.id || 0,
+              };
+            });
+          } catch (_) { return []; }
+        },
+      },
+    ];
+
+    function renderSection(s, items) {
+      items = items.slice().sort(function (a, b) { return b.time - a.time; });
+      var rows = items.length
+        ? items.map(function (item) {
+            return '<a href="' + esc(item.href) + '" class="sv-item">'
+              + '<div class="sv-icon"><span class="material-symbols-sharp">' + s.icon + '</span></div>'
+              + '<div class="sv-info">'
+              +   '<span class="sv-name">' + esc(item.name) + '</span>'
+              +   (item.time ? '<span class="sv-time">' + timeAgo(item.time) + '</span>' : '')
+              + '</div>'
+              + '<span class="material-symbols-sharp sv-arrow" style="font-size:16px">arrow_forward</span>'
+              + '</a>';
+          }).join('')
+        : '<p class="sv-empty">Nothing saved here yet.</p>';
+
+      return '<div class="sv-section">'
+        + '<div class="sv-section-hdr">'
+        +   '<span class="sv-eyebrow">' + s.label + '</span>'
+        +   (items.length ? '<span class="sv-count">' + items.length + '</span>' : '')
+        + '</div>'
+        + rows
+        + '</div>';
+    }
+
+    var root = document.getElementById('sv-root');
+    var allItems = 0;
+    var html = '';
+
+    sections.forEach(function (s) {
+      var items = s.load();
+      allItems += items.length;
+      html += renderSection(s, items);
+    });
+
+    if (allItems === 0) {
+      root.innerHTML = '<div class="sv-all-empty">'
+        + '<p>Nothing saved yet. Bookmark items as you practice — they\'ll appear here.</p>'
+        + '<a href="index.html" class="btn-secondary">Back to Dashboard</a>'
+        + '</div>';
+    } else {
+      root.innerHTML = '<div class="saved-header">'
+        + '<h3>All Saved</h3>'
+        + '<span class="saved-total">' + allItems + ' item' + (allItems !== 1 ? 's' : '') + '</span>'
+        + '</div>'
+        + html;
+    }
+  })();
+  </script>
+
+  <script src="lib/nav.js"></script>
+
+</body>
+</html>

@@ -205,20 +205,22 @@
       border-radius: 2px;
     }
 
-    [data-theme="dark"] .tag-general    { background: #FFF55F; color: #1B1B1B; }
-    [data-theme="dark"] .tag-double-leg { background: #85AAF4; color: #1B1B1B; }
-    [data-theme="dark"] .tag-single-leg { background: #372135; color: #EFEFEF; }
-    [data-theme="dark"] .tag-hands-down { background: #8D6889; color: #EFEFEF; }
-    [data-theme="dark"] .tag-floor      { background: #2B4738; color: #EFEFEF; }
+    .tag-general    { background: #FFF55F; color: #1B1B1B; border: none; }
+    .tag-double-leg { background: #85AAF4; color: #1B1B1B; border: none; }
+    .tag-single-leg { background: #372135; color: #EFEFEF; border: none; }
+    .tag-hands-down { background: #8D6889; color: #EFEFEF; border: none; }
+    .tag-floor      { background: #2B4738; color: #EFEFEF; border: none; }
 
-    /* Filter chip dots match their category color when active — dark mode only */
-    [data-theme="dark"] .filter-chip[data-filter="all"].active::before      { background: #EFEFEF; border-color: #EFEFEF; }
-    [data-theme="dark"] .mode-chip.on::before { background: #EFEFEF; border-color: #EFEFEF; }
-    [data-theme="dark"] .filter-chip[data-filter="general"].active::before    { background: #FFF55F; border-color: #FFF55F; }
-    [data-theme="dark"] .filter-chip[data-filter="double-leg"].active::before { background: #85AAF4; border-color: #85AAF4; }
-    [data-theme="dark"] .filter-chip[data-filter="single-leg"].active::before { background: #372135; border-color: #372135; }
-    [data-theme="dark"] .filter-chip[data-filter="hands-down"].active::before { background: #8D6889; border-color: #8D6889; }
-    [data-theme="dark"] .filter-chip[data-filter="floor"].active::before      { background: #2B4738; border-color: #2B4738; }
+    /* Filter chip dots match their category color when active */
+    .filter-chip[data-filter="all"].active::before,
+    .mode-chip.on::before                                                    { background: #1B1B1B; border-color: #1B1B1B; }
+    [data-theme="dark"] .filter-chip[data-filter="all"].active::before,
+    [data-theme="dark"] .mode-chip.on::before                               { background: #EFEFEF; border-color: #EFEFEF; }
+    .filter-chip[data-filter="general"].active::before                       { background: #FFF55F; border-color: #FFF55F; }
+    .filter-chip[data-filter="double-leg"].active::before                    { background: #85AAF4; border-color: #85AAF4; }
+    .filter-chip[data-filter="single-leg"].active::before                    { background: #372135; border-color: #372135; }
+    .filter-chip[data-filter="hands-down"].active::before                    { background: #8D6889; border-color: #8D6889; }
+    .filter-chip[data-filter="floor"].active::before                         { background: #2B4738; border-color: #2B4738; }
 
     .lib-table th:nth-child(3),
     .lib-table td:nth-child(3) {

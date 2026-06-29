@@ -15,10 +15,9 @@
       --surface-2:     rgba(var(--ink-rgb), .06);
       --border:        rgba(var(--ink-rgb), .13);
       --border-light:  rgba(var(--ink-rgb), .07);
-      --text-1:        var(--ink-solid);
-      --text-2:        #5A5850;
-      --text-3:        #9A9890;
-      --accent:        var(--ink-solid);
+      --text-1:        #1B1B1B;
+      --text-2:        #333333;
+      --text-3:        #A5A5A5;
       --accent-dim:    rgba(var(--ink-rgb), .06);
       --accent-border: rgba(var(--ink-rgb), .18);
       --r:   0px;
@@ -26,6 +25,7 @@
       --rs:  0px;
     }
     [data-theme="dark"] {
+      --text-1: #EFEFEF;
       --text-2: #C3C3C3;
       --text-3: #A5A5A5;
     }
@@ -177,8 +177,8 @@
       color: var(--text-1);
     }
     .chip.on::before {
-      background: var(--ink-solid);
-      border-color: var(--ink-solid);
+      background: var(--volt);
+      border-color: var(--volt);
       box-shadow: 0 0 4px rgba(var(--ink-rgb), .20);
     }
 
@@ -402,6 +402,7 @@
       text-transform: uppercase;
       letter-spacing: 0.10em;
     }
+    .stat-val { color: var(--volt); }
     [data-theme="dark"] .stat-val { color: #FFF55F; }
     [data-theme="dark"] #dur-val  { color: #EFEFEF; }
     .res-actions { display: flex; gap: 8px; align-items: center; }
@@ -511,6 +512,7 @@
       background: rgba(var(--ink-rgb), .10);
     }
     .ebar-seg.on { background: rgba(var(--ink-rgb), .38); }
+    .ebar-seg.on { background: var(--volt); }
     [data-theme="dark"] .ebar-seg.on { background: #FFF55F; }
     .song-copy { display: flex; align-items: center; justify-content: flex-end; margin-left: 20px; }
 
@@ -590,10 +592,11 @@
       border-color: #FFF55F;
     }
 
-    [data-theme="dark"] .curve-line { stroke: #FFF55F; }
-    [data-theme="dark"] .cp-ring    { stroke: #FFF55F; fill: #1B1B1B; }
-    [data-theme="dark"] .cp-dot     { fill: #FFF55F; }
-    [data-theme="dark"] .arc-pill.on .arc-line { stroke: #FFF55F; }
+    .curve-line { stroke: var(--volt); }
+    .cp-ring    { stroke: var(--volt); }
+    .cp-dot     { fill: var(--volt); }
+    .arc-pill.on .arc-line { stroke: var(--volt); }
+    [data-theme="dark"] .cp-ring { fill: #1B1B1B; }
   </style>
 </head>
 
@@ -1265,7 +1268,7 @@
     const durValEl = document.getElementById('dur-val');
     function updateDurSlider() {
       const pct = (durSlider.value - 30) / 60 * 100;
-      durSlider.style.background = `linear-gradient(to right,rgba(var(--ink-rgb),.68) ${pct}%,rgba(var(--ink-rgb),.12) ${pct}%)`;
+      durSlider.style.background = `linear-gradient(to right,var(--slider-fill) ${pct}%,rgba(var(--ink-rgb),.12) ${pct}%)`;
       durValEl.textContent = durSlider.value + ' min';
     }
     durSlider.addEventListener('input', () => {
@@ -1300,6 +1303,7 @@
           updateDurSlider();
           renderArcs();
           renderCurve();
+          S.saved = true;
           setTimeout(() => {
             renderResults(generate());
             document.querySelector('.results').scrollIntoView({ behavior: 'smooth', block: 'start' });

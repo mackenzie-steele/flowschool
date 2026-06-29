@@ -22,6 +22,9 @@
       overflow: visible;
     }
 
+    #ticks line.lit { stroke: var(--ink-solid); }
+    [data-theme="dark"] #ticks line.lit { stroke: var(--volt); }
+
     #svg-count {
       font-family: var(--font);
       font-size: var(--fs-h3);
@@ -363,6 +366,7 @@
       document.querySelectorAll('#ticks line').forEach((l, i) => {
         const lit = fromEnd ? i >= TICK_COUNT - litCount : i < litCount;
         l.setAttribute('opacity', lit ? '1' : baseOpacity);
+        l.classList.toggle('lit', lit);
       });
     }
 
@@ -493,7 +497,7 @@
 
     function updateSliderFill(slider) {
       const pct = (slider.value - slider.min) / (slider.max - slider.min) * 100;
-      slider.style.background = `linear-gradient(to right,rgba(var(--ink-rgb),.68) ${pct}%,rgba(var(--ink-rgb),.12) ${pct}%)`;
+      slider.style.background = `linear-gradient(to right,var(--slider-fill) ${pct}%,rgba(var(--ink-rgb),.12) ${pct}%)`;
     }
 
     ['inhale', 'exhale'].forEach(type => {

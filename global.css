@@ -44,14 +44,18 @@
   --border-light: rgba(var(--ink-rgb), .07);
 
   /* Text */
-  --text-1: var(--ink-solid);
-  --text-2: #5A5850;
-  --text-3: #9A9890;
+  --text-1: #1B1B1B;
+  --text-2: #555555;
+  --text-3: #A5A5A5;
 
-  /* Accent — monochrome charcoal */
-  --accent:        #3D3C38;
-  --accent-dim:    rgba(var(--ink-rgb), .06);
-  --accent-border: rgba(var(--ink-rgb), .16);
+  /* Accent — black in light mode */
+  --volt:          #1B1B1B;
+  --accent:        #1B1B1B;
+  --accent-dim:    rgba(var(--ink-rgb), .08);
+  --accent-border: rgba(var(--ink-rgb), .25);
+
+  /* Slider fill — black in light, volt in dark */
+  --slider-fill: var(--ink-solid);
 
   /* Radius — geometric */
   --r:  0px;
@@ -148,6 +152,7 @@
   --text-2:        #C3C3C3;
   --text-3:        #A5A5A5;
   --volt:          #FFF55F;
+  --slider-fill:   var(--volt);
 }
 
 [data-theme="dark"] .orb-1,
@@ -657,9 +662,9 @@ button svg {
 .saved .save-icon { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
 
 .btn-icon.saved {
-  background: rgba(var(--ink-rgb), .08);
-  border-color: rgba(var(--ink-rgb), .30);
-  color: var(--text-1);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--volt);
 }
 
 .btn-icon .material-symbols-sharp {
@@ -758,8 +763,8 @@ button svg {
 }
 .chip.on::before,
 .filter-chip.active::before {
-  background: var(--ink-solid);
-  border-color: var(--ink-solid);
+  background: var(--volt);
+  border-color: var(--volt);
 }
 
 /* Count + time btns are compact controls — keep full contrast */
@@ -1935,6 +1940,12 @@ body.has-sidebar {
   color: var(--text-3);
 }
 
+[data-theme="dark"] .btn-icon.saved {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--volt);
+}
+
 [data-theme="dark"] input[type=range].range-slider::-webkit-slider-thumb {
   background: var(--ink-solid);
 }
@@ -1965,22 +1976,8 @@ body.has-sidebar {
   background: rgba(21, 21, 21, .96);
 }
 
-/* Active LED dot → volt */
-[data-theme="dark"] .chip.on::before,
-[data-theme="dark"] .filter-chip.active::before {
-  background: var(--volt);
-  border-color: var(--volt);
-}
-
-/* Saved icon button → volt in dark */
-[data-theme="dark"] .btn-icon.saved {
-  color: var(--volt);
-  border-color: rgba(255, 245, 95, .35);
-  background: rgba(255, 245, 95, .08);
-}
-
 /* Active nav icon → volt */
-[data-theme="dark"] .nav-item.active .material-symbols-sharp {
+.nav-item.active .material-symbols-sharp {
   color: var(--volt);
   opacity: 1;
 }

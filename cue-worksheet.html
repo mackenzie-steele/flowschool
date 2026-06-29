@@ -425,6 +425,10 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    .pol-overlay .btn-primary,
+    .pol-overlay .btn-ghost,
+    .pol-overlay .pol-close { border-radius: 8px; }
+
     /* ── Word bank drawer (fixed bottom) ── */
     .wb-drawer {
       position: fixed;
@@ -722,46 +726,44 @@
 
 const WB = {
   verbs: [
-    'Sweep','Lift','Step','Reach','Bend','Press','Pull','Push','Circle','Twist',
-    'Pivot','Hover','Land','Tap','Drag','Slide','Open','Soften','Squeeze',
-    'Rainbow','Thread','Cactus','Melt','Float','Kick','Point','Flex','Root',
-    'Spin','Lean','Bow','Stack','Hug','Roll','Drop','Rise','Shift','Plant',
-    'Ground','Anchor','Send','Draw','Spread','Fan','Bloom','Engage','Firm',
-    'Release','Ease','Relax','Yield',
-    'Lie','Extend','Keep','Cross','Grab','Turn','Look','Crawl','Lower','Rock',
-    'Place','Sit','Wrap','Bring','Unwind','Connect','Fold','Guide','Swing',
-    'Wiggle','Stay','Straighten','Stand','Lay','Take','Pick','Imagine','Pretend',
+    'Anchor','Bend','Bloom','Bow','Bring','Cactus','Circle','Connect','Crawl','Cross',
+    'Draw','Drag','Drop','Ease','Engage','Extend','Fan','Firm','Flex','Float',
+    'Fold','Ground','Grab','Guide','Hover','Hug','Imagine','Keep','Kick','Land',
+    'Lay','Lean','Lie','Lift','Look','Lower','Melt','Open','Pick','Pivot',
+    'Place','Plant','Point','Pretend','Press','Pull','Push','Rainbow','Reach','Release',
+    'Relax','Rise','Rock','Roll','Root','Send','Shift','Sit','Slide','Soften',
+    'Spin','Spread','Squeeze','Stack','Stand','Stay','Step','Straighten','Sweep','Swing',
+    'Take','Tap','Thread','Turn','Twist','Unwind','Wiggle','Wrap','Yield',
   ],
   body: [
-    'your right foot','your left foot','your right knee','your left knee',
-    'your hips','your ribs','your low ribs','your chest','your spine',
-    'your shoulders','your shoulder blades','your arms','your right arm',
-    'your left arm','your fingertips','your palms','your hands',
-    'your heels','your toes','your back toes','your belly','your low belly',
-    'the crown of your head','your gaze','your chin','your tailbone',
-    'your sit bones','your pelvis','your heart',
-    'your head','your back','your right hand','your left hand',
-    'your right leg','your left leg','your front leg','your back leg',
-    'your right ankle','your left ankle','your right wrist','your left wrist',
-    'your elbows','your shin','your knees','your bottom knee',
-    'your inner right thigh','your left shoulder','your right shoulder',
-    'your armpits','both of your knees',
+    'both of your knees','the crown of your head',
+    'your armpits','your arms','your back','your back leg','your back toes',
+    'your belly','your bottom knee','your chin','your chest',
+    'your elbows','your fingertips','your front leg','your gaze',
+    'your hands','your head','your heart','your heels','your hips',
+    'your inner right thigh','your knees',
+    'your left ankle','your left arm','your left foot','your left hand',
+    'your left knee','your left leg','your left shoulder','your left wrist',
+    'your low belly','your low ribs','your palms','your pelvis',
+    'your ribs','your right ankle','your right arm','your right foot',
+    'your right hand','your right knee','your right leg','your right shoulder',
+    'your right wrist','your shin','your shoulder blades','your shoulders',
+    'your sit bones','your spine','your tailbone','your toes',
   ],
   dirs: [
-    'to the top of the mat','to the back of the mat','between your hands',
-    'toward the ceiling','toward the floor','over your head','beside your ribs',
-    'toward your seat','forward','backward','side to side',
-    'away from the ground','into the center of the room',
-    'to the long edge of your mat','up and over your head',
-    'out to the side','down toward the ground','to the front of the room',
-    'behind you','away from each other','toward each other',
-    'up and out','in line with your shoulders','level with your hip',
-    'on your back','into your chest','toward your chest',
-    'to the right','to the left','to the right side','to the left side',
-    'out to the sides','straight','high','through',
-    'alongside your chest','back toward your heels',
-    'toward the mat','to the back of the room','off the mat',
-    'down to the ground','at a 90 degree angle',
+    'alongside your chest','at a 90 degree angle','away from each other',
+    'away from the ground','back toward your heels','backward',
+    'behind you','beside your ribs','between your hands','down to the ground',
+    'down toward the ground','forward','high','in line with your shoulders',
+    'into the center of the room','into your chest','level with your hip',
+    'off the mat','on your back','out to the side','out to the sides',
+    'over your head','side to side','straight','through',
+    'to the back of the mat','to the back of the room','to the front of the room',
+    'to the left','to the left side','to the long edge of your mat',
+    'to the right','to the right side','to the top of the mat',
+    'toward each other','toward the ceiling','toward the floor',
+    'toward the mat','toward your chest','toward your seat',
+    'up and out','up and over your head',
   ],
 };
 
@@ -1395,6 +1397,7 @@ document.addEventListener('DOMContentLoaded', () => {
       flowName = flow.name;
       rows = JSON.parse(JSON.stringify(flow.rows));
       renderRows();
+      setSaved(true);
     }
   }
 });
