@@ -62,10 +62,14 @@
     /* ── Button row ── */
     .controls-actions {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
       gap: 10px;
       margin-bottom: 12px;
+    }
+
+    .start-btn {
+      border-radius: 8px;
     }
 
     .start-btn:hover {
@@ -74,6 +78,24 @@
 
     .start-btn:active {
       transform: none;
+    }
+
+    @media (max-width: 580px) {
+      .start-btn {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 90;
+        border-radius: 0;
+        justify-content: center;
+        padding: 18px 28px;
+        box-shadow: 0 -1px 0 rgba(var(--ink-rgb), .08);
+      }
+
+      .wrap {
+        padding-bottom: 100px;
+      }
     }
 
     /* ── Ghost-small + Audio ── */
@@ -198,6 +220,10 @@
       <button class="audio-btn on" id="audio-btn" title="Toggle sound">
         <span class="material-symbols-sharp" id="audio-icon" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">volume_up</span>
       </button>
+      <button class="start-btn" id="toggle-btn">
+        <span class="material-symbols-sharp" id="toggle-icon" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">play_arrow</span>
+        <span id="toggle-label">Start</span>
+      </button>
     </div>
     <div class="controls-card">
       <div class="ctl-grid">
@@ -235,12 +261,6 @@
 
   </div>
 
-  <div class="cta-bar">
-    <button class="start-btn" id="toggle-btn">
-      <span class="material-symbols-sharp" id="toggle-icon" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">play_arrow</span>
-      <span id="toggle-label">Start</span>
-    </button>
-  </div>
 
   <script>
     // ─── STATE ───────────────────────────────────────────────────────────────────

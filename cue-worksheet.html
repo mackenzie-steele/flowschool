@@ -56,7 +56,47 @@
     .pl-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
     /* ── Worksheet toolbar ── */
-    .ws-toolbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
+    .ws-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .ws-toolbar-btns { display: flex; gap: 8px; }
+    .ws-flow-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .ws-flow-title-wrap.visible { opacity: 1; }
+    .ws-flow-title {
+      font-size: var(--fs-body);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
+    }
+    .ws-flow-title-input {
+      font-family: var(--font);
+      font-size: var(--fs-body);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(var(--ink-rgb), .30);
+      outline: none;
+      padding: 0;
+      min-width: 40px;
+      width: auto;
+    }
+    .ws-edit-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      transition: color .15s;
+      flex-shrink: 0;
+    }
+    .ws-edit-btn:hover { color: var(--text-1); }
+    .ws-edit-btn .material-symbols-sharp { font-size: 18px; }
 
     /* ── Load modal flow list ── */
     .flow-list {
@@ -120,7 +160,7 @@
     .cue-hdr,
     .cue-row {
       display: grid;
-      grid-template-columns: 40px 60px 1fr 1.3fr 1.5fr 1.4fr 40px;
+      grid-template-columns: 80px 1fr 1.3fr 1.5fr 1.4fr 36px;
       min-width: 600px;
     }
 
@@ -137,6 +177,7 @@
       font-weight: var(--weight-medium);
       padding: 10px 12px;
       border-right: 1px solid rgba(var(--ink-rgb), .10);
+      white-space: nowrap;
     }
     .col-lbl:last-child { border-right: none; }
     .col-lbl.accent { color: var(--text-1); }
@@ -151,18 +192,6 @@
     .cue-row:focus-within { background: rgba(var(--ink-rgb), .03); }
 
     /* Row number */
-    .row-num {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      color: rgba(var(--ink-rgb), .40);
-      border-right: 1px solid rgba(var(--ink-rgb), .10);
-      user-select: none;
-      padding: 0 6px;
-    }
-
     /* Cell wrapper */
     .row-cell {
       border-right: 1px solid rgba(var(--ink-rgb), .10);
@@ -228,8 +257,11 @@
       border: none;
       color: rgba(var(--ink-rgb), .20);
       cursor: pointer;
-      padding: 6px;
-      line-height: 1;
+      padding: 0;
+      width: 28px;
+      height: 28px;
+      line-height: 28px;
+      text-align: center;
       font-size: 16px;
       transition: color .12s;
     }
@@ -399,12 +431,15 @@
       bottom: 0;
       left: 224px;
       right: 0;
-      z-index: 300;
+      z-index: 200;
       background: var(--bg);
       border-top: 1px solid rgba(var(--ink-rgb), .14);
       box-shadow: 0 -6px 32px rgba(var(--ink-rgb), .07);
       transform: translateY(calc(100% - 48px));
       transition: transform .28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    [data-theme="dark"] .wb-drawer {
+      box-shadow: 0 -6px 32px rgba(0, 0, 0, .40);
     }
     .wb-drawer.open { transform: translateY(0); }
 
@@ -436,9 +471,10 @@
     .wb-drawer.open .wb-chevron { transform: rotate(180deg); }
 
     .wb-body {
-      padding: 4px 22px 20px;
+      padding: 0 22px 20px;
       max-height: 260px;
       overflow-y: auto;
+      background: var(--bg);
     }
 
     .wb-tabs {
@@ -446,6 +482,10 @@
       gap: 0;
       margin-bottom: 14px;
       border-bottom: 1px solid rgba(var(--ink-rgb), .08);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--bg);
     }
     .wb-tab {
       padding: 8px 16px;
@@ -529,12 +569,23 @@
   <!-- ── WORKSHEET TOOLBAR ────────────────────────────────────── -->
 
   <div class="ws-toolbar">
-    <button class="btn-icon" id="ws-load-btn" data-tooltip="Load saved flow">
-      <span class="material-symbols-sharp">history</span>
-    </button>
-    <button class="btn-icon" id="ws-save-btn" data-tooltip="Save">
-      <span class="material-symbols-sharp" id="ws-save-icon">bookmark</span>
-    </button>
+    <div class="ws-flow-title-wrap" id="ws-flow-title-wrap">
+      <span class="ws-flow-title" id="ws-flow-title"></span>
+      <button class="ws-edit-btn" id="ws-edit-btn" title="Rename flow">
+        <span class="material-symbols-sharp">edit</span>
+      </button>
+    </div>
+    <div class="ws-toolbar-btns">
+      <button class="btn-icon" id="ws-load-btn" data-tooltip="Load saved flow">
+        <span class="material-symbols-sharp">history</span>
+      </button>
+      <button class="btn-icon" id="ws-save-btn" data-tooltip="Save">
+        <span class="material-symbols-sharp" id="ws-save-icon">bookmark</span>
+      </button>
+      <button class="btn-icon" id="btn-pdf" data-tooltip="Copy script">
+        <span class="material-symbols-sharp">content_copy</span>
+      </button>
+    </div>
   </div>
 
   <!-- ── WORKSHEET CARD ─────────────────────────────────────────── -->
@@ -565,10 +616,6 @@
   <!-- ── CUE ACTIONS ───────────────────────────────────────────── -->
 
   <div class="cue-actions">
-    <button class="btn-primary" id="btn-pdf">
-      <span class="material-symbols-sharp">content_copy</span>
-      Copy Script
-    </button>
     <button class="btn-ghost" id="btn-pol">
       <span class="material-symbols-sharp" style="font-size:17px;margin-right:4px">record_voice_over</span>
       Practice Out Loud
@@ -718,9 +765,27 @@ const WB = {
   ],
 };
 
+// ─── PLACEHOLDER ROTATION ────────────────────────────────────────────────────
+
+const CUE_EXAMPLES = [
+  { verb: 'Hug',    body: 'both of your knees',  dir: 'into your chest' },
+  { verb: 'Extend', body: 'your bottom leg',      dir: 'long' },
+  { verb: 'Reach',  body: 'your right arm',       dir: 'over your head' },
+  { verb: 'Lower',  body: 'your chest',           dir: 'down to the ground' },
+  { verb: 'Plant',  body: 'your hands',           dir: 'alongside your chest' },
+  { verb: 'Roll',   body: 'your left foot',       dir: 'onto the ground' },
+  { verb: 'Send',   body: 'your hips',            dir: 'back towards your heels' },
+  { verb: 'Kick',   body: 'your left leg',        dir: 'straight' },
+  { verb: 'Kick',   body: 'your foot',            dir: 'toward the back of the mat' },
+  { verb: 'Wrap',   body: 'your right arm',       dir: 'around your left leg' },
+  { verb: 'Guide',  body: 'your lifted foot',     dir: 'across your right leg' },
+  { verb: 'Swing',  body: 'your right hand',      dir: 'behind you' },
+];
+const PLACEHOLDER_CUE = CUE_EXAMPLES[Math.floor(Math.random() * CUE_EXAMPLES.length)];
+
 // ─── STATE ───────────────────────────────────────────────────────────────────
 
-const INITIAL_ROWS = 8;
+const INITIAL_ROWS = 1;
 const LS_KEY = 'fs-cue-flows';
 let flowName = '';
 
@@ -736,7 +801,7 @@ let activeInput = null; // last focused .cue-input
 let polIndex = 0;
 let polScriptVisible = false;
 let wbTab = 'verbs';
-let wbOpen = false;
+let wbOpen = localStorage.getItem('fs-wb-open') !== 'false';
 
 // ─── UTILITIES ───────────────────────────────────────────────────────────────
 
@@ -809,6 +874,7 @@ function clearWorksheet() {
   initRows(INITIAL_ROWS);
   renderRows();
   flowName = '';
+  setFlowTitle('');
   showToast('Worksheet cleared.');
 }
 
@@ -816,7 +882,7 @@ function clearWorksheet() {
 
 function renderHeader() {
   const hdr = document.getElementById('cue-hdr');
-  const cols = ['#', 'In / Ex', 'Verb', 'Your Body Part', 'Direction', 'Pose Name', ''];
+  const cols = ['In / Ex', 'Verb', 'Your Body Part', 'Direction', 'Pose Name', ''];
   hdr.innerHTML = cols.map(c =>
     `<div class="col-lbl">${esc(c)}</div>`
   ).join('');
@@ -842,18 +908,20 @@ function renderRows() {
       const idx = parseInt(rowEl.dataset.idx, 10);
       const field = el.dataset.field;
       rows[idx][field] = el.value;
+      markDirty();
     });
     el.addEventListener('change', () => {
       const rowEl = el.closest('.cue-row');
       const idx = parseInt(rowEl.dataset.idx, 10);
       const field = el.dataset.field;
       rows[idx][field] = el.value;
+      markDirty();
     });
   });
 
   // Wire remove buttons
   container.querySelectorAll('.row-rm').forEach(btn => {
-    btn.addEventListener('click', () => removeRow(parseInt(btn.dataset.idx, 10)));
+    btn.addEventListener('click', () => { removeRow(parseInt(btn.dataset.idx, 10)); markDirty(); });
   });
 }
 
@@ -862,15 +930,14 @@ function buildRowHTML(row, i) {
   const previewClass = cue ? '' : ' empty';
   const previewText = cue || '—';
 
-  const numCell  = `<div class="row-num">${i + 1}</div>`;
-  const inexCell = `<div class="row-cell"><select class="inex-select" data-field="inex"><option${row.inex==='—'?' selected':''}>—</option><option${row.inex==='IN'?' selected':''}>IN</option><option${row.inex==='EX'?' selected':''}>EX</option></select></div>`;
-  const verbCell = `<div class="row-cell"><input class="cue-input verb-input" data-field="verb" value="${esc(row.verb)}" placeholder="Verb" autocomplete="off" spellcheck="false"></div>`;
-  const bodyCell = `<div class="row-cell"><input class="cue-input" data-field="body" value="${esc(row.body)}" placeholder="Your body part" autocomplete="off" spellcheck="false"></div>`;
-  const dirCell  = `<div class="row-cell"><input class="cue-input" data-field="dir" value="${esc(row.dir)}" placeholder="Direction" autocomplete="off" spellcheck="false"></div>`;
+  const inexCell =`<div class="row-cell"><select class="inex-select" data-field="inex"><option${row.inex==='—'?' selected':''}>—</option><option${row.inex==='IN'?' selected':''}>IN</option><option${row.inex==='EX'?' selected':''}>EX</option></select></div>`;
+  const verbCell = `<div class="row-cell"><input class="cue-input verb-input" data-field="verb" value="${esc(row.verb)}" placeholder="${PLACEHOLDER_CUE.verb}" autocomplete="off" spellcheck="false"></div>`;
+  const bodyCell = `<div class="row-cell"><input class="cue-input" data-field="body" value="${esc(row.body)}" placeholder="${PLACEHOLDER_CUE.body}" autocomplete="off" spellcheck="false"></div>`;
+  const dirCell  = `<div class="row-cell"><input class="cue-input" data-field="dir" value="${esc(row.dir)}" placeholder="${PLACEHOLDER_CUE.dir}" autocomplete="off" spellcheck="false"></div>`;
   const poseCell = `<div class="row-cell"><input class="cue-input pose-input" data-field="pose" value="${esc(row.pose)}" placeholder="Pose name" autocomplete="off" spellcheck="false"></div>`;
   const rmCell   = `<div class="row-rm-cell"><button class="row-rm" data-idx="${i}" title="Remove row">×</button></div>`;
 
-  return `<div class="cue-row" data-idx="${i}">${numCell}${inexCell}${verbCell}${bodyCell}${dirCell}${poseCell}${rmCell}</div>`;
+  return `<div class="cue-row" data-idx="${i}">${inexCell}${verbCell}${bodyCell}${dirCell}${poseCell}${rmCell}</div>`;
 }
 
 
@@ -993,6 +1060,8 @@ function renderFlowList() {
       flowName = entry.name;
       rows = (entry.rows || []).map(r => Object.assign(makeRow(), r));
       renderRows();
+      setSaved(true);
+      setFlowTitle(flowName);
       closeLoadModal();
       showToast(`"${flowName}" loaded.`);
     });
@@ -1010,6 +1079,97 @@ function renderFlowList() {
   });
 }
 
+function setFlowTitle(name) {
+  const wrap = document.getElementById('ws-flow-title-wrap');
+  const el   = document.getElementById('ws-flow-title');
+  if (!wrap || !el) return;
+  el.textContent = name || '';
+  wrap.classList.toggle('visible', !!name);
+}
+
+function startRename() {
+  const titleEl = document.getElementById('ws-flow-title');
+  const editBtn = document.getElementById('ws-edit-btn');
+
+  const sizer = document.createElement('span');
+  sizer.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;pointer-events:none;font-family:inherit;font-size:inherit;font-weight:inherit;letter-spacing:inherit;padding:0;border:0';
+  document.body.appendChild(sizer);
+
+  const input = document.createElement('input');
+  input.className = 'ws-flow-title-input';
+  input.value = flowName;
+
+  function syncWidth() {
+    sizer.textContent = input.value || ' ';
+    input.style.width = sizer.offsetWidth + 'px';
+  }
+  syncWidth();
+  input.addEventListener('input', syncWidth);
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'ws-edit-btn';
+  saveBtn.title = 'Save name';
+  saveBtn.innerHTML = '<span class="material-symbols-sharp">check</span>';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'ws-edit-btn';
+  cancelBtn.title = 'Cancel';
+  cancelBtn.innerHTML = '<span class="material-symbols-sharp">close</span>';
+
+  titleEl.replaceWith(input);
+  editBtn.replaceWith(saveBtn);
+  saveBtn.after(cancelBtn);
+  input.focus();
+  input.select();
+
+  function restore(newName) {
+    sizer.remove();
+    const span = document.createElement('span');
+    span.className = 'ws-flow-title';
+    span.id = 'ws-flow-title';
+    span.textContent = newName;
+    input.replaceWith(span);
+    saveBtn.replaceWith(editBtn);
+    cancelBtn.remove();
+  }
+
+  function commit() {
+    const newName = input.value.trim();
+    if (newName && newName !== flowName) {
+      const store = getFlowStore();
+      if (store[flowName]) {
+        store[newName] = { ...store[flowName], name: newName };
+        delete store[flowName];
+        setFlowStore(store);
+      }
+      flowName = newName;
+    }
+    restore(flowName);
+  }
+
+  function cancel() {
+    restore(flowName);
+  }
+
+  saveBtn.addEventListener('click', commit);
+  cancelBtn.addEventListener('click', cancel);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+  });
+}
+
+function setSaved(saved) {
+  const icon = document.getElementById('ws-save-icon');
+  const btn  = document.getElementById('ws-save-btn');
+  icon.style.fontVariationSettings = saved ? "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20" : '';
+  btn.classList.toggle('saved', saved);
+}
+
+function markDirty() {
+  setSaved(false);
+}
+
 function saveToLocal(name) {
   flowName = name;
   try {
@@ -1017,14 +1177,7 @@ function saveToLocal(name) {
     store[name] = { name, rows, savedAt: new Date().toISOString() };
     setFlowStore(store);
     showToast('Flow saved.');
-    const icon = document.getElementById('ws-save-icon');
-    const btn  = document.getElementById('ws-save-btn');
-    icon.style.fontVariationSettings = "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20";
-    btn.classList.add('saved');
-    setTimeout(() => {
-      icon.style.fontVariationSettings = '';
-      btn.classList.remove('saved');
-    }, 2000);
+    setSaved(true);
   } catch(e) {
     showToast('Could not save — storage may be full.');
   }
@@ -1140,15 +1293,16 @@ function init() {
   renderRows();
 
   // Row actions
-  document.getElementById('btn-add-row').addEventListener('click', addRow);
-  document.getElementById('btn-remove-row').addEventListener('click', removeLastRow);
-  document.getElementById('btn-clear').addEventListener('click', clearWorksheet);
+  document.getElementById('btn-add-row').addEventListener('click', () => { addRow(); markDirty(); });
+  document.getElementById('btn-remove-row').addEventListener('click', () => { removeLastRow(); markDirty(); });
+  document.getElementById('btn-clear').addEventListener('click', () => { clearWorksheet(); markDirty(); });
 
   // Check my cues
   document.getElementById('btn-pdf').addEventListener('click', copyScript);
 
   // Export / save
   document.getElementById('ws-load-btn').addEventListener('click', openLoadModal);
+  document.getElementById('ws-edit-btn').addEventListener('click', startRename);
   document.getElementById('ws-load-modal-cancel').addEventListener('click', closeLoadModal);
   document.getElementById('ws-load-modal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeLoadModal();
@@ -1221,12 +1375,14 @@ function init() {
   // Word bank
   document.getElementById('wb-handle').addEventListener('click', () => {
     wbOpen = !wbOpen;
+    localStorage.setItem('fs-wb-open', wbOpen);
     document.getElementById('wb-drawer').classList.toggle('open', wbOpen);
   });
   document.querySelectorAll('.wb-tab').forEach(tab => {
     tab.addEventListener('click', () => switchWBTab(tab.dataset.wb));
   });
   renderWBWords();
+  document.getElementById('wb-drawer').classList.toggle('open', wbOpen);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

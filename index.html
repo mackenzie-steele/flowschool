@@ -1073,11 +1073,11 @@
       }).join('');
 
       var dataPts = data.map(function (d, i) { var p = pt(d.score, i); return p[0] + ',' + p[1]; }).join(' ');
-      var dataSVG = '<polygon points="' + dataPts + '" fill="rgba(var(--ink-rgb),.10)" stroke="rgba(var(--ink-rgb),.55)" stroke-width="1.5" stroke-linejoin="round"/>';
+      var dataSVG = '<polygon points="' + dataPts + '" fill="rgba(255,245,95,.15)" stroke="rgba(255,245,95,.70)" stroke-width="1.5" stroke-linejoin="round"/>';
 
       var dotsSVG = data.map(function (d, i) {
         var p = pt(d.score, i);
-        return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="2.5" fill="rgba(var(--ink-rgb),.80)"/>';
+        return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="2.5" fill="rgba(255,245,95,.90)"/>';
       }).join('');
 
       var LABEL_OFFSET = 20;

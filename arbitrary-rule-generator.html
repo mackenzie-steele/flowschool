@@ -21,6 +21,8 @@
       margin-bottom: 12px;
     }
 
+    .generate-btn { border-radius: 8px; }
+
     .count-group {
       display: flex;
       flex-direction: column;
@@ -507,12 +509,39 @@
 
     // ─── COUNT TOGGLE ────────────────────────────────────────────────────────────
 
+    function pickOneNewRule() {
+      const currentRules = currentRuleIds.map(id => RULES.find(r => r.id === id)).filter(Boolean);
+      const usedCats = new Set(currentRules.map(r => r.cat));
+      const hasStart = currentRules.some(r => r.cat === 'start');
+      const available = [...RULES]
+        .filter(r => !currentRuleIds.includes(r.id) && !(r.cat === 'start' && hasStart))
+        .sort(() => Math.random() - 0.5);
+      return available.find(r => !usedCats.has(r.cat)) || available[0] || null;
+    }
+
+    function adjustRules(newCount) {
+      if (!currentRuleIds.length) { generate(); return; }
+      const diff = newCount - currentRuleIds.length;
+      if (diff > 0) {
+        for (let i = 0; i < diff; i++) {
+          const rule = pickOneNewRule();
+          if (rule) currentRuleIds.push(rule.id);
+        }
+      } else if (diff < 0) {
+        currentRuleIds = currentRuleIds.slice(0, newCount);
+      }
+      const rules = currentRuleIds.map(id => RULES.find(r => r.id === id)).filter(Boolean);
+      rules.sort((a, b) => (a.cat === 'start' ? -1 : b.cat === 'start' ? 1 : 0));
+      renderCard(rules);
+    }
+
     document.querySelectorAll('.count-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         ruleCount = parseInt(btn.dataset.n);
         document.querySelector('#generate-btn .btn-label').textContent = ruleCount === 1 ? 'Generate Rule' : 'Generate Challenge';
+        adjustRules(ruleCount);
       });
     });
 

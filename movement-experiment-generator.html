@@ -10,39 +10,27 @@
     /* ── Controls bar ── */
     .controls-bar {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
       padding: 32px 0 0;
       margin-bottom: 16px;
-    }
-
-    .controls-filters {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
     }
 
     .filter-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 10px 8px;
-      flex: 1;
-    }
-
-    .pool-count {
-      font-size: var(--text-small);
-      color: var(--text-3);
-      margin-top: 12px;
-    }
-
-    .pool-count strong {
-      color: var(--text-2);
-      font-weight: var(--weight-semibold);
     }
 
     .shuffle-btn {
-      align-self: flex-start;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    [data-theme="dark"] .filter-chip.active::before {
+      background: #EFEFEF;
+      border-color: #EFEFEF;
     }
 
     /* ── Experiment card ── */
@@ -238,7 +226,7 @@
         padding: 28px 22px;
       }
 
-      .controls-filters {
+      .controls-bar {
         flex-direction: column;
         align-items: flex-start;
       }
@@ -279,19 +267,16 @@
   <div class="wrap">
 
     <div class="controls-bar">
-      <div class="controls-filters">
-        <div class="filter-chips" id="filter-chips">
-          <button class="filter-chip" data-tag="props">Props</button>
-          <button class="filter-chip" data-tag="floor">Floor-Based</button>
-          <button class="filter-chip" data-tag="standing">Standing</button>
-          <button class="filter-chip" data-tag="gaze">Gaze &amp; Focus</button>
-          <button class="filter-chip" data-tag="arms-hands">Arms &amp; Hands</button>
-          <button class="filter-chip" data-tag="mat-orientation">Mat Orientation</button>
-          <button class="filter-chip" data-tag="slow-somatic">Slow &amp; Somatic</button>
-          <button class="filter-chip" data-tag="sequencing">Creative Sequencing</button>
-        </div>
+      <div class="filter-chips" id="filter-chips">
+        <button class="filter-chip" data-tag="props">Props</button>
+        <button class="filter-chip" data-tag="floor">Floor-Based</button>
+        <button class="filter-chip" data-tag="standing">Standing</button>
+        <button class="filter-chip" data-tag="gaze">Gaze &amp; Focus</button>
+        <button class="filter-chip" data-tag="arms-hands">Arms &amp; Hands</button>
+        <button class="filter-chip" data-tag="mat-orientation">Mat Orientation</button>
+        <button class="filter-chip" data-tag="slow-somatic">Slow &amp; Somatic</button>
+        <button class="filter-chip" data-tag="sequencing">Creative Sequencing</button>
       </div>
-      <p class="pool-count"><strong id="pool-num">28</strong> available</p>
       <button class="shuffle-btn" id="shuffle-btn">
         <span class="material-symbols-sharp">shuffle</span>
         Shuffle
@@ -1069,9 +1054,7 @@
     }
 
     function updatePoolCount() {
-      const n = getPool().length;
-      document.getElementById('pool-num').textContent = n;
-      document.getElementById('shuffle-btn').disabled = n === 0;
+      document.getElementById('shuffle-btn').disabled = getPool().length === 0;
     }
 
     // ─── RENDER ──────────────────────────────────────────────────────────────────

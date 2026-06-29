@@ -133,16 +133,21 @@
 /* ─── 1b. DARK MODE TOKENS ───────────────────────────────────── */
 
 [data-theme="dark"] {
-  --bg:          #1C1B19;
-  --ink-rgb:     240, 237, 230;
-  --ink-solid:   #F0EDE6;
-  --paper-solid: #1C1B19;
-  --accent:      #B8A898;
-  --accent-dim:  rgba(184, 168, 152, .12);
-  --accent-border: rgba(184, 168, 152, .28);
-  --text-1:      #F0EDE6;
-  --text-2:      #C8C3B8;
-  --text-3:      #8A8680;
+  --bg:            #1B1B1B;
+  --ink-rgb:       239, 239, 239;
+  --ink-solid:     #EFEFEF;
+  --paper-solid:   #1B1B1B;
+  --surface:       #262626;
+  --surface-2:     #333333;
+  --border:        #333333;
+  --border-light:  #262626;
+  --accent:        #FFF55F;
+  --accent-dim:    rgba(255, 245, 95, .10);
+  --accent-border: rgba(255, 245, 95, .25);
+  --text-1:        #EFEFEF;
+  --text-2:        #C3C3C3;
+  --text-3:        #A5A5A5;
+  --volt:          #FFF55F;
 }
 
 [data-theme="dark"] .orb-1,
@@ -1945,19 +1950,48 @@ body.has-sidebar {
 
 /* Semi-transparent paper bg elements — need explicit dark values */
 [data-theme="dark"] .hdr {
-  background: rgba(28, 27, 25, .88);
+  background: rgba(27, 27, 27, .88);
 }
 
 [data-theme="dark"] .auth-hdr {
-  background: rgba(28, 27, 25, .88);
+  background: rgba(27, 27, 27, .88);
 }
 
 [data-theme="dark"] .sidebar-toggle {
-  background: rgba(28, 27, 25, .92);
+  background: rgba(27, 27, 27, .92);
 }
 
 [data-theme="dark"] .app-sidebar {
-  background: rgba(24, 23, 21, .96);
+  background: rgba(21, 21, 21, .96);
+}
+
+/* Active LED dot → volt */
+[data-theme="dark"] .chip.on::before,
+[data-theme="dark"] .filter-chip.active::before {
+  background: var(--volt);
+  border-color: var(--volt);
+}
+
+/* Saved icon button → volt in dark */
+[data-theme="dark"] .btn-icon.saved {
+  color: var(--volt);
+  border-color: rgba(255, 245, 95, .35);
+  background: rgba(255, 245, 95, .08);
+}
+
+/* Active nav icon → volt */
+[data-theme="dark"] .nav-item.active .material-symbols-sharp {
+  color: var(--volt);
+  opacity: 1;
+}
+
+/* Modal backdrop + card shadow — dark */
+[data-theme="dark"] .pl-modal-backdrop {
+  background: rgba(27, 27, 27, .85);
+}
+
+[data-theme="dark"] .pl-modal-card {
+  box-shadow: 0 4px 32px rgba(0, 0, 0, .50), 0 20px 60px rgba(0, 0, 0, .35);
 }
 
 /* Disabled btn text color fix in dark */

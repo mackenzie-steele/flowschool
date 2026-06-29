@@ -229,7 +229,7 @@
       padding: 14px 28px 18px;
       gap: 8px;
     }
-    .cta-bar .btn-primary { box-shadow: 0 2px 12px rgba(var(--ink-rgb), .16); }
+    .cta-bar .btn-primary { box-shadow: 0 2px 12px rgba(var(--ink-rgb), .16); border-radius: 8px; }
 
 
 /* ── Config steps ─────────────────────────────────────────── */
@@ -407,6 +407,8 @@
       text-transform: uppercase;
       letter-spacing: 0.10em;
     }
+    [data-theme="dark"] .stat-val { color: #FFF55F; }
+    [data-theme="dark"] #dur-val  { color: #EFEFEF; }
     .res-actions { display: flex; gap: 8px; align-items: center; }
 
     /* ── Playlist section cards ───────────────────────────────── */
@@ -445,9 +447,9 @@
     /* ── Song rows ────────────────────────────────────────────── */
     .song {
       display: grid;
-      grid-template-columns: 28px 1fr auto 72px auto;
+      grid-template-columns: 28px 1fr auto auto auto;
       align-items: center;
-      gap: 14px;
+      gap: 20px;
       padding: 10px 20px;
       border-bottom: 1px solid rgba(var(--ink-rgb), .06);
       transition: background .15s;
@@ -485,7 +487,7 @@
       text-overflow: ellipsis;
       margin-top: 2px;
     }
-    .song-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+    .song-meta { display: flex; flex-direction: row; align-items: center; gap: 20px; }
     .song-bpm {
       font-family: var(--font-mono);
       font-size: 11px;
@@ -501,13 +503,21 @@
       font-variant-numeric: tabular-nums;
     }
     .ebar {
-      height: 2px;
-      background: rgba(var(--ink-rgb), .08);
-      border-radius: 0;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 2.5px;
+      height: 10px;
+      flex-shrink: 0;
     }
-    .efill { height: 100%; border-radius: 0; }
-    .song-copy { display: flex; align-items: center; justify-content: flex-end; }
+    .ebar-seg {
+      width: 2px;
+      height: 10px;
+      border-radius: 1px;
+      background: rgba(var(--ink-rgb), .10);
+    }
+    .ebar-seg.on { background: rgba(var(--ink-rgb), .38); }
+    [data-theme="dark"] .ebar-seg.on { background: #FFF55F; }
+    .song-copy { display: flex; align-items: center; justify-content: flex-end; margin-left: 20px; }
 
     /* ── Save modal ───────────────────────────────────────────── */
     .pl-modal-backdrop {
@@ -576,6 +586,19 @@
       .cta-bar  { padding: 12px 16px 16px; }
     }
 
+    [data-theme="dark"] .filter-chip.active::before {
+      background: #EFEFEF;
+      border-color: #EFEFEF;
+    }
+    [data-theme="dark"] .chip.on::before {
+      background: #FFF55F;
+      border-color: #FFF55F;
+    }
+
+    [data-theme="dark"] .curve-line { stroke: #FFF55F; }
+    [data-theme="dark"] .cp-ring    { stroke: #FFF55F; fill: #1B1B1B; }
+    [data-theme="dark"] .cp-dot     { fill: #FFF55F; }
+    [data-theme="dark"] .arc-pill.on .arc-line { stroke: #FFF55F; }
   </style>
 </head>
 
@@ -906,6 +929,7 @@
 
       const line = ns('path');
       line.setAttribute('d', d); line.setAttribute('fill', 'none');
+      line.setAttribute('class', 'curve-line');
       line.setAttribute('stroke', 'rgba(var(--ink-rgb),.82)'); line.setAttribute('stroke-width', '2');
       line.setAttribute('stroke-linecap', 'round');
       line.setAttribute('shape-rendering', 'geometricPrecision');
@@ -924,12 +948,14 @@
         const ring = ns('circle');
         ring.setAttribute('cx', pt.x); ring.setAttribute('cy', pt.y);
         ring.setAttribute('r', '5'); ring.setAttribute('fill', 'var(--paper-solid)');
+        ring.setAttribute('class', 'cp-ring');
         ring.setAttribute('stroke', 'rgba(var(--ink-rgb),.70)'); ring.setAttribute('stroke-width', '1.5');
         g.appendChild(ring);
         // inner dot
         const center = ns('circle');
         center.setAttribute('cx', pt.x); center.setAttribute('cy', pt.y);
         center.setAttribute('r', '1.8'); center.setAttribute('fill', 'rgba(var(--ink-rgb),.80)');
+        center.setAttribute('class', 'cp-dot');
         g.appendChild(center);
         svg.appendChild(g);
       });
@@ -988,7 +1014,7 @@
       const sw     = isActive ? '1.8' : '1.2';
       return `<svg class="arc-pill-curve" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
     <path d="${d} L ${lp.x},${H - p} L ${fp.x},${H - p} Z" fill="${fill}"/>
-    <path d="${d}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision"/>
+    <path class="arc-line" d="${d}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision"/>
   </svg>`;
     }
 
@@ -1105,7 +1131,7 @@
         <div class="sec-hdr">
           <div class="sec-meta">
             <h4>${sec.label}</h4>
-            <span>${fmt(target)} target · ${songs.length} song${songs.length !== 1 ? 's' : ''} · ${fmt(actual)} actual</span>
+            <span>${songs.length} song${songs.length !== 1 ? 's' : ''} · ${fmt(actual)}</span>
           </div>
         </div>
         ${songs.map(s => `
@@ -1119,7 +1145,7 @@
               <span class="song-bpm">${s.bpm} BPM</span>
               <span class="song-dur">${fmt(s.dur)}</span>
             </div>
-            <div class="ebar"><div class="efill" style="width:${s.energy}%;background:${sec.color}"></div></div>
+            <div class="ebar">${[1,2,3,4,5,6,7,8].map(i => `<div class="ebar-seg${i <= Math.round(s.energy * 8 / 100) ? ' on' : ''}"></div>`).join('')}</div>
             <div class="song-copy">
               <button class="btn-icon song-copy-btn" aria-label='Copy ${s.title} by ${s.artist}' data-tooltip="Copy">
                 <span class="material-symbols-sharp">content_copy</span>
@@ -1305,7 +1331,7 @@
       S.saved = false;
       setTimeout(() => {
         renderResults(generate());
-        btn.disabled = false; label.textContent = 'Build this playlist';
+        document.getElementById('gen-btn').closest('.cta-bar').style.display = 'none';
         document.querySelector('.results').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 550);
     });
