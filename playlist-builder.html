@@ -3,6 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"light")}()</script>
+  <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Playlist Builder</title>
   <link rel="stylesheet" href="global.css">
@@ -893,7 +895,7 @@
 
       // ── Time axis labels (every 15 min) ──────────────────────
       for (let m = 0; m <= S.duration; m += 15) {
-        const x = Math.round(m / S.duration * SVG_W);
+        const x = m / S.duration * SVG_W;
         const tl = ns('text');
         tl.setAttribute('x', m === 0 ? x + 2 : (m === S.duration ? x - 2 : x));
         tl.setAttribute('y', SVG_H - 26);
@@ -908,8 +910,8 @@
       }
 
       // ── 5-minute minor ticks on baseline ─────────────────────
-      for (let m = 5; m < S.duration; m += 5) {
-        const x = Math.round(m / S.duration * SVG_W);
+      for (let m = 0; m <= S.duration; m += 5) {
+        const x = m / S.duration * SVG_W;
         const tick = ns('line');
         tick.setAttribute('x1', x); tick.setAttribute('x2', x);
         tick.setAttribute('y1', SVG_H - PAD_B + 2); tick.setAttribute('y2', SVG_H - PAD_B + 5);

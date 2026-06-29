@@ -1434,12 +1434,20 @@ input[type=range].range-slider:disabled {
 }
 
 .sidebar-logo {
-  font-size: var(--text-ui);
-  font-weight: var(--weight-bold);
-  letter-spacing: -.01em;
-  color: var(--text-1);
   text-decoration: none;
+  display: flex;
+  align-items: center;
 }
+
+.sidebar-logo-img {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.logo-dark { display: none; }
+[data-theme="dark"] .logo-light { display: none; }
+[data-theme="dark"] .logo-dark  { display: block; }
 
 /* ── Sidebar nav ── */
 .sidebar-nav {
