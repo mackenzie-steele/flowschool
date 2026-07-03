@@ -464,6 +464,10 @@
 
     <!-- Action buttons -->
     <div class="deck-actions">
+      <button class="btn-ghost" id="reset-btn">
+        <span class="material-symbols-sharp" style="font-size:16px;margin-right:6px">restart_alt</span>
+        <span id="reset-label">Reset</span>
+      </button>
       <button class="btn-primary" id="next-pose-btn">
         <span id="next-pose-label">Next Pose</span>
         <span class="material-symbols-sharp" id="next-pose-icon">arrow_forward</span>
@@ -683,32 +687,69 @@
     }
 
     // ─── TRANSITION ANIMATION ────────────────────────────────────
+    // The card-table turn, told honestly: the played pose falls toward
+    // the chain log it joins, the connected pose advances into the
+    // starting slot (it's where you now stand), and a fresh card is
+    // dealt into the empty space.
+    var animating = false;
+
     function animateTransition(callback) {
+      if (animating) return;
+      if (!('animate' in Element.prototype) ||
+          (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+        callback();
+        return;
+      }
+      animating = true;
+
       var startCard = document.getElementById('start-card');
       var destCard  = document.getElementById('dest-card');
+      var connector = document.querySelector('.deck-connector');
+      var sr = startCard.getBoundingClientRect();
+      var dr = destCard.getBoundingClientRect();
+      var dx = sr.left - dr.left;
+      var dy = sr.top - dr.top;
 
-      startCard.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
-      destCard.style.transition  = 'opacity 0.18s ease, transform 0.18s ease';
-      startCard.style.opacity    = '0';
-      startCard.style.transform  = 'translateX(-18px)';
-      destCard.style.opacity     = '0.35';
-      destCard.style.transform   = 'translateX(-10px)';
+      // played card falls toward the log below
+      var fall = startCard.animate([
+        { opacity: 1, transform: 'none' },
+        { opacity: 0, transform: 'translateY(14px) scale(.97)' }
+      ], { duration: 240, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
 
-      setTimeout(function() {
+      // connected card advances into the starting slot
+      var advance = destCard.animate([
+        { transform: 'none' },
+        { transform: 'translate(' + dx + 'px, ' + dy + 'px)' }
+      ], { duration: 320, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+
+      if (connector) {
+        connector.animate([{ opacity: 1 }, { opacity: .15 }],
+          { duration: 200, easing: 'ease', fill: 'forwards' });
+      }
+
+      advance.onfinish = function () {
         callback();
-        startCard.style.opacity  = '';
-        startCard.style.transform = '';
-        destCard.style.opacity   = '0';
-        destCard.style.transform = 'translateX(18px)';
-        setTimeout(function() {
-          destCard.style.opacity   = '';
-          destCard.style.transform = '';
-          setTimeout(function() {
-            startCard.style.transition = '';
-            destCard.style.transition  = '';
-          }, 200);
-        }, 20);
-      }, 200);
+        fall.cancel();
+        advance.cancel();
+
+        // the advanced card's pixels are seamlessly replaced by the new
+        // start card; a soft settle covers the style handoff
+        startCard.animate([{ opacity: .4 }, { opacity: 1 }],
+          { duration: 160, easing: 'ease-out' });
+
+        // a fresh card is dealt into the empty destination slot
+        var deal = destCard.animate([
+          { opacity: 0, transform: 'translateX(28px) rotate(1.2deg)' },
+          { opacity: 1, transform: 'none' }
+        ], { duration: 280, easing: 'cubic-bezier(.2,.7,.3,1)' });
+
+        if (connector) {
+          connector.animate([{ opacity: .15 }, { opacity: 1 }],
+            { duration: 280, easing: 'ease', fill: 'forwards' });
+        }
+
+        deal.onfinish = function () { animating = false; };
+      };
     }
 
     // ─── SUMMARY ─────────────────────────────────────────────────
@@ -748,6 +789,8 @@
         btn.innerHTML = '<span class="material-symbols-sharp">content_copy</span> Copy Chain';
       }, 1800);
     }
+
+    document.getElementById('reset-btn').addEventListener('click', startNewChain);
 
     function startNewChain() {
       hideSummary();

@@ -391,6 +391,30 @@
       padding: 20px 0;
     }
 
+    /* optional sections collapse to a quiet add-row until needed */
+    .cw-optional.collapsed { padding: 8px 0; }
+
+    .cw-add-row {
+      display: none;
+      align-items: center;
+      gap: 7px;
+      background: none;
+      border: none;
+      padding: 6px 0;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: var(--text-ui);
+      font-weight: var(--weight-medium);
+      color: var(--text-3);
+      transition: color var(--transition-base);
+    }
+
+    .cw-add-row .material-symbols-sharp { font-size: 15px; }
+    .cw-add-row:hover { color: var(--text-1); }
+
+    .cw-optional.collapsed .cw-add-row { display: inline-flex; }
+    .cw-optional.collapsed .cw-section-body { display: none; }
+
     .cw-section-head {
       margin-bottom: 10px;
     }
@@ -559,12 +583,27 @@
 
     .tv-notes-area::placeholder { color: var(--text-3); font-style: italic; }
 
-    .tv-notes-hint {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      letter-spacing: .05em;
-      color: var(--text-3);
-      margin-top: 10px;
+    /* note composer — hidden until "Add a Note"; same grounded box
+       language as the editor's section fields */
+    .tv-note-composer .tv-notes-area {
+      min-height: 84px;
+      background: rgba(var(--ink-rgb), .04);
+      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      transition: box-shadow var(--transition-base), background var(--transition-base);
+    }
+
+    .tv-note-composer .tv-notes-area:focus {
+      background: rgba(var(--ink-rgb), .06);
+      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .30);
+    }
+
+    .tv-note-composer-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 12px;
     }
 
     /* past teaching notes — one dated entry per teach */
@@ -753,8 +792,16 @@
 
         <div class="tv-notes">
           <span class="label-1">Take Notes</span>
-          <textarea class="tv-notes-area" id="tv-notes-area" placeholder="What worked? What didn&#8217;t? What was amazing? What should be repeated?"></textarea>
-          <p class="tv-notes-hint">Today&#8217;s note &#8212; saves as you type. Each time you teach this class, you get a fresh one.</p>
+          <button type="button" class="cw-add-row" id="add-note-btn" style="display:inline-flex">
+            <span class="material-symbols-sharp">add</span>Add a Note
+          </button>
+          <div class="tv-note-composer" id="tv-note-composer" hidden>
+            <textarea class="tv-notes-area" id="tv-notes-area" placeholder="What worked? What didn&#8217;t? What was amazing? What should be repeated?"></textarea>
+            <div class="tv-note-composer-actions">
+              <button class="btn-ghost" id="note-cancel-btn">Cancel</button>
+              <button class="btn-secondary" id="note-save-btn">Save Note</button>
+            </div>
+          </div>
           <div class="tv-notes-log" id="tv-notes-log"></div>
         </div>
       </div>
@@ -796,8 +843,8 @@
           <div class="cw-playlist">
             <span class="label-1">Playlist</span>
             <div class="cw-playlist-fields">
-              <input type="text" class="cw-playlist-input" id="cw-playlist" placeholder="The playlist for this class&#8230;" maxlength="120">
-              <input type="url" class="cw-playlist-url" id="cw-playlist-url" placeholder="Link &#8212; Spotify, Apple Music, Tidal&#8230;" maxlength="500">
+              <input type="text" class="cw-playlist-input" id="cw-playlist" placeholder="Playlist title" maxlength="120">
+              <input type="url" class="cw-playlist-url" id="cw-playlist-url" placeholder="Playlist link" maxlength="500">
             </div>
           </div>
 
@@ -851,9 +898,9 @@
     var SECTIONS = [
       { key: 'begin',      label: 'Begin In',      placeholder: 'CHILD', rows: 1 },
       { key: 'warmup',     label: 'Warm Up Flow',  placeholder: 'QPED / BIRD DOG / SL CHILD / COBRA / …', rows: 2 },
-      { key: 'transition', label: 'Transition',    placeholder: 'QUAD ROCK / step to TOM', rows: 1 },
+      { key: 'transition', label: 'Transition',    placeholder: 'QUAD ROCK / step to TOM', rows: 1, optional: true },
       { key: 'nohands',    label: 'No Hands Flow', placeholder: 'TADA / CHAIR / TWIST CHAIR / FF / …', rows: 2 },
-      { key: 'workshop',   label: 'Workshop',      placeholder: 'Demo the step up transition', rows: 1 },
+      { key: 'workshop',   label: 'Workshop',      placeholder: 'Demo the step up transition', rows: 1, optional: true },
       { key: 'peak',       label: 'Peak Flow',     placeholder: 'W2 / HANDS HEART SKAN / REV CL / HM / …', rows: 3 },
       { key: 'cooldown',   label: 'Cool Down',     placeholder: 'PIGEON / JANU / SUPINE TWIST / …', rows: 2 },
     ];
@@ -878,7 +925,6 @@
     var editingId = null;      // class open in editor (null = new)
     var editLength = 60;       // selected class length (minutes)
     var attachedIds = [];      // editor working set of story ids
-    var notesTimer = null;
     var wakeLock = null;
 
     // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -1029,14 +1075,12 @@
 
       // teaching log — today's note is open; past teaches stack below
       normalizeNotes(c);
-      var today = dayStr(new Date());
-      var todayEntry = c.notesLog.find(function (n) { return n.day === today; });
-      var notesArea = document.getElementById('tv-notes-area');
-      notesArea.value = todayEntry ? todayEntry.text : '';
-      autoGrow(notesArea);
+      document.getElementById('tv-note-composer').hidden = true;
+      document.getElementById('add-note-btn').hidden = false;
+      document.getElementById('tv-notes-area').value = '';
 
       var past = c.notesLog
-        .filter(function (n) { return n.day !== today; })
+        .slice()
         .sort(function (a, b) { return b.ts - a.ts; });
       var log = document.getElementById('tv-notes-log');
       log.innerHTML = past.map(function (n) {
@@ -1070,12 +1114,17 @@
 
     function buildEditor() {
       document.getElementById('cw-sections').innerHTML = SECTIONS.map(function (s) {
-        return '<div class="cw-section">' +
-          '<div class="cw-section-head">' +
-            '<span class="label-1">' + s.label + '</span>' +
-          '</div>' +
-          '<textarea class="cw-area" data-key="' + s.key + '" rows="' + s.rows + '" placeholder="' + s.placeholder + '"></textarea>' +
-        '</div>';
+        var head = '<div class="cw-section-head"><span class="label-1">' + s.label + '</span></div>';
+        var area = '<textarea class="cw-area" data-key="' + s.key + '" rows="' + s.rows + '" placeholder="' + s.placeholder + '"></textarea>';
+        if (s.optional) {
+          return '<div class="cw-section cw-optional" data-sec="' + s.key + '">' +
+            '<button type="button" class="cw-add-row">' +
+              '<span class="material-symbols-sharp">add</span>' + s.label +
+            '</button>' +
+            '<div class="cw-section-body">' + head + area + '</div>' +
+          '</div>';
+        }
+        return '<div class="cw-section">' + head + area + '</div>';
       }).join('');
       document.querySelectorAll('.cw-area').forEach(function (el) {
         el.addEventListener('input', function () { autoGrow(el); });
@@ -1100,7 +1149,11 @@
       el.innerHTML = attachedIds.map(function (sid) {
         var s = stories.find(function (x) { return x.id === sid; });
         if (!s) return '';
-        var label = s.starter || s.text;
+        // the teacher's own words identify the story better than its prompt
+        var words = (s.text || '').trim().split(/\s+/).filter(Boolean);
+        var label = words.length
+          ? words.slice(0, 6).join(' ') + (words.length > 6 ? '\u2026' : '')
+          : (s.starter || 'Untitled story');
         return '<div class="cw-story-chip">' +
           '<span class="cw-story-chip-text">' + esc(label) + '</span>' +
           '<button class="cw-story-chip-rm" data-id="' + sid + '" title="Detach">&#10005;</button>' +
@@ -1127,9 +1180,11 @@
         el.value = c ? (c.sections[el.dataset.key] || '') : '';
         autoGrow(el);
       });
+      syncOptionalSections();
 
       dirty = false;
-      setSaveButton('ready');
+      // an untouched existing class IS saved; a fresh one has nothing to save yet
+      setSaveButton(c ? 'saved' : 'idle');
 
       if (push) history.pushState({}, '', c ? 'your-classes.html?edit=' + id : 'your-classes.html?new=1');
       window.scrollTo(0, 0);
@@ -1156,6 +1211,9 @@
       return editingId != null ? 'your-classes.html?edit=' + editingId : 'your-classes.html?new=1';
     }
 
+    // 'saved'  → ✓ Saved, disabled (current state is committed)
+    // 'idle'   → labeled but disabled (new class, nothing to save yet)
+    // 'ready'  → labeled and enabled (unsaved changes exist)
     function setSaveButton(state) {
       var btn = document.getElementById('save-btn');
       if (state === 'saved') {
@@ -1163,7 +1221,7 @@
         btn.disabled = true;
       } else {
         btn.textContent = editingId != null ? 'Save Changes' : 'Save to Your Library';
-        btn.disabled = false;
+        btn.disabled = (state === 'idle');
       }
     }
 
@@ -1210,6 +1268,24 @@
       if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v;
       return v;
     }
+
+    // optional sections show as add-rows when empty, open when they hold content
+    function syncOptionalSections() {
+      document.querySelectorAll('.cw-optional').forEach(function (w) {
+        var area = w.querySelector('.cw-area');
+        w.classList.toggle('collapsed', !area.value.trim());
+      });
+    }
+
+    document.getElementById('cw-sections').addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.cw-add-row');
+      if (!btn) return;
+      var wrap = btn.closest('.cw-optional');
+      wrap.classList.remove('collapsed');
+      var area = wrap.querySelector('.cw-area');
+      autoGrow(area);
+      area.focus();
+    });
 
     function collectSections() {
       var out = {};
@@ -1568,6 +1644,7 @@
         el.value = (c.sections && c.sections[el.dataset.key]) || '';
         autoGrow(el);
       });
+      syncOptionalSections();
       markDirty();
       toast('Copy ready \u2014 make it yours.');
     }
@@ -1622,25 +1699,36 @@
       }
     });
 
-    // today's teaching note — saves as you type, one entry per day taught
+    // teaching notes — deliberate entries, appended to the log
     document.getElementById('tv-notes-area').addEventListener('input', function (e) {
       autoGrow(e.target);
-      clearTimeout(notesTimer);
-      notesTimer = setTimeout(function () {
-        var c = byId(currentId);
-        if (!c) return;
-        normalizeNotes(c);
-        var today = dayStr(new Date());
-        var text = e.target.value.trim();
-        var entry = c.notesLog.find(function (n) { return n.day === today; });
-        if (text) {
-          if (entry) { entry.text = text; entry.ts = Date.now(); }
-          else { c.notesLog.push({ ts: Date.now(), day: today, text: text }); }
-        } else if (entry) {
-          c.notesLog = c.notesLog.filter(function (n) { return n !== entry; });
-        }
-        persist();
-      }, 500);
+    });
+
+    document.getElementById('add-note-btn').addEventListener('click', function () {
+      this.hidden = true;
+      document.getElementById('tv-note-composer').hidden = false;
+      var area = document.getElementById('tv-notes-area');
+      autoGrow(area);
+      area.focus();
+    });
+
+    document.getElementById('note-cancel-btn').addEventListener('click', function () {
+      document.getElementById('tv-note-composer').hidden = true;
+      document.getElementById('add-note-btn').hidden = false;
+      document.getElementById('tv-notes-area').value = '';
+    });
+
+    document.getElementById('note-save-btn').addEventListener('click', function () {
+      var area = document.getElementById('tv-notes-area');
+      var text = area.value.trim();
+      if (!text) { area.focus(); return; }
+      var c = byId(currentId);
+      if (!c) return;
+      normalizeNotes(c);
+      c.notesLog.push({ ts: Date.now(), day: dayStr(new Date()), text: text });
+      persist();
+      renderTeach(currentId);
+      toast('Note added to the log.');
     });
 
     // ─── STORY PICKER ────────────────────────────────────────────────────────────
