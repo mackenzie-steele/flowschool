@@ -58,35 +58,57 @@
 
 body { opacity: 0; transition: opacity .18s; }
 
-/* ── Page layout ── */
+/* ── Page layout — standard 820 grid, editor's 640 measure inside ── */
 .profile-wrap {
   max-width: 820px;
   margin: 0 auto;
-  padding: 32px 28px 120px;
+  padding: 0 28px 120px;
 }
 
-/* ── Avatar upload ── */
-.avatar-section {
+.profile-wrap > * { max-width: 640px; }
+
+/* ── Identity header — the person is the headline ── */
+.pf-identity {
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 28px 32px;
-  margin-bottom: 12px;
+  gap: 28px;
+  padding: 16px 0 40px;
 }
 
 .avatar-preview {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: var(--surface-2); border: 1px solid var(--border);
-  object-fit: cover; flex-shrink: 0;
+  width: 96px; height: 96px; border-radius: 50%;
+  background: rgba(var(--ink-rgb), .05);
+  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .14);
+  flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.75rem; font-weight: var(--weight-regular); color: var(--accent);
+  font-size: 2rem; font-weight: var(--weight-regular); color: var(--text-2);
   overflow: hidden;
+  user-select: none;
 }
 .avatar-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
-.avatar-info { flex: 1; }
-.avatar-name { font-size: var(--text-body); font-weight: var(--weight-semibold); color: var(--text-1); margin-bottom: 4px; letter-spacing: -.01em; }
-.avatar-email { font-size: var(--text-small); color: var(--text-3); margin-bottom: 12px; }
+.avatar-info { flex: 1; min-width: 0; }
+.pf-identity .label-1 { margin-bottom: 6px; }
+
+.avatar-name {
+  font-size: var(--fs-h4);
+  font-weight: var(--weight-regular);
+  letter-spacing: -.01em;
+  line-height: var(--lh-heading);
+  color: var(--text-1);
+  margin-bottom: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.avatar-email {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--text-3);
+  margin-bottom: 14px;
+}
 
 .avatar-upload-btn {
   position: relative; display: inline-flex; align-items: center;
@@ -98,14 +120,13 @@ body { opacity: 0; transition: opacity .18s; }
 .avatar-uploading { font-size: var(--text-small); color: var(--text-3); margin-top: 8px; display: none; }
 .avatar-uploading.show { display: block; }
 
-/* ── Form card ── */
-.profile-form-card { padding: 32px; }
-
-.pf-section-label {
-  font-size: var(--text-label); font-weight: var(--weight-bold);
-  letter-spacing: var(--ls-label); text-transform: uppercase;
-  color: var(--text-3); margin-bottom: 18px; display: block;
+/* ── Sections — chromeless, hairline-divided ── */
+.pf-section {
+  padding: 36px 0;
+  border-top: 1px solid var(--border-light);
 }
+
+.pf-section-label { display: block; margin-bottom: 22px; }
 
 .pf-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
 .pf-field:last-of-type { margin-bottom: 0; }
@@ -116,20 +137,69 @@ body { opacity: 0; transition: opacity .18s; }
 }
 
 .pf-input {
-  width: 100%; background: rgba(var(--ink-rgb),.04); border: 1px solid var(--border);
+  width: 100%; background: rgba(var(--ink-rgb),.04); border: none;
+  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb),.12);
   border-radius: 0; padding: 12px 16px;
+  transition: box-shadow var(--transition-base), background var(--transition-base);
   color: var(--text-1); font-size: var(--text-body-sm); font-family: var(--font);
-  outline: none; transition: border-color .15s, background .15s;
+  outline: none;
 }
-.pf-input:focus { border-color: rgba(var(--ink-rgb),.35); background: rgba(var(--ink-rgb),.06); }
 .pf-input::placeholder { color: var(--text-3); }
 
 textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 
+.pf-input:focus {
+  outline: none;
+  background: rgba(var(--ink-rgb),.06);
+  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb),.30);
+}
+
+.pf-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.pf-row:last-child { border-bottom: none; }
+
+.pf-row-label {
+  display: block;
+  font-size: var(--text-label); font-weight: var(--weight-bold);
+  letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--text-3);
+  margin-bottom: 4px;
+}
+.pf-row-val { font-size: var(--text-body-sm); color: var(--text-2); }
+.pf-row .btn-ghost { flex-shrink: 0; }
+.pf-row .btn-ghost.danger { color: var(--danger); }
+
+.pf-chips { margin-top: 10px; }
+
+/* every action button on this page carries the CTA radius */
+.profile-wrap .btn-primary,
+.profile-wrap .btn-secondary,
+.profile-wrap .btn-ghost,
+.avatar-upload-btn,
+#email-modal .btn-primary, #email-modal .btn-ghost,
+#pass-modal .btn-primary, #pass-modal .btn-ghost,
+#delete-modal .btn-primary, #delete-modal .btn-ghost {
+  border-radius: var(--r-cta);
+}
+
+.pf-signout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px;
+}
+
 
 .pf-hint { font-size: var(--text-small); color: var(--text-3); margin-top: 5px; line-height: 1.5; }
 
-.pf-divider { height: 1px; background: var(--border-light); margin: 24px 0; }
 
 /* ── Social row ── */
 .social-field { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -151,19 +221,10 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 }
 .pf-success.show { display: block; }
 
-/* ── Form actions ── */
-.pf-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-light);
-}
-
 @media (max-width: 580px) {
-  .profile-wrap  { padding: 0 20px 60px; }
-  .avatar-section { padding: 22px 20px; gap: 16px; }
-  .profile-form-card { padding: 24px 20px; }
+  .profile-wrap { padding: 0 20px 60px; }
+  .pf-identity { gap: 18px; padding-bottom: 32px; }
+  .avatar-preview { width: 72px; height: 72px; font-size: 1.5rem; }
 }
 </style>
 </head>
@@ -172,41 +233,49 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
   <script src="lib/nav.js"></script>
 
 <main>
-<section class="hero">
-  <div class="inner">
-    <p class="page-eyebrow">Your account</p>
-    <h1>Profile</h1>
+<div class="post-bar">
+  <button class="btn-ghost" id="profile-back-btn">
+    <span class="material-symbols-sharp" style="font-size:16px;margin-right:6px">arrow_back</span>
+    Dashboard
+  </button>
+  <div class="post-edit-actions">
+    <button class="btn-ghost" id="discard-btn" disabled>Cancel</button>
+    <button class="btn-primary" id="save-btn" disabled>Save Profile</button>
   </div>
-</section>
-
+</div>
 <div class="profile-wrap">
 
-  <!-- Avatar + name -->
-  <div class="card avatar-section">
+  <!-- Identity — the page's headline -->
+  <header class="pf-identity">
     <div class="avatar-preview" id="avatar-preview">?</div>
     <div class="avatar-info">
-      <div class="avatar-name" id="avatar-name">—</div>
-      <div class="avatar-email" id="avatar-email">—</div>
-      <div class="avatar-upload-btn btn-secondary">
-        <span class="material-symbols-sharp">upload</span>
-        Upload photo
+      <p class="label-1">Your account</p>
+      <h3 class="avatar-name" id="avatar-name">&#8212;</h3>
+      <p class="avatar-email" id="avatar-email">&#8212;</p>
+      <div class="avatar-upload-btn btn-ghost sm">
+        <span class="material-symbols-sharp" style="font-size:15px">photo_camera</span>
+        Change Photo
         <input type="file" id="avatar-file" accept="image/*">
       </div>
-      <div class="avatar-uploading" id="avatar-uploading">Uploading…</div>
+      <div class="avatar-uploading" id="avatar-uploading">Uploading&#8230;</div>
     </div>
-  </div>
+  </header>
 
-  <!-- Profile form -->
-  <div class="card profile-form-card">
+  <div class="pf-error" id="pf-error"></div>
+  <div class="pf-success" id="pf-success"></div>
 
-    <div class="pf-error" id="pf-error"></div>
-    <div class="pf-success" id="pf-success"></div>
-
-    <span class="pf-section-label">About you</span>
+  <!-- About you -->
+  <section class="pf-section">
+    <span class="label-1 pf-section-label">About you</span>
 
     <div class="pf-field">
       <label class="pf-label" for="display-name">Display name</label>
       <input class="pf-input" type="text" id="display-name" placeholder="How you want to be known" autocomplete="name">
+    </div>
+
+    <div class="pf-field">
+      <label class="pf-label" for="location">Location</label>
+      <input class="pf-input" type="text" id="location" placeholder="Portland, Oregon" autocomplete="address-level2">
     </div>
 
     <div class="pf-field">
@@ -219,10 +288,11 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
       <textarea class="pf-input" id="teaching-style" placeholder="e.g. Vinyasa-based, breath-led, creative sequencing…" rows="3"></textarea>
       <p class="pf-hint">What makes your teaching yours.</p>
     </div>
+  </section>
 
-    <div class="pf-divider"></div>
-
-    <span class="pf-section-label">Links</span>
+  <!-- Links -->
+  <section class="pf-section">
+    <span class="label-1 pf-section-label">Links</span>
 
     <div class="social-field">
       <span class="material-symbols-sharp social-icon">language</span>
@@ -230,18 +300,75 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
     </div>
 
     <div class="social-field">
-      <span class="material-symbols-sharp social-icon">link</span>
+      <svg class="social-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="5"/>
+        <circle cx="12" cy="12" r="4.2"/>
+        <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/>
+      </svg>
       <input class="pf-input" type="text" id="instagram" placeholder="@yourhandle">
     </div>
+  </section>
 
-    <div class="pf-actions">
-      <button class="btn-primary" id="save-btn" disabled>Save profile</button>
-      <button class="btn-ghost" id="discard-btn" disabled>Discard</button>
+  <!-- Account -->
+  <section class="pf-section">
+    <span class="label-1 pf-section-label">Account</span>
+    <div class="pf-row">
+      <div><span class="pf-row-label">Email</span><span class="pf-row-val" id="acct-email">&#8212;</span></div>
+      <button class="btn-ghost sm" id="change-email-btn">Change</button>
     </div>
+    <div class="pf-row">
+      <div><span class="pf-row-label">Password</span><span class="pf-row-val">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span></div>
+      <button class="btn-ghost sm" id="change-pass-btn">Change</button>
+    </div>
+    <div class="pf-row">
+      <div><span class="pf-row-label">Delete account</span><span class="pf-row-val">Removes your profile from our servers. Your work on this device stays yours.</span></div>
+      <button class="btn-ghost sm danger" id="delete-acct-btn">Delete&#8230;</button>
+    </div>
+  </section>
 
-  </div>
+  <button class="btn-secondary pf-signout" id="signout-btn">
+    <span class="material-symbols-sharp" style="font-size:17px">logout</span>
+    Sign Out
+  </button>
 
 </div><!-- /.profile-wrap -->
+
+<div class="modal-backdrop" id="email-modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3>Change email</h3>
+    <p class="modal-hint">We&#8217;ll send a confirmation link to the new address.</p>
+    <input type="email" class="modal-input" id="new-email" placeholder="new@email.com" autocomplete="email">
+    <div class="modal-actions">
+      <button class="btn-ghost" id="email-cancel">Cancel</button>
+      <button class="btn-primary" id="email-confirm">Send Confirmation</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="pass-modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3>Change password</h3>
+    <p class="modal-hint">At least 8 characters.</p>
+    <input type="password" class="modal-input" id="new-pass" placeholder="New password" autocomplete="new-password">
+    <input type="password" class="modal-input" id="new-pass2" placeholder="Repeat it" autocomplete="new-password" style="margin-top:10px">
+    <div class="modal-actions">
+      <button class="btn-ghost" id="pass-cancel">Cancel</button>
+      <button class="btn-primary" id="pass-confirm">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="delete-modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3>Delete your account?</h3>
+    <p class="modal-hint">This removes your profile and photo from our servers and signs you out. Classes, stories, and everything else saved on this device stays yours. Type <strong>DELETE</strong> to confirm.</p>
+    <input type="text" class="modal-input" id="delete-confirm-input" placeholder="DELETE" autocomplete="off" spellcheck="false">
+    <div class="modal-actions">
+      <button class="btn-ghost" id="delete-cancel">Cancel</button>
+      <button class="btn-primary" id="delete-confirm" disabled>Delete Account</button>
+    </div>
+  </div>
+</div>
 
 </main>
 
@@ -260,23 +387,27 @@ async function init() {
   currentUser = user;
 
   document.getElementById('avatar-email').textContent = user.email;
+  document.getElementById('acct-email').textContent = user.email;
   document.body.style.opacity = '1';
 
   // Load profile
   const { data: profile } = await db
     .from('profiles')
-    .select('display_name, bio, teaching_style, avatar_url, website, instagram')
+    .select('display_name, location, bio, teaching_style, avatar_url, website, instagram')
     .eq('id', user.id)
     .single();
 
   if (profile) {
     setFields(profile);
     originalData = { ...profile };
+    // the nav reads this cache for the identity block
+    localStorage.setItem('fs-display-name', profile.display_name || '');
   }
 }
 
 function setFields(p) {
   document.getElementById('display-name').value  = p.display_name    || '';
+  document.getElementById('location').value       = p.location        || '';
   document.getElementById('bio').value            = p.bio             || '';
   document.getElementById('teaching-style').value = p.teaching_style  || '';
   document.getElementById('website').value        = p.website         || '';
@@ -295,23 +426,47 @@ function setFields(p) {
 
 // ─── AVATAR UPLOAD ───────────────────────────────────────────────────────────
 
+// downscale to 512px jpeg before upload — faster, cheaper, kinder to phones
+async function processAvatar(file) {
+  const img = await createImageBitmap(file);
+  const max = 512;
+  const scale = Math.min(1, max / Math.max(img.width, img.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(img.width * scale));
+  canvas.height = Math.max(1, Math.round(img.height * scale));
+  canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+  return await new Promise((res, rej) =>
+    canvas.toBlob(b => b ? res(b) : rej(new Error('encode failed')), 'image/jpeg', 0.85));
+}
+
 document.getElementById('avatar-file').addEventListener('change', async e => {
   const file = e.target.files[0];
+  e.target.value = '';
   if (!file || !currentUser) return;
+  if (!file.type.startsWith('image/')) { showError('That file isn\u2019t an image.'); return; }
+  if (file.size > 20 * 1024 * 1024) { showError('That photo is too large \u2014 try one under 20MB.'); return; }
 
   const uploading = document.getElementById('avatar-uploading');
   uploading.classList.add('show');
 
-  const ext      = file.name.split('.').pop();
-  const path     = `${currentUser.id}/avatar.${ext}`;
+  let blob;
+  try { blob = await processAvatar(file); }
+  catch (err) {
+    console.error('avatar processing failed:', err);
+    uploading.classList.remove('show');
+    showError('Couldn\u2019t read that photo \u2014 try a different image.');
+    return;
+  }
 
+  const path = `${currentUser.id}/avatar.jpg`;
   const { error: uploadError } = await db.storage
     .from('avatars')
-    .upload(path, file, { upsert: true });
+    .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
 
   if (uploadError) {
+    console.error('avatar upload failed:', uploadError);
     uploading.classList.remove('show');
-    showError('Photo upload failed. Make sure the "avatars" bucket exists in Supabase Storage.');
+    showError('Couldn\u2019t upload that photo. Give it another try in a moment.');
     return;
   }
 
@@ -320,7 +475,7 @@ document.getElementById('avatar-file').addEventListener('change', async e => {
   // Save avatar_url to profile
   await db.from('profiles').upsert({ id: currentUser.id, avatar_url: publicUrl });
 
-  document.getElementById('avatar-preview').innerHTML = `<img src="${publicUrl}" alt="Profile photo">`;
+  document.getElementById('avatar-preview').innerHTML = `<img src="${publicUrl}?t=${Date.now()}" alt="Profile photo">`;
   uploading.classList.remove('show');
   showSuccess('Photo updated.');
 });
@@ -329,11 +484,12 @@ document.getElementById('avatar-file').addEventListener('change', async e => {
 
 // ─── DIRTY STATE ─────────────────────────────────────────────────────────────
 
-const FIELD_IDS = ['display-name','bio','teaching-style','website','instagram'];
+const FIELD_IDS = ['display-name','location','bio','teaching-style','website','instagram'];
 
 function getCurrentValues() {
   return {
     display_name:   document.getElementById('display-name').value.trim(),
+    location:       document.getElementById('location').value.trim(),
     bio:            document.getElementById('bio').value.trim(),
     teaching_style: document.getElementById('teaching-style').value.trim(),
     website:        document.getElementById('website').value.trim(),
@@ -345,6 +501,7 @@ function isDirty() {
   const cur = getCurrentValues();
   return (
     cur.display_name   !== (originalData.display_name   || '') ||
+    cur.location       !== (originalData.location        || '') ||
     cur.bio            !== (originalData.bio             || '') ||
     cur.teaching_style !== (originalData.teaching_style  || '') ||
     cur.website        !== (originalData.website         || '') ||
@@ -372,11 +529,19 @@ document.getElementById('save-btn').addEventListener('click', async () => {
 
   const vals = getCurrentValues();
 
+  // canonical forms: links get a scheme, instagram becomes @handle
+  if (vals.website && !/^https?:\/\//i.test(vals.website)) vals.website = 'https://' + vals.website;
+  if (vals.instagram) {
+    const m = vals.instagram.match(/(?:instagram\.com\/)?@?([A-Za-z0-9._]+)/);
+    vals.instagram = m ? '@' + m[1] : vals.instagram;
+  }
+
   const { error } = await db
     .from('profiles')
     .upsert({
       id: currentUser.id,
       display_name:   vals.display_name,
+      location:       vals.location,
       bio:            vals.bio,
       teaching_style: vals.teaching_style,
       website:        vals.website,
@@ -389,12 +554,13 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     btn.disabled = false;
   } else {
     originalData = { ...vals };
-    document.getElementById('avatar-name').textContent = vals.display_name || currentUser.email.split('@')[0];
+    localStorage.setItem('fs-display-name', vals.display_name || '');
+    setFields(originalData); // reflect canonical forms back into the inputs
     showSuccess('Profile saved.');
     updateButtons();
   }
 
-  btn.textContent = 'Save profile';
+  btn.textContent = 'Save Profile';
 });
 
 // ─── DISCARD ─────────────────────────────────────────────────────────────────
@@ -417,6 +583,103 @@ function showSuccess(msg) {
   el.textContent = msg; el.classList.add('show');
   document.getElementById('pf-error').classList.remove('show');
 }
+// ─── UNSAVED-CHANGES GUARD ───────────────────────────────────────────────────
+
+window.addEventListener('beforeunload', e => {
+  if (isDirty()) { e.preventDefault(); e.returnValue = ''; }
+});
+
+// ─── ACCOUNT ─────────────────────────────────────────────────────────────────
+
+function openModal(id) { document.getElementById(id).hidden = false; }
+function closeModal(id) { document.getElementById(id).hidden = true; }
+['email-modal', 'pass-modal', 'delete-modal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.hidden = true;
+  });
+});
+
+document.getElementById('profile-back-btn').addEventListener('click', () => {
+  window.location.href = 'index.html';
+});
+
+document.getElementById('signout-btn').addEventListener('click', async () => {
+  localStorage.removeItem('fs-display-name');
+  await db.auth.signOut();
+  window.location.href = 'index.html';
+});
+
+// email
+document.getElementById('change-email-btn').addEventListener('click', () => {
+  document.getElementById('new-email').value = '';
+  openModal('email-modal');
+  document.getElementById('new-email').focus();
+});
+document.getElementById('email-cancel').addEventListener('click', () => closeModal('email-modal'));
+document.getElementById('email-confirm').addEventListener('click', async () => {
+  const email = document.getElementById('new-email').value.trim();
+  if (!email || !email.includes('@')) { document.getElementById('new-email').focus(); return; }
+  const btn = document.getElementById('email-confirm');
+  btn.disabled = true;
+  const { error } = await db.auth.updateUser({ email });
+  btn.disabled = false;
+  closeModal('email-modal');
+  if (error) { console.error(error); showError('Couldn\u2019t start the email change. Try again in a moment.'); }
+  else showSuccess('Check ' + email + ' to confirm the change.');
+});
+
+// password
+document.getElementById('change-pass-btn').addEventListener('click', () => {
+  document.getElementById('new-pass').value = '';
+  document.getElementById('new-pass2').value = '';
+  openModal('pass-modal');
+  document.getElementById('new-pass').focus();
+});
+document.getElementById('pass-cancel').addEventListener('click', () => closeModal('pass-modal'));
+document.getElementById('pass-confirm').addEventListener('click', async () => {
+  const a = document.getElementById('new-pass').value;
+  const b = document.getElementById('new-pass2').value;
+  if (a.length < 8) { showError('Passwords need at least 8 characters.'); return; }
+  if (a !== b) { showError('Those passwords don\u2019t match.'); return; }
+  const btn = document.getElementById('pass-confirm');
+  btn.disabled = true;
+  const { error } = await db.auth.updateUser({ password: a });
+  btn.disabled = false;
+  closeModal('pass-modal');
+  if (error) { console.error(error); showError('Couldn\u2019t update the password. Try again in a moment.'); }
+  else showSuccess('Password updated.');
+});
+
+// delete — typed confirmation
+document.getElementById('delete-acct-btn').addEventListener('click', () => {
+  document.getElementById('delete-confirm-input').value = '';
+  document.getElementById('delete-confirm').disabled = true;
+  openModal('delete-modal');
+  document.getElementById('delete-confirm-input').focus();
+});
+document.getElementById('delete-cancel').addEventListener('click', () => closeModal('delete-modal'));
+document.getElementById('delete-confirm-input').addEventListener('input', function () {
+  document.getElementById('delete-confirm').disabled = this.value.trim() !== 'DELETE';
+});
+document.getElementById('delete-confirm').addEventListener('click', async () => {
+  const btn = document.getElementById('delete-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Deleting\u2026';
+  try {
+    const uid = currentUser.id;
+    const { data: files } = await db.storage.from('avatars').list(uid);
+    if (files && files.length) {
+      await db.storage.from('avatars').remove(files.map(f => uid + '/' + f.name));
+    }
+    await db.from('profiles').delete().eq('id', uid);
+  } catch (err) { console.error('account cleanup:', err); }
+  localStorage.removeItem('fs-display-name');
+  await db.auth.signOut();
+  window.location.href = 'index.html';
+});
+
+// ─── MESSAGES ────────────────────────────────────────────────────────────────
+
 function clearMessages() {
   document.getElementById('pf-error').classList.remove('show');
   document.getElementById('pf-success').classList.remove('show');

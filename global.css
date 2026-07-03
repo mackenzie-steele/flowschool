@@ -827,6 +827,13 @@ button svg {
 
 /* ─── 9. CHIPS / TOGGLE SELECTORS ────────────────────────────── */
 
+/* the row that holds a set of chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 8px;
+}
+
 .filter-chip,
 .chip,
 .count-btn,
@@ -1301,7 +1308,7 @@ input[type=range].range-slider:disabled {
 .nav-avatar-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
   text-decoration: none;
 }
 
@@ -1325,9 +1332,25 @@ input[type=range].range-slider:disabled {
   border-color: rgba(var(--ink-rgb), .32);
 }
 
+.nav-user-id {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
 .nav-user-name {
   font-size: var(--text-small);
-  color: var(--text-2);
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.nav-user-email {
+  font-size: 11px;
+  color: var(--text-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1355,7 +1378,10 @@ input[type=range].range-slider:disabled {
 
 @media (prefers-reduced-motion: no-preference) {
   main {
-    animation: pageEnter .38s cubic-bezier(.2, .6, 0, 1) both;
+    /* fill "backwards", not "both": a retained fill keeps a live
+       transform on main forever, and a transformed ancestor kills
+       backdrop-filter (the bars' glass) in Chromium */
+    animation: pageEnter .38s cubic-bezier(.2, .6, 0, 1) backwards;
   }
 }
 
@@ -1724,24 +1750,6 @@ input[type=range].range-slider:disabled {
   text-decoration: none;
   display: flex;
   align-items: center;
-}
-
-.nav-signout-btn {
-  display: block;
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 5px 4px;
-  font-family: var(--font);
-  font-size: var(--text-small);
-  color: var(--text-3);
-  text-align: left;
-  cursor: pointer;
-  transition: color var(--transition-base);
-}
-
-.nav-signout-btn:hover {
-  color: var(--text-1);
 }
 
 /* ── Theme switch in nav ── */
@@ -2290,9 +2298,9 @@ body.has-sidebar {
   height: 81px;
   padding: 0 24px;
   margin-bottom: 40px;
-  background: rgba(var(--paper-rgb), .52);
-  backdrop-filter: blur(52px) saturate(180%);
-  -webkit-backdrop-filter: blur(52px) saturate(180%);
+  background: rgba(var(--paper-rgb), .48);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
   border-bottom: 1px solid rgba(var(--ink-rgb), .09);
 }
 
@@ -2300,6 +2308,17 @@ body.has-sidebar {
 
 .post-edit-actions { display: flex; align-items: center; gap: 14px; }
 .post-edit-actions .btn-primary { border-radius: var(--r-cta); }
+
+/* desktop: heavier material — large type under a tall bar needs more
+   blur AND a denser fill before it stops being readable (the
+   apple/tidal look); mobile keeps the lighter mix */
+@media (min-width: 769px) {
+  .post-bar {
+    background: rgba(var(--paper-rgb), .52);
+    backdrop-filter: blur(48px) saturate(190%);
+    -webkit-backdrop-filter: blur(48px) saturate(190%);
+  }
+}
 
 @media (max-width: 768px) {
   /* stay below the floating sidebar toggle; natural height on mobile */

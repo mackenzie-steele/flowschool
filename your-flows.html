@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
+  <style>html{background:#1B1B1B;color-scheme:dark}html[data-theme="light"]{background:#F5F4F0;color-scheme:light}</style>
+  <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Flows — Flow School</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <link rel="stylesheet" href="global.css">
+  <style>
+    /* display:flex components would defeat the hidden attribute */
+    [hidden] { display: none !important; }
+
+    /* ── Library bar ── */
+    .library-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .library-bar .search-wrap { flex: 1; }
+    .library-bar .btn-primary { flex-shrink: 0; }
+
+    .library-bar .btn-primary {
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: var(--r-cta);
+    }
+
+    /* ── Index — one list, typed by tags ── */
+    /* ── Filter row — same pattern as the shorthand library ── */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+
+    .filter-row::-webkit-scrollbar { display: none; }
+
+    .result-count {
+      margin-left: auto;
+      font-size: var(--text-small);
+      color: var(--text-3);
+      font-weight: var(--weight-semibold);
+      white-space: nowrap;
+    }
+
+    .flow-filter-empty {
+      padding: 44px 0;
+      text-align: center;
+    }
+
+    .flow-filter-empty p {
+      font-size: var(--text-body-sm);
+      color: var(--text-3);
+      max-width: 44ch;
+      margin: 0 auto 18px;
+      line-height: 1.65;
+    }
+
+    .flow-tag {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-2);
+      border: 1px solid rgba(var(--ink-rgb), .18);
+      padding: 3px 8px;
+      user-select: none;
+    }
+
+    /* ── Flow cards — blocks that click into a class ── */
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .flow-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(var(--ink-rgb), .13);
+      padding: 18px 20px 16px;
+      cursor: pointer;
+      transition: border-color var(--transition-base);
+    }
+
+    .flow-card:hover { border-color: rgba(var(--ink-rgb), .32); }
+
+    .fc-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .flow-more-btn { flex-shrink: 0; margin: -6px -8px 0 0; }
+
+    .fc-title {
+      font-size: var(--fs-h5);
+      font-weight: var(--weight-regular);
+      letter-spacing: -.01em;
+      line-height: var(--lh-heading);
+      color: var(--text-1);
+      margin-bottom: 12px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .fc-text {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .03em;
+      line-height: 1.7;
+      color: var(--text-2);
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      margin-bottom: 14px;
+      flex: 1;
+    }
+
+    .fc-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .05em;
+      color: var(--text-3);
+      border-top: 1px solid var(--border-light);
+      padding-top: 12px;
+    }
+
+    .fl-menu {
+      position: absolute;
+      top: 46px;
+      right: 12px;
+      z-index: 6;
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+      background: var(--paper-solid);
+      border: 1px solid rgba(var(--ink-rgb), .16);
+      border-top-color: rgba(var(--ink-rgb), .30);
+      box-shadow: 0 4px 24px rgba(var(--ink-rgb), .10);
+      animation: fadeUp .14s ease both;
+    }
+
+    .fl-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: var(--text-ui);
+      color: var(--text-2);
+      text-align: left;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .fl-menu-item:hover { background: rgba(var(--ink-rgb), .05); color: var(--text-1); }
+    .fl-menu-item .material-symbols-sharp { font-size: 16px; color: var(--text-3); }
+    .fl-menu-item:hover .material-symbols-sharp { color: var(--text-2); }
+
+    .fl-menu-item.armed,
+    .fl-menu-item.armed:hover { color: var(--danger); }
+    .fl-menu-item.armed .material-symbols-sharp,
+    .fl-menu-item.armed:hover .material-symbols-sharp { color: var(--danger); }
+
+    /* ── Editor ── */
+    .fl-editor { max-width: 640px; position: relative; }
+
+    .fl-title-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 0 0 18px;
+      color: var(--text-1);
+      font-family: var(--font);
+      font-size: var(--fs-h4);
+      font-weight: var(--weight-regular);
+      letter-spacing: -.01em;
+      line-height: var(--lh-heading);
+    }
+
+    .fl-title-input::placeholder { color: var(--text-3); }
+
+    .fl-section { padding: 20px 0; }
+
+    .fl-section .label-1 { display: block; margin-bottom: 14px; }
+
+    /* collapsed type — a tag, not a control panel */
+    .fl-typebar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 2px 0 6px;
+    }
+
+    .fl-type-change {
+      background: none;
+      border: none;
+      padding: 2px 0;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: var(--text-small);
+      color: var(--text-3);
+      transition: color var(--transition-base);
+    }
+
+    .fl-type-change:hover { color: var(--text-1); }
+
+    /* section head with a live counter */
+    .fl-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .fl-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .05em;
+      color: var(--text-3);
+      white-space: nowrap;
+    }
+
+    /* where this flow lives */
+    .fl-class-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border-light);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .fl-class-row:last-child { border-bottom: none; }
+
+    .fl-class-title {
+      font-size: var(--text-ui);
+      color: var(--text-1);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      transition: opacity var(--transition-base);
+    }
+
+    .fl-class-row:hover .fl-class-title { opacity: .65; }
+
+    .fl-class-meta {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    .fl-usedin-empty {
+      font-size: var(--text-body-sm);
+      color: var(--text-3);
+    }
+
+    /* type picker — the taxonomy, selectable */
+    .fl-types {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .fl-types { grid-template-columns: 1fr; }
+    }
+
+    .fl-type {
+      display: block;
+      text-align: left;
+      background: none;
+      border: 1px solid rgba(var(--ink-rgb), .13);
+      padding: 13px 15px;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: border-color var(--transition-base), background var(--transition-base);
+    }
+
+    .fl-type:hover { border-color: rgba(var(--ink-rgb), .30); }
+
+    .fl-type.on {
+      border-color: rgba(var(--ink-rgb), .55);
+      background: rgba(var(--ink-rgb), .04);
+    }
+
+    .fl-type-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--text-ui);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
+      margin-bottom: 4px;
+    }
+
+    .fl-type-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(var(--ink-rgb), .18);
+      flex-shrink: 0;
+      transition: background var(--transition-base);
+    }
+
+    .fl-type.on .fl-type-dot { background: var(--volt); }
+
+    .fl-type-desc {
+      display: block;
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-3);
+    }
+
+    /* the writing field — grounded, like the class editor */
+    .fl-area {
+      width: 100%;
+      min-height: 96px;
+      display: block;
+      background: rgba(var(--ink-rgb), .04);
+      border: none;
+      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      color: var(--text-1);
+      font-family: var(--font);
+      font-size: var(--fs-body);
+      line-height: 1.7;
+      outline: none;
+      resize: none;
+      overflow: hidden;
+      transition: box-shadow var(--transition-base), background var(--transition-base);
+    }
+
+    .fl-area:focus {
+      background: rgba(var(--ink-rgb), .06);
+      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .30);
+    }
+
+    .fl-area::placeholder { color: rgba(var(--ink-rgb), .30); }
+
+    /* ── Shorthand suggest (same contract as the class editor) ── */
+    .sh-suggest {
+      position: absolute;
+      z-index: 5;
+      min-width: 230px;
+      max-width: 320px;
+      background: var(--paper-solid);
+      border: 1px solid rgba(var(--ink-rgb), .16);
+      border-top-color: rgba(var(--ink-rgb), .30);
+      box-shadow: 0 4px 24px rgba(var(--ink-rgb), .10);
+      animation: fadeUp .14s ease both;
+    }
+
+    .sh-row { display: flex; align-items: baseline; gap: 12px; padding: 8px 12px; cursor: pointer; }
+    .sh-row.sel, .sh-row:hover { background: rgba(var(--ink-rgb), .05); }
+    .sh-code { flex-shrink: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: .02em; color: var(--text-1); }
+    .sh-full { font-size: 11px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sh-hint {
+      display: flex; gap: 14px; padding: 6px 12px;
+      border-top: 1px solid var(--border-light);
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em;
+      color: var(--text-3); user-select: none;
+    }
+  </style>
+</head>
+
+<body class="has-sidebar">
+
+  <script src="lib/nav.js"></script>
+  <script src="data/shorthand.js"></script>
+  <script src="lib/toast.js"></script>
+  <script src="lib/confirm-delete.js"></script>
+  <div class="toast" id="toast"></div>
+
+  <main>
+
+  <!-- ── LIST VIEW ── -->
+  <div id="list-view">
+    <section class="hero">
+      <div class="inner">
+        <p class="label-1">The building blocks.</p>
+        <h3>Your Flows</h3>
+        <p>The small sequences you reach for again and again. Name them, keep them, and build your classes out of them.</p>
+      </div>
+    </section>
+
+    <div class="wrap">
+      <div class="library-bar" id="library-bar">
+        <div class="search-wrap">
+          <span class="search-icon"><span class="material-symbols-sharp">search</span></span>
+          <input type="text" class="search-input" id="flow-search" placeholder="Search your flows&#8230;" autocomplete="off">
+          <button class="search-clear hidden" id="flow-search-clear" aria-label="Clear search">&#215;</button>
+        </div>
+        <button class="btn-primary" id="new-flow-btn">
+          <span class="material-symbols-sharp" style="font-size:19px">add</span>
+          New Flow
+        </button>
+      </div>
+      <div class="filter-row" id="flow-filter"></div>
+      <div id="flow-index"></div>
+    </div>
+  </div>
+
+  <!-- ── EDIT VIEW ── -->
+  <div id="edit-view" hidden>
+    <div class="post-bar">
+      <button class="btn-ghost" id="editor-back-btn">
+        <span class="material-symbols-sharp" style="font-size:16px;margin-right:6px">arrow_back</span>
+        Your Flows
+      </button>
+      <div class="post-edit-actions">
+        <button class="btn-ghost" id="cancel-btn">Cancel</button>
+        <button class="btn-primary" id="save-btn">Save to Your Library</button>
+      </div>
+    </div>
+    <div class="wrap" style="padding-top: 0;">
+
+      <div class="fl-editor">
+        <input type="text" class="fl-title-input" id="fl-title" placeholder="Name your flow&#8230;" maxlength="120">
+
+        <div class="fl-typebar" id="fl-typebar" hidden>
+          <span class="flow-tag" id="fl-typebar-tag"></span>
+          <button type="button" class="fl-type-change" id="fl-type-change">Change</button>
+        </div>
+
+        <div class="fl-section" id="fl-types-wrap">
+          <span class="label-1">What kind of flow?</span>
+          <div class="fl-types" id="fl-types"></div>
+        </div>
+
+        <div class="fl-section">
+          <div class="fl-head">
+            <span class="label-1">The Flow</span>
+            <span class="fl-count" id="fl-count" hidden></span>
+          </div>
+          <textarea class="fl-area" id="fl-area" rows="3" placeholder="SEATED TWIST / BOAT / LOW BOAT / TWIST BOAT"></textarea>
+        </div>
+
+        <div class="fl-section" id="fl-usedin" hidden>
+          <span class="label-1">In Your Classes</span>
+          <div id="fl-usedin-list"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── DISCARD GUARD ── -->
+  <div class="modal-backdrop" id="discard-modal" hidden>
+    <div class="modal-card">
+      <h3>Discard changes?</h3>
+      <p class="modal-hint">Your edits haven&#8217;t been saved.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="discard-keep">Keep Editing</button>
+        <button class="btn-primary" id="discard-yes">Discard</button>
+      </div>
+    </div>
+  </div>
+
+  </main>
+
+  <script>
+    // ─── DATA ────────────────────────────────────────────────────────────────────
+
+    var LS_KEY = 'flowschool_flows';
+
+    // the taxonomy, in class order
+    var FLOW_TYPES = [
+      { key: 'warmup',   name: 'Warm Up Flow',      desc: 'Begin the class connected to the earth.' },
+      { key: 'bridge',   name: 'Bridge Flow',       desc: 'Great for the middle of a class — bridging the warm up and the peak.' },
+      { key: 'nohands',  name: 'No Hands Flow',     desc: 'Standing flows without your hands on the ground.' },
+      { key: 'peak',     name: 'Peak Flow',         desc: 'Every body position, moving in all directions — on and off the ground.' },
+      { key: 'workshop', name: 'Mid Class Workshop', desc: 'Teach the small things that make a big difference.' },
+      { key: 'slomo',    name: 'Slo Mo Flow',       desc: 'Think “slow and strong” — one-ish times per side.' },
+    ];
+
+    function typeOf(key) {
+      return FLOW_TYPES.find(function (t) { return t.key === key; });
+    }
+
+    function loadFlows() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch (_) { return []; }
+    }
+
+    var flows = loadFlows();
+
+    function persist() {
+      localStorage.setItem(LS_KEY, JSON.stringify(flows));
+    }
+
+    function byId(id) {
+      return flows.find(function (f) { return f.id === id; });
+    }
+
+    function esc(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function poseCount(text) {
+      return (text || '').split(/[\/\n]/).map(function (p) { return p.trim(); }).filter(Boolean).length;
+    }
+
+    function fmtDate(ts) {
+      return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // ─── STATE ───────────────────────────────────────────────────────────────────
+
+    var editingId = null;
+    var editType = null;
+    var dirty = false;
+    var pendingDiscard = null;
+
+    // ─── LIST ────────────────────────────────────────────────────────────────────
+
+    var TAG_NAMES = { warmup: 'Warm Up', bridge: 'Bridge', nohands: 'No Hands', peak: 'Peak', workshop: 'Workshop', slomo: 'Slo Mo' };
+    var listFilter = 'all';
+    var searchQ = '';
+
+    function renderFilter(count) {
+      var el = document.getElementById('flow-filter');
+      el.innerHTML = '<button class="filter-chip' + (listFilter === 'all' ? ' active' : '') + '" data-f="all">All</button>' +
+        FLOW_TYPES.map(function (t) {
+          return '<button class="filter-chip' + (listFilter === t.key ? ' active' : '') + '" data-f="' + t.key + '">' + TAG_NAMES[t.key] + '</button>';
+        }).join('') +
+        '<span class="result-count">' + count + ' result' + (count !== 1 ? 's' : '') + '</span>';
+    }
+
+    function renderList() {
+      var index = document.getElementById('flow-index');
+      var bar = document.getElementById('library-bar');
+
+      document.getElementById('flow-filter').hidden = !flows.length;
+      if (!flows.length) {
+        bar.hidden = true;
+        searchQ = '';
+        index.innerHTML =
+          '<div class="library-empty">' +
+          '<h4 class="library-empty-title">Classes are built from flows.</h4>' +
+          '<p class="library-empty-sub">Write the small sequences you reach for again and again &#8212; a warm up, a bridge, a peak. Name them, and build with them.</p>' +
+          '<div class="library-empty-actions">' +
+          '<button class="btn-primary" id="empty-new-btn">Write a Flow</button>' +
+          '</div>' +
+          '<div class="library-empty-ghost" aria-hidden="true">' +
+          '<div class="library-empty-ghost-row"><i></i><i></i></div>' +
+          '<div class="library-empty-ghost-row"><i></i><i></i></div>' +
+          '<div class="library-empty-ghost-row"><i></i><i></i></div>' +
+          '</div>' +
+          '</div>';
+        var btn = document.getElementById('empty-new-btn');
+        if (btn) btn.addEventListener('click', function () { showEdit(null, true); });
+        return;
+      }
+
+      bar.hidden = false;
+
+      var q = searchQ.trim().toLowerCase();
+      var list = flows
+        .filter(function (f) { return listFilter === 'all' || f.type === listFilter; })
+        .filter(function (f) {
+          if (!q) return true;
+          return (f.name || '').toLowerCase().indexOf(q) !== -1 ||
+                 (f.text || '').toLowerCase().indexOf(q) !== -1 ||
+                 (TAG_NAMES[f.type] || '').toLowerCase().indexOf(q) !== -1;
+        })
+        .sort(function (a, b) { return (b.editedAt || b.id) - (a.editedAt || a.id); });
+
+      renderFilter(list.length);
+
+      if (!list.length) {
+        if (q) {
+          index.innerHTML = '<div class="flow-filter-empty"><p>Nothing matches &#8220;' + esc(searchQ.trim()) + '&#8221;.</p></div>';
+          return;
+        }
+        var t = typeOf(listFilter);
+        index.innerHTML =
+          '<div class="flow-filter-empty">' +
+          '<p>No ' + (t ? t.name.toLowerCase() + 's' : 'flows') + ' yet.' + (t ? ' ' + t.desc : '') + '</p>' +
+          (t ? '<button class="btn-ghost" id="filter-new-btn"><span class="material-symbols-sharp" style="font-size:15px;margin-right:6px">add</span>Write a ' + t.name + '</button>' : '') +
+          '</div>';
+        var fnb = document.getElementById('filter-new-btn');
+        if (fnb) fnb.addEventListener('click', function () { showEdit(null, true, listFilter); });
+        return;
+      }
+
+      index.innerHTML = '<div class="flow-grid">' + list.map(function (f) {
+        var n = poseCount(f.text);
+        return '<div class="flow-card" data-id="' + f.id + '">' +
+          '<div class="fc-top">' +
+            '<span class="flow-tag">' + (TAG_NAMES[f.type] || f.type) + '</span>' +
+            '<button class="btn-icon flow-more-btn" data-id="' + f.id + '" title="More actions" data-tooltip="More">' +
+              '<span class="material-symbols-sharp">more_horiz</span>' +
+            '</button>' +
+          '</div>' +
+          '<span class="fc-title">' + esc(f.name || 'Untitled Flow') + '</span>' +
+          '<span class="fc-text">' + esc(f.text || '') + '</span>' +
+          '<span class="fc-meta">' + n + (n === 1 ? ' pose' : ' poses') + ' &#183; ' + fmtDate(f.editedAt || f.id) + '</span>' +
+        '</div>';
+      }).join('') + '</div>';
+
+      index.querySelectorAll('.flow-card').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+          if (e.target.closest('.flow-more-btn') || e.target.closest('.fl-menu')) return;
+          showEdit(parseInt(el.dataset.id, 10), true);
+        });
+      });
+
+      index.querySelectorAll('.flow-more-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openRowMenu(btn);
+        });
+      });
+    }
+
+    // ─── ROW MENU — duplicate / delete behind one quiet button ──────────────────
+
+    var menuEl = document.createElement('div');
+    menuEl.className = 'fl-menu';
+    menuEl.hidden = true;
+    var menuId = null;
+    var menuArmTimer = null;
+
+    function closeRowMenu() {
+      menuEl.hidden = true;
+      menuId = null;
+      clearTimeout(menuArmTimer);
+      if (menuEl.parentElement) menuEl.parentElement.removeChild(menuEl);
+    }
+
+    function renderRowMenu() {
+      menuEl.innerHTML =
+        '<button class="fl-menu-item" data-act="dup"><span class="material-symbols-sharp">content_copy</span>Duplicate</button>' +
+        '<button class="fl-menu-item" data-act="del"><span class="material-symbols-sharp">delete</span>Delete flow</button>';
+    }
+
+    function openRowMenu(btn) {
+      var row = btn.closest('.flow-card');
+      if (menuId === parseInt(btn.dataset.id, 10) && !menuEl.hidden) { closeRowMenu(); return; }
+      closeRowMenu();
+      menuId = parseInt(btn.dataset.id, 10);
+      renderRowMenu();
+      row.appendChild(menuEl);
+      menuEl.hidden = false;
+    }
+
+    menuEl.addEventListener('click', function (e) {
+      var item = e.target.closest('.fl-menu-item');
+      if (!item) return;
+      e.stopPropagation();
+      var f = byId(menuId);
+      if (!f) { closeRowMenu(); return; }
+
+      if (item.dataset.act === 'dup') {
+        closeRowMenu();
+        // opens unsaved — nothing exists until they save the variant
+        showEdit(null, true, f.type);
+        document.getElementById('fl-title').value = (f.name || 'Untitled Flow') + ' \u2014 copy';
+        var area = document.getElementById('fl-area');
+        area.value = f.text || '';
+        autoGrow(area);
+        renderCount();
+        markDirty();
+        toast('Copy ready \u2014 make it yours.');
+      } else if (item.dataset.act === 'del') {
+        if (item.classList.contains('armed')) {
+          var id = menuId;
+          closeRowMenu();
+          flows = flows.filter(function (x) { return x.id !== id; });
+          persist();
+          toast('Flow removed.');
+          renderList();
+        } else {
+          item.classList.add('armed');
+          item.innerHTML = '<span class="material-symbols-sharp">delete</span>Click again to delete';
+          clearTimeout(menuArmTimer);
+          menuArmTimer = setTimeout(function () {
+            if (!menuEl.hidden) renderRowMenu();
+          }, 2200);
+        }
+      }
+    });
+
+    document.addEventListener('click', function () { if (!menuEl.hidden) closeRowMenu(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !menuEl.hidden) closeRowMenu();
+    });
+
+    // ─── EDITOR ──────────────────────────────────────────────────────────────────
+
+    function renderTypes() {
+      document.getElementById('fl-types').innerHTML = FLOW_TYPES.map(function (t) {
+        return '<button type="button" class="fl-type' + (editType === t.key ? ' on' : '') + '" data-type="' + t.key + '">' +
+          '<span class="fl-type-name"><span class="fl-type-dot"></span>' + t.name + '</span>' +
+          '<span class="fl-type-desc">' + t.desc + '</span>' +
+        '</button>';
+      }).join('');
+    }
+
+    // the type is a decision, not a dashboard — once made, it collapses
+    function setTypeCollapsed(collapsed) {
+      document.getElementById('fl-types-wrap').hidden = collapsed;
+      document.getElementById('fl-typebar').hidden = !collapsed;
+      if (collapsed && editType) {
+        document.getElementById('fl-typebar-tag').textContent = TAG_NAMES[editType] || editType;
+      }
+    }
+
+    function renderCount() {
+      var n = poseCount(document.getElementById('fl-area').value);
+      var el = document.getElementById('fl-count');
+      el.hidden = n === 0;
+      el.textContent = n + (n === 1 ? ' pose' : ' poses');
+    }
+
+    // classes this flow lives in — sectionMeta links (the coming
+    // class-editor integration) or literal text containment
+    function renderUsedIn() {
+      var wrap = document.getElementById('fl-usedin');
+      if (editingId == null) { wrap.hidden = true; return; }
+      var f = byId(editingId);
+      if (!f) { wrap.hidden = true; return; }
+      var classes = [];
+      try { classes = JSON.parse(localStorage.getItem('flowschool_classes') || '[]'); } catch (_) {}
+      var text = (f.text || '').trim();
+      var hits = classes.filter(function (c) {
+        var metaHit = c.sectionMeta && Object.keys(c.sectionMeta).some(function (k) {
+          return c.sectionMeta[k] && c.sectionMeta[k].flowId === f.id;
+        });
+        var textHit = text.length > 12 && Object.keys(c.sections || {}).some(function (k) {
+          return (c.sections[k] || '').indexOf(text) !== -1;
+        });
+        return metaHit || textHit;
+      });
+      wrap.hidden = false;
+      document.getElementById('fl-usedin-list').innerHTML = hits.length
+        ? hits.map(function (c) {
+            return '<a class="fl-class-row" href="your-classes.html?id=' + c.id + '">' +
+              '<span class="fl-class-title">' + esc(c.title || 'Untitled Class') + '</span>' +
+              '<span class="fl-class-meta">' + (c.length || 60) + ' min</span>' +
+            '</a>';
+          }).join('')
+        : '<p class="fl-usedin-empty">Not part of a class yet.</p>';
+    }
+
+    function autoGrow(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+
+    // 'saved' → committed · 'idle' → nothing to save yet · 'ready' → unsaved changes
+    function setSaveButton(state) {
+      var btn = document.getElementById('save-btn');
+      if (state === 'saved') {
+        btn.innerHTML = '<span class="material-symbols-sharp" style="font-size:16px">check</span>Saved';
+        btn.disabled = true;
+      } else {
+        btn.textContent = editingId != null ? 'Save Changes' : 'Save to Your Library';
+        btn.disabled = (state === 'idle');
+      }
+    }
+
+    function markDirty() {
+      if (document.getElementById('edit-view').hidden) return;
+      if (!dirty) setSaveButton('ready');
+      dirty = true;
+    }
+
+    function isEditing() {
+      return !document.getElementById('edit-view').hidden;
+    }
+
+    function editorUrl() {
+      return editingId != null ? 'your-flows.html?edit=' + editingId : 'your-flows.html?new=1';
+    }
+
+    function showList(push) {
+      document.getElementById('edit-view').hidden = true;
+      document.getElementById('list-view').hidden = false;
+      renderList();
+      if (push) history.pushState({}, '', 'your-flows.html');
+      window.scrollTo(0, 0);
+    }
+
+    function showEdit(id, push, presetType) {
+      var f = id != null ? byId(id) : null;
+      if (id != null && !f) { showList(); return; }
+      editingId = f ? f.id : null;
+      editType = f ? f.type : (presetType || null);
+
+      document.getElementById('list-view').hidden = true;
+      document.getElementById('edit-view').hidden = false;
+
+      document.getElementById('fl-title').value = f ? (f.name || '') : '';
+      var area = document.getElementById('fl-area');
+      area.value = f ? (f.text || '') : '';
+      renderTypes();
+      setTypeCollapsed(!!editType);
+      renderCount();
+      renderUsedIn();
+      autoGrow(area);
+
+      dirty = false;
+      setSaveButton(f ? 'saved' : 'idle');
+
+      if (push) history.pushState({}, '', f ? 'your-flows.html?edit=' + f.id : 'your-flows.html?new=1');
+      window.scrollTo(0, 0);
+      if (!f) document.getElementById('fl-title').focus();
+    }
+
+    // ─── GUARDS ──────────────────────────────────────────────────────────────────
+
+    function confirmDiscard(cb) {
+      pendingDiscard = cb;
+      document.getElementById('discard-modal').hidden = false;
+    }
+
+    document.getElementById('discard-yes').addEventListener('click', function () {
+      document.getElementById('discard-modal').hidden = true;
+      var cb = pendingDiscard; pendingDiscard = null;
+      if (cb) cb(true);
+    });
+
+    document.getElementById('discard-keep').addEventListener('click', function () {
+      document.getElementById('discard-modal').hidden = true;
+      var cb = pendingDiscard; pendingDiscard = null;
+      if (cb) cb(false);
+    });
+
+    document.getElementById('discard-modal').addEventListener('click', function (e) {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.hidden = true;
+        var cb = pendingDiscard; pendingDiscard = null;
+        if (cb) cb(false);
+      }
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (isEditing() && dirty) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    function leaveEditor() {
+      function leave() { dirty = false; showList(true); }
+      if (dirty) { confirmDiscard(function (yes) { if (yes) leave(); }); }
+      else { leave(); }
+    }
+
+    document.getElementById('cancel-btn').addEventListener('click', leaveEditor);
+    document.getElementById('editor-back-btn').addEventListener('click', leaveEditor);
+
+    // ─── SAVE ────────────────────────────────────────────────────────────────────
+
+    document.getElementById('save-btn').addEventListener('click', function () {
+      var name = document.getElementById('fl-title').value.trim();
+      var text = document.getElementById('fl-area').value.trim();
+      if (!editType) { toast('Pick what kind of flow this is.'); return; }
+      if (!text) { toast('A flow needs at least a pose.'); document.getElementById('fl-area').focus(); return; }
+
+      if (editingId != null) {
+        var f = byId(editingId);
+        if (!f) return;
+        f.name = name || 'Untitled Flow';
+        f.type = editType;
+        f.text = text;
+        f.editedAt = Date.now();
+      } else {
+        var entry = {
+          id: Date.now(),
+          name: name || 'Untitled Flow',
+          type: editType,
+          text: text,
+          editedAt: Date.now(),
+        };
+        flows.push(entry);
+        editingId = entry.id;
+        history.replaceState({}, '', 'your-flows.html?edit=' + entry.id);
+      }
+      persist();
+      dirty = false;
+      setSaveButton('saved');
+    });
+
+    // ─── EVENTS ──────────────────────────────────────────────────────────────────
+
+    document.getElementById('new-flow-btn').addEventListener('click', function () {
+      showEdit(null, true);
+    });
+
+    document.getElementById('flow-filter').addEventListener('click', function (e) {
+      var chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      listFilter = chip.dataset.f;
+      renderList();
+    });
+
+    var searchEl = document.getElementById('flow-search');
+    var searchClear = document.getElementById('flow-search-clear');
+
+    searchEl.addEventListener('input', function () {
+      searchQ = searchEl.value;
+      searchClear.classList.toggle('hidden', !searchQ);
+      renderList();
+    });
+
+    searchClear.addEventListener('click', function () {
+      searchQ = '';
+      searchEl.value = '';
+      searchClear.classList.add('hidden');
+      renderList();
+      searchEl.focus();
+    });
+
+    document.getElementById('fl-title').addEventListener('input', markDirty);
+
+    document.getElementById('fl-types').addEventListener('click', function (e) {
+      var btn = e.target.closest('.fl-type');
+      if (!btn) return;
+      editType = btn.dataset.type;
+      renderTypes();
+      setTypeCollapsed(true);
+      markDirty();
+      document.getElementById('fl-area').focus();
+    });
+
+    document.getElementById('fl-type-change').addEventListener('click', function () {
+      setTypeCollapsed(false);
+    });
+
+    // ─── SHORTHAND SUGGEST ───────────────────────────────────────────────────────
+    // Same contract as the class editor: Tab inserts, arrows arm, Enter
+    // only when armed, Esc dismisses for the current token.
+
+    var SH = (function () {
+      var panel = document.createElement('div');
+      panel.className = 'sh-suggest';
+      panel.hidden = true;
+      document.querySelector('.fl-editor').appendChild(panel);
+
+      var state = { el: null, items: [], sel: -1, tokenStart: 0, dismissed: null };
+
+      function tokenAt(el) {
+        var upto = el.value.slice(0, el.selectionStart);
+        var start = Math.max(upto.lastIndexOf('/'), upto.lastIndexOf('\n')) + 1;
+        return { start: start, text: upto.slice(start) };
+      }
+
+      function rank(q) {
+        q = q.toLowerCase();
+        var scored = [];
+        (typeof SHORTHAND === 'undefined' ? [] : SHORTHAND).forEach(function (e) {
+          var code = e.short.toLowerCase();
+          var full = e.full.toLowerCase();
+          var sc = -1;
+          if (code.indexOf(q) === 0) sc = 0;
+          else if (full.split(/\s+/).some(function (w) { return w.indexOf(q) === 0; })) sc = 1;
+          else if (code.indexOf(q) !== -1) sc = 2;
+          else if (full.indexOf(q) !== -1) sc = 3;
+          if (sc >= 0) scored.push({ e: e, sc: sc });
+        });
+        scored.sort(function (a, b) { return a.sc - b.sc || a.e.short.length - b.e.short.length; });
+        return scored.slice(0, 6).map(function (x) { return x.e; });
+      }
+
+      function caretXY(el) {
+        var m = document.createElement('div');
+        var cs = getComputedStyle(el);
+        m.style.cssText = 'position:absolute;visibility:hidden;white-space:pre-wrap;word-wrap:break-word;box-sizing:border-box;' +
+          'width:' + el.clientWidth + 'px;padding:' + cs.padding + ';font:' + cs.font + ';line-height:' + cs.lineHeight + ';letter-spacing:' + cs.letterSpacing + ';';
+        m.textContent = el.value.slice(0, el.selectionStart);
+        var mark = document.createElement('span');
+        mark.textContent = '​';
+        m.appendChild(mark);
+        document.body.appendChild(m);
+        var xy = { x: mark.offsetLeft, y: mark.offsetTop + mark.offsetHeight };
+        document.body.removeChild(m);
+        return xy;
+      }
+
+      function hide() {
+        panel.hidden = true;
+        state.el = null;
+        state.sel = -1;
+      }
+
+      function hideIfStale() {
+        if (document.activeElement !== state.el) hide();
+      }
+
+      function render() {
+        panel.innerHTML = state.items.map(function (e, i) {
+          return '<div class="sh-row' + (i === state.sel ? ' sel' : '') + '" data-i="' + i + '">' +
+            '<span class="sh-code">' + esc(e.short) + '</span>' +
+            '<span class="sh-full">' + esc(e.full) + '</span>' +
+          '</div>';
+        }).join('') +
+        '<div class="sh-hint"><span>tab &#183; insert</span><span>esc &#183; dismiss</span></div>';
+      }
+
+      function show(el) {
+        var t = tokenAt(el);
+        if (state.dismissed && state.dismissed.el === el && state.dismissed.start === t.start) return hide();
+        var q = t.text.trim();
+        if (q.length < 2) return hide();
+        var items = rank(q);
+        if (!items.length) return hide();
+
+        var leading = t.text.length - t.text.replace(/^\s+/, '').length;
+        state.el = el;
+        state.items = items;
+        state.sel = -1;
+        state.tokenStart = t.start + leading;
+        render();
+
+        var xy = caretXY(el);
+        var ed = document.querySelector('.fl-editor').getBoundingClientRect();
+        var er = el.getBoundingClientRect();
+        panel.hidden = false;
+        var left = er.left - ed.left + xy.x;
+        left = Math.min(left, ed.width - panel.offsetWidth);
+        panel.style.left = Math.max(0, left) + 'px';
+        panel.style.top = (er.top - ed.top + xy.y + 4) + 'px';
+      }
+
+      function insert(i) {
+        var el = state.el;
+        var e = state.items[i];
+        if (!el || !e) return;
+        var before = el.value.slice(0, state.tokenStart);
+        var after = el.value.slice(el.selectionStart);
+        el.value = before + e.short + ' / ' + after;
+        var pos = (before + e.short + ' / ').length;
+        el.setSelectionRange(pos, pos);
+        hide();
+        state.dismissed = null;
+        autoGrow(el);
+        el.focus();
+        markDirty();
+      }
+
+      function onKey(ev) {
+        if (panel.hidden || state.el !== ev.target) return;
+        if (ev.key === 'Tab') {
+          ev.preventDefault();
+          insert(state.sel === -1 ? 0 : state.sel);
+        } else if (ev.key === 'ArrowDown') {
+          ev.preventDefault();
+          state.sel = (state.sel + 1) % state.items.length;
+          render();
+        } else if (ev.key === 'ArrowUp') {
+          ev.preventDefault();
+          state.sel = state.sel <= 0 ? state.items.length - 1 : state.sel - 1;
+          render();
+        } else if (ev.key === 'Enter' && state.sel !== -1) {
+          ev.preventDefault();
+          insert(state.sel);
+        } else if (ev.key === 'Escape') {
+          state.dismissed = { el: ev.target, start: state.tokenStart };
+          hide();
+        }
+      }
+
+      panel.addEventListener('mousedown', function (ev) {
+        var row = ev.target.closest('.sh-row');
+        if (!row) return;
+        ev.preventDefault();
+        insert(parseInt(row.dataset.i, 10));
+      });
+
+      return { show: show, hide: hide, hideIfStale: hideIfStale, onKey: onKey };
+    })();
+
+    var flArea = document.getElementById('fl-area');
+    flArea.addEventListener('input', function () {
+      autoGrow(flArea);
+      SH.show(flArea);
+      renderCount();
+      markDirty();
+    });
+    flArea.addEventListener('keydown', function (e) { SH.onKey(e); });
+    flArea.addEventListener('blur', function () { setTimeout(SH.hideIfStale, 120); });
+
+    // ─── ROUTING ─────────────────────────────────────────────────────────────────
+
+    function route() {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('edit')) {
+        showEdit(parseInt(params.get('edit'), 10));
+      } else if (params.get('new')) {
+        showEdit(null, false, params.get('type') || null);
+      } else {
+        showList();
+      }
+    }
+
+    window.addEventListener('popstate', function () {
+      if (isEditing() && dirty) {
+        confirmDiscard(function (yes) {
+          if (yes) { dirty = false; route(); }
+          else { history.pushState({}, '', editorUrl()); }
+        });
+      } else {
+        route();
+      }
+    });
+
+    route();
+  </script>
+  <script src="lib/tracker.js"></script>
+
+</body>
+
+</html>

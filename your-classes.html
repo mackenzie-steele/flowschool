@@ -392,6 +392,110 @@
       padding: 20px 0;
     }
 
+    /* section head: label left, flow name + insert affordance right */
+    .cw-section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .cw-head-right { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+
+    .cw-flow-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .04em;
+      color: var(--text-3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cw-insert-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: var(--text-small);
+      color: var(--text-3);
+      transition: color var(--transition-base);
+    }
+
+    .cw-insert-btn .material-symbols-sharp { font-size: 15px; }
+    .cw-insert-btn:hover { color: var(--text-1); }
+
+    /* linked section: content pulled live from Your Flows */
+    .cw-swap-btn {
+      display: inline-flex;
+      align-items: center;
+      background: none;
+      border: none;
+      padding: 2px;
+      cursor: pointer;
+      color: var(--text-3);
+      transition: color var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .cw-swap-btn:hover { color: var(--text-1); }
+    .cw-swap-btn .material-symbols-sharp { font-size: 15px; }
+
+    .cw-remove-btn {
+      display: inline-flex;
+      align-items: center;
+      background: none;
+      border: none;
+      padding: 2px;
+      cursor: pointer;
+      color: var(--text-3);
+      transition: color var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .cw-remove-btn:hover { color: var(--danger); }
+    .cw-remove-btn .material-symbols-sharp { font-size: 15px; }
+
+    .cw-area.linked {
+      background: rgba(var(--ink-rgb), .025);
+      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .09);
+      cursor: default;
+    }
+
+    /* flow picker rides the suggest-panel look */
+    .flow-pick { min-width: 280px; }
+
+    .flp-action {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 9px 12px;
+      background: none;
+      border: none;
+      border-top: 1px solid var(--border-light);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: var(--text-small);
+      color: var(--text-2);
+      text-align: left;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .flp-action:hover { background: rgba(var(--ink-rgb), .05); color: var(--text-1); }
+    .flp-action .material-symbols-sharp { font-size: 15px; }
+
+    .flp-empty {
+      padding: 12px;
+      font-size: var(--text-small);
+      color: var(--text-3);
+    }
+
     /* optional sections collapse to a quiet add-row until needed */
     .cw-optional.collapsed { padding: 8px 0; }
 
@@ -475,6 +579,15 @@
       font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
       margin-left: 11px;
       vertical-align: 3px;
+    }
+
+    .tv-flow-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .04em;
+      text-transform: none;
+      color: var(--text-3);
+      margin-left: 10px;
     }
 
     .tv-meta {
@@ -750,7 +863,7 @@
           <input type="search" class="search-input" id="class-search" placeholder="Search your classes&#8230;">
         </div>
         <button class="btn-primary" id="new-class-btn">
-          <span class="material-symbols-sharp" style="font-size:16px">edit_document</span>
+          <span class="material-symbols-sharp" style="font-size:19px">add</span>
           New Class
         </button>
       </div>
@@ -867,6 +980,19 @@
   </div>
 
   </main>
+
+  <!-- ── SAVE SECTION AS FLOW ── -->
+  <div class="modal-backdrop" id="sf-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <h3>Name this flow</h3>
+      <p class="modal-hint">It saves to Your Flows, ready to drop into any class.</p>
+      <input type="text" class="modal-input" id="sf-name-input" placeholder="Twist to Boat" maxlength="120" autocomplete="off">
+      <div class="modal-actions">
+        <button class="btn-ghost" id="sf-modal-cancel">Cancel</button>
+        <button class="btn-primary" id="sf-modal-confirm">Save Flow</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── DISCARD GUARD ── -->
   <div class="modal-backdrop" id="discard-modal" hidden>
@@ -1067,10 +1193,16 @@
 
       // sections — the flow exactly as they wrote it
       document.getElementById('tv-sections').innerHTML = SECTIONS.map(function (s) {
-        var raw = (c.sections[s.key] || '').trim();
+        var m = c.sectionMeta && c.sectionMeta[s.key];
+        var flow = m && m.flowId != null ? resolveFlow(m.flowId) : null;
+        // linked sections read live from the parent flow; the stored
+        // text is the fallback if the flow was deleted
+        var raw = (flow ? flow.text : (c.sections[s.key] || '')).trim();
         if (!raw) return '';
+        var name = flow ? flow.name : (m && m.flowName);
+        var nm = name ? '<span class="tv-flow-name">' + esc(name) + '</span>' : '';
         return '<div class="tv-section">' +
-          '<div class="tv-label label-1">' + s.label + '</div>' +
+          '<div class="tv-label label-1">' + s.label + nm + '</div>' +
           '<div class="tv-flow">' + esc(raw) + '</div>' +
         '</div>';
       }).join('');
@@ -1114,9 +1246,35 @@
 
     // ─── EDITOR ──────────────────────────────────────────────────────────────────
 
+    // which flow types belong in which class section
+    var SECTION_FLOWS = {
+      warmup:     ['warmup'],
+      transition: ['bridge'],
+      nohands:    ['nohands', 'slomo'],
+      workshop:   ['workshop'],
+      peak:       ['peak', 'slomo'],
+    };
+
     function buildEditor() {
       document.getElementById('cw-sections').innerHTML = SECTIONS.map(function (s) {
-        var head = '<div class="cw-section-head"><span class="label-1">' + s.label + '</span></div>';
+        var removeBtn = s.optional
+          ? '<button type="button" class="cw-remove-btn" data-remove="' + s.key + '" title="Remove section" data-tooltip="Remove">' +
+              '<span class="material-symbols-sharp">close</span>' +
+            '</button>'
+          : '';
+        var right = SECTION_FLOWS[s.key]
+          ? '<span class="cw-head-right">' +
+              '<span class="cw-flow-name" data-flowname="' + s.key + '"></span>' +
+              '<button type="button" class="cw-swap-btn" data-insert="' + s.key + '" title="Replace flow" data-tooltip="Replace" hidden>' +
+                '<span class="material-symbols-sharp">swap_horiz</span>' +
+              '</button>' +
+              '<button type="button" class="cw-insert-btn" data-insert="' + s.key + '">' +
+                '<span class="material-symbols-sharp">airline_stops</span>Insert a Flow' +
+              '</button>' +
+              removeBtn +
+            '</span>'
+          : (removeBtn ? '<span class="cw-head-right">' + removeBtn + '</span>' : '');
+        var head = '<div class="cw-section-head"><span class="label-1">' + s.label + '</span>' + right + '</div>';
         var area = '<textarea class="cw-area" data-key="' + s.key + '" rows="' + s.rows + '" placeholder="' + s.placeholder + '"></textarea>';
         if (s.optional) {
           return '<div class="cw-section cw-optional" data-sec="' + s.key + '">' +
@@ -1183,6 +1341,8 @@
         autoGrow(el);
       });
       syncOptionalSections();
+      editMeta = c && c.sectionMeta ? JSON.parse(JSON.stringify(c.sectionMeta)) : {};
+      updateSectionLinks();
 
       dirty = false;
       // an untouched existing class IS saved; a fresh one has nothing to save yet
@@ -1296,6 +1456,224 @@
       });
       return out;
     }
+
+    // ─── FLOWS ↔ SECTIONS ────────────────────────────────────────────────────────
+    // Insert a saved flow into its matching section (copy with
+    // provenance), or save a written section back to Your Flows.
+
+    var editMeta = {};
+
+    var FLOW_TAGS = { warmup: 'Warm Up', bridge: 'Bridge', nohands: 'No Hands', peak: 'Peak', workshop: 'Workshop', slomo: 'Slo Mo' };
+
+    function loadFlowLib() {
+      try { return JSON.parse(localStorage.getItem('flowschool_flows') || '[]'); } catch (_) { return []; }
+    }
+
+    function saveFlowLib(list) {
+      localStorage.setItem('flowschool_flows', JSON.stringify(list));
+    }
+
+    function flowPoseCount(text) {
+      return (text || '').split(/[\/\n]/).map(function (x) { return x.trim(); }).filter(Boolean).length;
+    }
+
+    function resolveFlow(id) {
+      return loadFlowLib().find(function (f) { return f.id === id; });
+    }
+
+    // linked sections read from the parent flow; the class stores a
+    // snapshot only as a fallback for deleted flows
+    function updateSectionLinks() {
+      Object.keys(SECTION_FLOWS).forEach(function (key) {
+        var nameEl = document.querySelector('.cw-flow-name[data-flowname="' + key + '"]');
+        var swapBtn = document.querySelector('.cw-swap-btn[data-insert="' + key + '"]');
+        var insBtn = document.querySelector('.cw-insert-btn[data-insert="' + key + '"]');
+        var area = document.querySelector('.cw-area[data-key="' + key + '"]');
+        if (!nameEl || !area) return;
+        var m = editMeta[key];
+        var flow = m && m.flowId != null ? resolveFlow(m.flowId) : null;
+
+        if (m && !flow) {
+          // parent flow was deleted — the section keeps its snapshot, unlinked
+          delete editMeta[key];
+          m = null;
+        }
+
+        if (flow) {
+          area.value = flow.text;
+          area.readOnly = true;
+          area.classList.add('linked');
+          autoGrow(area);
+          nameEl.textContent = flow.name;
+          swapBtn.hidden = false;
+          insBtn.hidden = true;
+          if (m.flowName !== flow.name) m.flowName = flow.name;
+        } else {
+          area.readOnly = false;
+          area.classList.remove('linked');
+          nameEl.textContent = '';
+          swapBtn.hidden = true;
+          insBtn.hidden = false;
+        }
+      });
+    }
+
+    var FLP = (function () {
+      var panel = document.createElement('div');
+      panel.className = 'sh-suggest flow-pick';
+      panel.hidden = true;
+      document.querySelector('.cw-editor').appendChild(panel);
+
+      var openKey = null;
+
+      function close() { panel.hidden = true; openKey = null; }
+
+      function open(key, anchor) {
+        openKey = key;
+        var types = SECTION_FLOWS[key] || [];
+        var flows = loadFlowLib()
+          .filter(function (f) { return types.indexOf(f.type) !== -1; })
+          .sort(function (a, b) { return (b.editedAt || b.id) - (a.editedAt || a.id); });
+        var area = document.querySelector('.cw-area[data-key="' + key + '"]');
+        var linked = !!editMeta[key];
+        var hasText = area && area.value.trim().length > 0;
+        var linkedId = linked ? editMeta[key].flowId : null;
+
+        panel.innerHTML =
+          (flows.length
+            ? flows.map(function (f, i) {
+                return '<div class="sh-row' + (f.id === linkedId ? ' sel' : '') + '" data-fid="' + f.id + '">' +
+                  '<span class="sh-code">' + esc(f.name || 'Untitled Flow') + '</span>' +
+                  '<span class="sh-full">' + FLOW_TAGS[f.type] + ' &#183; ' + flowPoseCount(f.text) + ' poses</span>' +
+                '</div>';
+              }).join('')
+            : '<div class="flp-empty">No ' + (FLOW_TAGS[types[0]] || '').toLowerCase() + ' flows saved yet.</div>') +
+          (linked
+            ? '<button type="button" class="flp-action" data-detach="' + key + '">' +
+                '<span class="material-symbols-sharp">link_off</span>Detach &#8212; edit freely in this class' +
+              '</button>'
+            : (hasText
+              ? '<button type="button" class="flp-action" data-saveflow="' + key + '">' +
+                  '<span class="material-symbols-sharp">add</span>Save this section as a flow' +
+                '</button>'
+              : ''));
+
+        var ed = document.querySelector('.cw-editor').getBoundingClientRect();
+        var ar = anchor.getBoundingClientRect();
+        panel.hidden = false;
+        var left = ar.right - ed.left - panel.offsetWidth;
+        panel.style.left = Math.max(0, left) + 'px';
+        panel.style.top = (ar.bottom - ed.top + 6) + 'px';
+      }
+
+      panel.addEventListener('click', function (ev) {
+        var row = ev.target.closest('.sh-row');
+        if (row) {
+          insertFlow(openKey, parseInt(row.dataset.fid, 10));
+          close();
+          return;
+        }
+        var act = ev.target.closest('.flp-action');
+        if (act) {
+          if (act.dataset.detach) {
+            var dkey = act.dataset.detach;
+            close();
+            detachFlow(dkey);
+          } else {
+            var key = act.dataset.saveflow;
+            close();
+            openSaveFlowModal(key);
+          }
+        }
+      });
+
+      document.addEventListener('click', function (ev) {
+        if (!panel.hidden && !panel.contains(ev.target) && !ev.target.closest('.cw-insert-btn') && !ev.target.closest('.cw-swap-btn')) close();
+      });
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape' && !panel.hidden) close();
+      });
+
+      return { open: open, close: close };
+    })();
+
+    function insertFlow(key, fid) {
+      var f = loadFlowLib().find(function (x) { return x.id === fid; });
+      var area = document.querySelector('.cw-area[data-key="' + key + '"]');
+      if (!f || !area) return;
+      var hadText = area.value.trim().length > 0 && !editMeta[key];
+      editMeta[key] = { flowId: f.id, flowName: f.name };
+      updateSectionLinks();
+      markDirty();
+      if (hadText) toast('Replaced with ' + f.name + '.');
+    }
+
+    function detachFlow(key) {
+      // the text stays as a copy — editable, theirs
+      delete editMeta[key];
+      updateSectionLinks();
+      markDirty();
+      var area = document.querySelector('.cw-area[data-key="' + key + '"]');
+      if (area) area.focus();
+    }
+
+    // section → flow-type when saving back to the library
+    function primaryTypeOf(key) {
+      return (SECTION_FLOWS[key] || [])[0] || 'warmup';
+    }
+
+    var saveFlowKey = null;
+
+    function openSaveFlowModal(key) {
+      saveFlowKey = key;
+      var input = document.getElementById('sf-name-input');
+      input.value = '';
+      document.getElementById('sf-modal').hidden = false;
+      requestAnimationFrame(function () { input.focus(); });
+    }
+
+    document.getElementById('sf-modal-cancel').addEventListener('click', function () {
+      document.getElementById('sf-modal').hidden = true;
+    });
+
+    document.getElementById('sf-modal').addEventListener('click', function (e) {
+      if (e.target === e.currentTarget) e.currentTarget.hidden = true;
+    });
+
+    document.getElementById('sf-modal-confirm').addEventListener('click', function () {
+      var input = document.getElementById('sf-name-input');
+      var name = input.value.trim();
+      if (!name) { input.focus(); return; }
+      var area = document.querySelector('.cw-area[data-key="' + saveFlowKey + '"]');
+      var text = area ? area.value.trim() : '';
+      if (!text) { document.getElementById('sf-modal').hidden = true; return; }
+      var lib = loadFlowLib();
+      var entry = { id: Date.now(), name: name, type: primaryTypeOf(saveFlowKey), text: text, editedAt: Date.now() };
+      lib.push(entry);
+      saveFlowLib(lib);
+      editMeta[saveFlowKey] = { flowId: entry.id, flowName: entry.name };
+      updateSectionLinks();
+      markDirty();
+      document.getElementById('sf-modal').hidden = true;
+      toast('Saved to Your Flows.');
+    });
+
+    document.getElementById('cw-sections').addEventListener('click', function (ev) {
+      var rm = ev.target.closest('.cw-remove-btn');
+      if (rm) {
+        var key = rm.dataset.remove;
+        var area = document.querySelector('.cw-area[data-key="' + key + '"]');
+        if (area) { area.value = ''; autoGrow(area); }
+        delete editMeta[key];
+        updateSectionLinks();
+        var wrap = rm.closest('.cw-optional');
+        if (wrap) wrap.classList.add('collapsed');
+        markDirty();
+        return;
+      }
+      var btn = ev.target.closest('.cw-insert-btn') || ev.target.closest('.cw-swap-btn');
+      if (btn) FLP.open(btn.dataset.insert, btn);
+    });
 
     // ─── SHORTHAND SUGGEST ───────────────────────────────────────────────────────
     // While writing a flow, matches from the shorthand library appear under
@@ -1647,6 +2025,8 @@
         autoGrow(el);
       });
       syncOptionalSections();
+      editMeta = c.sectionMeta ? JSON.parse(JSON.stringify(c.sectionMeta)) : {};
+      updateSectionLinks();
       markDirty();
       toast('Copy ready \u2014 make it yours.');
     }
@@ -1677,6 +2057,7 @@
         if (!c) return;
         c.title = title || 'Untitled Class';
         c.sections = sections;
+        c.sectionMeta = editMeta;
         c.storyIds = attachedIds.slice();
         c.playlist = document.getElementById('cw-playlist').value.trim();
         c.playlistUrl = playlistUrlValue();
@@ -1690,6 +2071,7 @@
           id: Date.now(),
           title: title || 'Untitled Class',
           sections: sections,
+          sectionMeta: editMeta,
           storyIds: attachedIds.slice(),
           playlist: document.getElementById('cw-playlist').value.trim(),
           playlistUrl: playlistUrlValue(),

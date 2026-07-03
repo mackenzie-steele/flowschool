@@ -241,6 +241,7 @@
     function renderMeta() {
       var parts = [];
       var c = countOf('flowschool_classes');    if (c) parts.push(c + (c === 1 ? ' class' : ' classes'));
+      var fl = countOf('flowschool_flows');     if (fl) parts.push(fl + (fl === 1 ? ' flow' : ' flows'));
       var st = countOf('flowschool_stories');   if (st) parts.push(st + (st === 1 ? ' story' : ' stories'));
       var pl = countOf('flowschool_playlists'); if (pl) parts.push(pl + (pl === 1 ? ' playlist' : ' playlists'));
       var cf = countOf('fs-cue-flows');         if (cf) parts.push(cf + (cf === 1 ? ' cue flow' : ' cue flows'));
