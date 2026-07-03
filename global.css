@@ -2157,6 +2157,94 @@ body.has-sidebar {
 .res-actions { display: flex; gap: 8px; align-items: center; }
 
 
+/* ── Library empty state — a typographic moment, not an apology ──
+   Mono counter, one editorial line, actions, and a ghost of the
+   index that will exist. Used by Your Classes and Your Stories. */
+
+.library-empty {
+  text-align: center;
+  padding: 72px 28px 0;
+}
+
+.library-empty-title {
+  font-size: var(--fs-h4);
+  font-weight: var(--weight-regular);
+  letter-spacing: -.01em;
+  line-height: var(--lh-heading);
+  color: var(--text-1);
+  max-width: 460px;
+  margin: 0 auto 12px;
+}
+
+.library-empty-sub {
+  font-size: var(--text-body-sm);
+  color: var(--text-3);
+  line-height: 1.6;
+  max-width: 420px;
+  margin: 0 auto 30px;
+}
+
+.library-empty-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.library-empty-actions .btn-primary { border-radius: var(--r-cta); }
+
+/* quiet text link beneath the primary action — matches .db-view-all */
+.library-empty-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 18px;
+  font-size: var(--text-small);
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+
+.library-empty-link:hover { color: var(--text-1); }
+
+/* the future index, faintly */
+.library-empty-ghost {
+  max-width: 640px;
+  margin: 72px auto 0;
+  text-align: left;
+  user-select: none;
+  pointer-events: none;
+}
+
+.library-empty-ghost-row {
+  padding: 22px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.library-empty-ghost-row:nth-child(1) { opacity: .9; }
+.library-empty-ghost-row:nth-child(2) { opacity: .55; }
+.library-empty-ghost-row:nth-child(3) { opacity: .26; border-bottom: none; }
+
+.library-empty-ghost-row i {
+  display: block;
+  height: 13px;
+  background: rgba(var(--ink-rgb), .07);
+}
+
+.library-empty-ghost-row i + i {
+  height: 8px;
+  margin-top: 10px;
+  background: rgba(var(--ink-rgb), .045);
+}
+
+.library-empty-ghost-row:nth-child(1) i:first-child { width: 46%; }
+.library-empty-ghost-row:nth-child(1) i + i         { width: 24%; }
+.library-empty-ghost-row:nth-child(2) i:first-child { width: 58%; }
+.library-empty-ghost-row:nth-child(2) i + i         { width: 19%; }
+.library-empty-ghost-row:nth-child(3) i:first-child { width: 38%; }
+.library-empty-ghost-row:nth-child(3) i + i         { width: 27%; }
+
+
 /* ── Search field — icon + input (+ optional clear button) ──── */
 
 .search-wrap {

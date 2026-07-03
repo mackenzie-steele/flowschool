@@ -90,26 +90,6 @@
       white-space: nowrap;
     }
 
-    /* ── Empty state ── */
-    .stories-empty {
-      text-align: center;
-      padding: 88px 28px;
-    }
-
-    .stories-empty p {
-      color: var(--text-3);
-      margin-bottom: 24px;
-    }
-
-    .stories-empty-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .stories-empty-actions .btn-primary { border-radius: var(--r-cta); }
-
     /* ── Detail view — reads like a post ── */
     /* The bar stays pinned while writing or reading long stories */
     .post-bar {
@@ -344,11 +324,17 @@
       if (!stories.length) {
         bar.hidden = true;
         index.innerHTML =
-          '<div class="stories-empty">' +
-          '<p>No stories yet. Draw a starter for inspiration, or begin with a blank page.</p>' +
-          '<div class="stories-empty-actions">' +
-          '<button class="btn-secondary" id="empty-new-btn">Start with a Blank Page</button>' +
-          '<a href="story-starters.html" class="btn-primary">Find a Starter</a>' +
+          '<div class="library-empty">' +
+          '<h4 class="library-empty-title">The stories only you can tell.</h4>' +
+          '<p class="library-empty-sub">They&#8217;ll live here &#8212; ready to open a class with. Draw a starter for inspiration, or begin with a blank page.</p>' +
+          '<div class="library-empty-actions">' +
+          '<button class="btn-primary" id="empty-new-btn">Write a Story</button>' +
+          '</div>' +
+          '<a href="story-starters.html" class="library-empty-link">Get Inspired <span class="material-symbols-sharp" style="font-size:13px;vertical-align:-2px">arrow_forward</span></a>' +
+          '<div class="library-empty-ghost" aria-hidden="true">' +
+          '<div class="library-empty-ghost-row"><i></i><i></i></div>' +
+          '<div class="library-empty-ghost-row"><i></i><i></i></div>' +
+          '<div class="library-empty-ghost-row"><i></i><i></i></div>' +
           '</div>' +
           '</div>';
         document.getElementById('empty-new-btn').addEventListener('click', function () {
@@ -367,7 +353,7 @@
       }
 
       if (!list.length) {
-        index.innerHTML = '<div class="stories-empty"><p>Nothing matches &#8220;' + esc(filter) + '&#8221;.</p></div>';
+        index.innerHTML = '<div class="library-empty"><p class="library-empty-sub">Nothing matches &#8220;' + esc(filter) + '&#8221;.</p></div>';
         return;
       }
 
