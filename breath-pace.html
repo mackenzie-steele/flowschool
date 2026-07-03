@@ -13,29 +13,30 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" href="global.css">
   <style>
-    /* ── Pacer visual ── */
+    /* ── The instrument ── */
     .pacer-section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0 0 44px;
+      gap: 8px;
+      padding: 8px 0 52px;
       position: relative;
     }
 
     .pacer-svg {
-      width: 280px;
-      height: 280px;
+      width: 300px;
+      height: 300px;
       overflow: visible;
     }
 
     #ticks line.lit { stroke: var(--ink-solid); }
     [data-theme="dark"] #ticks line.lit { stroke: var(--volt); }
 
+    /* mono display digits — instrument readout, not typography */
     #svg-count {
-      font-family: var(--font);
-      font-size: var(--fs-h3);
+      font-family: var(--font-mono);
+      font-size: 62px;
       font-weight: var(--weight-regular) !important;
-      letter-spacing: -.01em;
       fill: var(--ink-solid);
       text-anchor: middle;
       dominant-baseline: central;
@@ -43,13 +44,54 @@
     }
 
     #svg-label {
+      font-family: var(--font-mono) !important;
+      font-size: 10px !important;
+      letter-spacing: .16em;
       fill: rgba(var(--ink-rgb), .40);
       text-anchor: middle;
     }
 
+    /* transport — centered under the display */
+    .bp-transport-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .bp-transport {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: none;
+      background: var(--ink-solid);
+      color: var(--paper-solid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: box-shadow var(--transition-base), transform var(--transition-fast);
+      box-shadow: 0 2px 12px rgba(var(--ink-rgb), .18);
+    }
+
+    .bp-transport:hover { box-shadow: 0 2px 16px rgba(var(--ink-rgb), .28); }
+    .bp-transport:active { transform: scale(.96); }
+
+    .bp-transport.running {
+      box-shadow: 0 0 0 4px var(--accent-dim), 0 2px 12px rgba(var(--ink-rgb), .18);
+    }
+
+
+
     /* ── Controls card ── */
     .controls-card {
       margin-bottom: 20px;
+      position: relative;
+    }
+
+    .controls-card .audio-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
     }
 
     .ctl-grid {
@@ -63,67 +105,7 @@
       gap: 6px;
     }
 
-    /* ── Button row ── */
-    .controls-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .start-btn {
-      border-radius: var(--r-cta);
-    }
-
-    .start-btn:hover {
-      transform: none;
-    }
-
-    .start-btn:active {
-      transform: none;
-    }
-
-    @media (max-width: 580px) {
-      .start-btn {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 90;
-        border-radius: 0;
-        justify-content: center;
-        padding: 18px 28px;
-        box-shadow: 0 -1px 0 rgba(var(--ink-rgb), .08);
-      }
-
-      .wrap {
-        padding-bottom: 100px;
-      }
-    }
-
-    /* ── Ghost-small + Audio ── */
-    .btn-ghost-sm {
-      background: none;
-      border: none;
-      color: var(--text-3);
-      padding: 11px 16px;
-      border-radius: var(--rf);
-      font-size: var(--text-ui);
-      font-family: var(--font);
-      cursor: pointer;
-      transition: color .15s;
-    }
-
-    .btn-ghost-sm:hover {
-      color: var(--text-2);
-    }
-
-    .btn-ghost-sm:disabled {
-      opacity: .3;
-      cursor: not-allowed;
-    }
-
+    /* ── Audio ── */
     .audio-btn {
       display: flex;
       align-items: center;
@@ -166,15 +148,6 @@
         grid-template-columns: 1fr;
         gap: 18px;
       }
-
-      .btn-row {
-        flex-wrap: wrap;
-      }
-
-      .start-btn {
-        width: 100%;
-        justify-content: center;
-      }
     }
 
     .range-ticks span:nth-child(1),
@@ -189,9 +162,6 @@
 
 
   <script src="lib/nav.js"></script>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
 
   <main>
   <section class="hero">
@@ -205,26 +175,23 @@
 
   <div class="wrap">
 
-    <!-- Pacer Visual -->
+    <!-- The instrument -->
     <div class="pacer-section">
       <svg class="pacer-svg" id="pacer-svg" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
         <g id="ticks"></g>
         <text id="svg-count" x="140" y="131">—</text>
-        <text class="label-1" id="svg-label" x="140" y="171">READY</text>
+        <text id="svg-label" x="140" y="173">READY</text>
       </svg>
+      <div class="bp-transport-row">
+        <button class="bp-transport" id="toggle-btn" title="Start" aria-label="Start or stop the pacer">
+          <span class="material-symbols-sharp" id="toggle-icon" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;font-size:26px">play_arrow</span>
+        </button>
+      </div>
     </div>
-
-    <!-- Controls -->
-    <div class="controls-actions">
+    <div class="controls-card">
       <button class="audio-btn on" id="audio-btn" title="Toggle sound">
         <span class="material-symbols-sharp" id="audio-icon" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">volume_up</span>
       </button>
-      <button class="start-btn" id="toggle-btn">
-        <span class="material-symbols-sharp" id="toggle-icon" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">play_arrow</span>
-        <span id="toggle-label">Start</span>
-      </button>
-    </div>
-    <div class="controls-card">
       <div class="ctl-grid">
 
         <div class="ctl-group">
@@ -339,7 +306,7 @@
 
     let breathProgress = 0;
     const TICK_COUNT = 60;
-    const CX = 140, CY = 140, R_IN = 100, R_OUT = 112;
+    const CX = 140, CY = 140, R_IN = 96, R_OUT = 116;
 
     function buildTicks() {
       const g = document.getElementById('ticks');
@@ -351,14 +318,14 @@
         line.setAttribute('x2', (CX + R_OUT * Math.cos(angle)).toFixed(2));
         line.setAttribute('y2', (CY + R_OUT * Math.sin(angle)).toFixed(2));
         line.setAttribute('stroke', 'rgba(var(--ink-rgb),.85)');
-        line.setAttribute('stroke-width', '2');
-        line.setAttribute('stroke-linecap', 'round');
-        line.setAttribute('opacity', '0.2');
+        line.setAttribute('stroke-width', '3');
+        line.setAttribute('stroke-linecap', 'butt');
+        line.setAttribute('opacity', '0.16');
         g.appendChild(line);
       }
     }
 
-    function setTickOpacity(progress, baseOpacity = 0.2, fromEnd = false) {
+    function setTickOpacity(progress, baseOpacity = 0.16, fromEnd = false) {
       const litCount = Math.round(progress * TICK_COUNT);
       document.querySelectorAll('#ticks line').forEach((l, i) => {
         const lit = fromEnd ? i >= TICK_COUNT - litCount : i < litCount;
@@ -410,8 +377,7 @@
       const phaseProgress = Math.min(1, elapsed / phaseDurMs);
       if (phase.id === 'inhale') breathProgress = phaseProgress;
       else if (phase.id === 'exhale') breathProgress = 1 - phaseProgress;
-      const baseOpacity = 0.2;
-      setTickOpacity(breathProgress, baseOpacity, phase.id === 'exhale');
+      setTickOpacity(breathProgress, 0.16, phase.id === 'exhale');
 
       // Fire tick at each new whole-second boundary within the phase.
       const currentPhaseSec = Math.floor(elapsed / 1000);
@@ -440,15 +406,10 @@
     }
 
     function setToggleState(isRunning) {
-      const icon = document.getElementById('toggle-icon');
-      const label = document.getElementById('toggle-label');
-      if (isRunning) {
-        icon.textContent = 'stop';
-        label.textContent = 'Stop';
-      } else {
-        icon.textContent = 'play_arrow';
-        label.textContent = 'Start';
-      }
+      const btn = document.getElementById('toggle-btn');
+      document.getElementById('toggle-icon').textContent = isRunning ? 'stop' : 'play_arrow';
+      btn.title = isRunning ? 'Stop' : 'Start';
+      btn.classList.toggle('running', isRunning);
     }
 
     document.getElementById('toggle-btn').addEventListener('click', async () => {

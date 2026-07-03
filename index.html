@@ -719,9 +719,6 @@
 <body class="has-sidebar">
 
   <script src="lib/nav.js"></script>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
 
   <main>
   <div class="db-wrap">
@@ -899,7 +896,7 @@
       document.getElementById('db-deck-scroll').innerHTML = pinned.map(function (c) {
         var meta = [(c.length || 60) + ' min'];
         if (c.playlist) meta.push('\u266A ' + c.playlist);
-        return '<a class="db-deck-card" href="class-writer.html?id=' + c.id + '">' +
+        return '<a class="db-deck-card" href="your-classes.html?id=' + c.id + '">' +
           '<span class="db-deck-title">' + escHTML(c.title || 'Untitled Class') + '</span>' +
           '<span class="db-deck-meta">' + escHTML(meta.join(' · ')) + '</span>' +
         '</a>';
@@ -950,7 +947,7 @@
       }
       el.innerHTML = entries.map(function (e) {
         var d = new Date(e.ts);
-        return '<a class="db-log-item" href="class-writer.html?id=' + e.id + '">' +
+        return '<a class="db-log-item" href="your-classes.html?id=' + e.id + '">' +
           '<span class="db-log-head">' +
             '<span class="db-log-class">' + escHTML(e.title) + '</span>' +
             '<span class="db-log-date">' + MO[d.getMonth()] + ' ' + d.getDate() + '</span>' +
@@ -999,7 +996,7 @@
               '</span>' +
               '<span class="material-symbols-sharp db-start-arrow">arrow_forward</span>' +
             '</a>' +
-            '<a class="db-start-step" href="class-writer.html">' +
+            '<a class="db-start-step" href="your-classes.html">' +
               '<span class="db-start-n label-2">03</span>' +
               '<span class="db-start-main">' +
                 '<span class="db-start-title">Write your first class</span>' +
@@ -1141,7 +1138,7 @@
       try {
         var classesSaved = JSON.parse(localStorage.getItem('flowschool_classes') || '[]');
         classesSaved.forEach(function (c) {
-          items.push({ icon: 'edit_document', name: c.title || 'Untitled Class', sub: 'Class Writer', href: 'class-writer.html?id=' + c.id, time: c.editedAt || c.id || 0 });
+          items.push({ icon: 'edit_document', name: c.title || 'Untitled Class', sub: 'Your Classes', href: 'your-classes.html?id=' + c.id, time: c.editedAt || c.id || 0 });
         });
       } catch (_) {}
       try {

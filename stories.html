@@ -25,6 +25,14 @@
 
     .library-bar .search-wrap { flex: 1; }
 
+    .library-bar .btn-primary {
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: var(--r-cta);
+    }
+
     @media (max-width: 580px) {
       .library-bar { flex-wrap: wrap; }
       .library-bar .search-wrap { flex-basis: 100%; }
@@ -213,9 +221,6 @@
   <script src="data/story-starters.js"></script>
   <script src="lib/toast.js"></script>
   <script src="lib/confirm-delete.js"></script>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
   <div class="toast" id="toast"></div>
 
   <main>
@@ -236,12 +241,13 @@
           <span class="search-icon"><span class="material-symbols-sharp">search</span></span>
           <input type="search" class="search-input" id="stories-search" placeholder="Search your stories&#8230;">
         </div>
-        <button class="btn-icon" id="new-story-btn" title="New blank story" data-tooltip="New story">
-          <span class="material-symbols-sharp">edit</span>
-        </button>
         <a href="story-starters.html" class="btn-icon" title="Find a starter" data-tooltip="Find a starter">
           <span class="material-symbols-sharp">auto_stories</span>
         </a>
+        <button class="btn-primary" id="new-story-btn">
+          <span class="material-symbols-sharp" style="font-size:16px">edit</span>
+          New Story
+        </button>
       </div>
       <div class="story-index" id="story-index"></div>
     </div>

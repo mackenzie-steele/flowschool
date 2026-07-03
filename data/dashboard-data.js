@@ -18,7 +18,7 @@ var TOOL_SKILL_MAP = {
   'breath-pace.html':           ['Cueing'],
   'playlist-builder.html':              ['Class Structure'],
   'story-starters.html':                ['Storytelling'],
-  'class-writer.html':                  ['Sequencing', 'Class Structure'],
+  'your-classes.html':                  ['Sequencing', 'Class Structure'],
 };
 
 // Suggested next action per weakest skill — includes link to the relevant tool

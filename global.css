@@ -11,7 +11,6 @@
    3.  Typography
    4.  Layout (.inner, .wrap)
    4b. Sticky CTA Bar
-   5.  Ambient Background (orbs)
    6.  Header / Navigation
    7.  Hero
    8.  Buttons (ghost, primary, secondary, icon)
@@ -31,6 +30,7 @@
    21. Auth Form
    22. Dark Mode Element Overrides
    23. Tool Page Components (controls-bar, modal, card-actions, search)
+   24. Site Footer (injected by lib/nav.js)
 
    HOW TO ADD A NEW TOOL PAGE
    1. Copy the page shell from any existing tool (e.g. arbitrary-rule-generator.html)
@@ -227,13 +227,6 @@
   --sidebar-bg:    rgba(21, 21, 21, .96);
   --btn-hover:     #EFEFEF;
 }
-
-[data-theme="dark"] .orb-1,
-[data-theme="dark"] .orb-2,
-[data-theme="dark"] .orb-3 {
-  opacity: .06;
-}
-
 
 /* ─── 1c. THEME TRANSITION ───────────────────────────────────── */
 
@@ -518,46 +511,6 @@ body.has-sidebar .cta-bar {
     width: 100%;
     justify-content: center;
   }
-}
-
-
-/* ─── 5. AMBIENT BACKGROUND ──────────────────────────────────── */
-
-.orb {
-  position: fixed;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.orb-1 {
-  width: 900px;
-  height: 700px;
-  background: radial-gradient(circle, rgba(215, 205, 185, .7) 0%, transparent 70%);
-  top: -300px;
-  left: -250px;
-  opacity: .55;
-  filter: blur(100px);
-}
-
-.orb-2 {
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(circle, rgba(198, 192, 172, .55) 0%, transparent 70%);
-  top: -200px;
-  right: -250px;
-  opacity: .45;
-  filter: blur(110px);
-}
-
-.orb-3 {
-  width: 700px;
-  height: 700px;
-  background: radial-gradient(circle, rgba(205, 198, 178, .45) 0%, transparent 70%);
-  bottom: -150px;
-  left: 15%;
-  opacity: .40;
-  filter: blur(120px);
 }
 
 
@@ -2326,4 +2279,26 @@ body.has-sidebar {
 .modal-actions .btn-ghost,
 .modal-actions .btn-primary {
   border-radius: var(--r-cta);
+}
+
+
+/* ─── 24. SITE FOOTER ────────────────────────────────────────── */
+/* Injected on every page by lib/nav.js; login/signup carry it
+   statically. Bump the version string in nav.js. */
+
+.site-footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--text-3);
+  padding: 8px 28px 44px;
+  user-select: none;
+}
+
+/* stay clear of pages with a fixed CTA bar */
+body:has(.cta-bar) .site-footer {
+  padding-bottom: 120px;
 }
