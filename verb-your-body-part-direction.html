@@ -645,6 +645,7 @@
 
   <script src="lib/nav.js"></script>
 <script src="data/shorthand.js"></script>
+<script src="lib/library.js"></script>
 <div class="toast" id="toast"></div>
 
 <main>
@@ -1585,7 +1586,7 @@ const CUE_SH = (function () {
   function rankPose(q) {
     q = q.toLowerCase();
     const scored = [];
-    (typeof SHORTHAND === 'undefined' ? [] : SHORTHAND).forEach(e => {
+    fsShorthandAll().forEach(e => {
       const code = e.short.toLowerCase(), full = e.full.toLowerCase();
       let sc = -1;
       if (code.indexOf(q) === 0) sc = 0;

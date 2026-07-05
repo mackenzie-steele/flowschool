@@ -674,81 +674,55 @@
       if (s) renderPostMeta(s);
     });
 
-    // ─── ACTIONS MENU — duplicate / delete ───────────────────────────────────────
+    // ─── ACTIONS MENU — favorite / duplicate / delete ────────────────────────────
 
-    var menuEl = document.getElementById('st-menu');
-    var menuArmTimer = null;
-
-    function closeMenu() {
-      menuEl.hidden = true;
-      clearTimeout(menuArmTimer);
-    }
-
-    function renderMenu() {
-      var src = stories.find(function (x) { return x.id === currentId; });
-      var pinned = src && src.pinned;
-      menuEl.innerHTML =
-        '<button class="st-menu-item" data-act="pin"><span class="material-symbols-sharp' + (pinned ? ' fav-mark" style="margin:0;vertical-align:0;font-size:16px' : '') + '">favorite</span>' +
-          (pinned ? 'Remove from favorites' : 'Add to favorites') + '</button>' +
-        '<button class="st-menu-item" data-act="dup"><span class="material-symbols-sharp">content_copy</span>Duplicate</button>' +
-        '<button class="st-menu-item" data-act="del"><span class="material-symbols-sharp">delete</span>Delete story</button>';
-    }
-
-    document.getElementById('story-more-btn').addEventListener('click', function (e) {
-      e.stopPropagation();
-      if (menuEl.hidden) { renderMenu(); menuEl.hidden = false; }
-      else closeMenu();
-    });
-
-    menuEl.addEventListener('click', function (e) {
-      var item = e.target.closest('.st-menu-item');
-      if (!item) return;
-      e.stopPropagation();
-      var src = stories.find(function (x) { return x.id === currentId; });
-      if (!src) { closeMenu(); return; }
-
-      if (item.dataset.act === 'pin') {
-        src.pinned = !src.pinned;
-        persist(stories);
-        renderTitleWithFav(src);
-        toast(src.pinned ? 'Added to your favorites.' : 'Removed from favorites.');
-        closeMenu();
-      } else if (item.dataset.act === 'dup') {
-        closeMenu();
-        // opens unsaved — nothing exists until they save the retelling
-        showCompose(null, true);
-        composeStarter = src.starter ? { id: src.starterId || null, text: src.starter } : null;
-        var csl = document.getElementById('post-starter-line');
-        csl.hidden = !src.starter;
-        csl.textContent = src.starter || '';
-        document.getElementById('post-title-input').value = (src.title || 'Untitled Story') + ' \u2014 copy';
-        var area = document.getElementById('post-edit-area');
-        area.value = src.text || '';
-        editBaseline = '\u0000never';
-        updateSaveEnabled();
-        autoGrow();
-        toast('Copy ready \u2014 make it yours.');
-      } else if (item.dataset.act === 'del') {
-        if (item.classList.contains('armed')) {
-          closeMenu();
+    var menu = fsWireItemMenu(document.getElementById('st-menu'), {
+      items: function () {
+        var src = stories.find(function (x) { return x.id === currentId; }) || {};
+        return [
+          { act: 'pin', icon: 'favorite',
+            iconClass: src.pinned ? 'fav-mark' : '',
+            iconStyle: src.pinned ? 'margin:0;vertical-align:0;font-size:16px' : '',
+            label: src.pinned ? 'Remove from favorites' : 'Add to favorites' },
+          { act: 'dup', icon: 'content_copy', label: 'Duplicate' },
+          { act: 'del', icon: 'delete', label: 'Delete story' },
+        ];
+      },
+      confirm: { del: 'Click again to delete' },
+      on: function (act) {
+        var src = stories.find(function (x) { return x.id === currentId; });
+        if (!src) return;
+        if (act === 'pin') {
+          src.pinned = !src.pinned;
+          persist(stories);
+          renderTitleWithFav(src);
+          toast(src.pinned ? 'Added to your favorites.' : 'Removed from favorites.');
+        } else if (act === 'dup') {
+          // opens unsaved — nothing exists until they save the retelling
+          showCompose(null, true);
+          composeStarter = src.starter ? { id: src.starterId || null, text: src.starter } : null;
+          var csl = document.getElementById('post-starter-line');
+          csl.hidden = !src.starter;
+          csl.textContent = src.starter || '';
+          document.getElementById('post-title-input').value = (src.title || 'Untitled Story') + ' \u2014 copy';
+          var area = document.getElementById('post-edit-area');
+          area.value = src.text || '';
+          editBaseline = '\u0000never';
+          updateSaveEnabled();
+          autoGrow();
+          toast('Copy ready \u2014 make it yours.');
+        } else if (act === 'del') {
           stories = stories.filter(function (x) { return x.id !== currentId; });
           persist(stories);
           toast('Story removed.');
           showList(true);
-        } else {
-          item.classList.add('armed');
-          item.innerHTML = '<span class="material-symbols-sharp">delete</span>Click again to delete';
-          clearTimeout(menuArmTimer);
-          menuArmTimer = setTimeout(function () {
-            if (!menuEl.hidden) renderMenu();
-          }, 2200);
         }
-      }
+      },
     });
 
-    document.addEventListener('click', function () { if (!menuEl.hidden) closeMenu(); });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !menuEl.hidden) closeMenu();
+    document.getElementById('story-more-btn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      menu.toggle();
     });
 
     // ─── INIT ────────────────────────────────────────────────────────────────────

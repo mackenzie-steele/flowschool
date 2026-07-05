@@ -956,7 +956,9 @@ button svg {
   border-color: var(--volt);
 }
 
-/* Count + time btns are compact controls — keep full contrast */
+/* Count + time btns are compact controls — keep full contrast.
+   (.time-btn now serves breath-pace only; the library pages use
+   LED .chip selectors.) */
 .count-btn.active,
 .time-btn.active {
   background: var(--ink-solid);
@@ -2340,6 +2342,58 @@ body.has-sidebar {
 .library-empty-ghost-row:nth-child(3) i:first-child { width: 38%; }
 .library-empty-ghost-row:nth-child(3) i + i         { width: 27%; }
 
+
+/* ── Shorthand suggest — caret-anchored completion panel ── */
+.sh-suggest {
+  position: absolute;
+  z-index: 5;
+  min-width: 230px;
+  max-width: 320px;
+  background: var(--paper-solid);
+  border: 1px solid rgba(var(--ink-rgb), .16);
+  border-top-color: rgba(var(--ink-rgb), .30);
+  box-shadow: 0 4px 24px rgba(var(--ink-rgb), .10);
+  animation: fadeUp .14s ease both;
+}
+
+.sh-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.sh-row.sel,
+.sh-row:hover { background: rgba(var(--ink-rgb), .05); }
+
+.sh-code {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .02em;
+  color: var(--text-1);
+}
+
+.sh-full {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sh-hint {
+  display: flex;
+  gap: 14px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--border-light);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .08em;
+  color: var(--text-3);
+  user-select: none;
+}
 
 /* ── Item action menu (⋯) — the tv-/fl-/st- prefixes are per-page
       wiring; the look is one component ── */

@@ -356,29 +356,6 @@
 
     .fl-area::placeholder { color: rgba(var(--ink-rgb), .30); }
 
-    /* ── Shorthand suggest (same contract as the class editor) ── */
-    .sh-suggest {
-      position: absolute;
-      z-index: 5;
-      min-width: 230px;
-      max-width: 320px;
-      background: var(--paper-solid);
-      border: 1px solid rgba(var(--ink-rgb), .16);
-      border-top-color: rgba(var(--ink-rgb), .30);
-      box-shadow: 0 4px 24px rgba(var(--ink-rgb), .10);
-      animation: fadeUp .14s ease both;
-    }
-
-    .sh-row { display: flex; align-items: baseline; gap: 12px; padding: 8px 12px; cursor: pointer; }
-    .sh-row.sel, .sh-row:hover { background: rgba(var(--ink-rgb), .05); }
-    .sh-code { flex-shrink: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: .02em; color: var(--text-1); }
-    .sh-full { font-size: 11px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sh-hint {
-      display: flex; gap: 14px; padding: 6px 12px;
-      border-top: 1px solid var(--border-light);
-      font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em;
-      color: var(--text-3); user-select: none;
-    }
   </style>
 </head>
 
@@ -671,88 +648,54 @@
       });
     }
 
-    // ─── ROW MENU — duplicate / delete behind one quiet button ──────────────────
+    // ─── ACTIONS MENU — favorite / duplicate / delete ────────────────────────────
 
     var menuEl = document.createElement('div');
     menuEl.className = 'fl-menu';
     menuEl.hidden = true;
-    var menuId = null;
-    var menuArmTimer = null;
 
-    function closeRowMenu() {
-      menuEl.hidden = true;
-      menuId = null;
-      clearTimeout(menuArmTimer);
-      if (menuEl.parentElement) menuEl.parentElement.removeChild(menuEl);
-    }
-
-    function renderRowMenu() {
-      var src = byId(menuId);
-      var pinned = src && src.pinned;
-      menuEl.innerHTML =
-        '<button class="fl-menu-item" data-act="pin"><span class="material-symbols-sharp' + (pinned ? ' fav-mark" style="margin:0;vertical-align:0;font-size:16px' : '') + '">favorite</span>' +
-          (pinned ? 'Remove from favorites' : 'Add to favorites') + '</button>' +
-        '<button class="fl-menu-item" data-act="dup"><span class="material-symbols-sharp">content_copy</span>Duplicate</button>' +
-        '<button class="fl-menu-item" data-act="del"><span class="material-symbols-sharp">delete</span>Delete flow</button>';
-    }
-
-    function openDetailMenu() {
-      if (!menuEl.hidden) { closeRowMenu(); return; }
-      menuId = currentId;
-      renderRowMenu();
-      document.getElementById('fd-actions').appendChild(menuEl);
-      menuEl.hidden = false;
-    }
-
-    menuEl.addEventListener('click', function (e) {
-      var item = e.target.closest('.fl-menu-item');
-      if (!item) return;
-      e.stopPropagation();
-      var f = byId(menuId);
-      if (!f) { closeRowMenu(); return; }
-
-      if (item.dataset.act === 'pin') {
-        f.pinned = !f.pinned;
-        persist();
-        renderFdTitle(f);
-        toast(f.pinned ? 'Added to your favorites.' : 'Removed from favorites.');
-        closeRowMenu();
-      } else if (item.dataset.act === 'dup') {
-        closeRowMenu();
-        // opens unsaved — nothing exists until they save the variant
-        showEdit(null, true, f.type);
-        document.getElementById('fl-title').value = (f.name || 'Untitled Flow') + ' \u2014 copy';
-        var area = document.getElementById('fl-area');
-        area.value = f.text || '';
-        autoGrow(area);
-        renderCount();
-        markDirty();
-        toast('Copy ready \u2014 make it yours.');
-      } else if (item.dataset.act === 'del') {
-        if (item.classList.contains('armed')) {
-          var id = menuId;
-          closeRowMenu();
-          flows = flows.filter(function (x) { return x.id !== id; });
+    var menu = fsWireItemMenu(menuEl, {
+      detach: true,
+      items: function () {
+        var f = byId(currentId) || {};
+        return [
+          { act: 'pin', icon: 'favorite',
+            iconClass: f.pinned ? 'fav-mark' : '',
+            iconStyle: f.pinned ? 'margin:0;vertical-align:0;font-size:16px' : '',
+            label: f.pinned ? 'Remove from favorites' : 'Add to favorites' },
+          { act: 'dup', icon: 'content_copy', label: 'Duplicate' },
+          { act: 'del', icon: 'delete', label: 'Delete flow' },
+        ];
+      },
+      confirm: { del: 'Click again to delete' },
+      on: function (act) {
+        var f = byId(currentId);
+        if (!f) return;
+        if (act === 'pin') {
+          f.pinned = !f.pinned;
+          persist();
+          renderFdTitle(f);
+          toast(f.pinned ? 'Added to your favorites.' : 'Removed from favorites.');
+        } else if (act === 'dup') {
+          // opens unsaved — nothing exists until they save the variant
+          showEdit(null, true, f.type);
+          document.getElementById('fl-title').value = (f.name || 'Untitled Flow') + ' \u2014 copy';
+          var area = document.getElementById('fl-area');
+          area.value = f.text || '';
+          autoGrow(area);
+          renderCount();
+          markDirty();
+          toast('Copy ready \u2014 make it yours.');
+        } else if (act === 'del') {
+          flows = flows.filter(function (x) { return x.id !== currentId; });
           persist();
           toast('Flow removed.');
           showList(true);
-        } else {
-          item.classList.add('armed');
-          item.innerHTML = '<span class="material-symbols-sharp">delete</span>Click again to delete';
-          clearTimeout(menuArmTimer);
-          menuArmTimer = setTimeout(function () {
-            if (!menuEl.hidden) renderRowMenu();
-          }, 2200);
         }
-      }
+      },
     });
 
-    document.addEventListener('click', function () { if (!menuEl.hidden) closeRowMenu(); });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !menuEl.hidden) closeRowMenu();
-    });
-
-    // ─── EDITOR ──────────────────────────────────────────────────────────────────
+    // ─── EDITOR ──────────────────────────────────────────────────────────────────    // ─── EDITOR ──────────────────────────────────────────────────────────────────
 
     function renderTypes() {
       document.getElementById('fl-types').innerHTML = FLOW_TYPES.map(function (t) {
@@ -988,7 +931,7 @@
 
     document.getElementById('fd-more-btn').addEventListener('click', function (e) {
       e.stopPropagation();
-      openDetailMenu();
+      menu.toggle(document.getElementById('fd-actions'));
     });
 
     document.getElementById('flow-filter').addEventListener('click', function (e) {
@@ -1035,144 +978,10 @@
     // Same contract as the class editor: Tab inserts, arrows arm, Enter
     // only when armed, Esc dismisses for the current token.
 
-    var SH = (function () {
-      var panel = document.createElement('div');
-      panel.className = 'sh-suggest';
-      panel.hidden = true;
-      document.querySelector('.fl-editor').appendChild(panel);
-
-      var state = { el: null, items: [], sel: -1, tokenStart: 0, dismissed: null };
-
-      function tokenAt(el) {
-        var upto = el.value.slice(0, el.selectionStart);
-        var start = Math.max(upto.lastIndexOf('/'), upto.lastIndexOf('\n')) + 1;
-        return { start: start, text: upto.slice(start) };
-      }
-
-      function rank(q) {
-        q = q.toLowerCase();
-        var scored = [];
-        (typeof SHORTHAND === 'undefined' ? [] : SHORTHAND).forEach(function (e) {
-          var code = e.short.toLowerCase();
-          var full = e.full.toLowerCase();
-          var sc = -1;
-          if (code.indexOf(q) === 0) sc = 0;
-          else if (full.split(/\s+/).some(function (w) { return w.indexOf(q) === 0; })) sc = 1;
-          else if (code.indexOf(q) !== -1) sc = 2;
-          else if (full.indexOf(q) !== -1) sc = 3;
-          if (sc >= 0) scored.push({ e: e, sc: sc });
-        });
-        scored.sort(function (a, b) { return a.sc - b.sc || a.e.short.length - b.e.short.length; });
-        return scored.slice(0, 6).map(function (x) { return x.e; });
-      }
-
-      function caretXY(el) {
-        var m = document.createElement('div');
-        var cs = getComputedStyle(el);
-        m.style.cssText = 'position:absolute;visibility:hidden;white-space:pre-wrap;word-wrap:break-word;box-sizing:border-box;' +
-          'width:' + el.clientWidth + 'px;padding:' + cs.padding + ';font:' + cs.font + ';line-height:' + cs.lineHeight + ';letter-spacing:' + cs.letterSpacing + ';';
-        m.textContent = el.value.slice(0, el.selectionStart);
-        var mark = document.createElement('span');
-        mark.textContent = '​';
-        m.appendChild(mark);
-        document.body.appendChild(m);
-        var xy = { x: mark.offsetLeft, y: mark.offsetTop + mark.offsetHeight };
-        document.body.removeChild(m);
-        return xy;
-      }
-
-      function hide() {
-        panel.hidden = true;
-        state.el = null;
-        state.sel = -1;
-      }
-
-      function hideIfStale() {
-        if (document.activeElement !== state.el) hide();
-      }
-
-      function render() {
-        panel.innerHTML = state.items.map(function (e, i) {
-          return '<div class="sh-row' + (i === state.sel ? ' sel' : '') + '" data-i="' + i + '">' +
-            '<span class="sh-code">' + esc(e.short) + '</span>' +
-            '<span class="sh-full">' + esc(e.full) + '</span>' +
-          '</div>';
-        }).join('') +
-        '<div class="sh-hint"><span>tab &#183; insert</span><span>esc &#183; dismiss</span></div>';
-      }
-
-      function show(el) {
-        var t = tokenAt(el);
-        if (state.dismissed && state.dismissed.el === el && state.dismissed.start === t.start) return hide();
-        var q = t.text.trim();
-        if (q.length < 2) return hide();
-        var items = rank(q);
-        if (!items.length) return hide();
-
-        var leading = t.text.length - t.text.replace(/^\s+/, '').length;
-        state.el = el;
-        state.items = items;
-        state.sel = -1;
-        state.tokenStart = t.start + leading;
-        render();
-
-        var xy = caretXY(el);
-        var ed = document.querySelector('.fl-editor').getBoundingClientRect();
-        var er = el.getBoundingClientRect();
-        panel.hidden = false;
-        var left = er.left - ed.left + xy.x;
-        left = Math.min(left, ed.width - panel.offsetWidth);
-        panel.style.left = Math.max(0, left) + 'px';
-        panel.style.top = (er.top - ed.top + xy.y + 4) + 'px';
-      }
-
-      function insert(i) {
-        var el = state.el;
-        var e = state.items[i];
-        if (!el || !e) return;
-        var before = el.value.slice(0, state.tokenStart);
-        var after = el.value.slice(el.selectionStart);
-        el.value = before + e.short + ' / ' + after;
-        var pos = (before + e.short + ' / ').length;
-        el.setSelectionRange(pos, pos);
-        hide();
-        state.dismissed = null;
-        autoGrow(el);
-        el.focus();
-        markDirty();
-      }
-
-      function onKey(ev) {
-        if (panel.hidden || state.el !== ev.target) return;
-        if (ev.key === 'Tab') {
-          ev.preventDefault();
-          insert(state.sel === -1 ? 0 : state.sel);
-        } else if (ev.key === 'ArrowDown') {
-          ev.preventDefault();
-          state.sel = (state.sel + 1) % state.items.length;
-          render();
-        } else if (ev.key === 'ArrowUp') {
-          ev.preventDefault();
-          state.sel = state.sel <= 0 ? state.items.length - 1 : state.sel - 1;
-          render();
-        } else if (ev.key === 'Enter' && state.sel !== -1) {
-          ev.preventDefault();
-          insert(state.sel);
-        } else if (ev.key === 'Escape') {
-          state.dismissed = { el: ev.target, start: state.tokenStart };
-          hide();
-        }
-      }
-
-      panel.addEventListener('mousedown', function (ev) {
-        var row = ev.target.closest('.sh-row');
-        if (!row) return;
-        ev.preventDefault();
-        insert(parseInt(row.dataset.i, 10));
-      });
-
-      return { show: show, hide: hide, hideIfStale: hideIfStale, onKey: onKey };
-    })();
+    var SH = fsShorthandSuggest({
+      container: '.fl-editor',
+      afterInsert: function () { renderCount(); markDirty(); },
+    });
 
     var flArea = document.getElementById('fl-area');
     flArea.addEventListener('input', function () {

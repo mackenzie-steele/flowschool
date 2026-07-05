@@ -25,7 +25,38 @@
     }
 
     /* ── Search — component from global.css; page spacing only ── */
+    .lib-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .lib-bar .search-wrap { flex: 1; margin-bottom: 0; }
+    .lib-bar .btn-primary {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: var(--r-cta);
+      white-space: nowrap;
+    }
+
     .search-wrap { margin-bottom: 14px; }
+
+    /* your own entries */
+    .tag-yours {
+      border: 1px solid rgba(var(--ink-rgb), .25);
+      color: var(--text-2);
+      margin-left: 6px;
+    }
+
+    .sh-del-btn.confirm-delete-armed,
+    .sh-del-btn.confirm-delete-armed:hover {
+      color: var(--danger);
+      border-color: var(--danger);
+      background: rgba(224, 82, 82, .10);
+    }
 
     .filter-row .filter-chip {
       flex-shrink: 0;
@@ -125,30 +156,27 @@
 
     /* Category tag variants — all inherit global .tag style */
 
+    /* category tags — same language as the Your Flows type tags */
     .lib-table .tag {
       white-space: nowrap;
-      border: none;
-      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-2);
+      background: none;
+      border: 1px solid rgba(var(--ink-rgb), .18);
+      border-radius: 0;
+      padding: 3px 8px;
+      user-select: none;
     }
 
-    .tag-general    { background: var(--cat-general);    color: var(--cat-ink-dark);  border: none; }
-    .tag-double-leg { background: var(--cat-double-leg); color: var(--cat-ink-dark);  border: none; }
-    .tag-single-leg { background: var(--cat-single-leg); color: var(--cat-ink-light); border: none; }
-    .tag-hands-down { background: var(--cat-hands-down); color: var(--cat-ink-light); border: none; }
-    .tag-floor      { background: var(--cat-floor);      color: var(--cat-ink-light); border: none; }
-
-    /* Filter chip dots match their category color when active */
-    .filter-chip[data-filter="all"].active::before,
-    .mode-chip.on::before { background: var(--text-1); border-color: var(--text-1); }
-    .filter-chip[data-filter="general"].active::before    { background: var(--cat-general);    border-color: var(--cat-general); }
-    .filter-chip[data-filter="double-leg"].active::before  { background: var(--cat-double-leg); border-color: var(--cat-double-leg); }
-    .filter-chip[data-filter="single-leg"].active::before  { background: var(--cat-single-leg); border-color: var(--cat-single-leg); }
-    .filter-chip[data-filter="hands-down"].active::before  { background: var(--cat-hands-down); border-color: var(--cat-hands-down); }
-    .filter-chip[data-filter="floor"].active::before       { background: var(--cat-floor);      border-color: var(--cat-floor); }
+    /* Active filter dots use the standard highlight — no category colors */
 
     .lib-table th:nth-child(3),
     .lib-table td:nth-child(3) {
-      width: 120px;
+      width: 1%;
+      white-space: nowrap;
     }
 
     /* Action buttons in table */
@@ -484,6 +512,9 @@
 <body class="has-sidebar">
 
   <script src="lib/nav.js"></script>
+  <script src="lib/library.js"></script>
+  <script src="lib/confirm-delete.js"></script>
+  <script src="lib/toast.js"></script>
 
   <main>
   <section class="hero">
@@ -496,14 +527,20 @@
 
   <div class="wrap">
 
-    <!-- Search -->
-    <div class="search-wrap">
-      <span class="search-icon">
-        <span class="material-symbols-sharp">search</span>
-      </span>
-      <input type="text" class="search-input" id="search-input" placeholder="Search shorthand, pose name, or category…"
-        autocomplete="off">
-      <button class="search-clear hidden" id="search-clear" aria-label="Clear search">×</button>
+    <!-- Search + add -->
+    <div class="lib-bar">
+      <div class="search-wrap">
+        <span class="search-icon">
+          <span class="material-symbols-sharp">search</span>
+        </span>
+        <input type="text" class="search-input" id="search-input" placeholder="Search shorthand, pose name, or category…"
+          autocomplete="off">
+        <button class="search-clear hidden" id="search-clear" aria-label="Clear search">×</button>
+      </div>
+      <button class="btn-primary" id="add-sh-btn">
+        <span class="material-symbols-sharp" style="font-size:19px">add</span>
+        Add Your Own
+      </button>
     </div>
 
     <!-- Filter chips -->
@@ -514,6 +551,7 @@
       <button class="filter-chip" data-filter="single-leg">Single Leg</button>
       <button class="filter-chip" data-filter="hands-down">Hands Down</button>
       <button class="filter-chip" data-filter="floor">Floor</button>
+      <button class="filter-chip" data-filter="yours">Custom</button>
       <span class="result-count" id="result-count"></span>
     </div>
 
@@ -532,8 +570,8 @@
       </table>
     </div>
 
-    <!-- Sequence Demo -->
-    <div class="card sh-demo-card">
+    <!-- Sequence Demo — parked for now; flip hidden to bring it back -->
+    <div class="card sh-demo-card" hidden>
       <h5 class="eyebrow-label">Try it</h5>
       <div class="demo-hdr">
         <div>
@@ -558,6 +596,26 @@
   </div><!-- .wrap -->
   </main>
 
+  <div class="modal-backdrop" id="sh-add-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <h3>Add your own shorthand</h3>
+      <p class="modal-hint">Your code joins the library and every suggestion panel on the platform.</p>
+      <input type="text" class="modal-input" id="sh-code-input" placeholder="Shorthand &#8212; e.g. BOP" maxlength="20" autocomplete="off" spellcheck="false" style="text-transform:uppercase">
+      <input type="text" class="modal-input" id="sh-full-input" placeholder="Full name &#8212; e.g. Bird of Paradise" maxlength="80" autocomplete="off" style="margin-top:10px">
+      <div class="chips" id="sh-cat-chips" style="margin-top:14px">
+        <button type="button" class="chip on" data-cat="general">General</button>
+        <button type="button" class="chip" data-cat="double-leg">Double Leg</button>
+        <button type="button" class="chip" data-cat="single-leg">Single Leg</button>
+        <button type="button" class="chip" data-cat="hands-down">Hands Down</button>
+        <button type="button" class="chip" data-cat="floor">Floor</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="sh-add-cancel">Cancel</button>
+        <button class="btn-primary" id="sh-add-confirm">Add Shorthand</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="data/shorthand.js"></script>
@@ -566,6 +624,53 @@
     // ─── STATE ───────────────────────────────────────────────────────────────────
 
     const STATE = { filter: 'all', query: '', mode: 'expand' };
+
+    // ─── ADD YOUR OWN ────────────────────────────────────────────────────────────
+
+    let addCat = 'general';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('sh-add-modal');
+
+      document.getElementById('add-sh-btn').addEventListener('click', () => {
+        document.getElementById('sh-code-input').value = '';
+        document.getElementById('sh-full-input').value = '';
+        addCat = 'general';
+        document.querySelectorAll('#sh-cat-chips .chip').forEach(c =>
+          c.classList.toggle('on', c.dataset.cat === 'general'));
+        modal.hidden = false;
+        requestAnimationFrame(() => document.getElementById('sh-code-input').focus());
+      });
+
+      document.getElementById('sh-add-cancel').addEventListener('click', () => { modal.hidden = true; });
+      modal.addEventListener('click', e => { if (e.target === e.currentTarget) modal.hidden = true; });
+
+      document.getElementById('sh-cat-chips').addEventListener('click', e => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        addCat = chip.dataset.cat;
+        document.querySelectorAll('#sh-cat-chips .chip').forEach(c =>
+          c.classList.toggle('on', c === chip));
+      });
+
+      document.getElementById('sh-add-confirm').addEventListener('click', () => {
+        const code = document.getElementById('sh-code-input').value.trim().toUpperCase();
+        const full = document.getElementById('sh-full-input').value.trim();
+        if (!code) { document.getElementById('sh-code-input').focus(); return; }
+        if (!full) { document.getElementById('sh-full-input').focus(); return; }
+        const clash = allShorthand().find(s => s.short.trim().toLowerCase() === code.toLowerCase());
+        if (clash) {
+          toast('\u201C' + code + '\u201D already means ' + clash.full + '.');
+          return;
+        }
+        const list = fsCustomShorthand();
+        list.push({ id: Date.now(), short: code, full: full, category: addCat, notes: '', custom: true });
+        localStorage.setItem('flowschool_shorthand', JSON.stringify(list));
+        modal.hidden = true;
+        toast(code + ' added to your library.');
+        renderLib();
+      });
+    });
 
     // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
@@ -591,9 +696,14 @@
       return `<span class="tag ${cls}">${lbl}</span>`;
     }
 
+    // the base library plus the teacher's own codes, always fresh
+    function allShorthand() {
+      return fsShorthandAll();
+    }
+
     function buildLookup() {
       const m = new Map();
-      SHORTHAND.forEach(s => m.set(s.short.trim().toLowerCase(), s.full));
+      allShorthand().forEach(s => m.set(s.short.trim().toLowerCase(), s.full));
       return m;
     }
 
@@ -693,9 +803,12 @@
     // ─── FILTERED DATA ────────────────────────────────────────────────────────────
 
     function getFiltered() {
+      const all = allShorthand();
       let pool = STATE.filter === 'all'
-        ? [...SHORTHAND]
-        : SHORTHAND.filter(s => s.category === STATE.filter);
+        ? all
+        : (STATE.filter === 'yours'
+          ? all.filter(s => s.custom)
+          : all.filter(s => s.category === STATE.filter));
 
       if (STATE.query) {
         const q = STATE.query.toLowerCase();
@@ -728,15 +841,27 @@
       tbody.innerHTML = data.map(s => `<tr class="lib-row">
     <td><span class="lib-short">${esc(s.short)}</span></td>
     <td><span class="lib-full">${esc(s.full)}</span></td>
-    <td>${catTag(s.category)}</td>
+    <td>${catTag(s.category)}${s.custom ? '<span class="tag tag-yours">Custom</span>' : ''}</td>
     <td class="td-actions">
       <div class="lib-actions">
+        ${s.custom ? `<button class="btn-icon sh-del-btn" data-id="${s.id}" title="Delete" data-tooltip="Delete">
+          <span class="material-symbols-sharp">delete</span>
+        </button>` : ''}
         <button class="btn-icon copy-btn" data-short="${esc(s.short)}" title="Copy shorthand" data-tooltip="Copy">
           <span class="material-symbols-sharp">content_copy</span>
         </button>
       </div>
     </td>
   </tr>`).join('');
+
+      tbody.querySelectorAll('.sh-del-btn').forEach(btn => {
+        wireConfirmDelete(btn, () => {
+          const list = fsCustomShorthand().filter(x => x.id !== parseInt(btn.dataset.id, 10));
+          localStorage.setItem('flowschool_shorthand', JSON.stringify(list));
+          toast('Shorthand removed.');
+          renderLib();
+        });
+      });
 
       tbody.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', () => {
