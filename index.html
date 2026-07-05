@@ -23,6 +23,7 @@
       gap: 10px;
       padding: 40px 40px 100px;
       max-width: 1080px;
+      margin: 0 auto; /* centered in the content area, like every other page */
     }
 
     /* ── Cards ───────────────────────────────────────────── */
@@ -975,7 +976,12 @@
       var el = document.getElementById('db-continue-scroll');
       var recent = [];
       try { recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch (_) {}
-      recent = recent.filter(function (r) { return r.href !== 'story-structure.html' && r.href !== 'movement-planes-lab.html'; });
+      var GONE = ['story-structure.html', 'movement-planes-lab.html', 'elements-of-flow-lab.html', 'dashboard.html'];
+      recent = recent.filter(function (r) { return GONE.indexOf(r.href) === -1; });
+      // renamed pages keep their history
+      recent.forEach(function (r) {
+        if (r.href === 'shorthand-library.html') { r.href = 'pose-library.html'; r.name = 'Pose Library'; }
+      });
       if (!recent.length) {
         document.getElementById('db-continue-eyebrow').textContent = 'Start Here';
         el.innerHTML =

@@ -27,6 +27,11 @@
     .library-bar .search-wrap { flex: 1; }
     .library-bar .btn-primary { flex-shrink: 0; }
 
+    @media (max-width: 640px) {
+      .library-bar { flex-wrap: wrap; }
+      .library-bar .search-wrap { flex: 1 1 100%; }
+    }
+
     .library-bar .btn-primary {
       white-space: nowrap;
       display: inline-flex;
@@ -49,17 +54,7 @@
       line-height: 1.65;
     }
 
-    .flow-tag {
-      flex-shrink: 0;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--text-2);
-      border: 1px solid rgba(var(--ink-rgb), .18);
-      padding: 3px 8px;
-      user-select: none;
-    }
+    .flow-tag { flex-shrink: 0; } /* look comes from global mono-tag */
 
     /* ── Flow cards — blocks that click into a class ── */
     .flow-grid {

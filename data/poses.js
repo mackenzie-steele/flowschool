@@ -1,7 +1,7 @@
 // ─── FLOW SCHOOL — POSE DECK ──────────────────────────────────────────────────
 //
 // Source of truth: /data/poses.md
-// Sourced from the Shorthand Library (all categories except General).
+// Sourced from the Pose Library (all categories except General).
 //
 // ─────────────────────────────────────────────────────────────────────────────
 

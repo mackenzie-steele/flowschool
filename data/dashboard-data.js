@@ -13,7 +13,7 @@ var SKILL_MAP_DATA = [
 var TOOL_SKILL_MAP = {
   'arbitrary-rules.html':      ['Sequencing'],
   'movement-experiments.html': ['Sequencing'],
-  'shorthand-library.html':             ['Sequencing', 'Class Structure'],
+  'pose-library.html':                  ['Sequencing', 'Class Structure'],
   'verb-your-body-part-direction.html': ['Cueing'],
   'breath-pace.html':           ['Cueing'],
   'playlist-builder.html':              ['Class Structure'],
@@ -55,11 +55,11 @@ var NEXT_STEPS = [
     trigger: 'verb-your-body-part-direction.html',
     title:   'Put it into shorthand',
     desc:    "You've been writing your cues. Now encode your sequences using Flow School shorthand so you can track and recall them over time.",
-    href:    'shorthand-library.html',
-    label:   'Open Shorthand Library',
+    href:    'pose-library.html',
+    label:   'Open Pose Library',
   },
   {
-    trigger: 'shorthand-library.html',
+    trigger: 'pose-library.html',
     title:   'Take your notes into movement',
     desc:    "You've been documenting sequences. Take one into a movement experiment and see what changes when you add a creative constraint.",
     href:    'movement-experiments.html',

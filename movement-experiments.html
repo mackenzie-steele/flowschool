@@ -959,6 +959,9 @@
     // ─── STATE ───────────────────────────────────────────────────────────────────
 
     let lastId = null;
+    // NOTE (data model): experiments pin STATIC content, so favorites live
+    // here as an id list — unlike library artifacts (classes/flows/stories),
+    // which carry a `pinned` field on the object itself. Deliberate, not drift.
     let favorites = JSON.parse(localStorage.getItem('flowschool_favs') || '[]');
     // Migrate old format (array of numbers) to array of objects
     if (favorites.length && typeof favorites[0] === 'number') {

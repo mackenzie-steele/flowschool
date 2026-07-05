@@ -135,7 +135,7 @@
   --r:  0px;  /* cards, inputs, panels */
   --rf: 2px;  /* fine detail (beta tag) */
   --rs: 0px;  /* small controls */
-  --rb: 1px;  /* buttons, badges, toast */
+  --rb: 8px;  /* buttons, badges, toast — all buttons carry 8px (Jul 2026) */
   --r-cta: 8px;  /* rounded CTAs, callouts, text-button hover pills */
 
   /* Button padding */
@@ -915,6 +915,9 @@ button svg {
   position: relative;
   padding: 5px 12px 5px 22px;
 }
+.chip,
+.filter-chip { white-space: nowrap; }
+
 .chip::before,
 .filter-chip::before {
   content: '';
@@ -2392,6 +2395,27 @@ body.has-sidebar {
   font-size: 9px;
   letter-spacing: .08em;
   color: var(--text-3);
+  user-select: none;
+}
+
+/* ── Mono tag — the small uppercase artifact label. The per-page
+      names (flow-tag, cc-tag, …) are one component, like the menus ── */
+.flow-tag,
+.cc-tag,
+.cw-length-tag,
+.cw-props-tag,
+.lg-class-tag,
+.lib-table .tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-2);
+  background: none;
+  border: 1px solid rgba(var(--ink-rgb), .18);
+  border-radius: 0;
+  padding: 3px 8px;
+  white-space: nowrap;
   user-select: none;
 }
 
