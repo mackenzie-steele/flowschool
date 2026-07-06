@@ -20,7 +20,7 @@
     .db-wrap {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       padding: 40px 40px 100px;
       max-width: 1080px;
       margin: 0 auto; /* centered in the content area, like every other page */
@@ -37,7 +37,7 @@
       display: flex;
       flex-direction: column;
       border: 1px solid rgba(var(--ink-rgb), .13);
-      padding: 18px 20px 16px;
+      padding: 16px 20px 16px;
       text-decoration: none;
       color: inherit;
       cursor: pointer;
@@ -51,7 +51,7 @@
       font-size: 10px;
       letter-spacing: .08em;
       color: var(--text-3);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .db-pod-title {
@@ -60,7 +60,7 @@
       letter-spacing: -.01em;
       line-height: var(--lh-heading);
       color: var(--text-1);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .db-pod-blurb {
@@ -78,7 +78,7 @@
       margin-top: auto;
       font-family: var(--font-mono);
       font-size: 10px;
-      letter-spacing: .05em;
+      letter-spacing: .04em;
       color: var(--text-3);
       border-top: 1px solid var(--border-light);
       padding-top: 12px;
@@ -95,11 +95,11 @@
       right: 14px;
       background: none;
       border: none;
-      padding: 4px 6px;
+      padding: 4px 8px;
       cursor: pointer;
       font-family: var(--font-mono);
       font-size: 11px;
-      letter-spacing: .05em;
+      letter-spacing: .04em;
       line-height: 1;
       color: var(--text-3);
       opacity: 0;
@@ -135,7 +135,7 @@
       border: 1px solid var(--border-light);
       border-radius: 0;
       background: rgba(var(--ink-rgb),.018);
-      padding: 22px 24px;
+      padding: 24px 24px;
     }
 
     .db-eyebrow {
@@ -151,7 +151,7 @@
     /* ── Row grids ───────────────────────────────────────── */
     .db-row {
       display: grid;
-      gap: 10px;
+      gap: 12px;
     }
 
     .db-row-2   { grid-template-columns: 1fr 1fr; }
@@ -185,7 +185,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 5px;
+      gap: 4px;
       flex-shrink: 0;
       user-select: none;
     }
@@ -201,7 +201,7 @@
     .db-moon-datetime {
       font-family: var(--font-mono);
       font-size: 11px;
-      letter-spacing: .06em;
+      letter-spacing: .04em;
       color: var(--text-2);
       line-height: 1;
     }
@@ -211,14 +211,14 @@
       flex-shrink: 0;
       width: 224px;
       border: 1px solid var(--border);
-      padding: 18px;
+      padding: 16px;
       text-decoration: none;
       color: inherit;
       background: rgba(var(--ink-rgb),.022);
-      transition: border-color .15s, background .15s;
+      transition: border-color var(--transition-base), background .15s;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .db-deck-card:hover {
@@ -252,8 +252,8 @@
     .db-milestones {
       display: flex;
       flex-wrap: wrap;
-      gap: 14px 40px;
-      padding: 2px 0 18px;
+      gap: 16px 40px;
+      padding: 2px 0 16px;
     }
 
     .db-mile-val {
@@ -269,7 +269,7 @@
       display: block;
       font-size: 10px;
       font-weight: var(--weight-semibold);
-      letter-spacing: .07em;
+      letter-spacing: .08em;
       text-transform: uppercase;
       color: var(--text-3);
       margin-top: 3px;
@@ -278,11 +278,11 @@
     /* ── Teaching Log ─────────────────────────────────────── */
     .db-log-item {
       display: block;
-      padding: 10px 0;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-light);
       text-decoration: none;
       color: inherit;
-      transition: opacity .15s;
+      transition: opacity var(--transition-base);
     }
 
     .db-log-item:last-child { border-bottom: none; }
@@ -291,7 +291,7 @@
     .db-log-head {
       display: flex;
       align-items: baseline;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 3px;
     }
 
@@ -325,7 +325,7 @@
     .db-drive {
       display: flex;
       align-items: center;
-      gap: 18px;
+      gap: 16px;
     }
 
     .db-drive-icon {
@@ -338,10 +338,10 @@
       justify-content: center;
     }
 
-    .db-drive-icon .material-symbols-sharp { font-size: 20px; color: var(--text-2); }
+    .db-drive-icon .material-symbols-sharp { font-size: var(--icon-lg); color: var(--text-2); }
 
     .db-drive-info { flex: 1; min-width: 0; }
-    .db-drive-info .db-eyebrow { margin-bottom: 6px; }
+    .db-drive-info .db-eyebrow { margin-bottom: 8px; }
 
     .db-drive-title {
       font-size: var(--fs-h6);
@@ -369,7 +369,7 @@
          row below, separated by a hairline for a clear tap target */
       .db-drive {
         flex-wrap: wrap;
-        gap: 14px 16px;
+        gap: 16px 16px;
         align-items: flex-start;
       }
       .db-drive-info { flex: 1 1 calc(100% - 56px); }
@@ -411,7 +411,7 @@
     /* ── Continue ────────────────────────────────────────── */
     .db-continue-scroll {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       overflow-x: auto;
       padding-bottom: 2px;
       scrollbar-width: none;
@@ -424,14 +424,14 @@
       width: 192px;
       border: 1px solid var(--border);
       border-radius: 0;
-      padding: 18px;
+      padding: 16px;
       text-decoration: none;
       color: inherit;
       background: rgba(var(--ink-rgb),.022);
-      transition: border-color .15s, background .15s;
+      transition: border-color var(--transition-base), background .15s;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .db-continue-card:hover {
@@ -450,7 +450,7 @@
     }
 
     .db-cc-icon .material-symbols-sharp {
-      font-size: 17px;
+      font-size: var(--icon-md);
       color: var(--text-2);
     }
 
@@ -485,12 +485,12 @@
     .db-start-step {
       display: flex;
       align-items: baseline;
-      gap: 14px;
-      padding: 13px 0;
+      gap: 16px;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-light);
       text-decoration: none;
       color: inherit;
-      transition: opacity .15s;
+      transition: opacity var(--transition-base);
     }
 
     .db-start-step:last-child { border-bottom: none; }
@@ -518,7 +518,7 @@
     .db-start-arrow {
       flex-shrink: 0;
       align-self: center;
-      font-size: 15px;
+      font-size: var(--icon-sm);
       color: var(--text-3);
     }
 
@@ -533,7 +533,7 @@
       font-size: var(--text-small);
       color: var(--text-3);
       font-style: italic;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .db-next-title {
@@ -552,11 +552,36 @@
     }
 
     /* ── Skill Map ───────────────────────────────────────── */
+    /* the shape draws itself in on first paint — the dashboard's one
+       set-piece; everything else holds still */
+    @media (prefers-reduced-motion: no-preference) {
+      .db-shape-draw {
+        stroke-dasharray: 1;
+        animation: dbShapeDraw .9s ease-out both;
+      }
+      .db-shape-draw + circle, .db-shape-draw ~ circle {
+        animation: dbShapeDots .3s ease-out .75s both;
+      }
+    }
+
+    @keyframes dbShapeDraw {
+      from { stroke-dashoffset: 1; fill-opacity: 0; }
+      60%  { fill-opacity: 0; }
+      to   { stroke-dashoffset: 0; fill-opacity: 1; }
+    }
+
+    @keyframes dbShapeDots {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
     .db-shape-svg {
+      position: relative;
+      z-index: calc(var(--z-grain) + 1); /* data reads above texture */
       display: block;
       width: 100%;
       max-width: 352px;
-      margin: 6px auto 2px;
+      margin: 8px auto 2px;
       overflow: visible;
     }
 
@@ -573,7 +598,7 @@
     .db-shape-label.open { fill: var(--volt); }
 
     .db-shape-receipts {
-      margin-top: 14px;
+      margin-top: 16px;
       padding-top: 12px;
       border-top: 1px solid var(--border-light);
     }
@@ -619,7 +644,7 @@
     .db-skillmap-foot {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
       margin-top: 4px;
     }
 
@@ -657,11 +682,11 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 10px 0;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-light);
       text-decoration: none;
       color: inherit;
-      transition: opacity .15s;
+      transition: opacity var(--transition-base);
     }
 
     .db-saved-item:last-child { border-bottom: none; }
@@ -678,7 +703,7 @@
       flex-shrink: 0;
     }
 
-    .db-saved-icon .material-symbols-sharp { font-size: 16px; color: var(--text-2); }
+    .db-saved-icon .material-symbols-sharp { font-size: var(--icon-md); color: var(--text-2); }
 
     .db-saved-info { flex: 1; min-width: 0; }
 
@@ -708,11 +733,11 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      margin-top: 14px;
+      margin-top: 16px;
       font-size: var(--text-small);
       color: var(--text-3);
       text-decoration: none;
-      transition: color .15s;
+      transition: color var(--transition-base);
     }
     .db-view-all:hover { color: var(--text-1); }
 
@@ -720,8 +745,8 @@
     .db-event {
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 10px 0;
+      gap: 16px;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-light);
     }
 
@@ -733,7 +758,7 @@
       flex-shrink: 0;
       text-align: center;
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: var(--r);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -787,7 +812,7 @@
       font-family: var(--font) !important;
       box-shadow: none !important;
       cursor: pointer;
-      transition: color .15s;
+      transition: color var(--transition-base);
       flex-shrink: 0;
     }
     .db-event-signup:hover { color: var(--text-1) !important; }
@@ -803,7 +828,7 @@
       aspect-ratio: 16 / 9;
       overflow: hidden;
       background: rgba(var(--ink-rgb), .06);
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
     .db-drop-thumb img {
       width: 100%;
@@ -936,7 +961,7 @@
             <h4 class="db-drive-title">Share your flow.</h4>
             <p class="db-drive-desc">Record 3&#8211;20 minutes of you teaching &#8212; horizontal, full body, well lit. Upload it to your folder and fill in your doc. By sharing, you&#8217;re signing up to receive from each other.</p>
           </div>
-          <a class="btn-primary db-drive-cta" href="https://drive.google.com/drive/folders/1ZcuhP1p9U0MGRKBb6O3IzscNe07m4c4G?usp=drive_link" target="_blank" rel="noopener">Open your folder<span class="material-symbols-sharp" style="font-size:14px">open_in_new</span></a>
+          <a class="btn-primary db-drive-cta" href="https://drive.google.com/drive/folders/1ZcuhP1p9U0MGRKBb6O3IzscNe07m4c4G?usp=drive_link" target="_blank" rel="noopener">Open your folder<span class="material-symbols-sharp i-sm">open_in_new</span></a>
         </div>
 
         <!-- 3. Continue Where You Left Off / Start Here (first run) -->
@@ -975,7 +1000,7 @@
           <div class="db-card">
             <span class="db-eyebrow">Recently Saved</span>
             <div id="db-saved-list"></div>
-            <a href="saved.html" class="db-view-all">View all saved <span class="material-symbols-sharp" style="font-size:13px;vertical-align:-2px">arrow_forward</span></a>
+            <a href="saved.html" class="db-view-all">View all saved <span class="material-symbols-sharp i-sm" style="vertical-align:-2px">arrow_forward</span></a>
           </div>
 
         </div>
@@ -1093,7 +1118,7 @@
 
         el.innerHTML = picks.map(function (e) {
           return '<a class="db-pod" href="' + escP(e.url) + '" target="_blank" rel="noopener">' +
-            '<button type="button" class="db-pod-x" data-num="' + e.num + '" title="Hide this episode">&#10005;</button>' +
+            '<button type="button" class="db-pod-x" data-num="' + e.num + '" title="Hide this episode"><span class="material-symbols-sharp i-sm">close</span></button>' +
             '<span class="db-pod-num">EP ' + e.num + '</span>' +
             '<span class="db-pod-title">' + escP(e.title) + '</span>' +
             '<span class="db-pod-blurb">' + escP(e.blurb) + '</span>' +
@@ -1109,7 +1134,7 @@
         clearTimeout(podArmTimer);
         el.querySelectorAll('.db-pod-x.armed').forEach(function (b) {
           b.classList.remove('armed');
-          b.innerHTML = '&#10005;';
+          b.innerHTML = '<span class="material-symbols-sharp i-sm">close</span>';
         });
       }
 
@@ -1321,13 +1346,14 @@
         '<span class="db-eyebrow">Next Step</span>' +
         '<h3 class="db-next-title">' + step.title + '</h3>' +
         '<p class="db-next-desc">' + step.desc + '</p>' +
-        '<a href="' + step.href + '" class="btn-primary" style="align-self:flex-start;display:inline-flex;align-items:center;gap:8px">' + step.label + '<span class="material-symbols-sharp" style="font-size:14px">arrow_forward</span></a>';
+        '<a href="' + step.href + '" class="btn-primary" style="align-self:flex-start;display:inline-flex;align-items:center;gap:8px">' + step.label + '<span class="material-symbols-sharp i-sm">arrow_forward</span></a>';
     }
 
     // ── The Shape of Your Practice — a portrait from real artifacts ──
     // Two polygons: all-time in quiet ink, the last 30 days in volt.
     // Tap an axis for its receipts. Data: fsPracticeShape() — no mock.
     var shapeOpenAxis = null;
+    var shapeHasDrawn = false; // the draw-in plays once per visit, not per tap
 
     function renderPracticeShape() {
       var axes = fsPracticeShape();
@@ -1355,8 +1381,9 @@
 
       var empty = axes.every(function (a) { return a.allTime === 0; });
 
+      var drawCls = shapeHasDrawn ? '' : ' class="db-shape-draw"';
       var allPoly = empty ? '' :
-        '<polygon points="' + axes.map(function (a, i) { return pt(a.allTime, i).join(','); }).join(' ') + '"' +
+        '<polygon' + drawCls + ' pathLength="1" points="' + axes.map(function (a, i) { return pt(a.allTime, i).join(','); }).join(' ') + '"' +
         ' fill="rgba(var(--ink-rgb),.07)" stroke="var(--volt)" stroke-width="1.5"/>' +
         axes.map(function (a, i) {
           if (!a.allTime) return '';
@@ -1398,6 +1425,8 @@
           ? '<p class="db-skillmap-sub">Your shape appears as you make things.</p>'
           : '') +
         receiptsHTML;
+
+      shapeHasDrawn = true;
 
       card.querySelectorAll('.db-shape-label').forEach(function (el) {
         el.addEventListener('click', function () {
@@ -1546,7 +1575,7 @@
         '<p class="db-bonnie-body">' + escHTML(pick.body) + '</p>' +
         '<a href="' + escHTML(pick.ctaHref) + '" class="btn-primary" style="margin-top:20px;display:inline-flex;align-items:center;gap:8px;border-radius:var(--r-cta)">' +
           escHTML(pick.ctaLabel) +
-          '<span class="material-symbols-sharp" style="font-size:14px">arrow_forward</span>' +
+          '<span class="material-symbols-sharp i-sm">arrow_forward</span>' +
         '</a>';
     }
 

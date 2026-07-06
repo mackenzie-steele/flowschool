@@ -17,7 +17,7 @@
     .library-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 8px;
     }
 
@@ -45,7 +45,7 @@
       display: flex;
       align-items: baseline;
       gap: 20px;
-      padding: 26px 0;
+      padding: 24px 0;
       border-bottom: 1px solid var(--border-light);
       text-decoration: none;
       color: inherit;
@@ -61,7 +61,7 @@
       letter-spacing: -.01em;
       line-height: var(--lh-heading);
       color: var(--text-1);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -118,7 +118,7 @@
       letter-spacing: -.01em;
       line-height: var(--lh-heading);
       color: var(--text-1);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     /* the starter is provenance, not the headline */
@@ -127,7 +127,7 @@
       font-size: 11px;
       letter-spacing: .04em;
       color: var(--text-3);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .post-title-input {
@@ -184,7 +184,7 @@
     }
 
     @media (max-width: 580px) {
-      .story-row { gap: 14px; padding: 22px 0; }
+      .story-row { gap: 16px; padding: 24px 0; }
       .story-row-date { display: none; }
       .post-title { font-size: clamp(1.5rem, 6vw, 2rem); }
     }
@@ -222,17 +222,17 @@
           <span class="material-symbols-sharp">auto_stories</span>
         </a>
         <button class="btn-primary" id="new-story-btn">
-          <span class="material-symbols-sharp" style="font-size:19px">add</span>
+          <span class="material-symbols-sharp i-lg">add</span>
           New Story
         </button>
       </div>
       <div class="sort-row" id="sort-row">
         <button class="btn-ghost sm" id="sort-btn" title="Toggle sort order" data-tooltip="Sort by">
-          <span class="material-symbols-sharp" style="font-size:15px;margin-right:5px">swap_vert</span>
+          <span class="material-symbols-sharp i-sm" style="margin-right:5px">swap_vert</span>
           <span id="sort-label">Recently Edited</span>
         </button>
         <button class="btn-ghost sm fav-filter" id="fav-filter-btn" title="Only favorites" data-tooltip="Only favorites">
-          <span class="material-symbols-sharp" style="font-size:15px;margin-right:5px">favorite</span>
+          <span class="material-symbols-sharp i-sm" style="margin-right:5px">favorite</span>
           Favorites
         </button>
         <span class="result-count" id="result-count"></span>
@@ -245,7 +245,7 @@
   <div id="detail-view" hidden>
     <div class="post-bar">
       <button class="btn-ghost" id="back-btn">
-      <span class="material-symbols-sharp" style="font-size:16px;margin-right:6px">arrow_back</span>
+      <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
       <span class="post-back-label">Your Stories</span>
       </button>
       <div class="post-edit-actions" id="post-edit-actions" hidden>
@@ -354,7 +354,7 @@
           '<div class="library-empty-actions">' +
           '<button class="btn-primary" id="empty-new-btn">Write a Story</button>' +
           '</div>' +
-          '<a href="story-starters.html" class="library-empty-link">Get Inspired <span class="material-symbols-sharp" style="font-size:13px;vertical-align:-2px">arrow_forward</span></a>' +
+          '<a href="story-starters.html" class="library-empty-link">Get Inspired <span class="material-symbols-sharp i-sm" style="vertical-align:-2px">arrow_forward</span></a>' +
           fsGhostRows() +
           '</div>';
         document.getElementById('empty-new-btn').addEventListener('click', function () {

@@ -45,8 +45,8 @@
     .sv-section-hdr {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding-bottom: 10px;
+      gap: 12px;
+      padding-bottom: 12px;
       border-bottom: 1px solid var(--border-light);
       margin-bottom: 4px;
     }
@@ -64,8 +64,8 @@
       font-size: 10px;
       color: var(--text-3);
       background: rgba(var(--ink-rgb), .06);
-      border-radius: 2px;
-      padding: 1px 6px;
+      border-radius: var(--r);
+      padding: 1px 8px;
     }
 
     /* ── Item row ── */
@@ -73,11 +73,11 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 10px 0;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-light);
       text-decoration: none;
       color: inherit;
-      transition: opacity .15s;
+      transition: opacity var(--transition-base);
     }
 
     .sv-item:last-child { border-bottom: none; }
@@ -93,7 +93,7 @@
       flex-shrink: 0;
     }
 
-    .sv-icon .material-symbols-sharp { font-size: 16px; color: var(--text-2); }
+    .sv-icon .material-symbols-sharp { font-size: var(--icon-md); color: var(--text-2); }
 
     .sv-info { flex: 1; min-width: 0; }
 
@@ -117,7 +117,7 @@
       color: var(--text-3);
       flex-shrink: 0;
       opacity: 0;
-      transition: opacity .15s;
+      transition: opacity var(--transition-base);
     }
 
     .sv-item:hover .sv-arrow { opacity: 1; }
@@ -132,7 +132,7 @@
 
     /* ── Global empty ── */
     .sv-all-empty {
-      padding: 60px 0;
+      padding: 56px 0;
       text-align: center;
     }
 
@@ -147,6 +147,7 @@
 <body class="has-sidebar">
 
   <script src="lib/nav.js"></script>
+<script src="lib/library.js"></script>
   <script src="lib/toast.js"></script>
   <div class="toast" id="toast"></div>
 
@@ -162,18 +163,18 @@
       font-size: var(--text-body-sm);
       color: var(--text-2);
       line-height: 1.65;
-      margin: 10px 0 18px;
+      margin: 12px 0 16px;
       max-width: 52ch;
     }
 
-    .sv-data-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .sv-data-actions { display: flex; gap: 12px; flex-wrap: wrap; }
     .sv-data-actions .btn-secondary { display: inline-flex; align-items: center; gap: 8px; }
 
     .sv-data-meta {
       margin-top: 16px;
       font-family: var(--font-mono);
       font-size: 11px;
-      letter-spacing: .05em;
+      letter-spacing: .04em;
       color: var(--text-3);
     }
   </style>
@@ -183,7 +184,7 @@
     <div class="inner">
       <p class="label-1">Your library</p>
       <h3>Saved</h3>
-      <p>Everything you've bookmarked, in one place.</p>
+      <p>Everything you’ve bookmarked, in one place.</p>
     </div>
   </section>
 
@@ -195,7 +196,7 @@
       <p class="sv-data-copy">Everything you make &#8212; classes, stories, playlists, cue flows, saved rules &#8212; lives on this device. Download a backup anytime, or restore one onto a new device.</p>
       <div class="sv-data-actions">
         <button class="btn-secondary" id="export-btn">
-          <span class="material-symbols-sharp" style="font-size:16px">download</span>
+          <span class="material-symbols-sharp i-md">download</span>
           Download Backup
         </button>
         <button class="btn-ghost" id="import-btn">Restore a Backup</button>
@@ -478,7 +479,7 @@
               +   '<span class="sv-name">' + esc(item.name) + '</span>'
               +   (item.time ? '<span class="sv-time">' + timeAgo(item.time) + '</span>' : '')
               + '</div>'
-              + '<span class="material-symbols-sharp sv-arrow" style="font-size:16px">arrow_forward</span>'
+              + '<span class="material-symbols-sharp sv-arrow i-md">arrow_forward</span>'
               + '</a>';
           }).join('')
         : '<p class="sv-empty">Nothing saved here yet.</p>';
@@ -503,9 +504,11 @@
     });
 
     if (allItems === 0) {
-      root.innerHTML = '<div class="sv-all-empty">'
-        + '<p>Nothing saved yet. Bookmark items as you practice — they\'ll appear here.</p>'
-        + '<a href="index.html" class="btn-secondary">Back to Dashboard</a>'
+      root.innerHTML = '<div class="library-empty">'
+        + fsGhostRows()
+        + '<p class="library-empty-headline">Everything you keep, in one place.</p>'
+        + '<p class="library-empty-sub">Save a challenge, a chain, a cue sheet, or a playlist as you practice \u2014 this shelf fills itself.</p>'
+        + '<div class="library-empty-actions"><a href="index.html" class="btn-primary">Back to Dashboard</a></div>'
         + '</div>';
     } else {
       root.innerHTML = '<div class="saved-header">'

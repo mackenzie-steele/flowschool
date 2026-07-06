@@ -20,8 +20,8 @@
 
     /* ── Experiment card ── */
     .experiment-card {
-      padding: 44px;
-      margin-bottom: 36px;
+      padding: 48px;
+      margin-bottom: 40px;
     }
 
     .exp-header {
@@ -68,7 +68,7 @@
     }
 
     .section-label {
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     ol.rules-list {
@@ -76,7 +76,7 @@
       counter-reset: rule-n;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     ol.rules-list li {
@@ -86,7 +86,7 @@
       color: var(--text-2);
       counter-increment: rule-n;
       display: flex;
-      gap: 14px;
+      gap: 16px;
     }
 
     ol.rules-list li::before {
@@ -100,7 +100,7 @@
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 9px;
+      gap: 8px;
     }
 
     ul.item-list li {
@@ -125,7 +125,7 @@
     }
 
     .insight-body p+p {
-      margin-top: 14px;
+      margin-top: 16px;
     }
 
     .reflect-block {
@@ -133,11 +133,11 @@
       background: rgba(var(--ink-rgb), .04);
       border: 1px solid rgba(var(--ink-rgb), .14);
       border-radius: 0;
-      padding: 22px 26px;
+      padding: 24px 24px;
     }
 
     .reflect-block .section-label {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .reflect-q {
@@ -165,7 +165,7 @@
 
     @media (max-width: 580px) {
       .experiment-card {
-        padding: 28px 22px;
+        padding: 28px 24px;
       }
 
       .shuffle-btn {
@@ -1092,7 +1092,7 @@
         <span class="fav-name">${exp.title}</span>
         <div class="fav-btns">
           <button class="fav-view-btn" data-id="${f.id}">View</button>
-          <button class="fav-rm-btn" data-id="${f.id}" title="Remove">✕</button>
+          <button class="fav-rm-btn" data-id="${f.id}" title="Remove"><span class="material-symbols-sharp i-sm">close</span></button>
         </div>
       </div>`;
       }).join('');

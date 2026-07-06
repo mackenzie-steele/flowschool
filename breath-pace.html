@@ -55,7 +55,7 @@
     .bp-transport-row {
       display: flex;
       justify-content: center;
-      margin-top: 10px;
+      margin-top: 12px;
     }
 
     .bp-transport {
@@ -70,14 +70,14 @@
       justify-content: center;
       cursor: pointer;
       transition: box-shadow var(--transition-base), transform var(--transition-fast);
-      box-shadow: 0 2px 12px rgba(var(--ink-rgb), .18);
+      box-shadow: var(--shadow-float);
     }
 
-    .bp-transport:hover { box-shadow: 0 2px 16px rgba(var(--ink-rgb), .28); }
+    .bp-transport:hover { box-shadow: var(--shadow-float); }
     .bp-transport:active { transform: scale(.96); }
 
     .bp-transport.running {
-      box-shadow: 0 0 0 4px var(--accent-dim), 0 2px 12px rgba(var(--ink-rgb), .18);
+      box-shadow: 0 0 0 4px var(--accent-dim), var(--shadow-float);
     }
 
 
@@ -102,7 +102,7 @@
 
     .time-btns {
       display: flex;
-      gap: 6px;
+      gap: 8px;
     }
 
     /* ── Audio ── */
@@ -113,10 +113,10 @@
       background: none;
       border: 1px solid rgba(var(--ink-rgb), .14);
       color: var(--text-3);
-      padding: 10px;
+      padding: 12px;
       border-radius: 0;
       cursor: pointer;
-      transition: all .15s;
+      transition: color var(--transition-base), background .15s, border-color .15s, opacity .15s, transform .15s;
     }
 
     .audio-btn:hover {
@@ -137,16 +137,16 @@
 
     @media (max-width: 580px) {
       .pacer-section {
-        padding: 44px 0 32px;
+        padding: 48px 0 32px;
       }
 
       .controls-card {
-        padding: 24px 22px;
+        padding: 24px 24px;
       }
 
       .ctl-grid {
         grid-template-columns: 1fr;
-        gap: 18px;
+        gap: 16px;
       }
     }
 
@@ -185,6 +185,7 @@
       </svg>
       <div class="bp-transport-row">
         <button class="bp-transport" id="toggle-btn" title="Start" aria-label="Start or stop the pacer">
+          <!-- transport hero glyph: the one sanctioned off-token icon size -->
           <span class="material-symbols-sharp" id="toggle-icon" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;font-size:26px">play_arrow</span>
         </button>
       </div>

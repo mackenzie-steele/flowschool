@@ -25,7 +25,7 @@
 
     /* ── Pose cards ── */
     .pose-card {
-      padding: 36px 40px 40px;
+      padding: 40px 40px 40px;
       display: flex;
       flex-direction: column;
       min-height: 200px;
@@ -47,7 +47,7 @@
       margin-bottom: 24px;
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
     }
 
     .eyebrow-dot {
@@ -115,7 +115,7 @@
     .chain-title-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .chain-title {
@@ -146,12 +146,12 @@
       padding: 0;
       display: flex;
       align-items: center;
-      transition: color .15s;
+      transition: color var(--transition-base);
       flex-shrink: 0;
     }
 
     .chain-title-btn:hover { color: var(--text-1); }
-    .chain-title-btn .material-symbols-sharp { font-size: 18px; }
+    .chain-title-btn .material-symbols-sharp { font-size: var(--icon-md); }
 
     .chain-count {
       font-family: var(--font-mono);
@@ -175,7 +175,7 @@
       gap: 8px;
       flex: 1;
       flex-wrap: wrap;
-      padding-top: 9px;
+      padding-top: 8px;
     }
 
     .chain-num {
@@ -232,11 +232,11 @@
       display: flex;
       align-items: center;
       flex-shrink: 0;
-      transition: color .15s;
+      transition: color var(--transition-base);
     }
 
     .chain-note-btn:hover { color: var(--text-1); }
-    .chain-note-btn .material-symbols-sharp { font-size: 16px; }
+    .chain-note-btn .material-symbols-sharp { font-size: var(--icon-md); }
 
     .chain-note-input {
       flex: 1;
@@ -250,7 +250,7 @@
       resize: none;
       outline: none;
       overflow: hidden;
-      transition: border-color .15s, background .15s;
+      transition: border-color var(--transition-base), background .15s;
     }
 
     .chain-note-input::placeholder { color: var(--text-3); font-style: italic; }
@@ -324,13 +324,13 @@
       border: none;
       cursor: pointer;
       color: rgba(var(--ink-rgb), .22);
-      padding: 4px 6px;
+      padding: 4px 8px;
       font-size: 16px;
       line-height: 1;
       flex-shrink: 0;
       transition: color .12s, transform .12s;
     }
-    .saved-chain-del .material-symbols-sharp { font-size: 15px; }
+    .saved-chain-del .material-symbols-sharp { font-size: var(--icon-sm); }
 
     .saved-chain-del:hover { color: var(--text-1); }
     .saved-chain-del.confirm-delete-armed,
@@ -379,7 +379,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 11px 0;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-light);
       font-size: var(--text-body-sm);
     }
@@ -465,7 +465,7 @@
     <!-- Action buttons -->
     <div class="deck-actions">
       <button class="btn-ghost" id="reset-btn">
-        <span class="material-symbols-sharp" style="font-size:16px;margin-right:6px">restart_alt</span>
+        <span class="material-symbols-sharp i-md" style="margin-right:6px">restart_alt</span>
         <span id="reset-label">Reset</span>
       </button>
       <button class="btn-primary" id="next-pose-btn">

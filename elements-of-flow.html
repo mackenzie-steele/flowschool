@@ -52,7 +52,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .fc-section-eyebrow-row {
@@ -75,12 +75,12 @@
       color: rgba(var(--ink-rgb), .28);
       position: relative;
       line-height: 1;
-      transition: color .15s;
+      transition: color var(--transition-base);
       flex-shrink: 0;
     }
 
     .fc-info-btn .material-symbols-sharp {
-      font-size: 18px;
+      font-size: var(--icon-md);
       font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
       line-height: 1;
     }
@@ -104,11 +104,11 @@
       text-align: left;
       color: var(--paper-solid);
       background: var(--ink-solid);
-      border-radius: 1px;
-      padding: 7px 10px;
+      border-radius: var(--rb);
+      padding: 8px 12px;
       pointer-events: none;
       opacity: 0;
-      transition: opacity .12s ease, transform .12s ease;
+      transition: opacity var(--transition-fast), transform var(--transition-fast);
       z-index: 100;
     }
 
@@ -122,7 +122,7 @@
     .fc-section-right {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       flex-shrink: 0;
     }
 
@@ -134,13 +134,13 @@
       color: var(--text-3);
       display: flex;
       align-items: center;
-      transition: color .15s;
+      transition: color var(--transition-base);
     }
 
     .fc-section-reset:hover { color: var(--text-1); }
 
     .fc-section-reset .material-symbols-sharp {
-      font-size: 20px;
+      font-size: var(--icon-lg);
       font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
       line-height: 1;
     }
@@ -148,7 +148,7 @@
     .fc-counter {
       display: flex;
       align-items: baseline;
-      gap: 6px;
+      gap: 8px;
       flex-shrink: 0;
     }
 
@@ -173,7 +173,7 @@
     .fc-progress {
       height: 2px;
       background: var(--border);
-      border-radius: 2px;
+      border-radius: var(--r);
       overflow: hidden;
       margin-bottom: 16px;
     }
@@ -181,18 +181,18 @@
     .fc-progress-fill {
       height: 100%;
       background: var(--accent);
-      border-radius: 2px;
+      border-radius: var(--r);
       width: 0%;
       transition: width .3s ease;
     }
 
     /* Complete callout */
     .fc-complete {
-      padding: 11px 14px;
+      padding: 12px 16px;
       border: 1px solid var(--accent-border);
       border-radius: var(--r-cta);
       background: var(--accent-dim);
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       display: none;
       animation: fadeUp .22s ease both;
     }
@@ -213,10 +213,10 @@
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      padding: 10px 0;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-light);
       cursor: pointer;
-      transition: opacity .15s;
+      transition: opacity var(--transition-base);
       -webkit-user-select: none;
       user-select: none;
     }
@@ -237,7 +237,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all .15s;
+      transition: color var(--transition-base), background .15s, border-color .15s, opacity .15s, transform .15s;
     }
 
     .fc-item.checked .fc-box {
@@ -246,10 +246,10 @@
     }
 
     .fc-icon {
-      font-size: 12px;
+      font-size: var(--icon-sm);
       color: var(--paper-solid);
       opacity: 0;
-      transition: opacity .15s;
+      transition: opacity var(--transition-base);
       font-weight: 700;
       line-height: 1;
       pointer-events: none;
@@ -278,8 +278,8 @@
     .fc-divider {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 0 4px;
+      gap: 12px;
+      padding: 12px 0 4px;
       font-size: var(--text-small);
       color: var(--text-3);
       letter-spacing: 0.05em;
@@ -326,7 +326,7 @@
         </div>
         <div class="res-actions">
           <button class="btn-icon" id="fc-reset-all" data-tooltip="Reset" title="Reset">
-            <span class="material-symbols-sharp">refresh</span>
+            <span class="material-symbols-sharp">restart_alt</span>
           </button>
         </div>
       </div>
@@ -344,7 +344,7 @@
                 </div>
               </div>
               <div class="fc-section-right">
-                <button class="fc-section-reset" data-key="bp" title="Reset body positions"><span class="material-symbols-sharp">refresh</span></button>
+                <button class="fc-section-reset" data-key="bp" title="Reset body positions"><span class="material-symbols-sharp">restart_alt</span></button>
                 <div class="fc-counter">
                   <span class="fc-count" id="bp-count">0</span>
                   <span class="fc-denom">/ 13</span>
@@ -370,7 +370,7 @@
                 </div>
               </div>
               <div class="fc-section-right">
-                <button class="fc-section-reset" data-key="plane" title="Reset movement planes"><span class="material-symbols-sharp">refresh</span></button>
+                <button class="fc-section-reset" data-key="plane" title="Reset movement planes"><span class="material-symbols-sharp">restart_alt</span></button>
                 <div class="fc-counter">
                   <span class="fc-count" id="plane-count">0</span>
                   <span class="fc-denom">/ 3</span>
@@ -392,7 +392,7 @@
                 </div>
               </div>
               <div class="fc-section-right">
-                <button class="fc-section-reset" data-key="gait" title="Reset gait"><span class="material-symbols-sharp">refresh</span></button>
+                <button class="fc-section-reset" data-key="gait" title="Reset gait"><span class="material-symbols-sharp">restart_alt</span></button>
                 <div class="fc-counter">
                   <span class="fc-count" id="gait-count">0</span>
                   <span class="fc-denom">/ 6</span>
@@ -414,7 +414,7 @@
                 </div>
               </div>
               <div class="fc-section-right">
-                <button class="fc-section-reset" data-key="big5" title="Reset big five"><span class="material-symbols-sharp">refresh</span></button>
+                <button class="fc-section-reset" data-key="big5" title="Reset big five"><span class="material-symbols-sharp">restart_alt</span></button>
                 <div class="fc-counter">
                   <span class="fc-count" id="big5-count">0</span>
                   <span class="fc-denom">/ 5</span>

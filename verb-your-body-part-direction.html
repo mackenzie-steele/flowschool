@@ -19,7 +19,7 @@
     .ws-flow-title-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       opacity: 0;
       transition: opacity .2s;
     }
@@ -50,17 +50,17 @@
       padding: 0;
       display: flex;
       align-items: center;
-      transition: color .15s;
+      transition: color var(--transition-base);
       flex-shrink: 0;
     }
     .ws-edit-btn:hover { color: var(--text-1); }
-    .ws-edit-btn .material-symbols-sharp { font-size: 18px; }
+    .ws-edit-btn .material-symbols-sharp { font-size: var(--icon-md); }
 
     /* ── Autosave indicator ── */
     .ws-autosave-indicator {
       display: none;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       font-family: var(--font-mono);
       font-size: 10px;
       text-transform: uppercase;
@@ -122,13 +122,13 @@
       border: none;
       cursor: pointer;
       color: rgba(var(--ink-rgb), .22);
-      padding: 4px 6px;
+      padding: 4px 8px;
       font-size: 16px;
       line-height: 1;
       flex-shrink: 0;
       transition: color .12s, transform .12s;
     }
-    .flow-list-del .material-symbols-sharp { font-size: 15px; }
+    .flow-list-del .material-symbols-sharp { font-size: var(--icon-sm); }
     .flow-list-del:hover { color: var(--text-1); }
     .flow-list-del.confirm-delete-armed,
     .flow-list-del.confirm-delete-armed:hover {
@@ -167,7 +167,7 @@
       letter-spacing: .10em;
       color: var(--text-2);
       font-weight: var(--weight-medium);
-      padding: 10px 12px;
+      padding: 12px 12px;
       border-right: 1px solid rgba(var(--ink-rgb), .10);
       white-space: nowrap;
     }
@@ -199,7 +199,7 @@
       min-height: 52px;
       background: transparent;
       border: none;
-      padding: 14px 12px;
+      padding: 16px 12px;
       font-family: var(--font);
       font-size: var(--text-body-sm);
       color: var(--text-1);
@@ -224,10 +224,10 @@
       min-height: 52px;
       background: transparent;
       border: none;
-      padding: 14px 8px;
+      padding: 16px 8px;
       font-family: var(--font-mono);
       font-size: 10px;
-      letter-spacing: .06em;
+      letter-spacing: .04em;
       color: var(--text-2);
       outline: none;
       cursor: pointer;
@@ -257,7 +257,7 @@
       opacity: 0;
       transition: color .12s, opacity .12s;
     }
-    .row-mv .material-symbols-sharp { font-size: 15px; }
+    .row-mv .material-symbols-sharp { font-size: var(--icon-sm); }
     .cue-row:hover .row-mv,
     .cue-row:focus-within .row-mv { opacity: 1; }
     .row-mv:hover { color: var(--text-1); }
@@ -271,7 +271,7 @@
       background: var(--paper-solid);
       border: 1px solid rgba(var(--ink-rgb), .16);
       border-top-color: rgba(var(--ink-rgb), .30);
-      box-shadow: 0 4px 24px rgba(var(--ink-rgb), .10);
+      box-shadow: var(--shadow-float);
       animation: fadeUp .14s ease both;
     }
     .sh-row { display: flex; align-items: baseline; gap: 12px; padding: 8px 12px; cursor: pointer; }
@@ -282,8 +282,8 @@
     .sh-word { font-size: 12.5px; color: var(--text-1); }
     .sh-hint {
       display: flex;
-      gap: 14px;
-      padding: 6px 12px;
+      gap: 16px;
+      padding: 8px 12px;
       border-top: 1px solid var(--border-light);
       font-family: var(--font-mono);
       font-size: 9px;
@@ -314,7 +314,7 @@
       font-size: 16px;
       transition: color .12s, transform .12s;
     }
-    .row-rm .material-symbols-sharp { font-size: 15px; }
+    .row-rm .material-symbols-sharp { font-size: var(--icon-sm); }
     .row-rm:hover { color: var(--text-1); }
     .row-rm.confirm-delete-armed,
     .row-rm.confirm-delete-armed:hover {
@@ -326,7 +326,7 @@
     .row-actions {
       display: flex;
       gap: 8px;
-      padding: 14px 16px;
+      padding: 16px 16px;
       border-top: 1px solid rgba(var(--ink-rgb), .08);
       background: rgba(var(--ink-rgb), .015);
       flex-wrap: wrap;
@@ -337,7 +337,7 @@
     /* ── Cue actions — speaking it is the point ── */
     .cue-actions {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       align-items: center;
       justify-content: flex-end;
       flex-wrap: wrap;
@@ -382,12 +382,12 @@
       color: var(--text-3);
       cursor: pointer;
       padding: 8px;
-      transition: color .15s;
+      transition: color var(--transition-base);
       display: flex;
       align-items: center;
     }
     .pol-close:hover { color: var(--text-1); }
-    .pol-close .material-symbols-sharp { font-size: 22px; }
+    .pol-close .material-symbols-sharp { font-size: var(--icon-lg); }
 
     .pol-meta {
       font-family: var(--font-mono);
@@ -437,14 +437,14 @@
     }
     .pol-nav {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
       justify-content: center;
       margin-bottom: 28px;
     }
     .pol-util {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
       justify-content: center;
     }
@@ -452,8 +452,8 @@
     /* Teleprompter script lines */
     .pol-script-line {
       display: flex;
-      gap: 18px;
-      padding: 16px 6px;
+      gap: 16px;
+      padding: 16px 8px;
       font-size: var(--fs-h3);
       color: rgba(var(--ink-rgb), .26);
       line-height: 1.3;
@@ -492,11 +492,11 @@
       flex: 1;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       min-width: 0;
     }
     .pol-inline-slider .range-slider { flex: 1; }
-    .pol-speed-icon { font-size: 18px; color: var(--text-3); flex-shrink: 0; }
+    .pol-speed-icon { font-size: var(--icon-md); color: var(--text-3); flex-shrink: 0; }
     .pol-speed-val {
       font-family: var(--font-mono);
       font-size: var(--text-small);
@@ -511,7 +511,7 @@
       justify-content: center;
       gap: 8px;
       width: 124px;
-      padding: 10px 0;
+      padding: 12px 0;
       background: var(--ink-solid);
       color: var(--paper-solid);
       border: none;
@@ -521,7 +521,7 @@
       font-weight: var(--weight-medium);
       cursor: pointer;
       white-space: nowrap;
-      transition: opacity .15s;
+      transition: opacity var(--transition-base);
       flex-shrink: 0;
     }
     .pol-start-btn:hover { opacity: .82; }
@@ -551,7 +551,7 @@
       border: 1px solid rgba(var(--ink-rgb), .12);
       border-top-color: rgba(var(--ink-rgb), .22);
       background: rgba(var(--ink-rgb), .02);
-      padding: 18px 20px 22px;
+      padding: 16px 20px 24px;
     }
 
     .wb-words {
@@ -578,12 +578,12 @@
       color: var(--text-3);
       margin-bottom: 16px;
     }
-    .wb-title .material-symbols-sharp { font-size: 14px; }
+    .wb-title .material-symbols-sharp { font-size: var(--icon-sm); }
 
     .wb-tabs {
       display: flex;
       gap: 0;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       border-bottom: 1px solid rgba(var(--ink-rgb), .08);
     }
     .wb-tab {
@@ -597,7 +597,7 @@
       font-weight: var(--weight-medium);
       color: var(--text-3);
       cursor: pointer;
-      transition: all .15s;
+      transition: color var(--transition-base), background .15s, border-color .15s, opacity .15s, transform .15s;
     }
     .wb-tab.active {
       color: var(--text-1);
@@ -614,10 +614,10 @@
     .wb-words {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px 6px;
+      gap: 12px 8px;
     }
     .wb-word {
-      padding: 5px 12px;
+      padding: 4px 12px;
       background: transparent;
       border: 1px solid rgba(var(--ink-rgb), .13);
       border-radius: 0;
@@ -625,7 +625,7 @@
       font-size: var(--text-small);
       color: var(--text-2);
       cursor: pointer;
-      transition: all .12s;
+      transition: color .12s, background .12s, border-color .12s, opacity .12s, transform .12s;
     }
     .wb-word:hover {
       background: rgba(var(--ink-rgb), .05);
@@ -711,7 +711,7 @@
       <button class="btn-ghost sm" id="btn-clear">Clear Worksheet</button>
       <div class="row-actions-spacer"></div>
       <button class="btn-ghost sm" id="btn-add-row">
-        <span class="material-symbols-sharp" style="font-size:15px;margin-right:4px">add</span>
+        <span class="material-symbols-sharp i-sm" style="margin-right:4px">add</span>
         Add Row
       </button>
     </div>
@@ -721,7 +721,7 @@
 
   <div class="cue-actions">
     <button class="btn-primary" id="btn-pol">
-      <span class="material-symbols-sharp" style="font-size:17px">record_voice_over</span>
+      <span class="material-symbols-sharp i-md">record_voice_over</span>
       Practice Out Loud
     </button>
   </div>
@@ -1114,7 +1114,7 @@ function downloadPDF() {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; color: #1a1a1a; padding: 72px 80px; max-width: 680px; }
   h1 { font-size: 22px; font-weight: 500; letter-spacing: -.01em; margin-bottom: 40px; }
-  .cue-line { font-size: 17px; font-weight: 300; line-height: 1.6; margin-bottom: 10px; }
+  .cue-line { font-size: 17px; font-weight: 300; line-height: 1.6; margin-bottom: 12px; }
   .pose-label { font-size: 10px; font-weight: 500; letter-spacing: .10em; text-transform: uppercase; color: #888; margin-top: 24px; margin-bottom: 4px; }
   @media print {
     body { padding: 56px 64px; }

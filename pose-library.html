@@ -21,8 +21,8 @@
     .lib-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     .lib-bar .search-wrap { flex: 1; margin-bottom: 0; }
@@ -40,13 +40,13 @@
       white-space: nowrap;
     }
 
-    .search-wrap { margin-bottom: 14px; }
+    .search-wrap { margin-bottom: 16px; }
 
     /* your own entries */
     .tag-yours {
       border: 1px solid rgba(var(--ink-rgb), .25);
       color: var(--text-2);
-      margin-left: 6px;
+      margin-left: 8px;
     }
 
     .sh-del-btn.confirm-delete-armed,
@@ -65,15 +65,15 @@
       display: inline-block;
       font-size: var(--text-nano);
       font-weight: var(--weight-bold);
-      padding: 2px 6px;
-      border-radius: 1px;
+      padding: 2px 8px;
+      border-radius: var(--r);
       background: rgba(var(--ink-rgb), .07);
       color: var(--text-3);
       border: 1px solid rgba(var(--ink-rgb), .10);
-      margin-left: 5px;
+      margin-left: 4px;
       vertical-align: middle;
       line-height: 1.5;
-      transition: background .15s, color .15s, border-color .15s;
+      transition: background var(--transition-base), color .15s, border-color .15s;
     }
 
     .filter-chip.active .lib-badge {
@@ -106,13 +106,13 @@
       letter-spacing: var(--ls-label);
       text-transform: uppercase;
       color: var(--text-3);
-      padding: 18px 18px 14px;
+      padding: 16px 16px 16px;
       border-bottom: 1px solid var(--border-light);
       white-space: nowrap;
     }
 
     .lib-table td {
-      padding: 13px 18px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border-light);
       vertical-align: middle;
     }
@@ -170,7 +170,7 @@
     .lib-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 6px;
+      gap: 8px;
     }
 
     /* Empty state */
@@ -185,7 +185,7 @@
     }
 
     .lib-empty p+p {
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: var(--text-small);
     }
 
@@ -218,12 +218,12 @@
 
     .mode-row {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       flex-shrink: 0;
     }
 
     .mode-chip {
-      padding: 7px 14px 7px 24px;
+      padding: 8px 16px 8px 24px;
       font-size: var(--text-small);
     }
 
@@ -232,14 +232,14 @@
       background: rgba(var(--ink-rgb), .04);
       border: 1px solid var(--border);
       border-radius: 0;
-      padding: 14px 16px;
+      padding: 16px 16px;
       color: var(--text-1);
       font-size: var(--text-body-sm);
       font-family: var(--font);
       outline: none;
       resize: vertical;
       min-height: 68px;
-      transition: border-color .15s, background .15s;
+      transition: border-color var(--transition-base), background .15s;
       line-height: 1.7;
     }
 
@@ -258,7 +258,7 @@
       align-items: center;
       gap: 8px;
       margin-top: 8px;
-      padding: 5px 10px 5px 7px;
+      padding: 4px 12px 4px 8px;
       background: rgba(var(--ink-rgb), .05);
       border: 1px solid var(--border);
       border-radius: 0;
@@ -278,8 +278,8 @@
       font-size: 10px;
       background: rgba(var(--ink-rgb), .07);
       border: 1px solid rgba(var(--ink-rgb), .14);
-      border-radius: 1px;
-      padding: 2px 6px;
+      border-radius: var(--r);
+      padding: 2px 8px;
       color: var(--text-3);
       line-height: 1.5;
     }
@@ -300,7 +300,7 @@
     }
 
     .seq-out-wrap {
-      margin-top: 14px;
+      margin-top: 16px;
       padding: 16px;
       background: rgba(var(--ink-rgb), .025);
       border: 1px solid var(--border-light);
@@ -338,7 +338,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .sh-section-title {
@@ -350,7 +350,7 @@
     .sh-section-desc {
       font-size: var(--text-ui);
       color: var(--text-3);
-      margin-bottom: 22px;
+      margin-bottom: 24px;
     }
 
     /* Add form */
@@ -376,7 +376,7 @@
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
     .form-label {}
@@ -392,12 +392,12 @@
       background: rgba(var(--ink-rgb), .04);
       border: 1px solid var(--border);
       border-radius: 0;
-      padding: 10px 14px;
+      padding: 12px 16px;
       color: var(--text-1);
       font-size: var(--text-ui);
       font-family: var(--font);
       outline: none;
-      transition: border-color .15s, background .15s;
+      transition: border-color var(--transition-base), background .15s;
     }
 
     .form-input:focus {
@@ -413,13 +413,13 @@
       background: rgba(var(--ink-rgb), .04);
       border: 1px solid var(--border);
       border-radius: 0;
-      padding: 10px 32px 10px 14px;
+      padding: 12px 32px 12px 16px;
       color: var(--text-2);
       font-size: var(--text-ui);
       font-family: var(--font);
       outline: none;
       cursor: pointer;
-      transition: border-color .15s;
+      transition: border-color var(--transition-base);
       -webkit-appearance: none;
       appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(var(--ink-rgb),0.35)' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -438,7 +438,7 @@
 
     .sh-add-btn {
       margin-top: 4px;
-      padding: 10px 24px;
+      padding: 12px 24px;
       font-size: var(--text-ui);
     }
 
@@ -446,7 +446,7 @@
     .saved-item-main {
       display: flex;
       align-items: baseline;
-      gap: 6px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -469,7 +469,7 @@
     @media (max-width: 620px) {
       .demo-hdr {
         flex-direction: column;
-        gap: 14px;
+        gap: 16px;
       }
 
       .mode-row {
@@ -478,7 +478,7 @@
 
       .sh-form-row {
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
       }
 
       .sh-form-row .fg-wide {
@@ -521,7 +521,7 @@
         <button class="search-clear hidden" id="search-clear" aria-label="Clear search">×</button>
       </div>
       <button class="btn-primary" id="add-sh-btn">
-        <span class="material-symbols-sharp" style="font-size:19px">add</span>
+        <span class="material-symbols-sharp i-lg">add</span>
         Add Your Own
       </button>
     </div>

@@ -20,7 +20,7 @@
     .library-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 8px;
     }
 
@@ -53,7 +53,7 @@
       display: flex;
       flex-direction: column;
       border: 1px solid rgba(var(--ink-rgb), .13);
-      padding: 18px 20px 16px;
+      padding: 16px 20px 16px;
       cursor: pointer;
       text-decoration: none;
       color: inherit;
@@ -73,8 +73,8 @@
     .cc-top {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     .cc-title {
@@ -83,7 +83,7 @@
       letter-spacing: -.01em;
       line-height: var(--lh-heading);
       color: var(--text-1);
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -92,7 +92,7 @@
     .cc-meta {
       font-family: var(--font-mono);
       font-size: 10px;
-      letter-spacing: .05em;
+      letter-spacing: .04em;
       color: var(--text-3);
       border-top: 1px solid var(--border-light);
       padding-top: 12px;
@@ -145,7 +145,7 @@
       border: 1px solid rgba(var(--ink-rgb), .12);
       border-top-color: rgba(var(--ink-rgb), .22);
       background: rgba(var(--ink-rgb), .02);
-      padding: 22px;
+      padding: 24px;
     }
 
     /* bands compact inside the panel — one rhythm: 22px between bands,
@@ -155,7 +155,7 @@
     .cw-spec .cw-props,
     .cw-spec .cw-stories,
     .cw-spec .cw-playlist {
-      margin: 0 0 22px;
+      margin: 0 0 24px;
       padding: 0;
       border: none;
     }
@@ -164,14 +164,14 @@
 
     .cw-spec .cw-playlist-fields { flex-direction: column; }
     .cw-spec .cw-length { display: block; }
-    .cw-spec .cw-length .label-1 { display: block; margin-bottom: 10px; }
-    .cw-spec .cw-props .label-1 { display: block; margin-bottom: 10px; }
+    .cw-spec .cw-length .label-1 { display: block; margin-bottom: 12px; }
+    .cw-spec .cw-props .label-1 { display: block; margin-bottom: 12px; }
     .cw-spec .cw-length-btns { flex-wrap: wrap; }
 
     @media (max-width: 980px) {
       /* single column: setup panel follows the writing, everything full width
          (align-items: start from the desktop grid would shrink-wrap children) */
-      .cw-layout { display: flex; flex-direction: column; gap: 36px; align-items: stretch; }
+      .cw-layout { display: flex; flex-direction: column; gap: 40px; align-items: stretch; }
       .cw-spec { position: static; }
     }
 
@@ -217,7 +217,7 @@
       background: rgba(var(--ink-rgb), .025);
       box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .09);
       border-radius: var(--r);
-      padding: 14px 16px;
+      padding: 16px 16px;
       margin-top: 12px;
     }
 
@@ -252,12 +252,12 @@
 
     /* playlist — name + link, boxed like the section slots */
     .cw-playlist {
-      padding: 14px 0 18px;
+      padding: 16px 0 16px;
     }
 
     .cw-playlist .label-1 {
       display: block;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .cw-playlist-fields {
@@ -273,7 +273,7 @@
       border: none;
       box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
       border-radius: var(--r);
-      padding: 11px 14px;
+      padding: 12px 16px;
       outline: none;
       transition: box-shadow var(--transition-base), background var(--transition-base);
     }
@@ -309,7 +309,7 @@
     .cw-props-tags {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -336,7 +336,7 @@
       border: none;
       box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
       border-radius: var(--r);
-      padding: 8px 10px;
+      padding: 8px 12px;
       outline: none;
       color: var(--text-1);
       font-family: var(--font-mono);
@@ -351,8 +351,8 @@
     }
 
     /* class type — free text with a menu of your saved types */
-    .cw-type { padding: 0 0 18px; }
-    .cw-type .label-1 { display: block; margin-bottom: 10px; }
+    .cw-type { padding: 0 0 16px; }
+    .cw-type .label-1 { display: block; margin-bottom: 12px; }
     .cw-type-wrap { position: relative; }
 
     .cw-type-input {
@@ -361,7 +361,7 @@
       border: none;
       box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
       border-radius: var(--r);
-      padding: 11px 14px;
+      padding: 12px 16px;
       outline: none;
       color: var(--text-1);
       font-family: var(--font);
@@ -385,7 +385,7 @@
       background: var(--paper-solid);
       border: 1px solid rgba(var(--ink-rgb), .16);
       border-top-color: rgba(var(--ink-rgb), .30);
-      box-shadow: 0 4px 24px rgba(var(--ink-rgb), .10);
+      box-shadow: var(--shadow-float);
       animation: fadeUp .14s ease both;
       max-height: 220px;
       overflow-y: auto;
@@ -394,7 +394,7 @@
     .cw-type-row {
       display: block;
       width: 100%;
-      padding: 9px 14px;
+      padding: 8px 16px;
       background: none;
       border: none;
       cursor: pointer;
@@ -439,19 +439,19 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 14px 0 18px;
+      padding: 16px 0 16px;
     }
 
     .cw-length-btns {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
     /* sections */
     .cw-section {
       padding: 20px 0;
-      transition: opacity .15s ease;
+      transition: opacity var(--transition-base) ease;
     }
 
     /* while writing in a section, the others recede */
@@ -465,7 +465,7 @@
       gap: 12px;
     }
 
-    .cw-head-right { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+    .cw-head-right { display: flex; align-items: baseline; gap: 16px; min-width: 0; }
 
     .cw-flow-name {
       font-family: var(--font-mono);
@@ -480,7 +480,7 @@
     .cw-insert-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       flex-shrink: 0;
       background: none;
       border: none;
@@ -492,7 +492,7 @@
       transition: color var(--transition-base);
     }
 
-    .cw-insert-btn .material-symbols-sharp { font-size: 15px; }
+    .cw-insert-btn .material-symbols-sharp { font-size: var(--icon-sm); }
     .cw-insert-btn:hover { color: var(--text-1); }
 
     /* linked section: content pulled live from Your Flows */
@@ -509,7 +509,7 @@
     }
 
     .cw-swap-btn:hover { color: var(--text-1); }
-    .cw-swap-btn .material-symbols-sharp { font-size: 15px; }
+    .cw-swap-btn .material-symbols-sharp { font-size: var(--icon-sm); }
 
     .cw-remove-btn {
       display: inline-flex;
@@ -524,7 +524,7 @@
     }
 
     .cw-remove-btn:hover { color: var(--danger); }
-    .cw-remove-btn .material-symbols-sharp { font-size: 15px; }
+    .cw-remove-btn .material-symbols-sharp { font-size: var(--icon-sm); }
 
     /* linked to Your Flows: read-only but copyable — it edits at the
        parent, or detach. Outline only, no field fill: not an input. */
@@ -547,7 +547,7 @@
       align-items: center;
       gap: 8px;
       width: 100%;
-      padding: 9px 12px;
+      padding: 8px 12px;
       background: none;
       border: none;
       border-top: 1px solid var(--border-light);
@@ -560,7 +560,7 @@
     }
 
     .flp-action:hover { background: rgba(var(--ink-rgb), .05); color: var(--text-1); }
-    .flp-action .material-symbols-sharp { font-size: 15px; }
+    .flp-action .material-symbols-sharp { font-size: var(--icon-sm); }
 
     .flp-empty {
       padding: 12px;
@@ -574,10 +574,10 @@
     .cw-add-row {
       display: none;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
       background: none;
       border: none;
-      padding: 6px 0;
+      padding: 8px 0;
       cursor: pointer;
       font-family: var(--font);
       font-size: var(--text-ui);
@@ -586,14 +586,14 @@
       transition: color var(--transition-base);
     }
 
-    .cw-add-row .material-symbols-sharp { font-size: 15px; }
+    .cw-add-row .material-symbols-sharp { font-size: var(--icon-sm); }
     .cw-add-row:hover { color: var(--text-1); }
 
     .cw-optional.collapsed .cw-add-row { display: inline-flex; }
     .cw-optional.collapsed .cw-section-body { display: none; }
 
     .cw-section-head {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .cw-area {
@@ -604,7 +604,7 @@
       border: none;
       box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
       border-radius: var(--r);
-      padding: 14px 16px;
+      padding: 16px 16px;
       color: var(--text-1);
       font-family: var(--font);
       font-size: var(--fs-body);
@@ -641,7 +641,7 @@
       letter-spacing: -.01em;
       line-height: var(--lh-heading);
       color: var(--text-1);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     /* favorited marker beside the title */
@@ -649,7 +649,7 @@
       font-size: 17px;
       color: var(--volt);
       font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
-      margin-left: 11px;
+      margin-left: 12px;
       vertical-align: 3px;
     }
 
@@ -659,12 +659,12 @@
       letter-spacing: .04em;
       text-transform: none;
       color: var(--text-3);
-      margin-left: 10px;
+      margin-left: 12px;
     }
 
     /* props stack tight under the playlist — one logistics block */
     .tv-playlist.tv-props {
-      margin-top: 5px;
+      margin-top: 4px;
     }
 
     .tv-meta {
@@ -677,20 +677,20 @@
     .tv-playlist {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
       font-family: var(--font-mono);
       font-size: 12px;
       letter-spacing: .04em;
       color: var(--text-2);
-      margin-top: 10px;
+      margin-top: 12px;
     }
 
-    .tv-playlist .material-symbols-sharp { font-size: 15px; color: var(--text-3); }
+    .tv-playlist .material-symbols-sharp { font-size: var(--icon-sm); color: var(--text-3); }
 
     .tv-playlist-link {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       color: var(--text-2);
       text-decoration: underline;
       text-underline-offset: 3px;
@@ -699,14 +699,14 @@
     }
 
     .tv-playlist-link:hover { color: var(--text-1); }
-    .tv-playlist-link .material-symbols-sharp { font-size: 13px; }
+    .tv-playlist-link .material-symbols-sharp { font-size: var(--icon-sm); }
 
     .tv-story {
-      padding: 18px 20px;
+      padding: 16px 20px;
       background: rgba(var(--ink-rgb), .03);
       border: 1px solid var(--border-light);
       border-top-color: rgba(var(--ink-rgb), .18);
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .tv-story-starter {
@@ -723,17 +723,17 @@
       line-height: 1.65;
     }
 
-    .tv-section { padding: 26px 0 10px; }
+    .tv-section { padding: 24px 0 12px; }
 
     .tv-label {
       position: sticky;
       top: 81px; /* below the pinned bar (80px + hairline) */
       z-index: 1;
-      padding: 6px 0;
+      padding: 8px 0;
       background: rgba(var(--paper-rgb), .92);
       backdrop-filter: var(--glass);
       -webkit-backdrop-filter: var(--glass);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     /* the flow exactly as written — slashes, line breaks and all */
@@ -748,7 +748,7 @@
 
     /* take notes */
     .tv-notes {
-      margin-top: 44px;
+      margin-top: 48px;
       padding-top: 24px;
       border-top: 1px solid var(--border-light);
     }
@@ -780,7 +780,7 @@
       background: rgba(var(--ink-rgb), .04);
       box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
       border-radius: var(--r);
-      padding: 14px 16px;
+      padding: 16px 16px;
       transition: box-shadow var(--transition-base), background var(--transition-base);
     }
 
@@ -792,7 +792,7 @@
     .tv-note-composer-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 12px;
       margin-top: 12px;
     }
 
@@ -811,10 +811,10 @@
       display: block;
       font-family: var(--font-mono);
       font-size: 10px;
-      letter-spacing: .06em;
+      letter-spacing: .08em;
       text-transform: uppercase;
       color: var(--text-3);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .tv-note-text {
@@ -830,7 +830,7 @@
       border: none;
       color: var(--text-3);
       cursor: pointer;
-      padding: 2px 6px;
+      padding: 2px 8px;
       font-size: 13px;
       line-height: 1;
       border-radius: var(--r-cta);
@@ -855,7 +855,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 14px;
+      padding: 12px 16px;
       cursor: pointer;
       border-bottom: 1px solid rgba(var(--ink-rgb), .07);
       transition: background var(--transition-fast);
@@ -906,7 +906,7 @@
     /* mobile teaching comfort */
     @media (max-width: 580px) {
       .tv-title { font-size: clamp(1.5rem, 6vw, 2rem); }
-      .class-row { gap: 14px; padding: 22px 0; }
+      .class-row { gap: 16px; padding: 24px 0; }
 
     }
     /* ── PRINT — the class sheet. Text-first, mono flows exactly as
@@ -1027,18 +1027,18 @@
           <input type="search" class="search-input" id="class-search" placeholder="Search your classes&#8230;">
         </div>
         <button class="btn-primary" id="new-class-btn">
-          <span class="material-symbols-sharp" style="font-size:19px">add</span>
+          <span class="material-symbols-sharp i-lg">add</span>
           New Class
         </button>
       </div>
       <div class="filter-row" id="class-type-filter" hidden></div>
       <div class="sort-row" id="sort-row">
         <button class="btn-ghost sm" id="sort-btn" title="Toggle sort order" data-tooltip="Sort by">
-          <span class="material-symbols-sharp" style="font-size:15px;margin-right:5px">swap_vert</span>
+          <span class="material-symbols-sharp i-sm" style="margin-right:5px">swap_vert</span>
           <span id="sort-label">Recently Edited</span>
         </button>
         <button class="btn-ghost sm fav-filter" id="fav-filter-btn" title="Only favorites" data-tooltip="Only favorites">
-          <span class="material-symbols-sharp" style="font-size:15px;margin-right:5px">favorite</span>
+          <span class="material-symbols-sharp i-sm" style="margin-right:5px">favorite</span>
           Favorites
         </button>
         <span class="result-count" id="result-count"></span>
@@ -1051,7 +1051,7 @@
   <div id="teach-view" hidden>
     <div class="post-bar">
       <button class="btn-ghost" id="back-btn">
-      <span class="material-symbols-sharp" style="font-size:16px;margin-right:6px">arrow_back</span>
+      <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
       Classes
       </button>
     </div>
@@ -1104,7 +1104,7 @@
   <div id="edit-view" hidden>
     <div class="post-bar">
       <button class="btn-ghost" id="editor-back-btn">
-        <span class="material-symbols-sharp" style="font-size:16px;margin-right:6px">arrow_back</span>
+        <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
         <span class="post-back-label" id="editor-back-label">Your Classes</span>
       </button>
       <div class="post-edit-actions">
