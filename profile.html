@@ -62,7 +62,13 @@ body { opacity: 0; transition: opacity .18s; }
 .profile-wrap {
   max-width: 820px;
   margin: 0 auto;
-  padding: 0 28px 120px;
+  padding: 0 28px 140px; /* same page depth as .wrap */
+}
+
+/* match the site grid's mobile rhythm (top 24 under 768, 20px gutters
+   and FAB-clearing bottom under 580) */
+@media (max-width: 768px) {
+  .profile-wrap { padding-top: 24px; }
 }
 
 .profile-wrap > * { max-width: 640px; }
@@ -282,7 +288,7 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 .pf-success.show { display: block; }
 
 @media (max-width: 580px) {
-  .profile-wrap { padding: 0 20px 56px; }
+  .profile-wrap { padding: 24px 20px 96px; }
   .pf-identity { gap: 16px; padding-bottom: 32px; }
   .avatar-preview { width: 72px; height: 72px; font-size: 1.5rem; }
 }
@@ -372,6 +378,19 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
     </div>
   </section>
 
+  <!-- Appearance -->
+  <section class="pf-section">
+    <span class="label-1 pf-section-label">Appearance</span>
+    <div class="pf-row">
+      <div><span class="pf-row-label">Theme</span><span class="pf-row-val" id="theme-val">&#8212;</span></div>
+      <button class="nav-theme-switch" id="pf-theme-toggle" aria-label="Toggle theme">
+        <span class="material-symbols-sharp nav-ts-icon">light_mode</span>
+        <span class="nav-ts-rail"><span class="nav-ts-thumb"></span></span>
+        <span class="material-symbols-sharp nav-ts-icon">dark_mode</span>
+      </button>
+    </div>
+  </section>
+
   <!-- Account -->
   <section class="pf-section">
     <span class="label-1 pf-section-label">Account</span>
@@ -424,7 +443,7 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 <div class="modal-backdrop" id="delete-modal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true">
     <h3>Delete your account?</h3>
-    <p class="modal-hint">This removes your profile and photo from our servers and signs you out. Classes, stories, and everything else saved on this device stays yours. Type <strong>DELETE</strong> to confirm.</p>
+    <p class="modal-hint">This permanently deletes your account and everything in it &mdash; profile, photo, classes, flows, stories, playlists, all of it. There is no undo. If you want a copy first, export a backup from the Saved page. Type <strong>DELETE</strong> to confirm.</p>
     <input type="text" class="modal-input" id="delete-confirm-input" placeholder="DELETE" autocomplete="off" spellcheck="false">
     <div class="modal-actions">
       <button class="btn-ghost" id="delete-cancel">Cancel</button>
@@ -439,6 +458,7 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="lib/supabase.js"></script>
+<script src="lib/telemetry.js"></script>
 <script src="lib/sync.js"></script>
 <script src="lib/toast.js"></script>
 <script>
@@ -709,6 +729,17 @@ document.getElementById('profile-back-btn').addEventListener('click', () => {
   window.location.href = 'dashboard';
 });
 
+// theme — the switch lives here now (moved out of the nav)
+function syncThemeVal() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.getElementById('theme-val').textContent = dark ? 'Dark' : 'Light';
+}
+document.getElementById('pf-theme-toggle').addEventListener('click', () => {
+  if (window.fsToggleTheme) fsToggleTheme();
+  syncThemeVal();
+});
+syncThemeVal();
+
 document.getElementById('signout-btn').addEventListener('click', async () => {
   if (window.fsSync) { try { await fsSync.signOutCleanup(); } catch (_) {} }
   localStorage.removeItem('fs-display-name');
@@ -773,18 +804,34 @@ document.getElementById('delete-confirm').addEventListener('click', async () => 
   const btn = document.getElementById('delete-confirm');
   btn.disabled = true;
   btn.textContent = 'Deleting\u2026';
+
+  // the real deletion happens server-side \u2014 auth user, profile, and all
+  // saved work go together (see api/delete-account.js)
+  let deleted = false;
   try {
-    const uid = currentUser.id;
-    const { data: files } = await db.storage.from('avatars').list(uid);
-    if (files && files.length) {
-      await db.storage.from('avatars').remove(files.map(f => uid + '/' + f.name));
+    const { data: { session } } = await db.auth.getSession();
+    if (session) {
+      const resp = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + session.access_token },
+      });
+      deleted = resp.ok;
     }
-    await db.from('profiles').delete().eq('id', uid);
-  } catch (err) { console.error('account cleanup:', err); }
+  } catch (err) { console.error('delete account:', err); }
+
+  if (!deleted) {
+    btn.disabled = false;
+    btn.textContent = 'Delete Account';
+    closeModal('delete-modal');
+    showError('Couldn\u2019t delete the account. Try again in a moment.');
+    return;
+  }
+
+  // the account is gone \u2014 clear every local trace and leave
   if (window.fsSync) { try { fsSync.clearCache(); } catch (_) {} }
   localStorage.removeItem('fs-display-name');
   localStorage.removeItem('fs-avatar-url');
-  await db.auth.signOut();
+  try { await db.auth.signOut(); } catch (_) {} // session may already be dead
   window.location.href = 'login';
 });
 

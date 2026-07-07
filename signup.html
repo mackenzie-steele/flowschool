@@ -50,6 +50,8 @@ body { display: flex; flex-direction: column; min-height: 100vh; opacity: 0; tra
       <div class="auth-success" id="auth-success"></div>
 
       <button type="submit" class="btn-primary auth-submit" id="submit-btn">Create account</button>
+
+      <p class="auth-privacy-line">Your work is stored securely and stays yours &mdash; <a href="privacy">the whole deal, in one paragraph</a>.</p>
     </form>
 
     <div class="auth-footer">
@@ -60,6 +62,7 @@ body { display: flex; flex-direction: column; min-height: 100vh; opacity: 0; tra
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="lib/supabase.js"></script>
+<script src="lib/telemetry.js"></script>
 <script>
 
 // Redirect if already logged in
@@ -128,6 +131,6 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
 });
 
 </script>
-  <footer class="site-footer">Flow School &#183; Tools for Yoga Teachers &#183; v2.1.1</footer>
+  <footer class="site-footer">Flow School &#183; Tools for Yoga Teachers &#183; v2.2.1</footer>
 </body>
 </html>

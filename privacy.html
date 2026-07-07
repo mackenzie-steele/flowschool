@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
+  <style>html{background:#1B1B1B;color-scheme:dark}html[data-theme="light"]{background:#F5F4F0;color-scheme:light}</style>
+<link rel="icon" href="img/flow-school-favicon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy — Flow School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="global.css">
+<style>
+body { display: flex; flex-direction: column; min-height: 100vh; }
+.auth-card { max-width: 560px; }
+.privacy-body {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-2);
+  margin: 0 0 20px;
+}
+.privacy-body strong { color: var(--text-1); font-weight: var(--weight-medium); }
+.privacy-body a { color: var(--text-1); }
+.privacy-sign {
+  font-size: var(--text-small);
+  color: var(--text-3);
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+
+<main class="auth-main">
+  <div class="card auth-card">
+    <a href="login">
+      <img src="img/flow-school-logo_black.png" class="auth-wordmark logo-light" alt="Flow School">
+      <img src="img/flow-school-logo_white.png" class="auth-wordmark logo-dark" alt="Flow School">
+    </a>
+    <span class="auth-eyebrow">Privacy note</span>
+    <h1 class="auth-title">Your work is yours.</h1>
+
+    <p class="privacy-body">
+      When you make an account, we keep your
+      <strong>email</strong>, your <strong>password</strong> (encrypted &mdash; even we
+      can't read it), your <strong>profile</strong>, and <strong>everything you create
+      here</strong>: classes, flows, stories, playlists, saved prompts. All of it lives in
+      <strong>Supabase</strong>, a secure database. The site runs on <strong>Vercel</strong>,
+      which counts visits without cookies and without following you around the internet.
+      If you send us feedback or something breaks, we keep those notes too &mdash; page,
+      browser, the technical bits &mdash; so we can fix it. Nobody sees your work but you.
+      We can reach it because we run the database, and we hold that like the trust it is.
+      We will never sell it. Never show you ads. Never share a thing. Want a copy? Download
+      everything, anytime (<strong>Saved &rarr; Export backup</strong>). Want out? Delete
+      your account (<strong>Profile &rarr; Delete account</strong>) and it's gone. Really
+      gone. This is a beta &mdash; everything is an experiment, including this app &mdash;
+      so if something ever feels off, tell us:
+      <a href="mailto:support@flowschool.io">support@flowschool.io</a>. We're real people.
+      We'll answer.
+    </p>
+
+    <p class="privacy-sign">&mdash; Bonnie &amp; Mackenzie</p>
+
+    <div class="auth-footer">
+      <a href="signup">Back to sign up</a> &nbsp;&middot;&nbsp; <a href="login">Sign in</a>
+    </div>
+  </div>
+</main>
+
+<script src="lib/telemetry.js"></script>
+  <footer class="site-footer">Flow School &#183; Tools for Yoga Teachers &#183; v2.2.1</footer>
+</body>
+</html>

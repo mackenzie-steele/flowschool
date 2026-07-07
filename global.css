@@ -111,8 +111,8 @@
   --paper-solid: #F5F4F0;
   /* Paper as RGB — for translucent paper surfaces (headers, toggles, veils) */
   --paper-rgb:   245, 244, 240;
-  /* Sidebar surface — slightly warmer than paper */
-  --sidebar-bg:  rgba(243, 241, 237, .96);
+  /* Sidebar surface — solid paper; nothing scrolls behind it */
+  --sidebar-bg:  var(--paper-solid);
 
   /* Surfaces */
   --surface:   rgba(var(--ink-rgb), .035);
@@ -279,7 +279,7 @@
   --volt-rgb:      255, 245, 95;
   --slider-fill:   var(--volt);
   --paper-rgb:     27, 27, 27;
-  --sidebar-bg:    rgba(21, 21, 21, .96);
+  --sidebar-bg:    var(--paper-solid);
   --btn-hover:     #EFEFEF;
 }
 
@@ -661,7 +661,9 @@ body.has-sidebar .cta-bar {
   color: var(--text-3);
   border: 1px solid rgba(var(--ink-rgb), .20);
   border-radius: var(--rf);
-  padding: 2px 8px 3px 8px;
+  /* right pad is optically 5px — the .08em tracking adds a ghost space
+     after the last letter, so the physical pad compensates */
+  padding: 2px 4px 3px 5px;
   user-select: none;
 }
 
@@ -1566,7 +1568,8 @@ input[type=range].range-slider:disabled {
   }
 
   .wrap {
-    padding: 24px 20px 72px;
+    /* 96px bottom keeps the last content clear of the floating menu button */
+    padding: 24px 20px 96px;
   }
 
   .hero {
@@ -1708,6 +1711,34 @@ input[type=range].range-slider:disabled {
 
 .auth-footer a { color: var(--text-1); }
 
+/* the honest line under the signup button */
+.auth-privacy-line {
+  margin-top: 14px;
+  font-size: var(--text-small);
+  color: var(--text-3);
+  line-height: 1.6;
+}
+.auth-privacy-line a { color: var(--text-2); }
+.auth-privacy-line a:hover { color: var(--text-1); }
+
+/* forgot-password — a quiet text action tucked under the password field */
+.auth-forgot {
+  text-align: right;
+  margin-top: -6px;
+}
+.auth-forgot-link {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: var(--text-small);
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+.auth-forgot-link:hover { color: var(--text-1); }
+
 
 /* ─── 20. APP SHELL / SIDEBAR ────────────────────────────────── */
 
@@ -1724,8 +1755,6 @@ input[type=range].range-slider:disabled {
   left: 0;
   bottom: 0;
   background: var(--sidebar-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid rgba(var(--ink-rgb), .10);
   display: flex;
   flex-direction: column;
@@ -1776,76 +1805,33 @@ input[type=range].range-slider:disabled {
 }
 
 .nav-section {
-  margin-bottom: 24px;
+  margin-bottom: 0; /* the eyebrows carry the rhythm between groups */
 }
 
-.nav-section-label,
-.nav-section-toggle {
-  font-size: 10px;
-  font-weight: var(--weight-semibold);
-  letter-spacing: .10em;
+/* group eyebrows — the sheet's register, seated: mono, tracked, quiet */
+.nav-section-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--text-3);
-  padding: 4px 12px 8px;
-  display: block;
-}
-
-.nav-section-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font);
-  transition: color var(--transition-base);
-}
-
-.nav-section-toggle:hover {
-  color: var(--text-2);
-}
-
-.nav-chevron {
-  font-size: 14px;
-  opacity: .5;
-  transition: transform .22s ease, opacity var(--transition-base);
-  flex-shrink: 0;
-}
-
-.nav-section-toggle:hover .nav-chevron {
-  opacity: .8;
-}
-
-.nav-section-toggle[aria-expanded="false"] .nav-chevron {
-  transform: rotate(-90deg);
-}
-
-.nav-section-items {
-  overflow: hidden;
-  max-height: 600px;
-  transition: max-height .28s ease;
-}
-
-.nav-section-items.collapsed {
-  max-height: 0;
+  padding: 18px 12px 6px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 12px;
+  min-height: 36px;
+  padding: 0 12px;
   border-radius: var(--r);
-  font-size: var(--text-ui);
+  font-size: 13px;
   color: var(--text-2);
   text-decoration: none;
   transition: background var(--transition-base), color var(--transition-base);
   line-height: 1.3;
-}
-
-.nav-section-items .nav-item {
-  padding-left: 12px;
 }
 
 .nav-item:hover {
@@ -1858,15 +1844,27 @@ input[type=range].range-slider:disabled {
   color: var(--text-1);
 }
 
+/* icons ramp by color, not opacity — opacity reads as disabled */
 .nav-item .material-symbols-sharp {
-  font-size: 16px;
+  font-size: 18px;
   flex-shrink: 0;
-  opacity: .6;
+  color: var(--text-3);
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+  transition: color var(--transition-base);
 }
 
-.nav-item.active .material-symbols-sharp,
 .nav-item:hover .material-symbols-sharp {
-  opacity: 1;
+  color: var(--text-2);
+}
+
+/* the LED dot — current page, same signature as the mobile sheet */
+.nav-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .nav-item.nav-soon {
@@ -1885,43 +1883,48 @@ input[type=range].range-slider:disabled {
   margin-left: auto;
 }
 
-/* ── Sidebar footer ── */
-.sidebar-footer {
-  padding: 0;
-  border-top: none;
+/* ── Sidebar identity — seated in the footer, above the serial plate ── */
+.sidebar-identity {
+  padding: 14px 20px 2px;
   flex-shrink: 0;
 }
 
-.sidebar-footer .hdr-auth {
-  padding: 8px 12px 16px;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-  border-top: 1px solid rgba(var(--ink-rgb), .08);
-}
-
-.sidebar-footer .nav-auth-btns {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  width: 100%;
-}
-
-.sidebar-footer .btn-ghost,
-.sidebar-footer .btn-nav-signup {
-  justify-content: flex-start;
-  width: 100%;
-  font-size: var(--text-small);
-}
-
-.sidebar-footer .nav-avatar-btn {
-  padding: 8px 4px;
+.sidebar-identity .nav-avatar-btn {
   gap: 12px;
   font-size: var(--text-small);
   color: var(--text-2);
   text-decoration: none;
   display: flex;
   align-items: center;
+  min-width: 0;
+}
+
+.sidebar-identity .nav-initial {
+  width: 36px;
+  height: 36px;
+}
+
+/* ── Sidebar footer — theme switch + the serial plate ── */
+.sidebar-footer {
+  padding: 0;
+  border-top: 1px solid rgba(var(--ink-rgb), .08);
+  flex-shrink: 0;
+}
+
+/* one meta line: the serial plate and the feedback door, side by side */
+.sidebar-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px 14px;
+}
+
+.sidebar-version {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: rgba(var(--ink-rgb), .30);
 }
 
 /* ── Theme switch in nav ── */
@@ -2038,6 +2041,28 @@ input[type=range].range-slider:disabled {
 body.sidebar-open .sidebar-toggle .nav-tg-menu { opacity: 0; }
 body.sidebar-open .sidebar-toggle .nav-tg-close { opacity: 1; }
 
+/* mobile brand mark — top-left, in flow (scrolls away, never sticky);
+   the phone menu doesn't carry the logo, so the page does */
+.mobile-brand {
+  display: none;
+}
+@media (max-width: 768px) {
+  .mobile-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* same logo↔tag gap as the desktop sidebar */
+    padding: 18px 20px 0;
+    text-decoration: none;
+  }
+  /* no display here — .logo-light/.logo-dark own visibility per theme,
+     and a more-specific display:block would show both logos at once */
+  .mobile-brand img {
+    height: 32px; /* matches the auth-page wordmark */
+    width: auto;
+    vertical-align: top;
+  }
+}
+
 /* ── Mobile menu — the bottom sheet ──────────────────────────────
    Rises from the same edge as the thumb and the trigger. Mobile-only:
    display is enabled in the 768px block; desktop keeps the sidebar. */
@@ -2055,14 +2080,18 @@ body.sidebar-open .sidebar-toggle .nav-tg-close { opacity: 1; }
   transform: translateY(100%);
   visibility: hidden;
   /* closing: slightly faster than opening — exits always are */
-  transition: transform .24s cubic-bezier(.32, .72, .24, 1), visibility .24s;
+  transition: transform .24s cubic-bezier(.32, .72, .24, 1), height .24s cubic-bezier(.32, .72, .24, 1), visibility .24s;
   outline: none;
 }
 .nav-sheet.open {
   transform: translateY(0);
   visibility: visible;
-  transition: transform .32s cubic-bezier(.32, .72, .24, 1), visibility .32s;
+  transition: transform .32s cubic-bezier(.32, .72, .24, 1), height .32s cubic-bezier(.32, .72, .24, 1), visibility .32s;
 }
+/* mid-drag the handle rides the finger 1:1 — no easing in the way */
+.nav-sheet.dragging { transition: none; }
+/* full-screen detent — content clears the notch/status bar */
+.nav-sheet.full { padding-top: env(safe-area-inset-top, 0px); }
 @media (prefers-reduced-motion: reduce) {
   .nav-sheet, .nav-sheet.open {
     transform: none;
@@ -2072,12 +2101,20 @@ body.sidebar-open .sidebar-toggle .nav-tg-close { opacity: 1; }
   .nav-sheet.open { opacity: 1; }
 }
 
+/* the drag handle — generous touch zone around the grabber bar */
+.ns-drag {
+  padding: 12px 0 10px;
+  flex-shrink: 0;
+  touch-action: none; /* the handle owns its gestures */
+  cursor: grab;
+}
+.ns-drag:active { cursor: grabbing; }
+
 .ns-grabber {
   width: 36px; height: 4px;
   border-radius: 2px;
   background: rgba(var(--ink-rgb), .20);
-  margin: 12px auto 10px;
-  flex-shrink: 0;
+  margin: 0 auto;
 }
 
 /* identity — the person is the header of their own studio */
@@ -2452,8 +2489,8 @@ body.has-sidebar {
   fill: rgba(var(--ink-rgb), .88);
 }
 
-/* Semi-transparent paper surfaces resolve per-theme via --paper-rgb /
-   --sidebar-bg — no per-element dark overrides needed. */
+/* Semi-transparent paper surfaces resolve per-theme via --paper-rgb —
+   no per-element dark overrides needed. (--sidebar-bg is solid paper.) */
 
 /* Active nav icon → volt */
 .nav-item.active .material-symbols-sharp {
@@ -2977,6 +3014,189 @@ body.has-sidebar {
 .modal-actions .btn-primary {
   border-radius: var(--r-cta);
 }
+
+/* ── Feedback card — one field, a data plate, a received transmission ── */
+/* guard: several children toggle via the hidden attribute; nothing in
+   this card may let a display rule outrank it */
+.fb-card [hidden] { display: none !important; }
+
+/* the card rises to meet you — retriggers on every open (display flip) */
+#fb-modal:not([hidden]) .fb-card {
+  animation: fb-rise .18s ease both;
+}
+@keyframes fb-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #fb-modal:not([hidden]) .fb-card { animation: none; }
+}
+
+.fb-eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+/* the title answers the chip — JS cross-fades it through this */
+.fb-title {
+  transition: opacity .11s ease;
+}
+
+/* one segmented instrument switch, not three floating pills */
+.fb-chips {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--rb);
+  overflow: hidden;
+  margin: 8px 0 14px;
+}
+
+.fb-chip {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 8px;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--border-light);
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color var(--transition-base), background var(--transition-base);
+}
+.fb-chip:first-child { border-left: none; }
+.fb-chip:hover { color: var(--text-1); }
+.fb-chip.on {
+  color: var(--text-1);
+  background: rgba(var(--ink-rgb), .05);
+}
+.fb-chip-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(var(--ink-rgb), .18);
+  transition: background var(--transition-base);
+}
+.fb-chip.on .fb-chip-dot { background: var(--accent); }
+
+
+.fb-text {
+  width: 100%;
+  background: rgba(var(--ink-rgb), .04);
+  border: none;
+  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-family: var(--font);
+  font-size: var(--text-body-sm);
+  color: var(--text-1);
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 110px;
+  outline: none;
+  transition: box-shadow var(--transition-base), background var(--transition-base);
+}
+.fb-text::placeholder { color: var(--text-3); }
+.fb-text:focus {
+  background: rgba(var(--ink-rgb), .06);
+  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .30);
+}
+
+.fb-fine {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  color: rgba(var(--ink-rgb), .32);
+  line-height: 1.6;
+  margin: 4px 0 0;
+}
+
+.fb-error {
+  font-size: var(--text-small);
+  color: var(--danger);
+  margin-top: 10px;
+}
+.fb-error:empty { display: none; }
+
+/* the received transmission — a lit dot, a mono stamp, the thanks */
+.fb-thanks {
+  padding: 18px 0 8px;
+}
+.fb-thanks-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.fb-thanks-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: fb-pulse .5s ease 1;
+}
+@keyframes fb-pulse {
+  0%   { transform: scale(.4); opacity: 0; }
+  60%  { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fb-thanks-dot { animation: none; }
+}
+.fb-thanks-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.fb-thanks-msg {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin: 10px 0 0;
+}
+
+/* the doors — quiet, never begging */
+.sidebar-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-3);
+  transition: color var(--transition-base);
+}
+.sidebar-feedback .material-symbols-sharp { font-size: 14px; }
+.sidebar-feedback:hover { color: var(--text-1); }
+
+.ns-feedback-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+.ns-feedback-btn .material-symbols-sharp { font-size: 20px; }
+.ns-feedback-btn:active { color: var(--text-1); }
 
 
 /* ─── 24. SITE FOOTER ────────────────────────────────────────── */

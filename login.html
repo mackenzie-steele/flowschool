@@ -35,7 +35,7 @@ body { display: flex; flex-direction: column; min-height: 100vh; opacity: 0; tra
         </div>
       </div>
 
-      <div class="field">
+      <div class="field" id="pw-field">
         <label class="field-label" for="password">Password</label>
         <div class="field-input-wrap">
           <input class="field-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
@@ -45,26 +45,60 @@ body { display: flex; flex-direction: column; min-height: 100vh; opacity: 0; tra
         </div>
       </div>
 
+      <div class="auth-forgot">
+        <button type="button" class="auth-forgot-link" id="forgot-toggle">Forgot password?</button>
+      </div>
+
       <div class="auth-error" id="auth-error"></div>
+      <div class="auth-success" id="auth-success"></div>
 
       <button type="submit" class="btn-primary auth-submit" id="submit-btn">Sign in</button>
     </form>
 
     <div class="auth-footer">
-      Don't have an account? <a href="signup">Create one</a>
+      Don't have an account? <a href="signup">Create one</a> &nbsp;&middot;&nbsp; <a href="privacy">Privacy</a>
     </div>
   </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="lib/supabase.js"></script>
+<script src="lib/telemetry.js"></script>
 <script>
+
+// Auth redirects (email confirmation etc.) land here carrying tokens or
+// errors in the URL — the client absorbs valid tokens into a session during
+// init, so getUser() below resolves the confirmed user automatically.
+const authHash = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+const authQuery = new URLSearchParams(window.location.search);
+const authLinkError = authHash.get('error_description') || authQuery.get('error_description')
+  || authHash.get('error') || authQuery.get('error');
+const confirmType = authHash.get('type');
 
 // Redirect if already logged in
 (async () => {
   const { data: { user } } = await db.auth.getUser();
-  if (user) { window.location.href = 'dashboard'; return; }
+  if (user) {
+    if (confirmType === 'signup') {
+      // arrived straight from the confirmation email — say so, then in
+      document.body.style.opacity = '1';
+      history.replaceState(null, '', 'login');
+      const sucEl = document.getElementById('auth-success');
+      sucEl.textContent = 'Email confirmed — welcome in.';
+      sucEl.classList.add('show');
+      setTimeout(() => { window.location.href = 'dashboard'; }, 1100);
+      return;
+    }
+    window.location.href = 'dashboard';
+    return;
+  }
   document.body.style.opacity = '1';
+  if (authLinkError) {
+    history.replaceState(null, '', 'login');
+    const errEl = document.getElementById('auth-error');
+    errEl.textContent = 'That link is invalid or has expired. Sign in — or request a fresh one.';
+    errEl.classList.add('show');
+  }
 })();
 
 // Password toggle
@@ -75,15 +109,51 @@ document.getElementById('pw-toggle').addEventListener('click', () => {
   document.getElementById('eye-icon').textContent = isText ? 'visibility_off' : 'visibility';
 });
 
-// Sign in
+// Forgot-password mode — the same card, one field fewer
+let resetMode = false;
+document.getElementById('forgot-toggle').addEventListener('click', () => {
+  resetMode = !resetMode;
+  // hard-hide: .field's own display:flex outranks the hidden attribute
+  document.getElementById('pw-field').style.display = resetMode ? 'none' : '';
+  document.getElementById('password').required = !resetMode;
+  document.querySelector('.auth-title').textContent = resetMode ? 'Reset your password.' : 'Welcome back.';
+  document.getElementById('submit-btn').textContent = resetMode ? 'Send reset link' : 'Sign in';
+  document.getElementById('forgot-toggle').textContent = resetMode ? 'Back to sign in' : 'Forgot password?';
+  document.getElementById('auth-error').classList.remove('show');
+  document.getElementById('auth-success').classList.remove('show');
+});
+
+// Sign in (or send the reset link, in forgot mode)
 document.getElementById('auth-form').addEventListener('submit', async e => {
   e.preventDefault();
   const email    = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const errEl    = document.getElementById('auth-error');
+  const sucEl    = document.getElementById('auth-success');
   const btn      = document.getElementById('submit-btn');
 
   errEl.classList.remove('show');
+  sucEl.classList.remove('show');
+
+  if (resetMode) {
+    if (!email) { errEl.textContent = 'Enter your email and we’ll send a reset link.'; errEl.classList.add('show'); return; }
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/reset-password',
+    });
+    btn.disabled = false;
+    btn.textContent = 'Send reset link';
+    if (error) {
+      errEl.textContent = error.message || 'Couldn’t send the link. Try again in a moment.';
+      errEl.classList.add('show');
+    } else {
+      sucEl.textContent = 'Check ' + email + ' for a reset link. It expires quickly — use it soon.';
+      sucEl.classList.add('show');
+    }
+    return;
+  }
+
   if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.add('show'); return; }
 
   btn.disabled = true;
@@ -126,6 +196,6 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
 });
 
 </script>
-  <footer class="site-footer">Flow School &#183; Tools for Yoga Teachers &#183; v2.1.1</footer>
+  <footer class="site-footer">Flow School &#183; Tools for Yoga Teachers &#183; v2.2.1</footer>
 </body>
 </html>

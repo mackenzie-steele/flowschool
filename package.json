@@ -1,0 +1,10 @@
+{
+  "name": "flow-school",
+  "version": "2.2.1",
+  "private": true,
+  "description": "Flow School — static site + Vercel API functions",
+  "dependencies": {
+    "@supabase/supabase-js": "^2",
+    "@vercel/analytics": "^2.0.1"
+  }
+}

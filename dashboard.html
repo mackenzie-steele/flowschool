@@ -413,7 +413,11 @@
       display: flex;
       gap: 12px;
       overflow-x: auto;
-      padding-bottom: 2px;
+      /* bleed across the module's 24px padding so scrolling cards clip at
+         the card's border — not 24px early; the inner padding keeps the
+         first card aligned with the eyebrow */
+      margin: 0 -24px;
+      padding: 0 24px 2px;
       scrollbar-width: none;
     }
 
@@ -888,7 +892,8 @@
     }
 
     @media (max-width: 768px) {
-      .db-wrap { padding: 24px 20px 80px; }
+      /* on the site grid: 28px gutters until 580, 96px bottom clears the FAB */
+      .db-wrap { padding: 24px 28px 96px; }
       .db-moon {
         position: fixed;
         top: 14px;
@@ -898,8 +903,13 @@
       }
     }
 
+    @media (max-width: 580px) {
+      /* 20px gutters at the same pivot as every other page; the old 72px
+         top (moon-toggle clearance) is covered by the in-flow brand mark */
+      .db-wrap { padding: 24px 20px 96px; }
+    }
+
     @media (max-width: 480px) {
-      .db-wrap { padding: 72px 16px 80px; }
       .db-welcome { flex-direction: column; gap: 16px; }
     }
 
@@ -910,6 +920,7 @@
   <script src="lib/nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="lib/supabase.js"></script>
+  <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
   <script src="lib/library.js"></script>
 
