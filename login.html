@@ -109,11 +109,23 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
         try { localStorage.setItem(r.collection, JSON.stringify(r.payload == null ? [] : r.payload)); } catch (_) {}
       });
     } catch (_) {}
+    // Warm identity (name + photo) so the nav avatar shows immediately.
+    try {
+      const { data: { user } } = await db.auth.getUser();
+      if (user) {
+        const { data: prof } = await db.from('profiles').select('display_name, avatar_url').eq('id', user.id).single();
+        if (prof) {
+          localStorage.setItem('fs-display-name', prof.display_name || '');
+          if (prof.avatar_url) localStorage.setItem('fs-avatar-url', prof.avatar_url);
+          else localStorage.removeItem('fs-avatar-url');
+        }
+      }
+    } catch (_) {}
     window.location.href = 'dashboard';
   }
 });
 
 </script>
-  <footer class="site-footer">Flow School &#183; Tools for Yoga Teachers &#183; v1.14.11</footer>
+  <footer class="site-footer">Flow School &#183; Tools for Yoga Teachers &#183; v2.1.1</footer>
 </body>
 </html>

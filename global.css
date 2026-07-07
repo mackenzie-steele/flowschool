@@ -248,6 +248,8 @@
   --z-sidebar-raised:  60;   /* mobile drawer above overlay */
   --z-cta:             90;   /* sticky CTA bar, below header */
   --z-sticky:         100;
+  --z-sheet-veil:     140;   /* mobile menu scrim — above page chrome */
+  --z-sheet:          150;   /* mobile menu sheet — below floating controls */
   --z-fab:            200;   /* floating controls (sidebar toggle) */
   --z-toast:          200;
   --z-modal:          300;
@@ -1441,6 +1443,7 @@ input[type=range].range-slider:disabled {
   width: 30px;
   height: 30px;
   border-radius: 50%;
+  overflow: hidden;
   background: rgba(var(--ink-rgb), .07);
   border: 1px solid rgba(var(--ink-rgb), .18);
   display: flex;
@@ -1450,6 +1453,13 @@ input[type=range].range-slider:disabled {
   font-weight: var(--weight-bold);
   color: var(--text-1);
   transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.nav-initial img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .nav-avatar-btn:hover .nav-initial {
@@ -1977,42 +1987,202 @@ input[type=range].range-slider:disabled {
 }
 
 /* ── Mobile sidebar toggle — floats bottom-left, thumb territory ── */
+/* the menu trigger is the page's primary floating action — solid ink,
+   bottom-right thumb zone, one fixed home (it never travels) */
 .sidebar-toggle {
   display: none;
   position: fixed;
-  bottom: 18px;
-  left: 16px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
   z-index: var(--z-fab);
-  background: rgba(var(--paper-rgb), .92);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid rgba(var(--ink-rgb), .18);
+  background: var(--ink-solid);
+  border: none;
   border-radius: var(--r-cta);
   box-shadow: var(--shadow-float);
-  width: 46px;
-  height: 46px;
+  width: 56px;
+  height: 56px;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--text-2);
-  transition: color var(--transition-base), border-color var(--transition-base), left .25s cubic-bezier(.4,0,.2,1);
+  color: var(--paper-solid);
+  transition: background var(--transition-base), transform var(--transition-base);
 }
 
 .sidebar-toggle:hover {
-  color: var(--text-1);
-  border-color: rgba(var(--ink-rgb), .28);
+  background: var(--btn-hover);
 }
 
-.sidebar-overlay {
+.sidebar-toggle:active {
+  transform: scale(.96);
+}
+
+/* both glyphs stacked; open state cross-fades menu → close in place.
+   (nav-tg- prefix: .st-menu already belongs to the stories item menu) */
+.sidebar-toggle .nav-tg-icon {
+  position: absolute;
+  inset: 0;
+  /* the base glyph class pins itself to a 1em box (anti-reflow guard);
+     un-pin it so each icon fills — and centers in — the whole button */
+  width: 100%;
+  height: 100%;
+  font-size: 28px; /* between --icon-lg and the button scale — sized by eye */
+  /* lighter stroke + large optical size — the base 'wght 400 / opsz 20'
+     is tuned for small glyphs and reads heavy at this scale */
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .12s ease;
+}
+.sidebar-toggle .nav-tg-close { opacity: 0; }
+body.sidebar-open .sidebar-toggle .nav-tg-menu { opacity: 0; }
+body.sidebar-open .sidebar-toggle .nav-tg-close { opacity: 1; }
+
+/* ── Mobile menu — the bottom sheet ──────────────────────────────
+   Rises from the same edge as the thumb and the trigger. Mobile-only:
+   display is enabled in the 768px block; desktop keeps the sidebar. */
+.nav-sheet {
   display: none;
   position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: var(--z-sheet);
+  flex-direction: column;
+  max-height: 85dvh;
+  background: var(--paper-solid);
+  border-top: 1px solid rgba(var(--ink-rgb), .14);
+  /* the system's one soft moment — the sheet's top corners */
+  border-radius: var(--r-cta) var(--r-cta) 0 0;
+  transform: translateY(100%);
+  visibility: hidden;
+  /* closing: slightly faster than opening — exits always are */
+  transition: transform .24s cubic-bezier(.32, .72, .24, 1), visibility .24s;
+  outline: none;
+}
+.nav-sheet.open {
+  transform: translateY(0);
+  visibility: visible;
+  transition: transform .32s cubic-bezier(.32, .72, .24, 1), visibility .32s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-sheet, .nav-sheet.open {
+    transform: none;
+    transition: opacity .15s ease, visibility .15s;
+  }
+  .nav-sheet { opacity: 0; }
+  .nav-sheet.open { opacity: 1; }
+}
+
+.ns-grabber {
+  width: 36px; height: 4px;
+  border-radius: 2px;
+  background: rgba(var(--ink-rgb), .20);
+  margin: 12px auto 10px;
+  flex-shrink: 0;
+}
+
+/* identity — the person is the header of their own studio */
+.ns-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 20px 14px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+.ns-person {
+  display: flex; align-items: center; gap: 12px;
+  flex: 1; min-width: 0;
+  text-decoration: none;
+}
+.ns-identity .nav-initial { width: 40px; height: 40px; font-size: 14px; }
+.ns-person-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ns-person-name {
+  font-size: 15px; color: var(--text-1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ns-person-email {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em;
+  color: var(--text-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* the tools — everything visible, one scroll; no collapse on mobile */
+.ns-groups {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0 8px;
+}
+.ns-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-label);
+  color: var(--text-3);
+  padding: 18px 20px 6px;
+}
+.ns-row {
+  display: flex; align-items: center; gap: 14px;
+  min-height: 52px;
+  padding: 0 20px;
+  font-size: 17px;
+  color: var(--text-2);
+  text-decoration: none;
+}
+.ns-row .material-symbols-sharp { font-size: 22px; color: var(--text-3); }
+.ns-row:active { background: rgba(var(--ink-rgb), .06); }
+.ns-row.on { color: var(--text-1); background: rgba(var(--ink-rgb), .05); }
+/* active icon goes accent — same convention as the desktop sidebar */
+.ns-row.on .material-symbols-sharp { color: var(--volt); }
+.ns-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* the dock — one full-width home bar anchoring the sheet; mono tracked
+   label in the instrument register, resting on the safe area */
+.ns-home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid var(--border-light);
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: color var(--transition-base), background var(--transition-base);
+}
+.ns-home .material-symbols-sharp { font-size: 18px; color: inherit; }
+.ns-home:active { background: rgba(var(--ink-rgb), .05); }
+.ns-home.on { color: var(--text-1); }
+
+.sidebar-overlay {
+  position: fixed;
   inset: 0;
-  background: rgba(var(--ink-rgb), .35);
-  z-index: var(--z-overlay);
+  /* paper veil, same convention as the modal backdrop — paper darkens in
+     dark mode; an ink-based scrim would invert and go light there */
+  background: rgba(var(--paper-rgb), .65);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .2s ease, visibility .2s ease;
+  z-index: var(--z-sheet-veil);
 }
 
 .sidebar-overlay.show {
-  display: block;
+  opacity: 1;
+  visibility: visible;
 }
 
 body.has-sidebar {
@@ -2034,27 +2204,33 @@ body.has-sidebar {
     margin-left: 0;
   }
 
+  /* the desktop sidebar retires under 768px — the bottom sheet is the menu */
   .app-sidebar {
-    transform: translateX(-100%);
-    transition: transform .25s cubic-bezier(.4, 0, .2, 1);
-    z-index: var(--z-sidebar-raised);
+    display: none;
   }
 
-  .app-sidebar.open {
-    transform: translateX(0);
+  .nav-sheet {
+    display: flex;
   }
 
   .sidebar-toggle {
     display: flex;
   }
 
-  body.sidebar-open .sidebar-toggle {
-    left: 232px;
+  /* the page holds still while the sheet is up — pinned in place, because
+     overflow:hidden alone still rubber-bands on iOS Safari. nav.js sets an
+     inline `top` to preserve the scroll position and restores it on close. */
+  body.sidebar-open {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+    overflow: hidden;
   }
 
-  /* bottom CTA bars clear the floating toggle — outranks page-local
-     padding on the bar */
-  body .cta-bar { padding-left: 76px; }
+  /* bottom CTA bars clear the floating toggle (bottom-right now) —
+     outranks page-local padding on the bar */
+  body .cta-bar { padding-right: 88px; }
 
   .wrap {
     padding-top: 24px;

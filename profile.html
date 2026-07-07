@@ -75,17 +75,78 @@ body { opacity: 0; transition: opacity .18s; }
   padding: 16px 0 40px;
 }
 
+/* the photo is the control — hover to reveal, click to change, × to remove */
+.avatar-wrap { position: relative; flex-shrink: 0; }
+
+.avatar-hit {
+  display: block;
+  padding: 0; border: 0; background: none;
+  border-radius: 50%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.avatar-hit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--bg), 0 0 0 2px rgba(var(--ink-rgb), .55);
+}
+
 .avatar-preview {
   width: 96px; height: 96px; border-radius: 50%;
   background: rgba(var(--ink-rgb), .05);
   box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .14);
-  flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 2rem; font-weight: var(--weight-regular); color: var(--text-2);
   overflow: hidden;
   user-select: none;
 }
-.avatar-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.avatar-preview img {
+  width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
+  transition: transform var(--transition-base);
+}
+
+.avatar-veil {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: rgba(var(--ink-rgb), .58);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--paper-solid);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
+}
+.avatar-veil .material-symbols-sharp {
+  font-size: 22px;
+  transform: translateY(3px);
+  transition: transform var(--transition-base);
+}
+.avatar-hit:hover .avatar-veil,
+.avatar-hit:focus-visible .avatar-veil { opacity: 1; }
+.avatar-hit:hover .avatar-veil .material-symbols-sharp,
+.avatar-hit:focus-visible .avatar-veil .material-symbols-sharp { transform: translateY(0); }
+.avatar-hit:hover .avatar-preview img { transform: scale(1.04); }
+
+.avatar-remove {
+  position: absolute; top: -2px; right: -2px;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--paper-solid);
+  border: 1px solid rgba(var(--ink-rgb), .18);
+  color: var(--text-1);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(.9);
+  transition: opacity var(--transition-base), transform var(--transition-base),
+              border-color var(--transition-base);
+}
+.avatar-remove .material-symbols-sharp { font-size: 14px; }
+.avatar-wrap:hover .avatar-remove,
+.avatar-remove:focus-visible { opacity: 1; transform: scale(1); }
+.avatar-remove:hover { border-color: rgba(var(--ink-rgb), .40); }
+@media (hover: none) {
+  .avatar-remove { opacity: 1; transform: scale(1); } /* touch: no hover to reveal it */
+}
 
 .avatar-info { flex: 1; min-width: 0; }
 .pf-identity .label-1 { margin-bottom: 8px; }
@@ -110,14 +171,14 @@ body { opacity: 0; transition: opacity .18s; }
   margin-bottom: 16px;
 }
 
-.avatar-upload-btn {
-  position: relative; display: inline-flex; align-items: center;
-  gap: 8px; overflow: hidden;
+.avatar-uploading {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-3);
+  display: none;
 }
-.avatar-upload-btn input[type=file] {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
-}
-.avatar-uploading { font-size: var(--text-small); color: var(--text-3); margin-top: 8px; display: none; }
 .avatar-uploading.show { display: block; }
 
 /* ── Sections — chromeless, hairline-divided ── */
@@ -180,7 +241,6 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 .profile-wrap .btn-primary,
 .profile-wrap .btn-secondary,
 .profile-wrap .btn-ghost,
-.avatar-upload-btn,
 #email-modal .btn-primary, #email-modal .btn-ghost,
 #pass-modal .btn-primary, #pass-modal .btn-ghost,
 #delete-modal .btn-primary, #delete-modal .btn-ghost {
@@ -247,16 +307,19 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 
   <!-- Identity — the page's headline -->
   <header class="pf-identity">
-    <div class="avatar-preview" id="avatar-preview">?</div>
+    <div class="avatar-wrap">
+      <button type="button" class="avatar-hit" id="avatar-change" aria-label="Change profile photo">
+        <span class="avatar-preview" id="avatar-preview">?</span>
+        <span class="avatar-veil" aria-hidden="true"><span class="material-symbols-sharp">photo_camera</span></span>
+      </button>
+      <button type="button" class="avatar-remove" id="avatar-remove" aria-label="Remove profile photo" hidden>
+        <span class="material-symbols-sharp">close</span>
+      </button>
+      <input type="file" id="avatar-file" accept="image/*" hidden>
+    </div>
     <div class="avatar-info">
-      <p class="label-1">Your account</p>
       <h3 class="avatar-name" id="avatar-name">&#8212;</h3>
       <p class="avatar-email" id="avatar-email">&#8212;</p>
-      <div class="avatar-upload-btn btn-ghost sm">
-        <span class="material-symbols-sharp i-sm">photo_camera</span>
-        Change Photo
-        <input type="file" id="avatar-file" accept="image/*">
-      </div>
       <div class="avatar-uploading" id="avatar-uploading">Uploading&#8230;</div>
     </div>
   </header>
@@ -372,9 +435,12 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 
 </main>
 
+<div class="toast" id="toast"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="lib/supabase.js"></script>
 <script src="lib/sync.js"></script>
+<script src="lib/toast.js"></script>
 <script>
 
 let currentUser = null;
@@ -403,6 +469,8 @@ async function init() {
     originalData = { ...profile };
     // the nav reads this cache for the identity block
     localStorage.setItem('fs-display-name', profile.display_name || '');
+    if (profile.avatar_url) localStorage.setItem('fs-avatar-url', profile.avatar_url);
+    else localStorage.removeItem('fs-avatar-url');
   }
 }
 
@@ -423,9 +491,15 @@ function setFields(p) {
   } else {
     preview.textContent = name.charAt(0).toUpperCase();
   }
+  document.getElementById('avatar-remove').hidden = !p.avatar_url;
 }
 
 // ─── AVATAR UPLOAD ───────────────────────────────────────────────────────────
+
+// the photo itself is the control
+document.getElementById('avatar-change').addEventListener('click', () => {
+  document.getElementById('avatar-file').click();
+});
 
 // downscale to 512px jpeg before upload — faster, cheaper, kinder to phones
 async function processAvatar(file) {
@@ -444,8 +518,8 @@ document.getElementById('avatar-file').addEventListener('change', async e => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file || !currentUser) return;
-  if (!file.type.startsWith('image/')) { showError('That file isn\u2019t an image.'); return; }
-  if (file.size > 20 * 1024 * 1024) { showError('That photo is too large \u2014 try one under 20MB.'); return; }
+  if (!file.type.startsWith('image/')) { toast('That file isn\u2019t an image.'); return; }
+  if (file.size > 20 * 1024 * 1024) { toast('That photo is too large \u2014 try one under 20MB.'); return; }
 
   const uploading = document.getElementById('avatar-uploading');
   uploading.classList.add('show');
@@ -455,7 +529,7 @@ document.getElementById('avatar-file').addEventListener('change', async e => {
   catch (err) {
     console.error('avatar processing failed:', err);
     uploading.classList.remove('show');
-    showError('Couldn\u2019t read that photo \u2014 try a different image.');
+    toast('Couldn\u2019t read that photo \u2014 try a different image.');
     return;
   }
 
@@ -467,7 +541,7 @@ document.getElementById('avatar-file').addEventListener('change', async e => {
   if (uploadError) {
     console.error('avatar upload failed:', uploadError);
     uploading.classList.remove('show');
-    showError('Couldn\u2019t upload that photo. Give it another try in a moment.');
+    toast('Couldn\u2019t upload that photo. Give it another try in a moment.');
     return;
   }
 
@@ -476,9 +550,40 @@ document.getElementById('avatar-file').addEventListener('change', async e => {
   // Save avatar_url to profile
   await db.from('profiles').upsert({ id: currentUser.id, avatar_url: publicUrl });
 
+  // cache for the nav avatar and refresh it live (bust so the new photo shows)
+  localStorage.setItem('fs-avatar-url', publicUrl + '?t=' + Date.now());
+  if (window.fsNavRefreshAuth) fsNavRefreshAuth();
+
   document.getElementById('avatar-preview').innerHTML = `<img src="${publicUrl}?t=${Date.now()}" alt="Profile photo">`;
+  document.getElementById('avatar-remove').hidden = false;
+  originalData.avatar_url = publicUrl;
   uploading.classList.remove('show');
-  showSuccess('Photo updated.');
+  toast('Photo updated');
+});
+
+// ─── AVATAR REMOVE ───────────────────────────────────────────────────────────
+
+document.getElementById('avatar-remove').addEventListener('click', async () => {
+  if (!currentUser) return;
+
+  try { await db.storage.from('avatars').remove([`${currentUser.id}/avatar.jpg`]); }
+  catch (err) { console.error('avatar file removal:', err); }
+
+  const { error } = await db.from('profiles').upsert({ id: currentUser.id, avatar_url: null });
+  if (error) {
+    console.error('avatar removal failed:', error);
+    toast('Couldn’t remove the photo. Give it another try in a moment.');
+    return;
+  }
+
+  originalData.avatar_url = null;
+  localStorage.removeItem('fs-avatar-url');
+  if (window.fsNavRefreshAuth) fsNavRefreshAuth();
+
+  const name = document.getElementById('avatar-name').textContent || '?';
+  document.getElementById('avatar-preview').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('avatar-remove').hidden = true;
+  toast('Photo removed');
 });
 
 // ─── SAVE ────────────────────────────────────────────────────────────────────
@@ -607,6 +712,7 @@ document.getElementById('profile-back-btn').addEventListener('click', () => {
 document.getElementById('signout-btn').addEventListener('click', async () => {
   if (window.fsSync) { try { await fsSync.signOutCleanup(); } catch (_) {} }
   localStorage.removeItem('fs-display-name');
+  localStorage.removeItem('fs-avatar-url');
   await db.auth.signOut();
   window.location.href = 'login';
 });
@@ -677,6 +783,7 @@ document.getElementById('delete-confirm').addEventListener('click', async () => 
   } catch (err) { console.error('account cleanup:', err); }
   if (window.fsSync) { try { fsSync.clearCache(); } catch (_) {} }
   localStorage.removeItem('fs-display-name');
+  localStorage.removeItem('fs-avatar-url');
   await db.auth.signOut();
   window.location.href = 'login';
 });

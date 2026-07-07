@@ -577,7 +577,9 @@
 
     .db-shape-svg {
       position: relative;
-      z-index: calc(var(--z-grain) + 1); /* data reads above texture */
+      /* no z-index escape hatch: it used to sit above the grain (999+),
+         which also put it above the mobile sheet, veil, toasts, and modals.
+         The grain is 3.8% opacity — the radar reads fine beneath it. */
       display: block;
       width: 100%;
       max-width: 352px;
