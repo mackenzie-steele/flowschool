@@ -7,10 +7,11 @@
 
 // ── UPCOMING EVENTS ──────────────────────────────────────────────
 // Date format: 'YYYY-MM-DD'. Past events hide themselves automatically.
-// 'url' is optional — when present, the Sign up link points there.
+// 'url' is optional — when present, a link renders; 'linkLabel' sets its
+// text (defaults to 'Sign up').
 var EVENTS = [
-  { date: '2026-07-08', title: 'New Course Drop: Circle Flows', time: '',        url: '' },
-  { date: '2026-07-15', title: 'Q&A with Bonnie',               time: '12pm PT', url: '' },
+  { date: '2026-07-08', title: 'New Course Drop: Circle Flows', time: '', url: '' },
+  { date: '2026-07-31', title: 'Beta feedback due', time: '', url: 'https://docs.google.com/forms/d/e/1FAIpQLSfvfINkopQMhmT4qkZ6Pg6si5-k0ROeAM057MRIpeB2MhASsA/viewform', linkLabel: 'Share feedback' },
 ];
 
 // ── NEW DROP ─────────────────────────────────────────────────────

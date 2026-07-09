@@ -1521,7 +1521,7 @@
       start.setHours(0, 0, 0, 0);
       var upcoming = (window.EVENTS || []).map(function (e) {
         var p = String(e.date).split('-');
-        return { d: new Date(+p[0], +p[1] - 1, +p[2]), title: e.title, time: e.time, url: e.url };
+        return { d: new Date(+p[0], +p[1] - 1, +p[2]), title: e.title, time: e.time, url: e.url, linkLabel: e.linkLabel };
       }).filter(function (e) { return e.d >= start; })
         .sort(function (a, b) { return a.d - b.d; });
 
@@ -1542,7 +1542,7 @@
               (e.time ? '<span class="db-event-time">' + escHTML(e.time) + '</span>' : '') +
             '</div>' +
           '</div>' +
-          (e.url ? '<a class="btn-ghost sm db-event-signup" href="' + escHTML(e.url) + '" target="_blank" rel="noopener">Sign up</a>' : '') +
+          (e.url ? '<a class="btn-ghost sm db-event-signup" href="' + escHTML(e.url) + '" target="_blank" rel="noopener">' + escHTML(e.linkLabel || 'Sign up') + '</a>' : '') +
         '</div>';
       }).join('');
     }
