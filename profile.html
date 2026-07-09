@@ -18,7 +18,10 @@
 
   create table public.profiles (
     id uuid references auth.users(id) on delete cascade primary key,
+    full_name text,
     display_name text,
+    email text,
+    location text,
     bio text,
     teaching_style text,
     avatar_url text,
@@ -38,11 +41,11 @@
   create policy "Users can update their own profile"
     on public.profiles for update using (auth.uid() = id);
 
-  -- Auto-create a profile row when a new user signs up
+  -- Auto-create a profile row (with email) when a new user signs up
   create or replace function public.handle_new_user()
   returns trigger as $$
   begin
-    insert into public.profiles (id) values (new.id);
+    insert into public.profiles (id, email) values (new.id, new.email);
     return new;
   end;
   $$ language plpgsql security definer;
@@ -50,6 +53,21 @@
   create trigger on_auth_user_created
     after insert on auth.users
     for each row execute procedure public.handle_new_user();
+
+  -- Keep profiles.email in sync when a user changes their email
+  create or replace function public.handle_user_email_change()
+  returns trigger as $$
+  begin
+    update public.profiles set email = new.email where id = new.id;
+    return new;
+  end;
+  $$ language plpgsql security definer;
+
+  create trigger on_auth_user_email_changed
+    after update of email on auth.users
+    for each row
+    when (old.email is distinct from new.email)
+    execute procedure public.handle_user_email_change();
 
   -- Storage: create a public bucket called "avatars" in Supabase → Storage
   ───────────────────────────────────────────────────────────────────────── -->
@@ -287,6 +305,12 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 }
 .pf-success.show { display: block; }
 
+.pf-field-error {
+  display: none; margin-top: 6px;
+  font-size: var(--text-small); color: var(--danger); line-height: 1.4;
+}
+.pf-field-error.show { display: block; }
+
 @media (max-width: 580px) {
   .profile-wrap { padding: 24px 20px 96px; }
   .pf-identity { gap: 16px; padding-bottom: 32px; }
@@ -296,6 +320,7 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 </head>
 <body class="has-sidebar">
 
+  <script src="lib/version.js"></script>
   <script src="lib/nav.js"></script>
 
 <main>
@@ -338,8 +363,13 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
     <span class="label-1 pf-section-label">About you</span>
 
     <div class="pf-field">
+      <label class="pf-label" for="full-name">Full name</label>
+      <input class="pf-input" type="text" id="full-name" placeholder="Your first and last name" autocomplete="name">
+    </div>
+
+    <div class="pf-field">
       <label class="pf-label" for="display-name">Display name</label>
-      <input class="pf-input" type="text" id="display-name" placeholder="How you want to be known" autocomplete="name">
+      <input class="pf-input" type="text" id="display-name" placeholder="How you want to be known" autocomplete="nickname">
     </div>
 
     <div class="pf-field">
@@ -430,7 +460,7 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 <div class="modal-backdrop" id="pass-modal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true">
     <h3>Change password</h3>
-    <p class="modal-hint">At least 8 characters.</p>
+    <p class="modal-hint">At least 8 characters, with upper &amp; lowercase letters, a number, and a symbol.</p>
     <input type="password" class="modal-input" id="new-pass" placeholder="New password" autocomplete="new-password">
     <input type="password" class="modal-input" id="new-pass2" placeholder="Repeat it" autocomplete="new-password" style="margin-top:10px">
     <div class="modal-actions">
@@ -480,9 +510,18 @@ async function init() {
   // Load profile
   const { data: profile } = await db
     .from('profiles')
-    .select('display_name, location, bio, teaching_style, avatar_url, website, instagram')
+    .select('full_name, display_name, email, location, bio, teaching_style, avatar_url, website, instagram')
     .eq('id', user.id)
     .single();
+
+  // Self-heal: mirror the auth email into profiles.email (covers rows
+  // created before the email column was synced, and confirmed email
+  // changes that landed while this client wasn't looking).
+  if (profile && profile.email !== user.email) {
+    db.from('profiles').upsert({ id: user.id, email: user.email })
+      .then(({ error }) => { if (error) console.warn('email mirror failed', error); });
+    profile.email = user.email;
+  }
 
   if (profile) {
     setFields(profile);
@@ -495,6 +534,7 @@ async function init() {
 }
 
 function setFields(p) {
+  document.getElementById('full-name').value     = p.full_name       || '';
   document.getElementById('display-name').value  = p.display_name    || '';
   document.getElementById('location').value       = p.location        || '';
   document.getElementById('bio').value            = p.bio             || '';
@@ -610,10 +650,11 @@ document.getElementById('avatar-remove').addEventListener('click', async () => {
 
 // ─── DIRTY STATE ─────────────────────────────────────────────────────────────
 
-const FIELD_IDS = ['display-name','location','bio','teaching-style','website','instagram'];
+const FIELD_IDS = ['full-name','display-name','location','bio','teaching-style','website','instagram'];
 
 function getCurrentValues() {
   return {
+    full_name:      document.getElementById('full-name').value.trim(),
     display_name:   document.getElementById('display-name').value.trim(),
     location:       document.getElementById('location').value.trim(),
     bio:            document.getElementById('bio').value.trim(),
@@ -626,6 +667,7 @@ function getCurrentValues() {
 function isDirty() {
   const cur = getCurrentValues();
   return (
+    cur.full_name      !== (originalData.full_name      || '') ||
     cur.display_name   !== (originalData.display_name   || '') ||
     cur.location       !== (originalData.location        || '') ||
     cur.bio            !== (originalData.bio             || '') ||
@@ -642,7 +684,14 @@ function updateButtons() {
 }
 
 FIELD_IDS.forEach(id => {
-  document.getElementById(id).addEventListener('input', updateButtons);
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => { clearFieldError(el); updateButtons(); });
+});
+
+// modal inputs clear their own error on typing
+['new-email', 'new-pass', 'new-pass2'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => clearFieldError(el));
 });
 
 // ─── SAVE ────────────────────────────────────────────────────────────────────
@@ -655,17 +704,39 @@ document.getElementById('save-btn').addEventListener('click', async () => {
 
   const vals = getCurrentValues();
 
+  // validate — errors land below their own field
+  const fail = (id, msg) => {
+    fieldError(id, msg);
+    btn.disabled = false;
+    btn.textContent = 'Save Profile';
+  };
+
+  if (vals.full_name && vals.full_name.split(/\s+/).length < 2) {
+    return fail('full-name', 'Enter your first and last name.');
+  }
+  if (vals.website && !/^(https?:\/\/)?\S+\.\S{2,}$/i.test(vals.website)) {
+    return fail('website', 'That doesn’t look like a web address.');
+  }
+  let igHandle = '';
+  if (vals.instagram) {
+    igHandle = vals.instagram
+      .replace(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\//i, '')
+      .replace(/^@/, '')
+      .replace(/\/+$/, '');
+    if (!/^[A-Za-z0-9._]{1,30}$/.test(igHandle)) {
+      return fail('instagram', 'That doesn’t look like an Instagram handle.');
+    }
+  }
+
   // canonical forms: links get a scheme, instagram becomes @handle
   if (vals.website && !/^https?:\/\//i.test(vals.website)) vals.website = 'https://' + vals.website;
-  if (vals.instagram) {
-    const m = vals.instagram.match(/(?:instagram\.com\/)?@?([A-Za-z0-9._]+)/);
-    vals.instagram = m ? '@' + m[1] : vals.instagram;
-  }
+  if (vals.instagram) vals.instagram = '@' + igHandle;
 
   const { error } = await db
     .from('profiles')
     .upsert({
       id: currentUser.id,
+      full_name:      vals.full_name,
       display_name:   vals.display_name,
       location:       vals.location,
       bio:            vals.bio,
@@ -679,10 +750,10 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     showError(error.message || 'Save failed. Please try again.');
     btn.disabled = false;
   } else {
-    originalData = { ...vals };
+    originalData = { ...originalData, ...vals }; // keep avatar_url/email — vals is text fields only
     localStorage.setItem('fs-display-name', vals.display_name || '');
     setFields(originalData); // reflect canonical forms back into the inputs
-    showSuccess('Profile saved.');
+    toast('Profile saved.');
     updateButtons();
   }
 
@@ -717,7 +788,11 @@ window.addEventListener('beforeunload', e => {
 
 // ─── ACCOUNT ─────────────────────────────────────────────────────────────────
 
-function openModal(id) { document.getElementById(id).hidden = false; }
+function openModal(id) {
+  const m = document.getElementById(id);
+  m.querySelectorAll('.pf-field-error.show').forEach(el => el.classList.remove('show'));
+  m.hidden = false;
+}
 function closeModal(id) { document.getElementById(id).hidden = true; }
 ['email-modal', 'pass-modal', 'delete-modal'].forEach(id => {
   document.getElementById(id).addEventListener('click', e => {
@@ -757,7 +832,10 @@ document.getElementById('change-email-btn').addEventListener('click', () => {
 document.getElementById('email-cancel').addEventListener('click', () => closeModal('email-modal'));
 document.getElementById('email-confirm').addEventListener('click', async () => {
   const email = document.getElementById('new-email').value.trim();
-  if (!email || !email.includes('@')) { document.getElementById('new-email').focus(); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    fieldError('new-email', 'That doesn’t look like an email address.');
+    return;
+  }
   const btn = document.getElementById('email-confirm');
   btn.disabled = true;
   const { error } = await db.auth.updateUser({ email });
@@ -778,15 +856,16 @@ document.getElementById('pass-cancel').addEventListener('click', () => closeModa
 document.getElementById('pass-confirm').addEventListener('click', async () => {
   const a = document.getElementById('new-pass').value;
   const b = document.getElementById('new-pass2').value;
-  if (a.length < 8) { showError('Passwords need at least 8 characters.'); return; }
-  if (a !== b) { showError('Those passwords don\u2019t match.'); return; }
+  const pwProblem = passwordProblem(a);
+  if (pwProblem) { fieldError('new-pass', pwProblem); return; }
+  if (a !== b) { fieldError('new-pass2', 'Those passwords don\u2019t match.'); return; }
   const btn = document.getElementById('pass-confirm');
   btn.disabled = true;
   const { error } = await db.auth.updateUser({ password: a });
   btn.disabled = false;
   closeModal('pass-modal');
   if (error) { console.error(error); showError('Couldn\u2019t update the password. Try again in a moment.'); }
-  else showSuccess('Password updated.');
+  else toast('Password updated.');
 });
 
 // delete — typed confirmation
@@ -840,6 +919,44 @@ document.getElementById('delete-confirm').addEventListener('click', async () => 
 function clearMessages() {
   document.getElementById('pf-error').classList.remove('show');
   document.getElementById('pf-success').classList.remove('show');
+  clearFieldErrors();
+}
+
+// Password rule — mirrors the Supabase Auth requirement (8+ chars,
+// lower + upper + digit + symbol). Returns the first problem, or null.
+function passwordProblem(pw) {
+  if (pw.length < 8)            return 'Passwords need at least 8 characters.';
+  if (!/[a-z]/.test(pw))        return 'Passwords need a lowercase letter.';
+  if (!/[A-Z]/.test(pw))        return 'Passwords need an uppercase letter.';
+  if (!/[0-9]/.test(pw))        return 'Passwords need a number.';
+  if (!/[^A-Za-z0-9]/.test(pw)) return 'Passwords need a symbol (like ! or #).';
+  return null;
+}
+
+// ─── FIELD ERRORS (inline, below the input) ──────────────────────────────────
+
+function fieldError(inputId, msg) {
+  const input = document.getElementById(inputId);
+  const anchor = input.closest('.social-field') || input; // icon rows: below the whole row
+  let el = anchor.nextElementSibling;
+  if (!el || !el.classList.contains('pf-field-error')) {
+    el = document.createElement('p');
+    el.className = 'pf-field-error';
+    anchor.insertAdjacentElement('afterend', el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  input.focus();
+}
+
+function clearFieldError(input) {
+  const anchor = input.closest('.social-field') || input;
+  const el = anchor.nextElementSibling;
+  if (el && el.classList.contains('pf-field-error')) el.classList.remove('show');
+}
+
+function clearFieldErrors() {
+  document.querySelectorAll('.pf-field-error.show').forEach(el => el.classList.remove('show'));
 }
 
 init();

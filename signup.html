@@ -39,7 +39,7 @@ body { display: flex; flex-direction: column; min-height: 100vh; opacity: 0; tra
       <div class="field">
         <label class="field-label" for="password">Password</label>
         <div class="field-input-wrap">
-          <input class="field-input" type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password" required>
+          <input class="field-input" type="password" id="password" placeholder="8+ characters: upper & lowercase, number, symbol" autocomplete="new-password" required>
           <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password">
             <span class="material-symbols-sharp" id="eye-icon">visibility</span>
           </button>
@@ -62,6 +62,7 @@ body { display: flex; flex-direction: column; min-height: 100vh; opacity: 0; tra
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="lib/supabase.js"></script>
+<script src="lib/version.js"></script>
 <script src="lib/telemetry.js"></script>
 <script>
 
@@ -80,6 +81,17 @@ document.getElementById('pw-toggle').addEventListener('click', () => {
   document.getElementById('eye-icon').textContent = isText ? 'visibility_off' : 'visibility';
 });
 
+// Password rule — mirrors the Supabase Auth requirement (8+ chars,
+// lower + upper + digit + symbol). Returns the first problem, or null.
+function passwordProblem(pw) {
+  if (pw.length < 8)            return 'Passwords need at least 8 characters.';
+  if (!/[a-z]/.test(pw))        return 'Passwords need a lowercase letter.';
+  if (!/[A-Z]/.test(pw))        return 'Passwords need an uppercase letter.';
+  if (!/[0-9]/.test(pw))        return 'Passwords need a number.';
+  if (!/[^A-Za-z0-9]/.test(pw)) return 'Passwords need a symbol (like ! or #).';
+  return null;
+}
+
 // Sign up
 document.getElementById('auth-form').addEventListener('submit', async e => {
   e.preventDefault();
@@ -94,7 +106,8 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
   sucEl.classList.remove('show');
 
   if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.add('show'); return; }
-  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+  const pwProblem = passwordProblem(password);
+  if (pwProblem) { errEl.textContent = pwProblem; errEl.classList.add('show'); return; }
 
   btn.disabled = true;
   btn.textContent = 'Creating account…';
@@ -105,8 +118,8 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
     const msg = error.message || '';
     errEl.textContent = msg.includes('User already registered')
       ? 'An account with this email already exists. Try signing in.'
-      : msg.includes('Password should be')
-        ? 'Password must be at least 6 characters.'
+      : msg.includes('Password should')
+        ? 'Passwords need at least 8 characters, with upper & lowercase letters, a number, and a symbol.'
         : msg || 'Something went wrong. Please try again.';
     errEl.classList.add('show');
     btn.disabled = false;
@@ -131,6 +144,6 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
 });
 
 </script>
-  <footer class="site-footer">Flow School &#183; Tools for Yoga Teachers &#183; v2.2.1</footer>
+  <footer class="site-footer">Flow School &#183; Tools for Yoga Teachers</footer>
 </body>
 </html>
