@@ -1868,6 +1868,14 @@ input[type=range].range-slider:disabled {
   color: var(--text-1); /* full ink with the label — volt stays active-only */
 }
 
+/* external rows (Studio B): the trailing mark says "this leaves the app" */
+.nav-item .nav-ext,
+.ns-row .ns-ext {
+  margin-left: auto;
+  font-size: var(--icon-sm);
+  color: rgba(var(--ink-rgb), .30);
+}
+
 /* the LED dot — current page, same signature as the mobile sheet */
 .nav-dot {
   width: 5px;
