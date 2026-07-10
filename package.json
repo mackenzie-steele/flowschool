@@ -1,6 +1,6 @@
 {
   "name": "flow-school",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "private": true,
   "description": "Flow School — static site + Vercel API functions",
   "dependencies": {

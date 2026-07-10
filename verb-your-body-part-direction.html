@@ -737,7 +737,7 @@
   <!-- ── CUE ACTIONS ───────────────────────────────────────────── -->
 
   <div class="cue-actions">
-    <button class="btn-primary" id="btn-pol">
+    <button class="btn-secondary" id="btn-pol" disabled>
       <span class="material-symbols-sharp i-md">record_voice_over</span>
       Practice Out Loud
     </button>
@@ -1024,6 +1024,7 @@ function renderHeader() {
 }
 
 function renderRows() {
+  updatePolState(); // every table change re-decides whether there's anything to practice
   const container = document.getElementById('cue-rows');
 
   container.innerHTML = rows.map((row, i) => buildRowHTML(row, i)).join('');
@@ -1349,9 +1350,17 @@ function setSaved(saved) {
 
 let _autosaveTimer;
 function markDirty() {
+  updatePolState();
   if (!flowName) { setSaved(false); return; }
   clearTimeout(_autosaveTimer);
   _autosaveTimer = setTimeout(autosaveFlow, 300);
+}
+
+// Practice Out Loud needs cues to practice — the button wakes when the
+// worksheet holds any, whether typed now or loaded from a saved flow
+function updatePolState() {
+  const hasCues = rows.some(r => r.verb || r.body || r.dir);
+  document.getElementById('btn-pol').disabled = !hasCues;
 }
 
 // Persists edits back into the currently open flow's own entry — used while
@@ -1818,6 +1827,7 @@ function init() {
 
   // Practice Out Loud
   document.getElementById('btn-pol').addEventListener('click', openPOL);
+  updatePolState();
   document.getElementById('pol-close').addEventListener('click', closePOL);
 
   document.getElementById('pol-prev').addEventListener('click', () => {
