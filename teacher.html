@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
+  <style>html{background:#1B1B1B;color-scheme:dark}html[data-theme="light"]{background:#F5F4F0;color-scheme:light}</style>
+  <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Teacher — Flow School</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <link rel="stylesheet" href="global.css">
+  <style>
+    [hidden] { display: none !important; }
+
+    /* nothing paints until identity + visibility checks resolve —
+       the profile.html loading treatment, reused */
+    body { opacity: 0; transition: opacity .18s; }
+
+    /* ── page column — a reading page, whitespace over boxes ── */
+    .tp-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 28px 140px;
+    }
+    .tp-wrap > * { max-width: 640px; margin-left: auto; margin-right: auto; }
+    @media (max-width: 768px) { .tp-wrap { padding-top: 24px; } }
+    @media (max-width: 580px) { .tp-wrap { padding: 24px 20px 96px; } }
+
+    /* ── introduction — the person is the headline ── */
+    .tp-identity {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding-bottom: 40px;
+    }
+    .tp-face {
+      width: 120px; height: 120px; border-radius: 50%;
+      overflow: hidden; flex-shrink: 0;
+      background: rgba(var(--ink-rgb), .05);
+      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .14);
+      display: flex; align-items: center; justify-content: center;
+      font-size: var(--fs-h3); color: var(--text-2);
+      user-select: none;
+    }
+    .tp-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .tp-id-info { flex: 1; min-width: 0; }
+    .tp-name {
+      font-size: var(--fs-h4);
+      font-weight: var(--weight-regular);
+      letter-spacing: -.01em;
+      line-height: var(--lh-heading);
+      color: var(--text-1);
+      margin: 0 0 6px;
+      overflow-wrap: break-word;
+    }
+    .tp-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .04em;
+      color: var(--text-3);
+      line-height: 1.7;
+      overflow-wrap: break-word;
+    }
+    .tp-id-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .tp-follow .material-symbols-sharp { font-size: var(--icon-md); margin-right: 6px; }
+    /* in-circle state stays quiet: same secondary bones, just settled */
+    .tp-follow[aria-pressed="true"] {
+      color: var(--text-1);
+      border-color: rgba(var(--ink-rgb), .35);
+      background: rgba(var(--ink-rgb), .05);
+    }
+
+    @media (max-width: 580px) {
+      .tp-identity { flex-direction: column; align-items: flex-start; gap: 20px; }
+      .tp-face { width: 96px; height: 96px; }
+      .tp-id-actions { width: 100%; }
+      .tp-id-actions .tp-follow { flex: 1; justify-content: center; }
+    }
+
+    /* ── sections — hairline-divided, not boxed ── */
+    .tp-section {
+      padding: 40px 0;
+      border-top: 1px solid var(--border-light);
+    }
+    .tp-section .label-1 { display: block; margin-bottom: 20px; }
+
+    /* why I teach — the pull-quote. It belongs to the hero (no seam
+       above), the eyebrow sits close like a kicker, and the words get
+       display scale: a declaration, not a bio field. */
+    #tp-why-sec { border-top: none; padding-top: 0; }
+    #tp-why-sec .label-1 { margin-bottom: 12px; }
+    .tp-why {
+      font-size: var(--fs-h5);
+      line-height: 1.45;
+      letter-spacing: -.01em;
+      color: var(--text-1);
+      white-space: pre-line;
+      overflow-wrap: break-word;
+    }
+
+    /* teaching style — the print-catalog posture: mono label in its own
+       left column, text right; stacks back on small screens */
+    .tp-style {
+      font-size: var(--fs-body);
+      line-height: 1.65;
+      color: var(--text-2);
+      white-space: pre-line;
+      overflow-wrap: break-word;
+    }
+    @media (min-width: 641px) {
+      #tp-style-sec {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        column-gap: 32px;
+        align-items: start;
+      }
+      #tp-style-sec .label-1 { margin-bottom: 0; padding-top: 4px; }
+    }
+
+    /* ── practice with me — scannable rows ── */
+    .tp-class {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .tp-class:last-child { border-bottom: none; }
+    /* the date tile — same instrument as the dashboard's Upcoming module */
+    .tp-class-date {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      text-align: center;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      background: rgba(var(--ink-rgb), .02);
+    }
+    .tp-class-mo {
+      display: block;
+      font-size: 8px;
+      font-weight: var(--weight-bold);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .tp-class-day {
+      display: block;
+      font-size: var(--fs-h6);
+      font-weight: var(--weight-regular);
+      color: var(--text-1);
+      line-height: 1;
+    }
+    .tp-class-what { flex: 1; min-width: 0; }
+    .tp-class-time {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: var(--fs-label-2);
+      letter-spacing: .04em;
+      color: var(--text-3);
+      margin-top: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+    .tp-class-name {
+      display: block;
+      font-size: var(--text-ui);
+      color: var(--text-1);
+      overflow-wrap: break-word;
+    }
+    .tp-class-where {
+      display: block;
+      font-size: var(--text-small);
+      color: var(--text-3);
+      margin-top: 4px;
+      overflow-wrap: break-word;
+    }
+    .tp-class-link {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: var(--text-small);
+      color: var(--text-3);
+      text-decoration: none;
+      transition: color var(--transition-base);
+    }
+    .tp-class-link:hover { color: var(--text-1); }
+    @media (max-width: 580px) {
+      .tp-class { flex-wrap: wrap; }
+      .tp-class-link { margin-left: 56px; } /* aligns under the text, past the tile */
+    }
+
+    /* identity links — the person's places, right under their name */
+    .tp-id-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 20px;
+      margin-top: 12px;
+    }
+    .tp-id-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--text-small);
+      color: var(--text-3);
+      text-decoration: none;
+      transition: color var(--transition-base);
+    }
+    .tp-id-links a:hover { color: var(--text-1); }
+    .tp-id-links .material-symbols-sharp { font-size: var(--icon-sm); }
+    .tp-id-links svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .tp-quiet {
+      font-size: var(--text-body-sm);
+      color: var(--text-3);
+    }
+
+    /* ── missing / blocked states — same shape as the site's empties ── */
+    .tp-state {
+      padding: 96px 24px;
+      text-align: center;
+    }
+    .tp-state p {
+      font-size: var(--text-body-sm);
+      color: var(--text-3);
+      line-height: 1.65;
+      max-width: 44ch;
+      margin: 0 auto 24px;
+    }
+
+    /* ── the quiet safety menu ── */
+    .tp-menu-wrap { position: relative; }
+    .tp-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: var(--z-toast);
+      min-width: 180px;
+      background: var(--paper-solid);
+      border: 1px solid rgba(var(--ink-rgb), .14);
+      box-shadow: var(--shadow-float);
+      padding: 6px;
+    }
+    .tp-menu button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 10px 12px;
+      font-family: var(--font);
+      font-size: var(--text-ui);
+      color: var(--text-2);
+      cursor: pointer;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+    .tp-menu button:hover { background: rgba(var(--ink-rgb), .05); color: var(--text-1); }
+
+    .tp-report-select {
+      width: 100%;
+      background: rgba(var(--ink-rgb), .04);
+      border: none;
+      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
+      padding: 12px 16px;
+      font-family: var(--font);
+      font-size: var(--text-ui);
+      color: var(--text-1);
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body class="has-sidebar">
+
+  <script src="lib/version.js"></script>
+  <script src="lib/nav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="lib/supabase.js"></script>
+  <script src="lib/telemetry.js"></script>
+  <script src="lib/sync.js"></script>
+  <script src="lib/community.js"></script>
+  <div class="toast" id="toast"></div>
+
+  <main>
+  <div class="post-bar">
+    <a class="btn-ghost" href="circle">
+      <span class="material-symbols-sharp i-md" style="margin-right:6px" aria-hidden="true">arrow_back</span>
+      <span class="post-back-label">The Circle</span>
+    </a>
+  </div>
+  <div class="tp-wrap">
+
+    <!-- shown only to the owner, previewing while not in The Circle -->
+    <div class="tc-join" id="tp-preview-note" hidden style="display:flex; align-items:center; gap:16px; border:1px solid rgba(var(--ink-rgb),.12); border-top-color:rgba(var(--ink-rgb),.22); background:rgba(var(--ink-rgb),.02); padding:20px 24px; margin-bottom:24px;">
+      <p style="flex:1; font-size:var(--text-body-sm); color:var(--text-2); line-height:1.55; margin:0;">
+        Only you can see this page right now &#8212; you&#8217;re not in The Circle yet.
+        Turn on &#8220;Include me in The Circle&#8221; in your profile when you&#8217;re ready to be found.
+      </p>
+    </div>
+
+    <!-- ── the profile ── -->
+    <div id="tp-view" hidden>
+
+      <header class="tp-identity">
+        <div class="tp-face" id="tp-face"></div>
+        <div class="tp-id-info">
+          <h3 class="tp-name" id="tp-name"></h3>
+          <p class="tp-meta" id="tp-meta"></p>
+          <div class="tp-id-links" id="tp-id-links" hidden></div>
+          <div class="tp-id-actions">
+            <button type="button" class="btn-secondary tp-follow" id="tp-follow" aria-pressed="false" hidden></button>
+            <a class="btn-secondary" id="tp-edit" href="profile" hidden>Edit Profile</a>
+            <div class="tp-menu-wrap" id="tp-menu-wrap" hidden>
+              <button type="button" class="btn-icon" id="tp-more" aria-label="Profile options" aria-haspopup="true" aria-expanded="false">
+                <span class="material-symbols-sharp" aria-hidden="true">more_horiz</span>
+              </button>
+              <div class="tp-menu" id="tp-menu" hidden>
+                <button type="button" id="tp-report-btn">Report profile</button>
+                <button type="button" id="tp-block-btn">Block teacher</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="tp-section" id="tp-why-sec" hidden>
+        <span class="label-1">Why I teach</span>
+        <p class="tp-why" id="tp-why"></p>
+      </section>
+
+      <section class="tp-section" id="tp-style-sec" hidden>
+        <span class="label-1">Teaching style</span>
+        <p class="tp-style" id="tp-style"></p>
+      </section>
+
+      <section class="tp-section" id="tp-classes-sec" hidden>
+        <span class="label-1">Practice with me</span>
+        <div id="tp-classes"></div>
+      </section>
+
+    </div>
+
+    <!-- ── not found / not in the circle (one state: existence isn't leaked) ── -->
+    <div class="tp-state" id="tp-missing" hidden>
+      <p>There&#8217;s no one at this address in The Circle right now. Teachers choose when to be seen &#8212; and addresses sometimes change.</p>
+      <a class="btn-secondary" href="circle">Back to The Circle</a>
+    </div>
+
+    <!-- ── you've blocked this teacher ── -->
+    <div class="tp-state" id="tp-blocked" hidden>
+      <p>You&#8217;ve blocked this teacher. They don&#8217;t appear in your Circle, and their profile stays out of your way.</p>
+      <button type="button" class="btn-secondary" id="tp-unblock">Unblock</button>
+    </div>
+
+  </div>
+  </main>
+
+  <!-- ── report ── -->
+  <div class="modal-backdrop" id="tp-report-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tp-report-heading">
+      <h3 id="tp-report-heading">Report this profile</h3>
+      <p class="modal-hint">Tell us what&#8217;s wrong. A human reads every report.</p>
+      <select class="tp-report-select" id="tp-report-reason" aria-label="Reason">
+        <option value="">Choose a reason&#8230;</option>
+        <option>Not a real teacher</option>
+        <option>Inappropriate content</option>
+        <option>Spam or self-promotion</option>
+        <option>Something else</option>
+      </select>
+      <textarea class="modal-input" id="tp-report-note" placeholder="Anything else we should know? (optional)" rows="3"></textarea>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="tp-report-cancel">Cancel</button>
+        <button class="btn-primary" id="tp-report-send">Send Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── block confirm ── -->
+  <div class="modal-backdrop" id="tp-block-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tp-block-heading">
+      <h3 id="tp-block-heading">Block this teacher?</h3>
+      <p class="modal-hint">They&#8217;ll disappear from your Circle and their profile will stay out of your way. They won&#8217;t be told. You can unblock anytime.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="tp-block-cancel">Cancel</button>
+        <button class="btn-primary" id="tp-block-confirm">Block</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ─── TEACHER PROFILE (/@handle) ──────────────────────────────────────────────
+    // Reads only the community views (circle_directory + circle_schedules):
+    // in-circle enforcement and field narrowing happen in the database.
+    // The route never trusts its input, nothing paints before checks
+    // resolve, and "not found" and "not in the circle" are one state on
+    // purpose — existence isn't leaked.
+
+    let teacher = null;   // the row from circle_directory
+    let myId = null;
+
+    // staged for a later drop: Add to My Circle + the report/block menu.
+    // The tables and wiring are live — flip this on when the community
+    // is ready for the graph.
+    const SHOW_CONNECT_CONTROLS = false;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ── route input: /@handle (vercel + serve rewrite) or ?t= fallback ──
+    function routeHandle() {
+      const m = window.location.pathname.match(/^\/@([a-z0-9-]{2,30})$/);
+      if (m) return m[1];
+      const q = new URLSearchParams(window.location.search).get('t') || '';
+      return /^[a-z0-9-]{2,30}$/.test(q) ? q : null;
+    }
+
+    // ── link hygiene: only http(s) leaves the page ──
+    function safeUrl(raw) {
+      if (!raw) return null;
+      let u = String(raw).trim();
+      if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+      try {
+        const parsed = new URL(u);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+        return parsed.href;
+      } catch (_) { return null; }
+    }
+    function domainLabel(url) {
+      try { return new URL(url).hostname.replace(/^www\./, ''); }
+      catch (_) { return 'Visit website'; }
+    }
+    function igHandle(raw) {
+      const m = String(raw || '').match(/(?:instagram\.com\/)?@?([A-Za-z0-9._]+)/);
+      return m ? m[1] : null;
+    }
+
+    // ── schedule formatting ──
+    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    function fmtTime(t) {
+      // "19:00:00" → "7:00 PM"
+      const m = String(t || '').match(/^(\d{1,2}):(\d{2})/);
+      if (!m) return '';
+      let h = parseInt(m[1], 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return h + ':' + m[2] + ' ' + ampm;
+    }
+
+    // "YYYY-MM-DD" → local Date (avoids UTC off-by-one)
+    function parseDate(d) {
+      const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+    }
+    // every class resolves to its NEXT real date: a one-time class is its
+    // date; a weekly class is the coming instance of its weekday
+    function nextDate(r) {
+      if (r.on_date) return parseDate(r.on_date) || new Date(8640000000000000);
+      const now = new Date();
+      const today = (now.getDay() + 6) % 7; // 0 = Monday, matching the schema
+      const ahead = (r.weekday - today + 7) % 7;
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate() + ahead);
+    }
+    function shortDate(dt) {
+      return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    function renderClasses(rows, isOwn) {
+      const sec = document.getElementById('tp-classes-sec');
+      if (!rows || !rows.length) {
+        // someone else with no classes: the section simply doesn't exist.
+        // your own empty page keeps a gentle nudge — only you see it.
+        if (!isOwn) { sec.hidden = true; return; }
+        sec.hidden = false;
+        document.getElementById('tp-classes').innerHTML =
+          '<p class="tp-quiet">No public classes listed yet \u2014 add them from Edit Profile.</p>';
+        return;
+      }
+      // soonest first — one row per class, never a year of instances
+      rows.sort((a, b) => (nextDate(a) - nextDate(b)) || String(a.start_time).localeCompare(String(b.start_time)));
+      const MO = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+      document.getElementById('tp-classes').innerHTML = rows.map(r => {
+        const what = [r.class_name, r.studio].filter(Boolean).join(' at ') || 'Class';
+        const link = safeUrl(r.url);
+        const d = nextDate(r);
+        const timeline = esc(fmtTime(r.start_time)) +
+          (r.on_date ? '' : ' · Every ' + esc(DAYS[r.weekday] || ''));
+        return '<div class="tp-class">' +
+          '<div class="tp-class-date" aria-hidden="true">' +
+            '<span class="tp-class-mo">' + MO[d.getMonth()] + '</span>' +
+            '<span class="tp-class-day">' + d.getDate() + '</span>' +
+          '</div>' +
+          '<span class="tp-class-what">' +
+            '<span class="tp-class-name">' + esc(what) + '</span>' +
+            '<span class="tp-class-time">' + timeline + '</span>' +
+            (r.city ? '<span class="tp-class-where">' + esc(r.city) + '</span>' : '') +
+          '</span>' +
+          (link ? '<a class="tp-class-link" href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">View class<span class="material-symbols-sharp i-sm" aria-hidden="true">open_in_new</span></a>' : '') +
+        '</div>';
+      }).join('');
+      sec.hidden = false;
+    }
+
+    // the platform does the math: a start year reads as years of practice
+    function teachingFor(since) {
+      const y = parseInt(since, 10);
+      if (!y || y < 1900) return null;
+      const diff = new Date().getFullYear() - y;
+      if (diff < 0) return null;
+      if (diff === 0) return 'First year of teaching';
+      return 'Teaching for ' + diff + ' year' + (diff === 1 ? '' : 's');
+    }
+
+    function renderProfile(t) {
+      document.title = (t.display_name || 'Teacher') + ' — Flow School';
+
+      const face = document.getElementById('tp-face');
+      if (t.avatar_url) face.innerHTML = '<img src="' + esc(t.avatar_url) + '" alt="Photo of ' + esc(t.display_name || 'this teacher') + '">';
+      else face.textContent = (t.display_name || '?').charAt(0).toUpperCase();
+
+      document.getElementById('tp-name').textContent = t.display_name || 'A Flow School teacher';
+      const meta = ['@' + t.handle];
+      if (t.location) meta.push(t.location);
+      const tenure = teachingFor(t.teaching_since);
+      if (tenure) meta.push(tenure);
+      document.getElementById('tp-meta').textContent = meta.join(' · ');
+
+      if (t.why_i_teach) {
+        document.getElementById('tp-why').textContent = t.why_i_teach;
+        document.getElementById('tp-why-sec').hidden = false;
+      }
+      if (t.teaching_style) {
+        document.getElementById('tp-style').textContent = t.teaching_style;
+        document.getElementById('tp-style-sec').hidden = false;
+      }
+
+      // the person's places, cosmos-style: icon + label, no chrome.
+      // instagram wears its own mark (same glyph the profile editor uses)
+      const IG_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>';
+      const links = [];
+      const site = safeUrl(t.website);
+      if (site) links.push('<a href="' + esc(site) + '" target="_blank" rel="noopener noreferrer"><span class="material-symbols-sharp" aria-hidden="true">language</span>' + esc(domainLabel(site)) + '</a>');
+      const ig = igHandle(t.instagram);
+      if (ig) links.push('<a href="https://instagram.com/' + esc(ig) + '" target="_blank" rel="noopener noreferrer">' + IG_SVG + '@' + esc(ig) + '</a>');
+      const linksEl = document.getElementById('tp-id-links');
+      linksEl.innerHTML = links.join('');
+      linksEl.hidden = !links.length;
+    }
+
+    // ── follow control: quiet, immediate, honest about failure ──
+    function setFollowBtn(inCircle, busy) {
+      const btn = document.getElementById('tp-follow');
+      btn.disabled = !!busy;
+      btn.setAttribute('aria-pressed', inCircle ? 'true' : 'false');
+      btn.innerHTML = inCircle
+        ? '<span class="material-symbols-sharp" aria-hidden="true">check</span>In My Circle'
+        : 'Add to My Circle';
+    }
+
+    async function wireFollow(followedSet) {
+      const btn = document.getElementById('tp-follow');
+      let inCircle = followedSet.has(teacher.id);
+      setFollowBtn(inCircle, false);
+      btn.hidden = false;
+
+      btn.addEventListener('click', async () => {
+        const next = !inCircle;
+        setFollowBtn(next, true); // optimistic, but locked while saving
+        const { error } = next
+          ? await fsCommunity.follow(teacher.id)
+          : await fsCommunity.unfollow(teacher.id);
+        if (error) {
+          setFollowBtn(inCircle, false); // roll back
+          toast('That didn’t save. Try again in a moment.');
+          return;
+        }
+        inCircle = next;
+        setFollowBtn(inCircle, false);
+        toast(inCircle ? 'Added to your Circle.' : 'Removed from your Circle.');
+      });
+    }
+
+    // ── the quiet safety menu ──
+    function wireMenu() {
+      const wrap = document.getElementById('tp-menu-wrap');
+      const more = document.getElementById('tp-more');
+      const menu = document.getElementById('tp-menu');
+      wrap.hidden = false;
+
+      function close() { menu.hidden = true; more.setAttribute('aria-expanded', 'false'); }
+      more.addEventListener('click', e => {
+        e.stopPropagation();
+        const open = menu.hidden;
+        menu.hidden = !open;
+        more.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', close);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+      // report
+      const rModal = document.getElementById('tp-report-modal');
+      document.getElementById('tp-report-btn').addEventListener('click', () => {
+        close();
+        document.getElementById('tp-report-reason').value = '';
+        document.getElementById('tp-report-note').value = '';
+        rModal.hidden = false;
+        document.getElementById('tp-report-reason').focus();
+      });
+      document.getElementById('tp-report-cancel').addEventListener('click', () => { rModal.hidden = true; });
+      rModal.addEventListener('click', e => { if (e.target === rModal) rModal.hidden = true; });
+      document.getElementById('tp-report-send').addEventListener('click', async () => {
+        const reason = document.getElementById('tp-report-reason').value;
+        if (!reason) { document.getElementById('tp-report-reason').focus(); return; }
+        const sendBtn = document.getElementById('tp-report-send');
+        sendBtn.disabled = true;
+        const { error } = await fsCommunity.report(teacher.id, reason, document.getElementById('tp-report-note').value.trim());
+        sendBtn.disabled = false;
+        rModal.hidden = true;
+        toast(error ? 'That didn’t send. Try again in a moment.' : 'Thank you. A human will take a look.');
+      });
+
+      // block
+      const bModal = document.getElementById('tp-block-modal');
+      document.getElementById('tp-block-btn').addEventListener('click', () => {
+        close();
+        bModal.hidden = false;
+        document.getElementById('tp-block-cancel').focus();
+      });
+      document.getElementById('tp-block-cancel').addEventListener('click', () => { bModal.hidden = true; });
+      bModal.addEventListener('click', e => { if (e.target === bModal) bModal.hidden = true; });
+      document.getElementById('tp-block-confirm').addEventListener('click', async () => {
+        const { error } = await fsCommunity.block(teacher.id);
+        bModal.hidden = true;
+        if (error) { toast('That didn’t save. Try again in a moment.'); return; }
+        document.getElementById('tp-view').hidden = true;
+        document.getElementById('tp-blocked').hidden = false;
+      });
+    }
+
+    // ── unblock, from the blocked state ──
+    document.getElementById('tp-unblock').addEventListener('click', async () => {
+      const { error } = await fsCommunity.unblock(teacher.id);
+      if (error) { toast('That didn’t save. Try again in a moment.'); return; }
+      window.location.reload();
+    });
+
+    // ─── LOAD ────────────────────────────────────────────────────────────────────
+    (async function init() {
+      const handle = routeHandle();
+      const show = id => { document.getElementById(id).hidden = false; document.body.style.opacity = '1'; };
+
+      if (!handle) { show('tp-missing'); return; }
+
+      myId = await fsCommunity.me();
+
+      const { data, error } = await db
+        .from('circle_directory')
+        .select('*')
+        .eq('handle', handle)
+        .maybeSingle();
+
+      if (error) console.warn('Profile could not load:', error.message || error);
+
+      // your own door always opens: not in The Circle yet means the view
+      // returns nothing, so the owner gets a private preview instead
+      if (!data && myId && localStorage.getItem('fs-handle') === handle) {
+        const { data: own } = await db.from('profiles')
+          .select('id, display_name, location, why_i_teach, teaching_since, teaching_style, avatar_url, website, instagram')
+          .eq('id', myId).maybeSingle();
+        if (own) {
+          teacher = Object.assign({ handle: handle }, own);
+          renderProfile(teacher);
+          document.getElementById('tp-edit').hidden = false;
+          document.getElementById('tp-preview-note').hidden = false;
+          const { data: ownClasses } = await db.from('schedules').select('*').eq('user_id', myId);
+          renderClasses((ownClasses || []).filter(c => !c.on_date || c.on_date >= new Date().toISOString().slice(0, 10)), true);
+          show('tp-view');
+          return;
+        }
+      }
+
+      if (!data) { show('tp-missing'); return; }
+      teacher = data;
+
+      // blocked? their page stays out of your way
+      const blocks = await fsCommunity.myBlocks();
+      if (blocks.has(teacher.id)) { show('tp-blocked'); return; }
+
+      renderProfile(teacher);
+
+      // own profile: edit, no follow, no safety menu
+      if (myId && myId === teacher.id) {
+        document.getElementById('tp-edit').hidden = false;
+      } else if (SHOW_CONNECT_CONTROLS) {
+        const follows = await fsCommunity.myFollows();
+        wireFollow(follows);
+        wireMenu();
+      }
+
+      // schedule loads after identity — a failure here degrades to the
+      // quiet empty line rather than killing the page
+      const { data: classes, error: sErr } = await db
+        .from('circle_schedules')
+        .select('*')
+        .eq('user_id', teacher.id);
+      if (sErr) console.warn('Schedule could not load:', sErr.message || sErr);
+      renderClasses(classes || [], myId === teacher.id);
+
+      show('tp-view');
+    })();
+  </script>
+  <script src="lib/toast.js"></script>
+
+</body>
+
+</html>

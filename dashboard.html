@@ -1070,15 +1070,19 @@
     function renderWelcome() {
       var h = new Date().getHours();
       var greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-      // first name from the Supabase session, when one exists
+      // first name — the profile's display name (cached at login/profile
+      // save), falling back to auth metadata for accounts that have it
       var name = '';
       try {
-        var raw = localStorage.getItem('sb-zizuopmcpzicbwngjagp-auth-token');
-        if (raw) {
-          var sess = JSON.parse(raw);
-          if (!sess.expires_at || sess.expires_at >= Date.now() / 1000) {
-            var meta = (sess.user && sess.user.user_metadata) || {};
-            name = (meta.full_name || meta.name || '').trim().split(/\s+/)[0] || '';
+        name = (localStorage.getItem('fs-display-name') || '').trim().split(/\s+/)[0] || '';
+        if (!name) {
+          var raw = localStorage.getItem('sb-zizuopmcpzicbwngjagp-auth-token');
+          if (raw) {
+            var sess = JSON.parse(raw);
+            if (!sess.expires_at || sess.expires_at >= Date.now() / 1000) {
+              var meta = (sess.user && sess.user.user_metadata) || {};
+              name = (meta.full_name || meta.name || '').trim().split(/\s+/)[0] || '';
+            }
           }
         }
       } catch (_) {}

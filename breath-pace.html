@@ -260,6 +260,21 @@
       return audioCtx;
     }
 
+    // Mobile audio has rules: iOS only starts sound inside a real tap, and
+    // the ringer switch mutes Web Audio unless the page declares itself
+    // playback audio. Call this from ANY gesture that should enable sound.
+    function unlockAudio() {
+      try {
+        if (navigator.audioSession) navigator.audioSession.type = 'playback'; // iOS 17+: play despite the silent switch
+        const ctx = getCtx();                       // create + resume inside this gesture
+        const buf = ctx.createBuffer(1, 1, 22050);  // one silent frame fully opens the output path
+        const srcNode = ctx.createBufferSource();
+        srcNode.buffer = buf;
+        srcNode.connect(ctx.destination);
+        srcNode.start(0);
+      } catch (e) { }
+    }
+
     function playTone(freq, vol, dur, type = 'sine') {
       if (!audioEnabled) return;
       try {
@@ -291,6 +306,7 @@
 
     document.getElementById('audio-btn').addEventListener('click', () => {
       audioEnabled = !audioEnabled;
+      if (audioEnabled) unlockAudio();
       const btn = document.getElementById('audio-btn');
       const icon = document.getElementById('audio-icon');
       btn.classList.toggle('on', audioEnabled);
@@ -446,7 +462,7 @@
         lastPhaseSec = 0;
         const phases = getPhases();
         if (audioEnabled) {
-          if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          unlockAudio();
           await audioCtx.resume();
           // Warm up the audio pipeline, then wait 2 frames for it to initialize
           const buf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);

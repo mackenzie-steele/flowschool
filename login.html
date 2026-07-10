@@ -187,6 +187,9 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
         const { data: prof } = await db.from('profiles').select('display_name, avatar_url').eq('id', user.id).single();
         if (prof) {
           localStorage.setItem('fs-display-name', prof.display_name || '');
+          const { data: hRow } = await db.from('handles').select('handle').eq('user_id', user.id).maybeSingle();
+          if (hRow && hRow.handle) localStorage.setItem('fs-handle', hRow.handle);
+          else localStorage.removeItem('fs-handle');
           if (prof.avatar_url) localStorage.setItem('fs-avatar-url', prof.avatar_url);
           else localStorage.removeItem('fs-avatar-url');
         }

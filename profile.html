@@ -22,7 +22,9 @@
     display_name text,
     email text,
     location text,
-    bio text,
+    bio text,           -- retired from the UI Jul 2026 (kept for data)
+    why_i_teach text,
+    teaching_since text,
     teaching_style text,
     avatar_url text,
     website text,
@@ -89,7 +91,7 @@ body { opacity: 0; transition: opacity .18s; }
   .profile-wrap { padding-top: 24px; }
 }
 
-.profile-wrap > * { max-width: 640px; }
+.profile-wrap > * { max-width: 640px; margin-left: auto; margin-right: auto; }
 
 /* ── Identity header — the person is the headline ── */
 .pf-identity {
@@ -216,6 +218,79 @@ body { opacity: 0; transition: opacity .18s; }
 .pf-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .pf-field:last-of-type { margin-bottom: 0; }
 
+/* public classes — a compact editor that saves as you go */
+.sched-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 580px) { .sched-form { grid-template-columns: 1fr; } }
+
+.sched-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.sched-when {
+  flex-shrink: 0;
+  width: 128px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label-2);
+  letter-spacing: .04em;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+.sched-what { flex: 1; min-width: 0; font-size: var(--text-ui); color: var(--text-1); overflow-wrap: break-word; }
+.sched-what small { display: block; font-size: var(--text-small); color: var(--text-3); margin-top: 2px; }
+.sched-row.editing { opacity: .45; }
+.sched-edit {
+  flex-shrink: 0;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-3); padding: 4px 6px; display: flex; align-items: center;
+  transition: color var(--transition-base);
+}
+.sched-edit:hover { color: var(--text-1); }
+.sched-edit .material-symbols-sharp { font-size: var(--icon-sm); }
+
+.sched-rm {
+  flex-shrink: 0;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-3); font-size: 16px; line-height: 1; padding: 4px 8px;
+  transition: color var(--transition-base);
+}
+.sched-rm:hover { color: var(--danger); }
+#sched-list:not(:empty) { margin-bottom: 20px; }
+
+/* handle — the @ is furniture, the input is the field */
+.pf-handle-wrap { position: relative; }
+.pf-at {
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  color: var(--text-3); font-size: var(--text-body-sm);
+  pointer-events: none;
+}
+.pf-handle-wrap .pf-input { padding-left: 34px; }
+
+/* the Circle opt-in — one honest checkbox */
+.pf-circle-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  width: 100%; padding: 0; background: none; border: none;
+  text-align: left; cursor: pointer; font-family: var(--font);
+}
+.pf-circle-box {
+  width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px;
+  border: 1px solid rgba(var(--ink-rgb), .30); border-radius: var(--rs);
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.pf-circle-check { font-size: 13px; color: var(--paper-solid); opacity: 0; }
+.pf-circle-row[aria-pressed="true"] .pf-circle-box { background: var(--ink-solid); border-color: var(--ink-solid); }
+.pf-circle-row[aria-pressed="true"] .pf-circle-check { opacity: 1; }
+.pf-circle-row:hover .pf-circle-box { border-color: rgba(var(--ink-rgb), .50); }
+.pf-circle-title { display: block; font-size: var(--text-ui); color: var(--text-1); margin-bottom: 4px; }
+.pf-circle-sub { display: block; font-size: var(--text-small); color: var(--text-3); line-height: 1.5; }
+
 .pf-label {
   font-size: var(--text-label); font-weight: var(--weight-bold);
   letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--text-3);
@@ -272,7 +347,7 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 }
 
 .pf-signout {
-  display: inline-flex;
+  display: flex; /* block-level so the column's auto margins center it */
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -327,7 +402,7 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
 <div class="post-bar">
   <button class="btn-ghost" id="profile-back-btn">
     <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
-    Dashboard
+    <span id="profile-back-label">Your Profile</span>
   </button>
   <div class="post-edit-actions">
     <button class="btn-ghost" id="discard-btn" disabled>Cancel</button>
@@ -373,13 +448,27 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
     </div>
 
     <div class="pf-field">
+      <label class="pf-label" for="handle">Handle</label>
+      <div class="pf-handle-wrap">
+        <span class="pf-at">@</span>
+        <input class="pf-input" type="text" id="handle" placeholder="yourname" autocomplete="off" spellcheck="false" maxlength="30">
+      </div>
+      <p class="pf-hint">Your address in the community. Lowercase letters, numbers, and hyphens.</p>
+    </div>
+
+    <div class="pf-field">
       <label class="pf-label" for="location">Location</label>
       <input class="pf-input" type="text" id="location" placeholder="Portland, Oregon" autocomplete="address-level2">
     </div>
 
     <div class="pf-field">
-      <label class="pf-label" for="bio">Bio</label>
-      <textarea class="pf-input" id="bio" placeholder="A few sentences about who you are and how you teach…" rows="4"></textarea>
+      <label class="pf-label" for="teaching-since">Teaching since</label>
+      <input class="pf-input" type="text" id="teaching-since" placeholder="2015" inputmode="numeric" maxlength="4" autocomplete="off">
+    </div>
+
+    <div class="pf-field">
+      <label class="pf-label" for="why-teach">Why you teach</label>
+      <textarea class="pf-input" id="why-teach" placeholder="Say it like you&#8217;d tell another teacher&#8230;" rows="4"></textarea>
     </div>
 
     <div class="pf-field">
@@ -405,6 +494,50 @@ textarea.pf-input { resize: vertical; min-height: 90px; line-height: 1.65; }
         <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/>
       </svg>
       <input class="pf-input" type="text" id="instagram" placeholder="@yourhandle">
+    </div>
+  </section>
+
+  <!-- Community -->
+  <section class="pf-section">
+    <span class="label-1 pf-section-label">Community</span>
+    <button type="button" class="pf-circle-row" id="circle-row" aria-pressed="false">
+      <span class="pf-circle-box"><span class="material-symbols-sharp pf-circle-check">check</span></span>
+      <span class="pf-circle-info">
+        <span class="pf-circle-title">Include me in The Circle</span>
+        <span class="pf-circle-sub">When The Circle opens, other Flow School teachers can see your profile &mdash; your photo, name, location, and why you teach. You can step out anytime.</span>
+      </span>
+    </button>
+  </section>
+
+  <!-- Your public classes -->
+  <section class="pf-section">
+    <span class="label-1 pf-section-label">Your Public Classes</span>
+    <p class="pf-hint" style="margin:-16px 0 20px">Shown on your Circle profile, so teachers nearby can practice with you. Saved as you go.</p>
+    <div id="sched-list"></div>
+    <div class="sched-form">
+      <select class="pf-input" id="sched-repeat" aria-label="How often">
+        <option value="weekly">Repeats weekly</option>
+        <option value="once">One-time class</option>
+      </select>
+      <select class="pf-input" id="sched-day" aria-label="Day of the week">
+        <option value="0">Monday</option><option value="1">Tuesday</option>
+        <option value="2">Wednesday</option><option value="3">Thursday</option>
+        <option value="4">Friday</option><option value="5">Saturday</option>
+        <option value="6">Sunday</option>
+      </select>
+      <input class="pf-input" type="date" id="sched-date" aria-label="Class date" hidden>
+      <input class="pf-input" type="time" id="sched-time" aria-label="Start time">
+      <input class="pf-input" type="text" id="sched-name" placeholder="Class name" aria-label="Class name">
+      <input class="pf-input" type="text" id="sched-studio" placeholder="Studio" aria-label="Studio">
+      <input class="pf-input" type="text" id="sched-city" placeholder="City" aria-label="City">
+      <input class="pf-input" type="text" id="sched-url" placeholder="Booking link (optional)" aria-label="Booking link">
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; margin-top:12px">
+      <button type="button" class="btn-secondary" id="sched-add">
+        <span class="material-symbols-sharp i-md" style="margin-right:6px" aria-hidden="true">add</span>
+        <span id="sched-add-label">Add Class</span>
+      </button>
+      <button type="button" class="btn-ghost" id="sched-cancel" hidden>Cancel</button>
     </div>
   </section>
 
@@ -510,9 +643,18 @@ async function init() {
   // Load profile
   const { data: profile } = await db
     .from('profiles')
-    .select('full_name, display_name, email, location, bio, teaching_style, avatar_url, website, instagram')
+    .select('full_name, display_name, email, location, why_i_teach, teaching_since, teaching_style, avatar_url, website, instagram, in_circle')
     .eq('id', user.id)
     .single();
+
+  // the handle lives in its own table (unique across the community)
+  if (profile) {
+    const { data: handleRow } = await db.from('handles').select('handle').eq('user_id', user.id).maybeSingle();
+    profile.handle = (handleRow && handleRow.handle) || '';
+    // the nav shows @handle in the identity block — keep its cache honest
+    if (profile.handle) localStorage.setItem('fs-handle', profile.handle);
+    else localStorage.removeItem('fs-handle');
+  }
 
   // Self-heal: mirror the auth email into profiles.email (covers rows
   // created before the email column was synced, and confirmed email
@@ -522,6 +664,8 @@ async function init() {
       .then(({ error }) => { if (error) console.warn('email mirror failed', error); });
     profile.email = user.email;
   }
+
+  loadScheds();
 
   if (profile) {
     setFields(profile);
@@ -537,7 +681,10 @@ function setFields(p) {
   document.getElementById('full-name').value     = p.full_name       || '';
   document.getElementById('display-name').value  = p.display_name    || '';
   document.getElementById('location').value       = p.location        || '';
-  document.getElementById('bio').value            = p.bio             || '';
+  document.getElementById('why-teach').value      = p.why_i_teach     || '';
+  document.getElementById('handle').value         = p.handle          || '';
+  document.getElementById('circle-row').setAttribute('aria-pressed', p.in_circle ? 'true' : 'false');
+  document.getElementById('teaching-since').value = p.teaching_since  || '';
   document.getElementById('teaching-style').value = p.teaching_style  || '';
   document.getElementById('website').value        = p.website         || '';
   document.getElementById('instagram').value      = p.instagram       || '';
@@ -553,6 +700,185 @@ function setFields(p) {
   }
   document.getElementById('avatar-remove').hidden = !p.avatar_url;
 }
+
+// a name becomes a handle: lowercase, accents stripped, hyphens between
+// words, clamped to the handle rules (2–30 of a-z 0-9 -)
+function slugifyHandle(name) {
+  let s = String(name || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 30)
+    .replace(/-+$/, '');
+  return s.length >= 2 ? s : '';
+}
+
+// ─── YOUR PUBLIC CLASSES ─────────────────────────────────────────────────────
+// Immediate-save rows (like the avatar) — separate from the dirty-tracked
+// form. Shown publicly via the circle_schedules view when you're in The
+// Circle.
+
+const SCHED_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+let schedules = [];
+
+function schedTime(t) {
+  const m = String(t || '').match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return '';
+  let h = parseInt(m[1], 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + m[2] + ' ' + ampm;
+}
+
+// "YYYY-MM-DD" → local Date (avoids UTC off-by-one)
+function schedParseDate(d) {
+  const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
+function schedShortDate(d) {
+  const dt = schedParseDate(d);
+  return dt ? dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+}
+// next occurrence: a one-time class IS its date; a weekly class is the
+// coming instance of its weekday (today counts)
+function schedNext(s) {
+  if (s.on_date) return schedParseDate(s.on_date) || new Date(8640000000000000);
+  const now = new Date();
+  const today = (now.getDay() + 6) % 7; // 0 = Monday, matching the schema
+  const ahead = (s.weekday - today + 7) % 7;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + ahead);
+}
+
+function renderScheds() {
+  schedules.sort((a, b) => (schedNext(a) - schedNext(b)) || String(a.start_time).localeCompare(String(b.start_time)));
+  document.getElementById('sched-list').innerHTML = schedules.map(s => {
+    const when = s.on_date
+      ? schedShortDate(s.on_date) + ' · ' + schedTime(s.start_time)
+      : SCHED_DAYS[s.weekday] + 's · ' + schedTime(s.start_time);
+    return '<div class="sched-row' + (String(s.id) === String(editingSchedId) ? ' editing' : '') + '">' +
+      '<span class="sched-when">' + when + '</span>' +
+      '<span class="sched-what">' + fsEscHtml([s.class_name, s.studio].filter(Boolean).join(' at ') || 'Class') +
+        (s.city ? '<small>' + fsEscHtml(s.city) + '</small>' : '') + '</span>' +
+      '<button type="button" class="sched-edit" data-id="' + s.id + '" aria-label="Edit this class"><span class="material-symbols-sharp" aria-hidden="true">edit</span></button>' +
+      '<button type="button" class="sched-rm" data-id="' + s.id + '" aria-label="Remove this class">&times;</button>' +
+    '</div>';
+  }).join('');
+}
+
+// the repeat choice swaps the weekday picker for a date picker
+let editingSchedId = null;
+
+function schedSetRepeat(once) {
+  document.getElementById('sched-repeat').value = once ? 'once' : 'weekly';
+  document.getElementById('sched-day').hidden = once;
+  document.getElementById('sched-date').hidden = !once;
+  if (once) document.getElementById('sched-date').min = new Date().toISOString().slice(0, 10);
+}
+document.getElementById('sched-repeat').addEventListener('change', function () {
+  schedSetRepeat(this.value === 'once');
+});
+
+function schedResetForm() {
+  editingSchedId = null;
+  ['sched-time', 'sched-name', 'sched-studio', 'sched-city', 'sched-url', 'sched-date'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  schedSetRepeat(false);
+  document.getElementById('sched-add-label').textContent = 'Add Class';
+  document.getElementById('sched-cancel').hidden = true;
+  renderScheds();
+}
+
+function schedStartEdit(s) {
+  editingSchedId = s.id;
+  schedSetRepeat(!!s.on_date);
+  if (s.on_date) { document.getElementById('sched-date').min = ''; document.getElementById('sched-date').value = s.on_date; }
+  else document.getElementById('sched-day').value = String(s.weekday);
+  document.getElementById('sched-time').value = String(s.start_time || '').slice(0, 5);
+  document.getElementById('sched-name').value = s.class_name || '';
+  document.getElementById('sched-studio').value = s.studio || '';
+  document.getElementById('sched-city').value = s.city || '';
+  document.getElementById('sched-url').value = s.url || '';
+  document.getElementById('sched-add-label').textContent = 'Save Class';
+  document.getElementById('sched-cancel').hidden = false;
+  renderScheds();
+  document.getElementById('sched-time').focus();
+}
+
+document.getElementById('sched-cancel').addEventListener('click', schedResetForm);
+
+function fsEscHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+async function loadScheds() {
+  const { data } = await db.from('schedules').select('*').eq('user_id', currentUser.id);
+  schedules = data || [];
+  renderScheds();
+}
+
+document.getElementById('sched-add').addEventListener('click', async () => {
+  const btn = document.getElementById('sched-add');
+  const time = document.getElementById('sched-time').value;
+  if (!time) { toast('Give the class a start time.'); document.getElementById('sched-time').focus(); return; }
+  const once = document.getElementById('sched-repeat').value === 'once';
+  const onDate = document.getElementById('sched-date').value;
+  if (once && !onDate) { toast('Pick a date for the class.'); document.getElementById('sched-date').focus(); return; }
+  // one-time classes carry their weekday too (derived from the date)
+  const weekday = once
+    ? (schedParseDate(onDate).getDay() + 6) % 7
+    : parseInt(document.getElementById('sched-day').value, 10);
+  btn.disabled = true;
+  const payload = {
+    weekday: weekday,
+    on_date: once ? onDate : null,
+    start_time: time,
+    class_name: document.getElementById('sched-name').value.trim() || null,
+    studio: document.getElementById('sched-studio').value.trim() || null,
+    city: document.getElementById('sched-city').value.trim() || null,
+    url: document.getElementById('sched-url').value.trim() || null,
+  };
+  let data, error;
+  if (editingSchedId != null) {
+    ({ data, error } = await db.from('schedules').update(payload).eq('id', editingSchedId).select().single());
+  } else {
+    payload.user_id = currentUser.id;
+    ({ data, error } = await db.from('schedules').insert(payload).select().single());
+  }
+  btn.disabled = false;
+  if (error) {
+    console.warn('Class save failed:', error);
+    toast('Couldn\u2019t save that class \u2014 ' + (error.message || 'try again in a moment.'));
+    return;
+  }
+  if (editingSchedId != null) {
+    schedules = schedules.map(s => String(s.id) === String(editingSchedId) ? data : s);
+    toast('Class updated.');
+  } else {
+    schedules.push(data);
+    toast('Class added.');
+  }
+  schedResetForm();
+});
+
+document.getElementById('sched-list').addEventListener('click', async e => {
+  const editBtn = e.target.closest('.sched-edit');
+  if (editBtn) {
+    const s = schedules.find(x => String(x.id) === String(editBtn.dataset.id));
+    if (s) schedStartEdit(s);
+    return;
+  }
+  const btn = e.target.closest('.sched-rm');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const { error } = await db.from('schedules').delete().eq('id', id);
+  if (error) { toast('Couldn\u2019t remove that class.'); return; }
+  schedules = schedules.filter(s => String(s.id) !== String(id));
+  if (String(id) === String(editingSchedId)) { schedResetForm(); return; }
+  renderScheds();
+  toast('Class removed.');
+});
 
 // ─── AVATAR UPLOAD ───────────────────────────────────────────────────────────
 
@@ -650,14 +976,17 @@ document.getElementById('avatar-remove').addEventListener('click', async () => {
 
 // ─── DIRTY STATE ─────────────────────────────────────────────────────────────
 
-const FIELD_IDS = ['full-name','display-name','location','bio','teaching-style','website','instagram'];
+const FIELD_IDS = ['full-name','display-name','handle','location','teaching-since','why-teach','teaching-style','website','instagram'];
 
 function getCurrentValues() {
   return {
     full_name:      document.getElementById('full-name').value.trim(),
     display_name:   document.getElementById('display-name').value.trim(),
     location:       document.getElementById('location').value.trim(),
-    bio:            document.getElementById('bio').value.trim(),
+    why_i_teach:    document.getElementById('why-teach').value.trim(),
+    handle:         document.getElementById('handle').value.trim(),
+    in_circle:      document.getElementById('circle-row').getAttribute('aria-pressed') === 'true',
+    teaching_since: document.getElementById('teaching-since').value.trim(),
     teaching_style: document.getElementById('teaching-style').value.trim(),
     website:        document.getElementById('website').value.trim(),
     instagram:      document.getElementById('instagram').value.trim(),
@@ -670,7 +999,10 @@ function isDirty() {
     cur.full_name      !== (originalData.full_name      || '') ||
     cur.display_name   !== (originalData.display_name   || '') ||
     cur.location       !== (originalData.location        || '') ||
-    cur.bio            !== (originalData.bio             || '') ||
+    cur.why_i_teach    !== (originalData.why_i_teach    || '') ||
+    cur.handle         !== (originalData.handle          || '') ||
+    cur.in_circle      !== !!originalData.in_circle ||
+    cur.teaching_since !== (originalData.teaching_since  || '') ||
     cur.teaching_style !== (originalData.teaching_style  || '') ||
     cur.website        !== (originalData.website         || '') ||
     cur.instagram      !== (originalData.instagram       || '')
@@ -686,6 +1018,18 @@ function updateButtons() {
 FIELD_IDS.forEach(id => {
   const el = document.getElementById(id);
   el.addEventListener('input', () => { clearFieldError(el); updateButtons(); });
+});
+
+// handles are lowercase by construction — typing enforces it quietly
+document.getElementById('handle').addEventListener('input', function () {
+  const clean = this.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  if (clean !== this.value) this.value = clean;
+});
+
+document.getElementById('circle-row').addEventListener('click', function () {
+  const on = this.getAttribute('aria-pressed') !== 'true';
+  this.setAttribute('aria-pressed', on ? 'true' : 'false');
+  updateButtons();
 });
 
 // modal inputs clear their own error on typing
@@ -714,6 +1058,49 @@ document.getElementById('save-btn').addEventListener('click', async () => {
   if (vals.full_name && vals.full_name.split(/\s+/).length < 2) {
     return fail('full-name', 'Enter your first and last name.');
   }
+  if (vals.teaching_since && !/^(19|20)\d{2}$/.test(vals.teaching_since)) {
+    return fail('teaching-since', 'Enter a year, like 2015.');
+  }
+  // no handle yet? a name mints one automatically — teachers shouldn't
+  // have to invent an address to join The Circle
+  let handleWasAuto = false;
+  if (!vals.handle && !(originalData.handle)) {
+    const base = slugifyHandle(vals.display_name || vals.full_name);
+    if (base) { vals.handle = base; handleWasAuto = true; }
+  }
+
+  if (vals.in_circle && !vals.handle) {
+    return fail('handle', 'The Circle needs an address \u2014 add a handle, or a name and we\u2019ll make one for you.');
+  }
+
+  if (vals.handle && !/^[a-z0-9][a-z0-9-]{0,28}[a-z0-9]$/.test(vals.handle)) {
+    return fail('handle', 'Lowercase letters, numbers, and hyphens \u2014 2 to 30 characters.');
+  }
+
+  // claim the handle before anything else saves — if it's taken, stop here.
+  // auto-minted handles retry with a quiet suffix; typed ones ask you.
+  if (vals.handle !== (originalData.handle || '')) {
+    if (vals.handle) {
+      let claimed = null;
+      const attempts = handleWasAuto ? 8 : 1;
+      for (let i = 0; i < attempts; i++) {
+        const tryHandle = i === 0 ? vals.handle : vals.handle.slice(0, 27) + '-' + (i + 1);
+        const { error: hErr } = await db.from('handles')
+          .upsert({ user_id: currentUser.id, handle: tryHandle }, { onConflict: 'user_id' });
+        if (!hErr) { claimed = tryHandle; break; }
+        const isTaken = hErr.code === '23505' || /duplicate|unique/i.test(hErr.message || '');
+        if (!isTaken) return fail('handle', 'Couldn\u2019t save your handle. Try again.');
+        if (!handleWasAuto) return fail('handle', 'That handle is taken.');
+      }
+      if (!claimed) return fail('handle', 'Couldn\u2019t find a free handle \u2014 pick one yourself.');
+      vals.handle = claimed;
+      localStorage.setItem('fs-handle', claimed);
+      document.getElementById('handle').value = claimed; // show them their address
+    } else {
+      await db.from('handles').delete().eq('user_id', currentUser.id);
+      localStorage.removeItem('fs-handle');
+    }
+  }
   if (vals.website && !/^(https?:\/\/)?\S+\.\S{2,}$/i.test(vals.website)) {
     return fail('website', 'That doesn’t look like a web address.');
   }
@@ -739,7 +1126,9 @@ document.getElementById('save-btn').addEventListener('click', async () => {
       full_name:      vals.full_name,
       display_name:   vals.display_name,
       location:       vals.location,
-      bio:            vals.bio,
+      why_i_teach:    vals.why_i_teach,
+      in_circle:      vals.in_circle,
+      teaching_since: vals.teaching_since,
       teaching_style: vals.teaching_style,
       website:        vals.website,
       instagram:      vals.instagram,
@@ -801,8 +1190,14 @@ function closeModal(id) { document.getElementById(id).hidden = true; }
 });
 
 document.getElementById('profile-back-btn').addEventListener('click', () => {
-  window.location.href = 'dashboard';
+  // the editor sits behind your public page — back returns there.
+  // no handle yet (nothing public to return to): the dashboard.
+  const h = localStorage.getItem('fs-handle');
+  window.location.href = h ? '/@' + h : 'dashboard';
 });
+if (!localStorage.getItem('fs-handle')) {
+  document.getElementById('profile-back-label').textContent = 'Dashboard';
+}
 
 // theme — the switch lives here now (moved out of the nav)
 function syncThemeVal() {

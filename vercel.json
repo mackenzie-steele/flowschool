@@ -2,6 +2,16 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
-    { "source": "/", "destination": "/dashboard", "permanent": false }
+    {
+      "source": "/",
+      "destination": "/dashboard",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/@:handle",
+      "destination": "/teacher"
+    }
   ]
 }

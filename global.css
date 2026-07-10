@@ -1776,6 +1776,13 @@ input[type=range].range-slider:disabled {
 }
 
 /* ── Sidebar logo ── */
+/* the header block: brand, a seam (which aligns with the post-bar's
+   81px hairline — one continuous line across the app), then you */
+.sidebar-head {
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(var(--ink-rgb), .09);
+}
+
 .sidebar-logo-wrap {
   padding: 20px 24px; /* left edge shared with icons, identity, and version */
   border-bottom: 1px solid rgba(var(--ink-rgb), .09);
@@ -1890,7 +1897,7 @@ input[type=range].range-slider:disabled {
 /* ── Sidebar identity — seated in the footer, above the serial plate ── */
 .sidebar-identity {
   justify-content: flex-start; /* .hdr-auth right-aligns for its header life; the rail reads left */
-  padding: 14px 24px 2px;      /* 24px = the nav rows' icon column (12 rail + 12 row) */
+  padding: 14px 24px 16px;     /* 24px = the nav rows' icon column (12 rail + 12 row) */
   flex-shrink: 0;
 }
 
@@ -3263,6 +3270,14 @@ body.has-sidebar {
   gap: 24px;
   min-height: 260px;
   cursor: pointer;
+}
+
+/* hovering anywhere on the deck lights the invitation inside —
+   the whole card is the control, and it says so */
+.deck-stack:hover .ready-state .btn-secondary {
+  color: var(--text-1);
+  border-color: rgba(var(--ink-rgb), .35);
+  background: rgba(var(--ink-rgb), .05);
 }
 .ready-count {
   font-family: var(--font-mono);
