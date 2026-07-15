@@ -3088,13 +3088,17 @@ body.has-sidebar {
   font-size: 13px;
   color: var(--text-2);
   cursor: pointer;
-  transition: color var(--transition-base), background var(--transition-base);
+  /* S2 — the unchosen kinds recede; the choice comes forward (the poles-
+     recede move the Style sliders use), no new colour */
+  opacity: .5;
+  transition: color var(--transition-base), background var(--transition-base), opacity var(--transition-base);
 }
 .fb-chip:first-child { border-left: none; }
-.fb-chip:hover { color: var(--text-1); }
+.fb-chip:hover { color: var(--text-1); opacity: .82; }
 .fb-chip.on {
   color: var(--text-1);
   background: rgba(var(--ink-rgb), .05);
+  opacity: 1;
 }
 .fb-chip-dot {
   width: 5px; height: 5px;
@@ -3143,6 +3147,60 @@ body.has-sidebar {
 }
 .fb-error:empty { display: none; }
 
+/* screenshot attach — a quiet text button, then a small removable thumbnail */
+.fb-attach { margin-top: 10px; }
+.fb-attach-btn[hidden] { display: none; }
+.fb-attach-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: var(--text-small);
+  color: var(--text-3);
+  transition: color var(--transition-base);
+}
+.fb-attach-btn:hover { color: var(--text-1); }
+.fb-shot { position: relative; display: inline-block; }
+.fb-shot-img {
+  display: block;
+  max-width: 180px;
+  max-height: 130px;
+  border-radius: var(--r);
+  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .16);
+}
+.fb-shot-x {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--paper-solid);
+  border: 1px solid rgba(var(--ink-rgb), .18);
+  border-radius: 50%;
+  color: var(--text-1);
+  cursor: pointer;
+  transition: border-color var(--transition-base);
+}
+.fb-shot-x:hover { border-color: rgba(var(--ink-rgb), .40); }
+
+/* the context line — same instrument register as the reply-to fine print */
+.fb-context {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  color: rgba(var(--ink-rgb), .32);
+  margin: 12px 0 0;
+}
+.fb-context:empty { display: none; }
+
 /* the received transmission — a lit dot, a mono stamp, the thanks */
 .fb-thanks {
   padding: 18px 0 8px;
@@ -3157,7 +3215,24 @@ body.has-sidebar {
   border-radius: 50%;
   background: var(--accent);
   animation: fb-pulse .5s ease 1;
+  transition: opacity .2s ease;
 }
+/* S1 — the pulse dot settles into a check once the message has landed.
+   The mark is sized to the dot so the row layout never shifts; the check
+   overlays it and scales in. */
+.fb-thanks-mark { position: relative; display: inline-flex; }
+.fb-thanks-check {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(.4);
+  font-size: 14px;
+  color: var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fb-thanks-mark.checked .fb-thanks-dot { opacity: 0; }
+.fb-thanks-mark.checked .fb-thanks-check { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 @keyframes fb-pulse {
   0%   { transform: scale(.4); opacity: 0; }
   60%  { transform: scale(1.5); opacity: 1; }

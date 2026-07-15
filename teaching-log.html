@@ -198,7 +198,7 @@
       <div class="inner">
         <p class="label-1">Same class. Better.</p>
         <h3>Teaching Log</h3>
-        <p>Every note you’ve written after teaching, in one place. What worked, what ran hot, what you’d change &#8212; your teaching intelligence, compounding.</p>
+        <p>After you teach, write down what worked and what you&#8217;d change. Do it after enough classes and you&#8217;ve got a record of how you&#8217;re actually getting better &#8212; which is easy to lose track of when you&#8217;re in the middle of it.</p>
       </div>
     </section>
 
@@ -216,7 +216,7 @@
       </div>
 
       <div class="lg-composer" id="lg-composer" hidden>
-        <div class="lg-class-row">
+        <div class="lg-class-row" id="lg-class-row">
           <button type="button" class="lg-class-pick" id="lg-class-pick">
             <span class="material-symbols-sharp">import_contacts</span>
             <span id="lg-class-pick-label">Select a class</span>
@@ -251,7 +251,9 @@
   <script>
 
     var KEY = 'flowschool_classes';
+    var LOG_KEY = 'flowschool_lognotes';   // notes not tied to any class
     var classes = loadClasses();
+    var logNotes = loadLog();
 
     // one load, one persist — the sync seam, same as every library
     function loadClasses() {
@@ -259,6 +261,12 @@
     }
 
     function persist() { localStorage.setItem(KEY, JSON.stringify(classes)); }
+
+    function loadLog() {
+      try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch (_) { return []; }
+    }
+
+    function persistLog() { localStorage.setItem(LOG_KEY, JSON.stringify(logNotes)); }
 
     var esc = fsEsc, fmtDate = fsFmtDate;
 
@@ -268,6 +276,9 @@
         (c.notesLog || []).forEach(function (n) {
           out.push({ ts: n.ts, text: n.text, classId: c.id, className: c.title || 'Untitled Class' });
         });
+      });
+      logNotes.forEach(function (n) {
+        out.push({ ts: n.ts, text: n.text, classId: null, className: null });
       });
       out.sort(function (a, b) { return b.ts - a.ts; });
       return out;
@@ -305,25 +316,34 @@
       }
 
       stream.innerHTML = filtered.map(function (e) {
+        var tag = e.classId
+          ? '<a class="lg-class-tag" href="your-classes?id=' + e.classId + '">' + esc(e.className) + '</a>'
+          : '';
         return '<div class="lg-entry">' +
           '<div class="lg-entry-main">' +
             '<div class="lg-entry-head">' +
               '<span class="lg-entry-date">' + fmtDate(e.ts) + '</span>' +
-              '<a class="lg-class-tag" href="your-classes?id=' + e.classId + '">' + esc(e.className) + '</a>' +
+              tag +
             '</div>' +
             '<div class="lg-entry-text">' + esc(e.text) + '</div>' +
           '</div>' +
-          '<button class="lg-entry-del" data-cid="' + e.classId + '" data-ts="' + e.ts + '" title="Delete note"><span class="material-symbols-sharp i-sm">close</span></button>' +
+          '<button class="lg-entry-del" data-cid="' + (e.classId != null ? e.classId : '') + '" data-ts="' + e.ts + '" title="Delete note"><span class="material-symbols-sharp i-sm">close</span></button>' +
         '</div>';
       }).join('');
 
       stream.querySelectorAll('.lg-entry-del').forEach(function (btn) {
         wireConfirmDelete(btn, function () {
-          var c = classes.find(function (x) { return x.id === parseInt(btn.dataset.cid, 10); });
-          if (!c) return;
           var ts = parseInt(btn.dataset.ts, 10);
-          c.notesLog = (c.notesLog || []).filter(function (n) { return n.ts !== ts; });
-          persist();
+          if (btn.dataset.cid === '') {
+            // a class-less note lives in its own store
+            logNotes = logNotes.filter(function (n) { return n.ts !== ts; });
+            persistLog();
+          } else {
+            var c = classes.find(function (x) { return x.id === parseInt(btn.dataset.cid, 10); });
+            if (!c) return;
+            c.notesLog = (c.notesLog || []).filter(function (n) { return n.ts !== ts; });
+            persist();
+          }
           toast('Note removed.');
           render();
         });
@@ -336,12 +356,16 @@
 
     function openComposer() {
       composeClassId = null;
-      document.getElementById('lg-class-pick-label').textContent = 'Select a class';
+      // attaching a class is optional; hide the picker entirely when there
+      // are no classes to attach to
+      document.getElementById('lg-class-row').hidden = !classes.length;
+      document.getElementById('lg-class-pick-label').textContent = 'Attach to a class (optional)';
       document.getElementById('lg-class-pick').classList.remove('chosen');
       document.getElementById('lg-area').value = '';
       document.getElementById('lg-composer').hidden = false;
       document.getElementById('add-note-btn').disabled = true;
       renderClassMenu();
+      document.getElementById('lg-area').focus();
     }
 
     function closeComposer() {
@@ -353,14 +377,15 @@
     function renderClassMenu() {
       var menu = document.getElementById('lg-class-menu');
       var list = classes.slice().sort(fsSorterFor('edited'));
-      menu.innerHTML = list.map(function (c) {
+      // a "No class" option at the top lets you detach after choosing
+      var none = '<button type="button" class="lg-class-row-item" data-id="">No class</button>';
+      menu.innerHTML = none + list.map(function (c) {
         return '<button type="button" class="lg-class-row-item" data-id="' + c.id + '">' + esc(c.title || 'Untitled Class') + '</button>';
       }).join('');
     }
 
     document.getElementById('add-note-btn').addEventListener('click', function (e) {
       e.stopPropagation(); // the opening click must not bubble into the close-on-outside listener
-      if (!classes.length) { toast('Write a class first — notes attach to classes.'); return; }
       openComposer();
     });
 
@@ -377,9 +402,15 @@
       var item = e.target.closest('.lg-class-row-item');
       if (!item) return;
       e.stopPropagation();
-      composeClassId = parseInt(item.dataset.id, 10);
-      document.getElementById('lg-class-pick-label').textContent = item.textContent;
-      document.getElementById('lg-class-pick').classList.add('chosen');
+      if (item.dataset.id === '') {
+        composeClassId = null;
+        document.getElementById('lg-class-pick-label').textContent = 'No class';
+        document.getElementById('lg-class-pick').classList.add('chosen');
+      } else {
+        composeClassId = parseInt(item.dataset.id, 10);
+        document.getElementById('lg-class-pick-label').textContent = item.textContent;
+        document.getElementById('lg-class-pick').classList.add('chosen');
+      }
       document.getElementById('lg-class-menu').hidden = true;
       document.getElementById('lg-area').focus();
     });
@@ -393,16 +424,18 @@
 
     document.getElementById('lg-save').addEventListener('click', function () {
       var text = document.getElementById('lg-area').value.trim();
-      if (!composeClassId) {
-        document.getElementById('lg-class-menu').hidden = false;
-        return;
-      }
       if (!text) { document.getElementById('lg-area').focus(); return; }
-      var c = classes.find(function (x) { return x.id === composeClassId; });
-      if (!c) return;
-      if (!c.notesLog) c.notesLog = [];
-      c.notesLog.unshift({ ts: Date.now(), text: text });
-      persist();
+      if (composeClassId) {
+        var c = classes.find(function (x) { return x.id === composeClassId; });
+        if (!c) return;
+        if (!c.notesLog) c.notesLog = [];
+        c.notesLog.unshift({ ts: Date.now(), text: text });
+        persist();
+      } else {
+        // a class-less note — saves to its own store, shows in the stream
+        logNotes.unshift({ ts: Date.now(), text: text });
+        persistLog();
+      }
       closeComposer();
       toast('Noted.');
       render();

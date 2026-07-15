@@ -45,6 +45,15 @@ module.exports = async (req, res) => {
   if (!kind || !message) return res.status(400).json({ error: 'Nothing to send' });
   if (message.length > 5000) return res.status(400).json({ error: 'That’s a lot — trim it under 5000 characters' });
 
+  // optional screenshot (data-URL) — attached to the support email, never
+  // stored in the row. A bad or oversized image is dropped, not fatal: the
+  // written feedback matters more than the picture.
+  let shotB64 = '';
+  if (typeof body.screenshot === 'string') {
+    const m = body.screenshot.match(/^data:image\/[a-z0-9.+-]+;base64,([A-Za-z0-9+/=]+)$/i);
+    if (m && m[1].length <= 3000000) shotB64 = m[1];   // ~2.2 MB decoded cap
+  }
+
   // ── friendly rate guard: 5 per hour per person ──
   const hourAgo = new Date(Date.now() - 3600 * 1000).toISOString();
   const { count } = await admin
@@ -88,6 +97,9 @@ module.exports = async (req, res) => {
             + '\n\n— context —\n'
             + Object.keys(context).map(function (k) { return k + ': ' + context[k]; }).join('\n')
             + '\nuser: ' + user.email + ' (' + user.id + ')',
+          attachments: shotB64
+            ? [{ filename: 'screenshot.jpg', content: shotB64 }]
+            : undefined,
         }),
       });
     } catch (e) {

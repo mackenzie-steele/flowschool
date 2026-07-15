@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
+  <style>html{background:#1B1B1B;color-scheme:dark}html[data-theme="light"]{background:#F5F4F0;color-scheme:light}</style>
+<link rel="icon" href="img/flow-school-favicon.png" type="image/png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flow School — The Creative Studio for Yoga Teachers</title>
+<meta name="description" content="Video education and interactive practice tools for yoga teachers. Learn Bonnie Weeks' method, practice the craft, and keep everything you make — in one place.">
+<meta property="og:title" content="Flow School — The Creative Studio for Yoga Teachers">
+<meta property="og:description" content="Learn the method. Practice the craft. Own the hell out of your voice.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<link rel="stylesheet" href="global.css">
+
+<style>
+/* ─────────────────────────────────────────────────────────────
+   MARKETING PAGE — the front door. Public (no sync.js, no nav).
+   All mk-* components are modular for future marketing pages.
+   Everything derives from the global token system; the only new
+   values are layout widths for the wider marketing canvas.
+   ───────────────────────────────────────────────────────────── */
+
+body { opacity: 0; transition: opacity .2s; }
+
+.mk-wrap { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+.mk-wrap-narrow { max-width: 720px; margin: 0 auto; padding: 0 28px; }
+
+/* ── Header — quiet, translucent paper, two doors ── */
+.mk-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(var(--paper-rgb), .82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+}
+.mk-header-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.mk-logo img { height: 20px; display: block; }
+.mk-logo .logo-light { display: var(--show-light, block); }
+[data-theme="dark"] .mk-logo .logo-light { display: none; }
+.mk-logo .logo-dark { display: none; }
+[data-theme="dark"] .mk-logo .logo-dark { display: block; }
+.mk-header-actions { display: flex; align-items: center; gap: 8px; }
+.mk-header .btn-primary { border-radius: var(--r-cta); }
+
+/* ── Type — the display register the app rarely spends ── */
+.mk-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label-1);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-3);
+  display: block;
+  margin-bottom: 20px;
+}
+.mk-h1 {
+  font-size: clamp(44px, 8vw, var(--fs-h1));
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--ls-tight);
+  line-height: 1.02;
+  color: var(--text-1);
+  margin: 0 0 24px;
+}
+.mk-h2 {
+  font-size: clamp(32px, 5vw, var(--fs-h3));
+  font-weight: var(--weight-regular);
+  letter-spacing: -.03em;
+  line-height: 1.08;
+  color: var(--text-1);
+  margin: 0 0 20px;
+}
+.mk-lede {
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.6;
+  color: var(--text-2);
+  margin: 0 0 32px;
+  max-width: 56ch;
+}
+.mk-body { font-size: var(--fs-body); line-height: 1.65; color: var(--text-2); }
+
+/* ── Sections — generous air, one rhythm ── */
+.mk-section { padding: 112px 0; }
+.mk-section + .mk-section { border-top: 1px solid var(--border-light); }
+@media (max-width: 700px) { .mk-section { padding: 72px 0; } }
+
+/* ── CTA row ── */
+.mk-ctas { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mk-ctas .btn-primary { border-radius: var(--r-cta); padding: 14px 28px; font-size: var(--fs-btn); }
+.mk-ctas .btn-ghost { padding: 14px 12px; }
+
+/* ── Scroll reveal — one pattern, reused everywhere ── */
+.mk-reveal { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
+.mk-reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .mk-reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* ── Browser frame — the product, framed ── */
+.mk-browser {
+  border: 1px solid var(--border);
+  border-top-color: rgba(var(--ink-rgb), .22);
+  background: var(--bg);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+.mk-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  background: rgba(var(--ink-rgb), .025);
+}
+.mk-browser-bar span { width: 8px; height: 8px; border-radius: 50%; background: rgba(var(--ink-rgb), .14); }
+.mk-browser-url {
+  margin-left: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  color: var(--text-3);
+}
+.mk-browser-body { padding: 24px; }
+
+/* ── Vignettes — real UI moments, rebuilt from the same tokens ── */
+.mk-vig-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 12px;
+  display: block;
+}
+.mk-card {
+  border: 1px solid rgba(var(--ink-rgb), .13);
+  border-top-color: rgba(var(--ink-rgb), .24);
+  background: rgba(var(--ink-rgb), .02);
+  padding: 16px 18px;
+}
+.mk-mono { font-family: var(--font-mono); font-size: 13px; line-height: 1.9; color: var(--text-2); letter-spacing: .01em; }
+.mk-mono b { color: var(--text-1); font-weight: var(--weight-medium); }
+
+/* the energy curve — the platform's signature instrument */
+.mk-curve svg { width: 100%; height: auto; display: block; }
+.mk-curve .c-line { stroke: var(--volt); stroke-width: 2; fill: none; stroke-linecap: round; }
+.mk-curve .c-fill { fill: rgba(var(--volt-rgb), .06); }
+.mk-curve .c-grid { stroke: rgba(var(--ink-rgb), .07); stroke-width: 1; }
+.mk-curve .c-knot { fill: var(--paper-solid); stroke: var(--volt); stroke-width: 2; }
+
+/* cue row — verb / body part / direction */
+.mk-cue { display: flex; gap: 8px; flex-wrap: wrap; }
+.mk-cue span {
+  border: 1px solid rgba(var(--ink-rgb), .16);
+  padding: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-1);
+}
+.mk-cue .mk-cue-dim { color: var(--text-3); border-style: dashed; }
+
+/* the breath circle — it actually breathes */
+.mk-breath {
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  border: 2px solid var(--volt);
+  margin: 8px auto;
+  animation: mkBreathe 7s ease-in-out infinite;
+}
+@keyframes mkBreathe {
+  0%, 100% { transform: scale(.78); opacity: .55; }
+  43% { transform: scale(1); opacity: 1; }   /* ~3s in, ~4s out */
+}
+@media (prefers-reduced-motion: reduce) { .mk-breath { animation: none; } }
+
+/* faces — The Circle */
+.mk-faces { display: flex; }
+.mk-face {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(var(--ink-rgb), .06);
+  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .16), 0 0 0 3px var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-2);
+  margin-left: -10px;
+}
+.mk-face:first-child { margin-left: 0; }
+
+/* ── Problem list — felt, not featured ── */
+.mk-problems { list-style: none; padding: 0; margin: 40px 0 0; }
+.mk-problems li {
+  font-size: clamp(19px, 2.6vw, 26px);
+  letter-spacing: -.01em;
+  line-height: 1.35;
+  color: var(--text-3);
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border-light);
+  transition: color var(--transition-base);
+}
+.mk-problems li.in, .mk-problems li:hover { color: var(--text-1); }
+
+/* ── Tour rows — product left/right, words the other side ── */
+.mk-tour { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; padding: 64px 0; }
+.mk-tour + .mk-tour { border-top: 1px solid var(--border-light); }
+.mk-tour-copy .mk-h3 {
+  font-size: clamp(24px, 3vw, var(--fs-h4));
+  font-weight: var(--weight-regular);
+  letter-spacing: -.02em;
+  line-height: 1.15;
+  color: var(--text-1);
+  margin: 0 0 14px;
+}
+.mk-tour-copy .mk-body { max-width: 44ch; }
+@media (max-width: 860px) {
+  .mk-tour { grid-template-columns: 1fr; gap: 28px; padding: 48px 0; }
+  .mk-tour-visual { order: -1; }
+}
+
+/* ── The loop — watch/practice split ── */
+.mk-loop { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 48px; }
+.mk-loop-col {
+  border: 1px solid rgba(var(--ink-rgb), .13);
+  border-top-color: rgba(var(--ink-rgb), .24);
+  padding: 32px;
+}
+.mk-loop-col h3 {
+  font-size: var(--fs-h5);
+  font-weight: var(--weight-regular);
+  color: var(--text-1);
+  margin: 0 0 8px;
+}
+.mk-loop-col .mk-loop-sub { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); display: block; margin-bottom: 20px; }
+.mk-loop-steps { list-style: none; margin: 20px 0 0; padding: 0; }
+.mk-loop-steps li {
+  display: flex; gap: 12px; align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: var(--text-body-sm);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.mk-loop-steps li:last-child { border-bottom: none; }
+.mk-loop-steps .n { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); flex-shrink: 0; }
+.mk-loop-dim { opacity: .55; }
+@media (max-width: 700px) { .mk-loop { grid-template-columns: 1fr; } }
+
+/* ── Feature grid ── */
+.mk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
+.mk-feature {
+  border: 1px solid rgba(var(--ink-rgb), .13);
+  border-top-color: rgba(var(--ink-rgb), .24);
+  background: rgba(var(--ink-rgb), .018);
+  padding: 28px 24px;
+  transition: border-color var(--transition-base), transform var(--transition-fast), background .15s;
+}
+.mk-feature:hover { border-color: rgba(var(--ink-rgb), .30); background: rgba(var(--ink-rgb), .035); transform: translateY(-2px); }
+.mk-feature .material-symbols-sharp { font-size: var(--icon-lg); color: var(--text-3); margin-bottom: 16px; display: block; }
+.mk-feature h3 { font-size: var(--fs-h6); font-weight: var(--weight-regular); color: var(--text-1); margin: 0 0 8px; }
+.mk-feature p { font-size: var(--text-body-sm); line-height: 1.55; color: var(--text-2); margin: 0; }
+@media (max-width: 860px) { .mk-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 580px) { .mk-grid { grid-template-columns: 1fr; } }
+
+/* ── The week — four moments ── */
+.mk-week { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 48px; }
+.mk-moment { border-top: 1px solid rgba(var(--ink-rgb), .22); padding-top: 20px; }
+.mk-moment .mk-when { font-family: var(--font-mono); font-size: 10px; letter-spacing: .10em; text-transform: uppercase; color: var(--text-3); display: block; margin-bottom: 12px; }
+.mk-moment h3 { font-size: var(--fs-h6); font-weight: var(--weight-regular); color: var(--text-1); margin: 0 0 8px; }
+.mk-moment p { font-size: var(--text-body-sm); line-height: 1.55; color: var(--text-2); margin: 0; }
+@media (max-width: 860px) { .mk-week { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 580px) { .mk-week { grid-template-columns: 1fr; } }
+
+/* ── Bonnie ── */
+.mk-bonnie { display: grid; grid-template-columns: 5fr 7fr; gap: 56px; align-items: start; }
+.mk-quote {
+  font-size: clamp(22px, 3vw, 30px);
+  letter-spacing: -.015em;
+  line-height: 1.35;
+  color: var(--text-1);
+  margin: 0 0 16px;
+}
+.mk-quote-by { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+.mk-facts { list-style: none; margin: 0; padding: 0; }
+.mk-facts li {
+  display: flex; justify-content: space-between; gap: 24px; align-items: baseline;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: var(--text-body-sm);
+  color: var(--text-2);
+}
+.mk-facts .v { font-family: var(--font-mono); font-size: 12px; color: var(--text-1); white-space: nowrap; }
+@media (max-width: 860px) { .mk-bonnie { grid-template-columns: 1fr; gap: 32px; } }
+
+/* ── Membership ── */
+.mk-member {
+  border: 1px solid rgba(var(--ink-rgb), .16);
+  border-top-color: rgba(var(--ink-rgb), .30);
+  background: rgba(var(--ink-rgb), .02);
+  padding: 56px;
+  margin-top: 48px;
+}
+.mk-member-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.mk-includes { list-style: none; margin: 0; padding: 0; }
+.mk-includes li {
+  display: flex; gap: 12px; align-items: baseline;
+  padding: 10px 0;
+  font-size: var(--fs-body);
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border-light);
+}
+.mk-includes li:last-child { border-bottom: none; }
+.mk-includes .material-symbols-sharp { font-size: var(--icon-md); color: var(--text-3); position: relative; top: 2px; }
+@media (max-width: 860px) { .mk-member { padding: 32px 24px; } .mk-member-cols { grid-template-columns: 1fr; gap: 32px; } }
+
+/* ── Final CTA ── */
+.mk-final { text-align: center; padding: 140px 0 120px; }
+.mk-final .mk-h1 { margin-bottom: 16px; }
+.mk-final .mk-lede { margin-left: auto; margin-right: auto; }
+.mk-final .mk-ctas { justify-content: center; }
+
+/* ── Footer ── */
+.mk-footer { border-top: 1px solid var(--border-light); padding: 32px 0; }
+.mk-footer-inner {
+  max-width: 1040px; margin: 0 auto; padding: 0 28px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; color: var(--text-3);
+}
+.mk-footer a { color: var(--text-3); text-decoration: none; }
+.mk-footer a:hover { color: var(--text-1); }
+.mk-footer-links { display: flex; gap: 20px; }
+
+/* hero layout */
+.mk-hero { padding: 96px 0 80px; }
+.mk-hero-visual { margin-top: 72px; }
+@media (max-width: 700px) { .mk-hero { padding: 56px 0 48px; } .mk-hero-visual { margin-top: 48px; } }
+
+/* hero product composition */
+.mk-hero-app { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; }
+@media (max-width: 700px) { .mk-hero-app { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header class="mk-header">
+  <div class="mk-header-inner">
+    <a class="mk-logo" href="/" aria-label="Flow School">
+      <img src="img/flow-school-logo_black.png" class="logo-light" alt="Flow School">
+      <img src="img/flow-school-logo_white.png" class="logo-dark" alt="Flow School">
+    </a>
+    <nav class="mk-header-actions" aria-label="Site">
+      <a class="btn-ghost" href="login">Sign in</a>
+      <a class="btn-primary" href="https://flowschool.uscreen.io" target="_blank" rel="noopener">Join Flow School</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ── 1 · HERO ───────────────────────────────────────────── -->
+<section class="mk-hero">
+  <div class="mk-wrap">
+    <span class="mk-eyebrow">Flow School — the creative studio for yoga teachers</span>
+    <h1 class="mk-h1">Own the hell out<br>of your voice.</h1>
+    <p class="mk-lede">Flow School is a place for yoga teachers to get better at the craft — real classes to learn from, tools to practice with, and a home for everything you make.</p>
+    <div class="mk-ctas">
+      <a class="btn-primary" href="https://flowschool.uscreen.io" target="_blank" rel="noopener">Join Flow School</a>
+      <a class="btn-ghost" href="#tour">See how it works</a>
+    </div>
+
+    <div class="mk-hero-visual mk-reveal" aria-hidden="true">
+      <div class="mk-browser">
+        <div class="mk-browser-bar"><span></span><span></span><span></span><span class="mk-browser-url">flowschool.io</span></div>
+        <div class="mk-browser-body">
+          <div class="mk-hero-app">
+            <div>
+              <span class="mk-vig-label">Tuesday · Slow &amp; Strong · 60 min</span>
+              <div class="mk-card">
+                <p class="mk-mono" style="margin:0">
+                  <b>Warm Up</b> — CHILD → QPED → BIRD DOG → AMS<br>
+                  <b>Build</b> — HL → REV HL → W2 → ESA<br>
+                  <b>Peak</b> — W3 → SS → HM → SKAN → TR AR<br>
+                  <b>Cool Down</b> — PIGEON → SEAT TWIST → BRIDGE
+                </p>
+              </div>
+            </div>
+            <div>
+              <span class="mk-vig-label">The energy of the room</span>
+              <div class="mk-card mk-curve">
+                <svg viewBox="0 0 300 140" role="img" aria-label="A class energy curve rising to a peak and landing softly">
+                  <line class="c-grid" x1="0" y1="35" x2="300" y2="35"/>
+                  <line class="c-grid" x1="0" y1="70" x2="300" y2="70"/>
+                  <line class="c-grid" x1="0" y1="105" x2="300" y2="105"/>
+                  <path class="c-fill" d="M10,118 C60,112 80,70 150,38 C190,22 220,60 290,110 L290,130 L10,130 Z"/>
+                  <path class="c-line" d="M10,118 C60,112 80,70 150,38 C190,22 220,60 290,110"/>
+                  <circle class="c-knot" cx="10" cy="118" r="4"/>
+                  <circle class="c-knot" cx="150" cy="38" r="4"/>
+                  <circle class="c-knot" cx="290" cy="110" r="4"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 2 · THE PROBLEM ───────────────────────────────────── -->
+<section class="mk-section">
+  <div class="mk-wrap-narrow">
+    <span class="mk-eyebrow">The part nobody taught you</span>
+    <h2 class="mk-h2">Teacher training gave you poses. Then it gave you a Tuesday night class.</h2>
+    <p class="mk-lede">You know how to move. Nobody showed you how to keep creating week after week without burning out. It usually looks like this:</p>
+    <ul class="mk-problems">
+      <li class="mk-reveal">Planning one class takes your whole afternoon.</li>
+      <li class="mk-reveal">Every week feels like starting from a blank page.</li>
+      <li class="mk-reveal">Your best ideas live in six different notes apps.</li>
+      <li class="mk-reveal">You teach sequences that don't sound like you.</li>
+      <li class="mk-reveal">You stopped experimenting somewhere along the way.</li>
+    </ul>
+    <p class="mk-lede" style="margin-top:40px">You're not a bad teacher. You just never got a system. That's what this is.</p>
+  </div>
+</section>
+
+<!-- ── 3 · THE SOLUTION ──────────────────────────────────── -->
+<section class="mk-section">
+  <div class="mk-wrap-narrow">
+    <span class="mk-eyebrow">What Flow School is</span>
+    <h2 class="mk-h2">A method for building classes, and a studio to practice it in.</h2>
+    <p class="mk-lede">Bonnie Weeks teaches yoga teachers. Her whole method — how to sequence, how to cue, how to sound like yourself instead of a script — lives here, as videos you can learn from and tools you can practice with.</p>
+    <p class="mk-lede">You watch a class get built. Then you build your own, teach it, and come back next week to make it better. That's the whole idea.</p>
+  </div>
+</section>
+
+<!-- ── 4 · PLATFORM TOUR ─────────────────────────────────── -->
+<section class="mk-section" id="tour">
+  <div class="mk-wrap">
+    <span class="mk-eyebrow">The tools</span>
+    <h2 class="mk-h2">Software built around how teaching actually works.</h2>
+
+    <div class="mk-tour">
+      <div class="mk-tour-copy mk-reveal">
+        <h3 class="mk-h3">Write classes you can actually teach from.</h3>
+        <p class="mk-body">Plan in shorthand — quick to write, easy to remember, readable from the mat in the middle of class. Every class you write stays in your library, so you can teach it again next month and make it a little better each time.</p>
+      </div>
+      <div class="mk-tour-visual mk-reveal" aria-hidden="true">
+        <span class="mk-vig-label">Your Classes</span>
+        <div class="mk-card">
+          <p class="mk-mono" style="margin:0">
+            <b>Peak Flow</b><br>
+            HL → REV HL → W3 → SS<br>
+            HM → SWOOSH SKAN → TR AR<br>
+            <span style="color:var(--text-3)">repeat ×5 · switch sides · breath pace</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mk-tour">
+      <div class="mk-tour-visual mk-reveal" aria-hidden="true">
+        <span class="mk-vig-label">Playlist Builder</span>
+        <div class="mk-card mk-curve">
+          <svg viewBox="0 0 300 120" role="img" aria-label="An energy curve with songs plotted along it">
+            <line class="c-grid" x1="0" y1="30" x2="300" y2="30"/>
+            <line class="c-grid" x1="0" y1="60" x2="300" y2="60"/>
+            <line class="c-grid" x1="0" y1="90" x2="300" y2="90"/>
+            <path class="c-line" d="M10,100 C70,95 100,45 160,32 C210,25 250,60 290,95"/>
+            <circle class="c-knot" cx="10" cy="100" r="4"/>
+            <circle class="c-knot" cx="160" cy="32" r="4"/>
+            <circle class="c-knot" cx="290" cy="95" r="4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="mk-tour-copy mk-reveal">
+        <h3 class="mk-h3">Shape the energy. Then build the music to match.</h3>
+        <p class="mk-body">Draw the arc of your class — where it builds, where it peaks, where it lands — and build a playlist that follows the same shape. Music moves the room as much as the sequence does. It deserves more than shuffle.</p>
+      </div>
+    </div>
+
+    <div class="mk-tour">
+      <div class="mk-tour-copy mk-reveal">
+        <h3 class="mk-h3">Never start from a blank page again.</h3>
+        <p class="mk-body">Constraints, movement experiments, story prompts — small starting points that get you on the mat before you open a plan. You figure out what you want to teach by moving through it. After that, writing the class is the easy part.</p>
+      </div>
+      <div class="mk-tour-visual mk-reveal" aria-hidden="true">
+        <span class="mk-vig-label">Arbitrary Rules</span>
+        <div class="mk-card" style="text-align:center; padding:32px 24px">
+          <p style="font-size:var(--fs-h5); color:var(--text-1); margin:0 0 10px">No Warrior 2.</p>
+          <span class="tag" style="font-family:var(--font-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); border:1px solid rgba(var(--ink-rgb),.16); padding:4px 10px">Pose Constraint</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mk-tour">
+      <div class="mk-tour-visual mk-reveal" aria-hidden="true">
+        <span class="mk-vig-label">Verb / Your Body Part / Direction</span>
+        <div class="mk-card">
+          <div class="mk-cue">
+            <span>Press</span><span>your left foot</span><span>into the ground</span>
+          </div>
+          <div class="mk-cue" style="margin-top:8px">
+            <span class="mk-cue-dim">Reach</span><span class="mk-cue-dim">your arms</span><span class="mk-cue-dim">up and over</span>
+          </div>
+        </div>
+      </div>
+      <div class="mk-tour-copy mk-reveal">
+        <h3 class="mk-h3">Practice cueing until clear language is second nature.</h3>
+        <p class="mk-body">Every clear cue is a verb, a body part, and a direction. Build yours, cut the extra words, and practice them at the speed of real breath — until people stop looking around the room to copy someone else and start following you.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── 5 · LEARN BY WATCHING ─────────────────────────────── -->
+<section class="mk-section">
+  <div class="mk-wrap">
+    <div class="mk-tour" style="border-top:none; padding-top:0">
+      <div class="mk-tour-copy mk-reveal">
+        <span class="mk-eyebrow">The library</span>
+        <h2 class="mk-h2">Watch real classes get built.</h2>
+        <p class="mk-body">Members get Bonnie's full library — flows, workshops, and complete classes, with more added every week. She builds real sequences on camera and talks through her choices as she goes, so you see how a class actually comes together.</p>
+      </div>
+      <div class="mk-tour-visual mk-reveal" aria-hidden="true">
+        <span class="mk-vig-label">The video library</span>
+        <div class="mk-card" style="padding:0; overflow:hidden">
+          <img src="img/slo-mo-flow-cover.jpg" alt="" style="width:100%; display:block" loading="lazy">
+          <div style="padding:14px 18px; display:flex; justify-content:space-between; align-items:baseline">
+            <span style="font-size:var(--text-ui); color:var(--text-1)">Slo-Mo Flow</span>
+            <span class="mk-mono" style="font-size:11px; color:var(--text-3)">Full class · 60 min</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 6 · PRACTICE, DON'T JUST WATCH ────────────────────── -->
+<section class="mk-section">
+  <div class="mk-wrap">
+    <span class="mk-eyebrow">The difference</span>
+    <h2 class="mk-h2">Most courses end when the video ends.</h2>
+    <p class="mk-lede">Watching only takes you so far. At some point you have to build something and teach it. Flow School is set up so the lesson and the practice live in the same place.</p>
+    <div class="mk-loop">
+      <div class="mk-loop-col mk-reveal mk-loop-dim">
+        <span class="mk-loop-sub">Everywhere else</span>
+        <h3>Watch. Take notes. Hope it sticks.</h3>
+        <ol class="mk-loop-steps">
+          <li><span class="n">01</span>Watch the course</li>
+          <li><span class="n">02</span>Write things in a notebook</li>
+          <li><span class="n">03</span>Teach the same class you always teach</li>
+        </ol>
+      </div>
+      <div class="mk-loop-col mk-reveal">
+        <span class="mk-loop-sub">Flow School</span>
+        <h3>Watch. Build. Teach. Refine.</h3>
+        <ol class="mk-loop-steps">
+          <li><span class="n">01</span>Watch a flow get built, piece by piece</li>
+          <li><span class="n">02</span>Play — experiments and constraints get you moving</li>
+          <li><span class="n">03</span>Build your own version in the class writer</li>
+          <li><span class="n">04</span>Teach it from your phone, on the mat</li>
+          <li><span class="n">05</span>Log what worked. Teach it better next week.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 7 · FEATURE GRID ──────────────────────────────────── -->
+<section class="mk-section">
+  <div class="mk-wrap">
+    <span class="mk-eyebrow">Everything in the studio</span>
+    <h2 class="mk-h2">One place for the whole craft.</h2>
+    <div class="mk-grid">
+      <div class="mk-feature mk-reveal">
+        <span class="material-symbols-sharp" aria-hidden="true">gesture</span>
+        <h3>Movement Experiments</h3>
+        <p>Small constraints to take to the mat when your own patterns start running the show.</p>
+      </div>
+      <div class="mk-feature mk-reveal">
+        <span class="material-symbols-sharp" aria-hidden="true">conversion_path</span>
+        <h3>Pose Popcorn</h3>
+        <p>Two poses at a time, and the job of getting between them. Transitions are most of teaching — this is where you practice them.</p>
+      </div>
+      <div class="mk-feature mk-reveal">
+        <span class="material-symbols-sharp" aria-hidden="true">auto_stories</span>
+        <h3>Story Starters</h3>
+        <p>Prompts that help you find the story only you can tell — the part of class nobody else can teach for you.</p>
+      </div>
+      <div class="mk-feature mk-reveal">
+        <span class="material-symbols-sharp" aria-hidden="true">air</span>
+        <h3>Breath Pace</h3>
+        <p>Set an inhale and an exhale, press start, and practice cueing along with it until you feel the pace instead of counting it.</p>
+      </div>
+      <div class="mk-feature mk-reveal">
+        <span class="material-symbols-sharp" aria-hidden="true">history_edu</span>
+        <h3>Teaching Log</h3>
+        <p>Write down what worked and what didn't after you teach. A year from now you'll be glad you did.</p>
+      </div>
+      <div class="mk-feature mk-reveal">
+        <span class="material-symbols-sharp" aria-hidden="true">groups</span>
+        <h3>The Circle</h3>
+        <p>Every Flow School teacher in one place — find your people, take their class when you're in town.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 8 · BUILT FOR REAL TEACHING ───────────────────────── -->
+<section class="mk-section">
+  <div class="mk-wrap">
+    <span class="mk-eyebrow">Built for real teaching</span>
+    <h2 class="mk-h2">It fits the week you already have.</h2>
+    <div class="mk-week">
+      <div class="mk-moment mk-reveal">
+        <span class="mk-when">Sunday afternoon</span>
+        <h3>Plan without the blank page</h3>
+        <p>Draw a rule, play on the mat, write the class in shorthand. Planning stops eating your whole afternoon.</p>
+      </div>
+      <div class="mk-moment mk-reveal">
+        <span class="mk-when">Fifteen minutes before</span>
+        <h3>Walk in ready</h3>
+        <p>Your class, your playlist, your story — on your phone, in one place, readable at a glance.</p>
+      </div>
+      <div class="mk-moment mk-reveal">
+        <span class="mk-when">In the room</span>
+        <h3>Teach from the mat</h3>
+        <p>Read your shorthand without losing the room, and let the breath set the pace.</p>
+      </div>
+      <div class="mk-moment mk-reveal">
+        <span class="mk-when">The drive home</span>
+        <h3>Get better on purpose</h3>
+        <p>Jot one note about what worked. Then teach the same class better next week.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 9 · ABOUT BONNIE ──────────────────────────────────── -->
+<section class="mk-section">
+  <div class="mk-wrap">
+    <div class="mk-bonnie">
+      <div class="mk-reveal">
+        <span class="mk-eyebrow">The teacher's teacher</span>
+        <h2 class="mk-h2">Bonnie Weeks</h2>
+        <p class="mk-body" style="margin-bottom:16px">Bonnie teaches yoga teachers. She's led trainings in person and online, taught weekly classes for years, and recorded hundreds of flows, workshops, and full classes along the way. Everything in Flow School comes out of that teaching — none of it is theory.</p>
+        <p class="mk-body">She won't hand you a script. She'll show you how sequencing works, then push you to sound like yourself.</p>
+      </div>
+      <div class="mk-reveal">
+        <p class="mk-quote">"You're changing the world — one person at a time. I'm here to stand next to you as you do it."</p>
+        <span class="mk-quote-by">— Bonnie</span>
+        <ul class="mk-facts" style="margin-top:40px">
+          <li>Video classes, flows &amp; workshops <span class="v">400+</span></li>
+          <li>Yoga Strong podcast episodes <span class="v">nearly 300</span></li>
+          <li>Teacher trainings <span class="v">in person &amp; online</span></li>
+          <li>New material <span class="v">added weekly</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 10 · MEMBERSHIP ───────────────────────────────────── -->
+<section class="mk-section">
+  <div class="mk-wrap">
+    <span class="mk-eyebrow">Membership</span>
+    <h2 class="mk-h2">Everything, together.</h2>
+    <div class="mk-member mk-reveal">
+      <div class="mk-member-cols">
+        <div>
+          <h3 style="font-size:var(--fs-h4); font-weight:var(--weight-regular); color:var(--text-1); margin:0 0 12px; letter-spacing:-.02em">One membership. The whole studio.</h3>
+          <p class="mk-body" style="margin-bottom:28px">One price, everything in it — including whatever gets built next.</p>
+          <div class="mk-ctas">
+            <a class="btn-primary" href="https://flowschool.uscreen.io" target="_blank" rel="noopener">Become a Member</a>
+          </div>
+        </div>
+        <ul class="mk-includes">
+          <li><span class="material-symbols-sharp" aria-hidden="true">check</span>The full video library — flows, workshops, classes</li>
+          <li><span class="material-symbols-sharp" aria-hidden="true">check</span>Every interactive tool in the studio</li>
+          <li><span class="material-symbols-sharp" aria-hidden="true">check</span>Your own library — classes, flows, stories, playlists</li>
+          <li><span class="material-symbols-sharp" aria-hidden="true">check</span>The Circle — the Flow School teacher community</li>
+          <li><span class="material-symbols-sharp" aria-hidden="true">check</span>New lessons and tools, added continually</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 11 · FINAL CTA ────────────────────────────────────── -->
+<section class="mk-final">
+  <div class="mk-wrap-narrow">
+    <div class="mk-breath" aria-hidden="true"></div>
+    <h2 class="mk-h1" style="font-size:clamp(36px,6vw,64px)">There's more than one way to be right.</h2>
+    <p class="mk-lede">Find yours.</p>
+    <div class="mk-ctas">
+      <a class="btn-primary" href="https://flowschool.uscreen.io" target="_blank" rel="noopener">Join Flow School</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="mk-footer">
+  <div class="mk-footer-inner">
+    <span class="site-footer" style="border:none; padding:0; margin:0">Flow School · Creative Studio for Yoga Teachers</span>
+    <div class="mk-footer-links">
+      <a href="login">Sign in</a>
+      <a href="privacy">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+<script src="lib/version.js"></script>
+<script src="lib/telemetry.js"></script>
+<script>
+  // page fade-in (matches the app's arrival)
+  document.addEventListener('DOMContentLoaded', function () {
+    document.body.style.opacity = '1';
+
+    // scroll reveals — one observer, one class, honest with reduced motion
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var els = document.querySelectorAll('.mk-reveal');
+    if (reduced || !('IntersectionObserver' in window)) {
+      els.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    els.forEach(function (el) { io.observe(el); });
+  });
+</script>
+
+</body>
+</html>

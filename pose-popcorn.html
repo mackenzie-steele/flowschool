@@ -528,7 +528,7 @@
     <section class="hero">
       <p class="label-1">Connect the dots.</p>
       <h3>Pose Popcorn</h3>
-      <p>Start with a pose. Connect it to the next one. Practice the art of cueing transitions one link at a time.</p>
+      <p>You get two poses, and your job is figuring out how to get from the first to the second. Most of us rush past transitions, but that&#8217;s where a lot of the teaching actually happens. Work them one at a time and your classes stop feeling like a list of poses.</p>
     </section>
 
     <!-- Two decks, face down — draw each to begin; the stacks stay,
@@ -686,8 +686,8 @@
 
     // ─── RENDER ──────────────────────────────────────────────────
     function renderDeck() {
-      document.getElementById('start-pose-name').textContent = startPose || 'Tap to draw';
-      document.getElementById('dest-pose-name').textContent  = destPose  || (startPose ? 'Tap to draw' : 'Starting pose first');
+      document.getElementById('start-pose-name').textContent = startPose || 'Tap for starting pose';
+      document.getElementById('dest-pose-name').textContent  = destPose  || (startPose ? 'Tap for next pose' : '');
       document.getElementById('start-card').classList.toggle('facedown', !startPose);
       document.getElementById('dest-card').classList.toggle('facedown', !destPose);
       document.getElementById('dest-card').classList.toggle('waits', !startPose && !destPose);

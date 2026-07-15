@@ -124,6 +124,71 @@
     /* intensity — the height dial under the arc pills, above the curve */
     .intensity-wrap { margin: 28px 0; }
 
+    /* ── saved playlist title + inline rename (V/YBP/D worksheet pattern) ── */
+    .pl-title-row[hidden] { display: none; }   /* display:flex would defeat the hidden attribute */
+    .pl-title-row {
+      /* same wrap as .results-inner — the title aligns with the content,
+         not the page edge (it can't live inside #results, which renderResults
+         rewrites on every build) */
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 28px 28px 0;
+    }
+    .pl-saved-title {
+      font-size: var(--fs-h5);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
+    }
+    .pl-title-input {
+      font-family: var(--font);
+      font-size: var(--fs-h5);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(var(--ink-rgb), .30);
+      outline: none;
+      padding: 0;
+      min-width: 40px;
+      width: auto;
+    }
+    .pl-title-edit {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      transition: color var(--transition-base);
+      flex-shrink: 0;
+    }
+    .pl-title-edit:hover { color: var(--text-1); }
+    .pl-title-edit .material-symbols-sharp { font-size: var(--icon-md); }
+
+    /* ── viewer mode — a saved playlist is for READING. The workshop
+       (config, build bar, regenerate) leaves; the settings show as a quiet
+       readout under the title; the playlist is the page. Unsaving brings
+       the workshop back. ── */
+    body.pl-viewing .cfg { display: none; }
+    body.pl-viewing .cta-bar { display: none !important; }
+    body.pl-viewing #regen-btn { display: none; }
+
+    .pl-spec[hidden] { display: none; }
+    .pl-spec {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 8px 28px 0;
+      font-family: var(--font-mono);
+      font-size: var(--fs-meta);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
     /* the class-length wrap is a flex column with an 8px gap; the slider's own
        8px bottom margin stacks on top of it, pushing its ticks 16px away. Zero
        that margin so its slider-to-ticks gap matches the other sliders' 8px.
@@ -471,7 +536,7 @@
     <div class="inner">
       <p class="label-1">Build the rhythm of the room.</p>
       <h3>Playlist Builder</h3>
-      <p>Design playlists that match the energy of your class and experiment with how music influences movement and mood.</p>
+      <p>Map the energy of your class, then build a playlist that follows that shape. Music does a lot of the work in a room, so it&#8217;s worth picking on purpose instead of hitting shuffle and hoping.</p>
     </div>
   </section>
 
@@ -534,6 +599,15 @@
 
 
   <section class="results">
+    <!-- the saved playlist's name — shown only while viewing a saved playlist,
+         with an inline rename (same pattern as the V/YBP/D worksheet title) -->
+    <div class="pl-title-row" id="pl-title-row" hidden>
+      <span class="pl-saved-title" id="pl-saved-title"></span>
+      <button class="pl-title-edit" id="pl-title-edit" title="Rename playlist">
+        <span class="material-symbols-sharp">edit</span>
+      </button>
+    </div>
+    <p class="pl-spec" id="pl-spec" hidden></p>
     <div class="results-inner" id="results">
       <div class="empty">
         <div class="empty-icon">♫</div>
@@ -908,17 +982,123 @@
 
     let built = false;
 
+    // the saved playlist being viewed — its name shows above the results
+    // with an inline rename; both clear the moment the playlist diverges
+    let savedId = null;
+    let savedTitle = null;
+
+    function showSavedTitle(id, title) {
+      savedId = id;
+      savedTitle = title;
+      document.getElementById('pl-saved-title').textContent = title;
+      document.getElementById('pl-title-row').hidden = false;
+    }
+
+    // viewer mode — hides the workshop and shows the settings as a readout;
+    // reads S.* (already restored from the saved entry by the ?id= handler)
+    function enterViewerMode() {
+      document.body.classList.add('pl-viewing');
+      const spec = document.getElementById('pl-spec');
+      spec.textContent = S.duration + ' min · ' + ARC_SHAPES[S.arcKey].name
+        + ' · Level ' + S.intensity
+        + ' · Vocal ' + S.mix.vocal + ' · Electronic ' + S.mix.electronic;
+      spec.hidden = false;
+    }
+
     // any divergence from a saved playlist clears the saved state: the icon
-    // resets, and ?id= is dropped from the URL so a refresh starts fresh
-    // instead of reloading the saved playlist.
+    // resets, the title row hides, and ?id= is dropped from the URL so a
+    // refresh starts fresh instead of reloading the saved playlist.
     function forgetSaved() {
       S.saved = false;
+      savedId = null;
+      savedTitle = null;
+      document.getElementById('pl-title-row').hidden = true;
+      // leaving the saved playlist — the workshop comes back
+      document.body.classList.remove('pl-viewing');
+      document.getElementById('pl-spec').hidden = true;
       const sb = document.getElementById('save-btn');
-      if (sb) { sb.classList.remove('saved'); sb.title = 'Save playlist'; }
+      if (sb) { sb.classList.remove('saved'); sb.title = 'Save playlist'; sb.setAttribute('data-tooltip', 'Save'); }
       if (location.search) {
         try { history.replaceState(null, '', location.pathname); } catch (_) {}
       }
     }
+
+    // inline rename — the pencil swaps the title for an input with check/
+    // cancel (the V/YBP/D worksheet pattern); commit writes the new name
+    // back to the saved entry
+    document.getElementById('pl-title-edit').addEventListener('click', function startRename() {
+      const titleEl = document.getElementById('pl-saved-title');
+      const editBtn = document.getElementById('pl-title-edit');
+
+      const sizer = document.createElement('span');
+      sizer.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;pointer-events:none;padding:0;border:0';
+      document.body.appendChild(sizer);
+
+      const input = document.createElement('input');
+      input.className = 'pl-title-input';
+      input.value = savedTitle || '';
+
+      function syncWidth() {
+        sizer.textContent = input.value || ' ';
+        input.style.width = (sizer.offsetWidth + 4) + 'px';
+      }
+      input.addEventListener('input', syncWidth);
+
+      const okBtn = document.createElement('button');
+      okBtn.className = 'pl-title-edit';
+      okBtn.title = 'Save name';
+      okBtn.innerHTML = '<span class="material-symbols-sharp">check</span>';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'pl-title-edit';
+      cancelBtn.title = 'Cancel';
+      cancelBtn.innerHTML = '<span class="material-symbols-sharp">close</span>';
+
+      titleEl.replaceWith(input);
+      editBtn.replaceWith(okBtn);
+      okBtn.after(cancelBtn);
+
+      const cs = window.getComputedStyle(input);
+      sizer.style.fontFamily = cs.fontFamily;
+      sizer.style.fontSize = cs.fontSize;
+      sizer.style.fontWeight = cs.fontWeight;
+      sizer.style.letterSpacing = cs.letterSpacing;
+      syncWidth();
+      input.focus();
+      input.select();
+
+      function restore(name) {
+        sizer.remove();
+        titleEl.textContent = name;
+        input.replaceWith(titleEl);
+        okBtn.replaceWith(editBtn);
+        cancelBtn.remove();
+      }
+
+      function commit() {
+        const newName = input.value.trim();
+        if (newName && newName !== savedTitle && savedId != null) {
+          try {
+            const saved = JSON.parse(localStorage.getItem('flowschool_playlists') || '[]');
+            const entry = saved.find(p => p.id === savedId);
+            if (entry) {
+              entry.title = newName;
+              localStorage.setItem('flowschool_playlists', JSON.stringify(saved));
+              savedTitle = newName;
+              toast('Renamed.');
+            }
+          } catch (_) {}
+        }
+        restore(savedTitle);
+      }
+
+      okBtn.addEventListener('click', commit);
+      cancelBtn.addEventListener('click', function () { restore(savedTitle); });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') commit();
+        if (e.key === 'Escape') restore(savedTitle);
+      });
+    });
 
     function markSettingsChanged() {
       if (!built) return;
@@ -1082,7 +1262,7 @@
         <button class="btn-icon" id="regen-btn" title="Regenerate playlist" data-tooltip="Regenerate">
           <span class="material-symbols-sharp">refresh</span>
         </button>
-        <button class="btn-icon${S.saved ? ' saved' : ''}" id="save-btn" title="${S.saved ? 'Saved' : 'Save playlist'}" data-tooltip="Save">
+        <button class="btn-icon${S.saved ? ' saved' : ''}" id="save-btn" title="${S.saved ? 'Remove from library' : 'Save playlist'}" data-tooltip="${S.saved ? 'Unsave' : 'Save'}">
           <span class="material-symbols-sharp save-icon">bookmark</span>
         </button>
       </div>
@@ -1170,17 +1350,33 @@
       } catch (_) {}
 
       S.saved = true;
+      showSavedTitle(entry.id, title);
       const btn = document.getElementById('save-btn');
       if (btn) {
         btn.classList.add('saved');
-        btn.title = 'Saved';
+        btn.title = 'Remove from library';
+        btn.setAttribute('data-tooltip', 'Unsave');
         btn.querySelector('.save-icon').textContent = 'bookmark';
       }
       toast(`"${title}" saved to your library.`);
     }
 
     function handleSave() {
-      if (S.saved) return;
+      if (S.saved) {
+        // unsave — the lit bookmark is a toggle. The entry leaves the library;
+        // the playlist stays on screen, just unsaved, so it can be re-saved.
+        if (savedId != null) {
+          try {
+            const saved = JSON.parse(localStorage.getItem('flowschool_playlists') || '[]')
+              .filter(p => p.id !== savedId);
+            localStorage.setItem('flowschool_playlists', JSON.stringify(saved));
+          } catch (_) {}
+        }
+        const title = savedTitle;
+        forgetSaved();
+        toast(title ? `"${title}" removed from your library.` : 'Removed from your library.');
+        return;
+      }
       openSaveModal();
     }
 
@@ -1356,6 +1552,8 @@
           renderCurve();
           updateIntensity();
           S.saved = true;
+          showSavedTitle(_pl.id, _pl.title || 'Untitled Playlist');
+          enterViewerMode();
           setTimeout(() => {
             // rebuild the exact saved playlist from its stored song ids; only
             // fall back to a fresh generate() for legacy entries saved before
@@ -1372,6 +1570,19 @@
               if (!data.some(d => d.songs.length)) data = null; // nothing resolved → regenerate
             }
             renderResults(data || generate());
+            // self-heal: a legacy entry (saved before songs were stored) just
+            // regenerated — lock THIS build into the entry, so every future
+            // open shows exactly this playlist instead of a fresh roll
+            if (!data && lastData) {
+              try {
+                const saved = JSON.parse(localStorage.getItem('flowschool_playlists') || '[]');
+                const entry = saved.find(p => String(p.id) === _urlPlaylist);
+                if (entry) {
+                  entry.songs = lastData.map(d => d.songs.map(s => s.id));
+                  localStorage.setItem('flowschool_playlists', JSON.stringify(saved));
+                }
+              } catch (_) {}
+            }
             built = true;
             document.querySelector('.results').scrollIntoView({ behavior: 'smooth', block: 'start' });
           }, 100);
