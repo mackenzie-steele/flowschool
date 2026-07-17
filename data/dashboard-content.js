@@ -12,6 +12,7 @@
 var EVENTS = [
   { date: '2026-07-08', title: 'New Course Drop: Circle Flows', time: '', url: '' },
   { date: '2026-07-31', title: 'Share your beta feedback', time: 'by July 31', url: 'https://docs.google.com/forms/d/e/1FAIpQLSfvfINkopQMhmT4qkZ6Pg6si5-k0ROeAM057MRIpeB2MhASsA/viewform', linkLabel: 'Open the form' },
+  { date: '2026-11-09', title: 'In-Person Flow School', time: 'Nov 9–13 · Portland, Oregon', url: 'https://www.bonnieweeks.com/pages/flow-school-in-person', linkLabel: 'Sign up' },
 ];
 
 // ── NEW DROP ─────────────────────────────────────────────────────

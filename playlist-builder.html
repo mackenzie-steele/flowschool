@@ -679,7 +679,9 @@
     // as drawn. Song selection follows automatically: it reads S.pts.
     function shapedArc(key, n) {
       const f = S.intensity / 100;
-      return sampleArc(key, n).map(e => Math.round(e * f));
+      // snap every preset handle to the 10-step gridlines — the same grid
+      // dragging snaps to, so presets start ON the lines, not near them
+      return sampleArc(key, n).map(e => Math.round(e * f / 10) * 10);
     }
 
     function updateIntensity() {
@@ -747,6 +749,9 @@
       saved: false,
       userEdited: false,
     };
+    // derive the initial curve the same way every preset change does —
+    // intensity-scaled and grid-snapped (the raw init above is a placeholder)
+    S.pts = shapedArc(S.arcKey, getKnotCount(S.duration));
 
     // ─── CURVE ───────────────────────────────────────────────────────────────────
 
@@ -828,8 +833,8 @@
         t.textContent = lbl; svg.appendChild(t);
       });
 
-      // ── Time axis labels (every 15 min) ──────────────────────
-      for (let m = 0; m <= S.duration; m += 15) {
+      // ── Time axis labels (every 10 min — matching the handle spacing) ──
+      for (let m = 0; m <= S.duration; m += 10) {
         const x = m / S.duration * SVG_W;
         const tl = ns('text');
         tl.setAttribute('x', m === 0 ? x + 2 : (m === S.duration ? x - 2 : x));
