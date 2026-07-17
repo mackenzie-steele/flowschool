@@ -781,6 +781,12 @@
     }
     .db-view-all:hover { color: var(--text-1); }
 
+    /* side-by-side cards whose footer links should sit on the same line:
+       the card flexes, the link pins to the bottom regardless of how many
+       entries the list above it holds */
+    .db-card-pin { display: flex; flex-direction: column; }
+    .db-card-pin .db-view-all { margin-top: auto; padding-top: 16px; align-self: flex-start; }
+
     /* ── Events ──────────────────────────────────────────── */
     .db-event {
       display: flex;
@@ -1044,13 +1050,13 @@
         <!-- 6. Teaching Log + Recently Saved -->
         <div class="db-row db-row-2">
 
-          <div class="db-card">
+          <div class="db-card db-card-pin">
             <span class="db-eyebrow">Teaching Log</span>
             <div id="db-log-list"></div>
             <a href="teaching-log" class="db-view-all">View the log <span class="material-symbols-sharp i-sm" style="vertical-align:-2px">arrow_forward</span></a>
           </div>
 
-          <div class="db-card">
+          <div class="db-card db-card-pin">
             <span class="db-eyebrow">Recently Saved</span>
             <div id="db-saved-list"></div>
             <a href="saved" class="db-view-all">View all saved <span class="material-symbols-sharp i-sm" style="vertical-align:-2px">arrow_forward</span></a>

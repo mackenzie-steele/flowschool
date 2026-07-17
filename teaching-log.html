@@ -424,7 +424,7 @@
 
     document.getElementById('lg-save').addEventListener('click', function () {
       var text = document.getElementById('lg-area').value.trim();
-      if (!text) { document.getElementById('lg-area').focus(); return; }
+      if (!text) { toast('Write the note first.'); document.getElementById('lg-area').focus(); return; }
       if (composeClassId) {
         var c = classes.find(function (x) { return x.id === composeClassId; });
         if (!c) return;

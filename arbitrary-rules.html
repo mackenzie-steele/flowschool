@@ -49,6 +49,16 @@
       background: rgba(var(--ink-rgb), .05);
     }
 
+    /* ── the exit — from a dealt rule to a class draft ── */
+    .rule-build {
+      display: flex;
+      justify-content: center;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(var(--ink-rgb), .07);
+    }
+    .rule-build .btn-secondary { display: inline-flex; align-items: center; }
+
     /* ── Redraw row — Draw again + compact count keys ── */
     .redraw {
       display: flex;
@@ -453,6 +463,15 @@
       const alreadySaved = isChallengeInSaved(currentRuleIds);
       const saveBtn = `<button class="btn-icon${alreadySaved ? ' saved' : ''}" id="save-btn" title="${alreadySaved ? 'Saved' : 'Save challenge'}" data-tooltip="Save"><span class="material-symbols-sharp save-icon">bookmark</span></button>`;
 
+      // the exit — the rule's whole point is the flow it starts
+      const buildBtn = `
+      <div class="rule-build">
+        <button type="button" class="btn-secondary" id="build-class-btn">
+          Build a flow with ${rules.length === 1 ? 'this' : 'these'}
+          <span class="material-symbols-sharp i-md" style="margin-left:6px">arrow_forward</span>
+        </button>
+      </div>`;
+
       if (rules.length === 1) {
         const r = rules[0];
         const invite = INVITES[Math.floor(Math.random() * INVITES.length)];
@@ -462,7 +481,8 @@
         ${saveBtn}
       </div>
       <div class="rule-text">${r.text}</div>
-      <span class="rule-cat tag">${CATEGORIES[r.cat]}</span>`;
+      <span class="rule-cat tag">${CATEGORIES[r.cat]}</span>
+      ${buildBtn}`;
       } else {
         card.innerHTML = `
       <div class="card-top">
@@ -478,10 +498,22 @@
               <span class="rule-cat tag">${CATEGORIES[r.cat]}</span>
             </div>
           </div>`).join('')}
-      </div>`;
+      </div>
+      ${buildBtn}`;
       }
 
       document.getElementById('save-btn').addEventListener('click', handleSave);
+      document.getElementById('build-class-btn').addEventListener('click', function () {
+        // fs-seed — the Play → Plan handoff: the flow editor's new-draft
+        // path consumes this and pins the rules as the flow's challenge
+        const texts = currentRuleIds
+          .map(id => RULES.find(r => r.id === id)).filter(Boolean).map(r => r.text);
+        if (!texts.length) return;
+        try {
+          localStorage.setItem('fs-seed', JSON.stringify({ type: 'rules', rules: texts, ts: Date.now() }));
+        } catch (_) {}
+        window.location.href = 'your-flows?new=1';
+      });
 
       card.classList.remove('animate');
       void card.offsetWidth;

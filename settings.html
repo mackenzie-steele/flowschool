@@ -41,6 +41,16 @@
     }
     .pf-section-label { display: block; margin-bottom: 24px; }
 
+    /* ── backup & restore (moved from Saved) ── */
+    .st-data-copy {
+      font-size: var(--text-body-sm);
+      color: var(--text-2);
+      line-height: 1.65;
+      margin: -8px 0 16px;
+    }
+    .st-data-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .st-data-actions .btn-secondary { display: inline-flex; align-items: center; gap: 8px; }
+
     .pf-row {
       display: flex;
       align-items: center;
@@ -155,6 +165,20 @@
       </div>
     </section>
 
+    <!-- Backup & restore — moved here from the Saved page (Jul 2026) -->
+    <section class="pf-section">
+      <span class="label-1 pf-section-label">Your work, yours to keep</span>
+      <p class="st-data-copy">Everything you make &#8212; classes, flows, stories, playlists, cue flows, saved rules &#8212; lives in your account and follows you to any device you sign in on. Download a backup anytime, or restore one wherever you need it.</p>
+      <div class="st-data-actions">
+        <button class="btn-secondary" id="export-btn">
+          <span class="material-symbols-sharp i-md">download</span>
+          Download Backup
+        </button>
+        <button class="btn-ghost" id="import-btn">Restore a Backup</button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+      </div>
+    </section>
+
     <button class="btn-secondary st-signout" id="signout-btn">
       <span class="material-symbols-sharp i-md" aria-hidden="true">logout</span>
       Sign Out
@@ -162,6 +186,17 @@
 
   </div>
   </main>
+
+  <div class="modal-backdrop" id="restore-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <h3>Restore this backup?</h3>
+      <p class="modal-hint" id="restore-hint">It will replace the matching work on this device.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="restore-cancel">Cancel</button>
+        <button class="btn-primary" id="restore-confirm">Restore</button>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-backdrop" id="email-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true">
@@ -385,6 +420,95 @@
       try { await db.auth.signOut(); } catch (_) {} // session may already be dead
       window.location.href = 'login';
     });
+  </script>
+
+  <script>
+  // ─── YOUR WORK — BACKUP & RESTORE (moved from Saved, Jul 2026) ───────────
+  // Everything the platform stores uses the flowschool_/fs- prefixes;
+  // the Supabase auth token does not, so it never rides along.
+  (function () {
+    var WORK_PREFIX = /^(flowschool_|fs-)/;
+
+    function collect() {
+      var data = {};
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (WORK_PREFIX.test(k)) data[k] = localStorage.getItem(k);
+      }
+      return data;
+    }
+
+    document.getElementById('export-btn').addEventListener('click', function () {
+      var payload = {
+        app: 'flow-school',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data: collect(),
+      };
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'flow-school-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+      toast('Backup downloaded.');
+    });
+
+    var pendingRestore = null;
+
+    document.getElementById('import-btn').addEventListener('click', function () {
+      document.getElementById('import-file').click();
+    });
+
+    document.getElementById('import-file').addEventListener('change', function () {
+      var file = this.files[0];
+      this.value = '';
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        var payload;
+        try { payload = JSON.parse(reader.result); } catch (_) { toast('That file isn’t a Flow School backup.'); return; }
+        if (!payload || payload.app !== 'flow-school' || typeof payload.data !== 'object' || !payload.data) {
+          toast('That file isn’t a Flow School backup.');
+          return;
+        }
+        var keys = Object.keys(payload.data).filter(function (k) { return WORK_PREFIX.test(k); });
+        if (!keys.length) { toast('That backup is empty.'); return; }
+        pendingRestore = payload.data;
+        var when = payload.exportedAt ? new Date(payload.exportedAt).toLocaleDateString() : null;
+        document.getElementById('restore-hint').textContent =
+          (when ? 'Backup from ' + when + '. ' : '') + 'It will replace the matching work on this device.';
+        document.getElementById('restore-modal').hidden = false;
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('restore-cancel').addEventListener('click', function () {
+      pendingRestore = null;
+      document.getElementById('restore-modal').hidden = true;
+    });
+
+    document.getElementById('restore-modal').addEventListener('click', function (e) {
+      if (e.target === e.currentTarget) {
+        pendingRestore = null;
+        e.currentTarget.hidden = true;
+      }
+    });
+
+    document.getElementById('restore-confirm').addEventListener('click', function () {
+      if (!pendingRestore) return;
+      Object.keys(pendingRestore).forEach(function (k) {
+        if (WORK_PREFIX.test(k)) localStorage.setItem(k, pendingRestore[k]);
+      });
+      pendingRestore = null;
+      document.getElementById('restore-modal').hidden = true;
+      toast('Backup restored.');
+      // restored data should be visible everywhere — re-init the page
+      window.location.reload();
+    });
+  })();
   </script>
 
 </body>

@@ -189,6 +189,53 @@
 
     .fl-title-input::placeholder { color: var(--text-3); }
 
+    /* ── the challenge — a quiet pinned strip under the title ── */
+    .fl-challenge {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      border: 1px solid rgba(var(--ink-rgb), .13);
+      border-top-color: rgba(var(--ink-rgb), .24);
+      background: rgba(var(--ink-rgb), .02);
+      padding: 12px 14px;
+      margin: 4px 0 16px;
+    }
+    .fl-challenge > .material-symbols-sharp { font-size: var(--icon-md); color: var(--text-3); flex-shrink: 0; position: relative; top: 1px; }
+    .fl-challenge-body { flex: 1; font-size: var(--text-body-sm); color: var(--text-2); line-height: 1.5; }
+    .fl-challenge-body ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+    .fl-challenge-body li { display: flex; gap: 8px; }
+    .fl-challenge-body li::before { content: '\2022'; color: var(--text-3); flex-shrink: 0; }
+    .fl-challenge-x {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      padding: 2px;
+      display: flex;
+      flex-shrink: 0;
+      transition: color var(--transition-base);
+    }
+    .fl-challenge-x .material-symbols-sharp { font-size: var(--icon-sm); }
+    .fl-challenge-x:hover { color: var(--text-1); }
+    .fl-challenge-x.confirm-delete-armed,
+    .fl-challenge-x.confirm-delete-armed:hover { color: var(--danger); }
+
+    /* detail view — the challenge above the flow text, same bulleted
+       layout as the editor's strip */
+    .fd-challenge {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: var(--text-body-sm);
+      color: var(--text-2);
+      line-height: 1.5;
+      margin: 0 0 16px;
+    }
+    .fd-challenge > .material-symbols-sharp { font-size: var(--icon-md); color: var(--text-3); position: relative; top: 1px; flex-shrink: 0; }
+    .fd-challenge ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+    .fd-challenge li { display: flex; gap: 8px; }
+    .fd-challenge li::before { content: '\2022'; color: var(--text-3); flex-shrink: 0; }
+
     .fl-section { padding: 20px 0; }
 
     .fl-section .label-1 { display: block; margin-bottom: 16px; }
@@ -536,6 +583,7 @@
           </div>
         </div>
 
+        <p class="fd-challenge" id="fd-challenge" hidden><span class="material-symbols-sharp" aria-hidden="true">casino</span><span id="fd-challenge-body"></span></p>
         <div class="fd-flow" id="fd-flow"></div>
 
         <div class="fd-usedin">
@@ -563,6 +611,16 @@
 
       <div class="fl-editor">
         <input type="text" class="fl-title-input" id="fl-title" placeholder="Name your flow&#8230;" maxlength="120">
+
+        <!-- the challenge — rules this flow was built under, pinned from
+             Arbitrary Rules via the fs-seed handoff -->
+        <div class="fl-challenge" id="fl-challenge" hidden>
+          <span class="material-symbols-sharp" aria-hidden="true">casino</span>
+          <span class="fl-challenge-body" id="fl-challenge-body"></span>
+          <button type="button" class="fl-challenge-x" id="fl-challenge-x" title="Remove the challenge" aria-label="Remove the challenge">
+            <span class="material-symbols-sharp i-sm">close</span>
+          </button>
+        </div>
 
         <div class="fl-typebar" id="fl-typebar" hidden>
           <span class="flow-tag" id="fl-typebar-tag"></span>
@@ -810,6 +868,24 @@
       },
     });
 
+    // ─── THE CHALLENGE — rules this flow was built under (fs-seed handoff) ───────
+
+    var editChallenge = [];
+
+    function renderChallenge() {
+      document.getElementById('fl-challenge').hidden = !editChallenge.length;
+      document.getElementById('fl-challenge-body').innerHTML =
+        '<ul>' + editChallenge.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>';
+    }
+
+    // removing the challenge uses the app's arm-to-confirm: first tap turns
+    // the ✕ into a trash can, the second commits
+    wireConfirmDelete(document.getElementById('fl-challenge-x'), function () {
+      editChallenge = [];
+      renderChallenge();
+      markDirty();
+    });
+
     // ─── EDITOR ──────────────────────────────────────────────────────────────────    // ─── EDITOR ──────────────────────────────────────────────────────────────────
 
     function renderTypes() {
@@ -908,6 +984,11 @@
 
       renderFdTitle(f);
       renderFdMeta(f);
+      // the challenge — the rules this flow was built under, one per line
+      var challenge = f.challenge || [];
+      document.getElementById('fd-challenge').hidden = !challenge.length;
+      document.getElementById('fd-challenge-body').innerHTML =
+        '<ul>' + challenge.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>';
       document.getElementById('fd-flow').textContent = f.text || '';
       renderUsedIn(f, document.getElementById('fd-usedin-list'));
 
@@ -953,9 +1034,27 @@
       efCollapse(); // arrives folded — it's an offer, not an assignment
       renderCount();
       autoGrow(area);
+      editChallenge = f && f.challenge ? f.challenge.slice() : [];
 
       dirty = false;
       setSaveButton(f ? 'saved' : 'idle');
+
+      // fs-seed — the Play → Plan handoff. A tool (Arbitrary Rules today)
+      // leaves a starting point in localStorage; a NEW flow draft picks it
+      // up and pins it. Consumed on read; stale seeds (>10 min) clear quietly.
+      if (!f) {
+        try {
+          var seed = JSON.parse(localStorage.getItem('fs-seed') || 'null');
+          localStorage.removeItem('fs-seed');
+          if (seed && seed.type === 'rules' && Array.isArray(seed.rules) &&
+              seed.rules.length && Date.now() - (seed.ts || 0) < 600000) {
+            editChallenge = seed.rules.slice();
+            dirty = true;
+            setSaveButton('ready');
+          }
+        } catch (_) {}
+      }
+      renderChallenge();
 
       if (push) history.pushState({}, '', f ? 'your-flows?edit=' + f.id : 'your-flows?new=1');
       window.scrollTo(0, 0);
@@ -1090,6 +1189,7 @@
         f.type = editType;
         f.text = text;
         f.elements = efSerialize();
+        f.challenge = editChallenge.slice();
         f.editedAt = Date.now();
       } else {
         var entry = {
@@ -1098,6 +1198,7 @@
           type: editType,
           text: text,
           elements: efSerialize(),
+          challenge: editChallenge.slice(),
           editedAt: Date.now(),
         };
         flows.push(entry);

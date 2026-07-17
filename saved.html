@@ -13,6 +13,17 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" href="global.css">
   <style>
+    /* ── Library bar — search, the standard pattern ── */
+    .library-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .library-bar .search-wrap { flex: 1; }
+    .library-bar[hidden] { display: none; }
+
     .saved-header {
       display: flex;
       align-items: baseline;
@@ -159,23 +170,6 @@
   <div class="toast" id="toast"></div>
 
   <style>
-    /* ── Your work — backup & restore ── */
-    .sv-data {
-      margin-top: 56px;
-      border-top: 1px solid var(--border-light);
-      padding-top: 32px;
-    }
-
-    .sv-data-copy {
-      font-size: var(--text-body-sm);
-      color: var(--text-2);
-      line-height: 1.65;
-      margin: 12px 0 16px;
-    }
-
-    .sv-data-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-    .sv-data-actions .btn-secondary { display: inline-flex; align-items: center; gap: 8px; }
-
     /* ── sync status — the honesty line ── */
     .sv-sync {
       display: inline-flex;
@@ -207,122 +201,16 @@
   </section>
 
   <div class="wrap">
+    <div class="library-bar" id="sv-bar" hidden>
+      <div class="search-wrap">
+        <span class="search-icon"><span class="material-symbols-sharp">search</span></span>
+        <input type="text" class="search-input" id="sv-search" placeholder="Search your library&#8230;" autocomplete="off">
+      </div>
+    </div>
     <div id="sv-root"></div>
-
-    <div class="sv-data">
-      <span class="label-1">Your work, yours to keep</span>
-      <p class="sv-data-copy">Everything you make &#8212; classes, stories, playlists, cue flows, saved rules &#8212; lives in your account and follows you to any device you sign in on. Download a backup anytime, or restore one wherever you need it.</p>
-      <div class="sv-data-actions">
-        <button class="btn-secondary" id="export-btn">
-          <span class="material-symbols-sharp i-md">download</span>
-          Download Backup
-        </button>
-        <button class="btn-ghost" id="import-btn">Restore a Backup</button>
-        <input type="file" id="import-file" accept="application/json,.json" hidden>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="restore-modal" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true">
-      <h3>Restore this backup?</h3>
-      <p class="modal-hint" id="restore-hint">It will replace the matching work on this device.</p>
-      <div class="modal-actions">
-        <button class="btn-ghost" id="restore-cancel">Cancel</button>
-        <button class="btn-primary" id="restore-confirm">Restore</button>
-      </div>
-    </div>
   </div>
   </main>
 
-  <script>
-  // ─── YOUR WORK — BACKUP & RESTORE ──────────────────────────────
-  // Everything the platform stores uses the flowschool_/fs- prefixes;
-  // the Supabase auth token does not, so it never rides along.
-  (function () {
-    var WORK_PREFIX = /^(flowschool_|fs-)/;
-
-    function collect() {
-      var data = {};
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (WORK_PREFIX.test(k)) data[k] = localStorage.getItem(k);
-      }
-      return data;
-    }
-
-    document.getElementById('export-btn').addEventListener('click', function () {
-      var payload = {
-        app: 'flow-school',
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        data: collect(),
-      };
-      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'flow-school-backup-' + new Date().toISOString().slice(0, 10) + '.json';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(a.href);
-      toast('Backup downloaded.');
-    });
-
-    var pendingRestore = null;
-
-    document.getElementById('import-btn').addEventListener('click', function () {
-      document.getElementById('import-file').click();
-    });
-
-    document.getElementById('import-file').addEventListener('change', function () {
-      var file = this.files[0];
-      this.value = '';
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function () {
-        var payload;
-        try { payload = JSON.parse(reader.result); } catch (_) { toast('That file isn\u2019t a Flow School backup.'); return; }
-        if (!payload || payload.app !== 'flow-school' || typeof payload.data !== 'object' || !payload.data) {
-          toast('That file isn\u2019t a Flow School backup.');
-          return;
-        }
-        var keys = Object.keys(payload.data).filter(function (k) { return WORK_PREFIX.test(k); });
-        if (!keys.length) { toast('That backup is empty.'); return; }
-        pendingRestore = payload.data;
-        var when = payload.exportedAt ? new Date(payload.exportedAt).toLocaleDateString() : null;
-        document.getElementById('restore-hint').textContent =
-          (when ? 'Backup from ' + when + '. ' : '') + 'It will replace the matching work on this device.';
-        document.getElementById('restore-modal').hidden = false;
-      };
-      reader.readAsText(file);
-    });
-
-    document.getElementById('restore-cancel').addEventListener('click', function () {
-      pendingRestore = null;
-      document.getElementById('restore-modal').hidden = true;
-    });
-
-    document.getElementById('restore-modal').addEventListener('click', function (e) {
-      if (e.target === e.currentTarget) {
-        pendingRestore = null;
-        e.currentTarget.hidden = true;
-      }
-    });
-
-    document.getElementById('restore-confirm').addEventListener('click', function () {
-      if (!pendingRestore) return;
-      Object.keys(pendingRestore).forEach(function (k) {
-        if (WORK_PREFIX.test(k)) localStorage.setItem(k, pendingRestore[k]);
-      });
-      pendingRestore = null;
-      document.getElementById('restore-modal').hidden = true;
-      toast('Backup restored.');
-      // the library list itself may now be stale — re-render
-      window.location.reload();
-    });
-  })();
-  </script>
 
   <script>
   (function () {
@@ -346,35 +234,38 @@
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    // sections mirror the nav: Play → Plan → Practice, labels match each
+    // page's title, icons match the sidebar
     var sections = [
       {
-        key: 'playlists',
-        label: 'Playlists',
-        icon: 'queue_music',
+        key: 'arbitrary-rules',
+        label: 'Arbitrary Rules',
+        icon: 'casino',
         load: function () {
           try {
-            return JSON.parse(localStorage.getItem('flowschool_playlists') || '[]').map(function (p) {
+            return JSON.parse(localStorage.getItem('flowschool_arules') || '[]').map(function (r) {
+              var name = r.title || 'Saved Challenge';
+              if (name.length > 80) name = name.slice(0, 77) + '…';
               return {
-                name: p.title || 'Untitled Playlist',
-                href: 'playlist-builder?id=' + p.id,
-                time: p.savedAt ? new Date(p.savedAt).getTime() : 0,
+                name: name,
+                href: 'arbitrary-rules?challenge=' + r.id,
+                time: r.id || 0,
               };
             });
           } catch (_) { return []; }
         },
       },
       {
-        key: 'cue-flows',
-        label: 'Cue Sheets',
-        icon: 'edit_note',
+        key: 'pose-connector',
+        label: 'Pose Popcorn',
+        icon: 'conversion_path',
         load: function () {
           try {
-            var flows = JSON.parse(localStorage.getItem('fs-cue-flows') || '{}');
-            return Object.values(flows).map(function (fl) {
+            return JSON.parse(localStorage.getItem('fs-pose-connector-saved') || '[]').map(function (c) {
               return {
-                name: fl.name || 'Untitled Flow',
-                href: 'verb-your-body-part-direction?flow=' + encodeURIComponent(fl.name),
-                time: fl.savedAt ? new Date(fl.savedAt).getTime() : 0,
+                name: c.name || 'Untitled Chain',
+                href: 'pose-popcorn?chain=' + (c.savedAt || ''),
+                time: c.savedAt || 0,
               };
             });
           } catch (_) { return []; }
@@ -397,18 +288,16 @@
         },
       },
       {
-        key: 'arbitrary-rules',
-        label: 'Arbitrary Rules',
-        icon: 'casino',
+        key: 'playlists',
+        label: 'Playlist Builder',
+        icon: 'queue_music',
         load: function () {
           try {
-            return JSON.parse(localStorage.getItem('flowschool_arules') || '[]').map(function (r) {
-              var name = r.title || 'Saved Challenge';
-              if (name.length > 80) name = name.slice(0, 77) + '…';
+            return JSON.parse(localStorage.getItem('flowschool_playlists') || '[]').map(function (p) {
               return {
-                name: name,
-                href: 'arbitrary-rules?challenge=' + r.id,
-                time: r.id || 0,
+                name: p.title || 'Untitled Playlist',
+                href: 'playlist-builder?id=' + p.id,
+                time: p.savedAt ? new Date(p.savedAt).getTime() : 0,
               };
             });
           } catch (_) { return []; }
@@ -416,7 +305,7 @@
       },
       {
         key: 'classes',
-        label: 'Classes',
+        label: 'Your Classes',
         icon: 'edit_document',
         load: function () {
           try {
@@ -431,9 +320,25 @@
         },
       },
       {
+        key: 'flows',
+        label: 'Your Flows',
+        icon: 'airline_stops',
+        load: function () {
+          try {
+            return JSON.parse(localStorage.getItem('flowschool_flows') || '[]').map(function (f) {
+              return {
+                name: f.name || 'Untitled Flow',
+                href: 'your-flows?id=' + f.id,
+                time: f.editedAt || f.id || 0,
+              };
+            });
+          } catch (_) { return []; }
+        },
+      },
+      {
         key: 'stories',
-        label: 'Stories',
-        icon: 'auto_stories',
+        label: 'Your Stories',
+        icon: 'library_books',
         load: function () {
           try {
             return JSON.parse(localStorage.getItem('flowschool_stories') || '[]').map(function (st) {
@@ -449,16 +354,17 @@
         },
       },
       {
-        key: 'pose-connector',
-        label: 'Pose Popcorn Chains',
-        icon: 'conversion_path',
+        key: 'cue-flows',
+        label: 'Verb / Your Body Part / Direction',
+        icon: 'edit_note',
         load: function () {
           try {
-            return JSON.parse(localStorage.getItem('fs-pose-connector-saved') || '[]').map(function (c) {
+            var flows = JSON.parse(localStorage.getItem('fs-cue-flows') || '{}');
+            return Object.values(flows).map(function (fl) {
               return {
-                name: c.name || 'Untitled Chain',
-                href: 'pose-popcorn?chain=' + (c.savedAt || ''),
-                time: c.savedAt || 0,
+                name: fl.name || 'Untitled Flow',
+                href: 'verb-your-body-part-direction?flow=' + encodeURIComponent(fl.name),
+                time: fl.savedAt ? new Date(fl.savedAt).getTime() : 0,
               };
             });
           } catch (_) { return []; }
@@ -491,14 +397,42 @@
     }
 
     var root = document.getElementById('sv-root');
-    var allItems = 0;
-    var html = '';
+    var bar = document.getElementById('sv-bar');
+    var search = document.getElementById('sv-search');
 
-    sections.forEach(function (s) {
-      var items = s.load();
-      allItems += items.length;
-      html += renderSection(s, items);
+    var loaded = sections.map(function (s) {
+      return { section: s, items: s.load() };
     });
+    var allItems = loaded.reduce(function (n, g) { return n + g.items.length; }, 0);
+
+    function render() {
+      var raw = search.value.trim();
+      var q = raw.toLowerCase();
+      var shown = 0;
+      var html = '';
+
+      loaded.forEach(function (g) {
+        var items = q
+          ? g.items.filter(function (item) {
+              return (item.name || '').toLowerCase().indexOf(q) !== -1;
+            })
+          : g.items;
+        if (q && !items.length) return;
+        shown += items.length;
+        html += renderSection(g.section, items);
+      });
+
+      if (q && shown === 0) {
+        root.innerHTML = '<div class="library-empty"><p class="library-empty-sub">Nothing matches &#8220;' + esc(raw) + '&#8221;.</p></div>';
+        return;
+      }
+
+      root.innerHTML = '<div class="saved-header">'
+        + '<h3>All Saved</h3>'
+        + '<span class="saved-total">' + shown + ' item' + (shown !== 1 ? 's' : '') + '</span>'
+        + '</div>'
+        + html;
+    }
 
     if (allItems === 0) {
       root.innerHTML = '<div class="library-empty">'
@@ -508,11 +442,9 @@
         + '<div class="library-empty-actions"><a href="dashboard" class="btn-primary">Back to Dashboard</a></div>'
         + '</div>';
     } else {
-      root.innerHTML = '<div class="saved-header">'
-        + '<h3>All Saved</h3>'
-        + '<span class="saved-total">' + allItems + ' item' + (allItems !== 1 ? 's' : '') + '</span>'
-        + '</div>'
-        + html;
+      bar.hidden = false;
+      search.addEventListener('input', render);
+      render();
     }
   })();
 
