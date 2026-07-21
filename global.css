@@ -977,12 +977,12 @@ button svg {
   color: var(--text-3);
 }
 
-.save-icon {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+.save-icon svg {
+  fill: transparent;
   /* saving is a quiet keeping — the fill blooms in, nothing bursts */
-  transition: font-variation-settings .15s ease;
+  transition: fill .15s ease;
 }
-.saved .save-icon { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+.saved .save-icon svg { fill: currentColor; }
 
 .btn-icon.saved {
   background: var(--accent-dim);
@@ -1061,7 +1061,6 @@ button svg {
 
 /* favorited marker — filled accent heart beside a title */
 .fav-mark {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
   color: var(--accent);
   font-size: var(--icon-sm);
   margin-left: 8px;
@@ -1077,9 +1076,10 @@ button svg {
 /* favorites-only filter toggle */
 .fav-filter.on { color: var(--text-1); }
 .fav-filter.on .material-symbols-sharp {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
   color: var(--accent);
 }
+
+.fav-filter.on .material-symbols-sharp svg { fill: currentColor; }
 
 .result-count {
   margin-left: auto;
@@ -3862,4 +3862,13 @@ body:has(.cta-bar) .site-footer {
 /* ─── PRINT ──────────────────────────────────────────────────── */
 @media print {
   body::after { display: none; } /* texture is for screens */
+
+  /* injected chrome never prints — position:fixed elements repeat on
+     every page of a multi-page sheet (the skip link was showing up
+     mid-document) */
+  .skip-link,
+  .sidebar-toggle,
+  .sidebar-overlay,
+  .nav-sheet,
+  .toast { display: none !important; }
 }

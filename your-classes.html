@@ -47,6 +47,7 @@
     }
 
     .class-card {
+      box-shadow: var(--crest);
       border-radius: var(--r);
       position: relative;
       display: flex;
@@ -56,7 +57,8 @@
       cursor: pointer;
       text-decoration: none;
       color: inherit;
-      transition: border-color var(--transition-base);
+      background: var(--raised), rgba(var(--ink-rgb), .022);
+      transition: border-color var(--transition-base), background .15s;
     }
 
     /* the heart floats in the corner — no layout space taken */
@@ -67,7 +69,10 @@
       margin: 0;
     }
 
-    .class-card:hover { border-color: rgba(var(--ink-rgb), .32); }
+    .class-card:hover {
+      border-color: rgba(var(--ink-rgb), .22);
+      background: var(--raised), rgba(var(--ink-rgb), .038);
+    }
 
     .cc-top {
       display: flex;
@@ -104,9 +109,10 @@
 
     /* favorited state — filled accent heart, matching the list marker */
     .tv-menu-item .material-symbols-sharp.filled {
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
       color: var(--accent);
     }
+
+    .tv-menu-item .material-symbols-sharp.filled svg { fill: currentColor; }
 
     .tv-menu-item:hover .material-symbols-sharp.filled { color: var(--accent); }
 
@@ -136,11 +142,21 @@
       min-width: 0;
     }
 
-    .cw-spec {
-      box-shadow: var(--crest);
-      border-radius: var(--r);
+    /* the margin column — setup panel and notes stack as two boxes,
+       riding along together while the flow scrolls */
+    .cw-margin {
       position: sticky;
       top: 121px; /* bar (81) + content gap (40) — aligns with the title */
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-width: 0;
+    }
+
+    .cw-spec,
+    .cw-notes {
+      box-shadow: var(--crest);
+      border-radius: var(--r);
       border: 1px solid rgba(var(--ink-rgb), .12);
       border-top-color: rgba(var(--ink-rgb), .22);
       background: var(--raised), rgba(var(--ink-rgb), .02);
@@ -171,7 +187,7 @@
       /* single column: setup panel follows the writing, everything full width
          (align-items: start from the desktop grid would shrink-wrap children) */
       .cw-layout { display: flex; flex-direction: column; gap: 40px; align-items: stretch; }
-      .cw-spec { position: static; }
+      .cw-margin { position: static; }
     }
 
     .cw-title-input {
@@ -192,6 +208,34 @@
     .cw-title-input::placeholder { color: var(--text-3); }
 
     .cw-wrap-wide { max-width: 1060px; }
+
+    /* the margin remembers — past teaching notes ride along while you
+       revise. Read here; the words are edited in the teach view. */
+    .cw-note {
+      padding: 12px 0;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .cw-note:first-child { border-top: none; }
+    .cw-note:last-child { padding-bottom: 0; }
+
+    .cw-note-date {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
+      color: var(--text-3);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .cw-note p {
+      font-size: var(--text-small);
+      line-height: 1.6;
+      color: var(--text-2);
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
 
     /* attached stories */
     .cw-stories {
@@ -648,10 +692,11 @@
     .tv-title-fav {
       font-size: 17px;
       color: var(--accent);
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
       margin-left: 12px;
       vertical-align: 3px;
     }
+
+    .tv-title-fav svg { fill: currentColor; }
 
     .tv-flow-name {
       font-family: var(--font-mono);
@@ -773,8 +818,8 @@
        language as the editor's section fields */
     .tv-note-composer .tv-notes-area {
       min-height: 84px;
-      background: rgba(var(--ink-rgb), .04);
-      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
+      background: var(--well-bg);
+      box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .12);
       border-radius: var(--r);
       padding: 16px 16px;
       transition: box-shadow var(--transition-base), background var(--transition-base);
@@ -782,7 +827,7 @@
 
     .tv-note-composer .tv-notes-area:focus {
       background: rgba(var(--ink-rgb), .06);
-      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .30);
+      box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .30);
     }
 
     .tv-note-composer-actions {
@@ -790,6 +835,40 @@
       justify-content: flex-end;
       gap: 12px;
       margin-top: 12px;
+    }
+
+    /* the note's words are the edit control — the same grammar as
+       the chain notes and date stamps: touchable text, no chrome */
+    .tv-note-text {
+      cursor: pointer;
+      transition: opacity var(--transition-base);
+    }
+
+    .tv-note-text:hover { opacity: .65; }
+
+    .tv-note-edit {
+      width: 100%;
+      display: block;
+      margin-top: 4px;
+      background: var(--well-bg);
+      box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .12);
+      border: none;
+      border-radius: var(--r);
+      padding: 12px 14px;
+      color: var(--text-1);
+      font-family: var(--font);
+      font-size: var(--text-body-sm);
+      line-height: 1.6;
+      resize: none;
+      overflow: hidden;
+      outline: none;
+      min-height: 64px;
+      transition: box-shadow var(--transition-base), background var(--transition-base);
+    }
+
+    .tv-note-edit:focus {
+      background: rgba(var(--ink-rgb), .06);
+      box-shadow: var(--well), inset 0 0 0 1px rgba(var(--accent-rgb), .60);
     }
 
     /* past teaching notes — one dated entry per teach */
@@ -820,7 +899,8 @@
       white-space: pre-wrap;
     }
 
-    .tv-note-del {
+    .tv-note-del,
+    .tv-note-act {
       flex-shrink: 0;
       background: none;
       border: none;
@@ -836,6 +916,8 @@
 
     .tv-note-del:hover,
     .tv-note-del.confirm-delete-armed { color: var(--danger); }
+
+    .tv-note-act:hover { color: var(--text-1); }
 
     .tv-notes-log { margin-top: 20px; }
 
@@ -938,8 +1020,19 @@
 
       /* head: title full ink, meta lines quiet */
       .tv-title { font-size: 24pt; margin-bottom: 6pt; }
+      /* the byline — set as a whole string in --print-byline so an
+         unsigned sheet shows nothing, never a bare "By:" */
+      .tv-title::after {
+        content: var(--print-byline, '');
+        display: block;
+        font-size: 10pt;
+        font-weight: var(--weight-regular);
+        letter-spacing: 0;
+        color: #555;
+        margin-top: 4pt;
+      }
       .tv-title .tv-title-fav { display: none !important; }
-      .tv-head-main { padding-bottom: 10pt; border-bottom: 1px solid #151515; }
+      .tv-head-main { padding-bottom: 10pt; border-bottom: 1px solid #ddd; }
       .tv-meta, .tv-playlist, .tv-props { color: #555 !important; }
       .tv-playlist .material-symbols-sharp { font-size: 10pt; }
       .tv-playlist-link { text-decoration: none !important; }
@@ -981,7 +1074,7 @@
 
       /* the signature line */
       .tv::after {
-        content: 'Flow School \00B7\00A0 the-process.com';
+        content: 'Flow School \00B7\00A0 flowschool.io';
         display: block;
         margin-top: 22pt;
         padding-top: 8pt;
@@ -1017,9 +1110,9 @@
   <div id="list-view">
     <section class="hero">
       <div class="inner">
-        <p class="label-1">Write it. Teach it. Refine it.</p>
+        <p class="label-1">All the details in one place.</p>
         <h3>Your Classes</h3>
-        <p>Write your classes here in shorthand, one circle flow per section, and read from them while you teach. Keep them so you can teach them again and make them a little better each time. You don&#8217;t need a brand-new class every week. You need to teach the same one better.</p>
+        <p>This is your class journal. Name your class, add your flows, attach a story, list your props, link your playlist, and leave yourself a note every time you teach it. That class that landed last month? It&#8217;s here, and ready for you to teach it even better next time.</p>
       </div>
     </section>
 
@@ -1141,11 +1234,12 @@
           <div id="cw-sections"></div>
         </div>
 
-        <aside class="cw-spec">
+        <aside class="cw-margin">
+          <div class="cw-spec">
           <div class="cw-type">
             <span class="label-1">Class Type</span>
             <div class="cw-type-wrap">
-              <input type="text" class="cw-type-input" id="cw-class-type" placeholder="Vinyasa, Slow Flow, Yin&#8230;" maxlength="60" autocomplete="off" aria-label="Class type">
+              <input type="text" class="cw-type-input" id="cw-class-type" placeholder="Vinyasa, Slow Flow, Restorative&#8230;" maxlength="60" autocomplete="off" aria-label="Class type">
               <div class="cw-type-menu" id="cw-type-menu" hidden></div>
             </div>
           </div>
@@ -1194,6 +1288,11 @@
               <input type="text" class="cw-playlist-input" id="cw-playlist" placeholder="Playlist title" maxlength="120" aria-label="Playlist name">
               <input type="url" class="cw-playlist-url" id="cw-playlist-url" placeholder="Playlist link" maxlength="500" aria-label="Playlist link">
             </div>
+          </div>
+          </div>
+          <div class="cw-notes" id="cw-notes" hidden>
+            <span class="label-1">Your Notes</span>
+            <div id="cw-notes-list"></div>
           </div>
         </aside>
       </div>

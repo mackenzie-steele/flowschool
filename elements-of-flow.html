@@ -272,25 +272,7 @@
       display: block;
     }
 
-    /* Divider inside Big Five */
-    .fc-divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 0 4px;
-      font-size: var(--text-small);
-      color: var(--text-3);
-      letter-spacing: 0.05em;
-      pointer-events: none;
-    }
 
-    .fc-divider::before,
-    .fc-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border-light);
-    }
 
     @media (max-width: 720px) {
       .fc-grid { grid-template-columns: 1fr; }
@@ -314,7 +296,7 @@
       <div class="inner">
         <p class="label-1">Review your class.</p>
         <h3>Elements of Flow</h3>
-        <p>Run your Peak Flow past every element &#8212; all the body positions, all three planes of movement, natural gait, and the Big Five. A quick check before you teach it so nothing&#8217;s missing.</p>
+        <p>Run your Peak Flow past every element &#8212; natural gait, all the body positions, and all three planes of movement. A quick check before you teach it so nothing&#8217;s missing.</p>
       </div>
     </section>
 
@@ -324,7 +306,7 @@
         <div class="res-stats">
           <div class="fc-counter">
             <span class="fc-count" id="fc-total-count">0</span>
-            <span class="fc-denom">/ 28 checked</span>
+            <span class="fc-denom">/ 21 checked</span>
           </div>
         </div>
         <div class="res-actions">
@@ -360,30 +342,8 @@
           </div>
         </div>
 
-        <!-- Right: Planes + Gait + Big Five -->
+        <!-- Right: Gait + Planes -->
         <div class="fc-col">
-
-          <!-- Movement Planes -->
-          <div class="fc-section">
-            <div class="fc-section-head">
-              <div>
-                <div class="fc-section-eyebrow-row">
-                  <span class="card-eyebrow">Movement Planes</span>
-                  <button class="fc-info-btn" data-fc-tooltip="Does your flow move in all three planes?"><span class="material-symbols-sharp">info</span></button>
-                </div>
-              </div>
-              <div class="fc-section-right">
-                <button class="fc-section-reset" data-key="plane" title="Reset movement planes"><span class="material-symbols-sharp">restart_alt</span></button>
-                <div class="fc-counter">
-                  <span class="fc-count" id="plane-count">0</span>
-                  <span class="fc-denom">/ 3</span>
-                </div>
-              </div>
-            </div>
-            <div class="fc-progress"><div class="fc-progress-fill" id="plane-fill"></div></div>
-            <div class="fc-complete" id="plane-complete"><p>All three planes covered.</p></div>
-            <div class="fc-list" id="plane-list"></div>
-          </div>
 
           <!-- Gait -->
           <div class="fc-section">
@@ -398,7 +358,7 @@
                 <button class="fc-section-reset" data-key="gait" title="Reset gait"><span class="material-symbols-sharp">restart_alt</span></button>
                 <div class="fc-counter">
                   <span class="fc-count" id="gait-count">0</span>
-                  <span class="fc-denom">/ 6</span>
+                  <span class="fc-denom">/ 4</span>
                 </div>
               </div>
             </div>
@@ -407,26 +367,26 @@
             <div class="fc-list" id="gait-list"></div>
           </div>
 
-          <!-- Big Five -->
+          <!-- Movement Planes -->
           <div class="fc-section">
             <div class="fc-section-head">
               <div>
                 <div class="fc-section-eyebrow-row">
-                  <span class="card-eyebrow">The Big Five</span>
-                  <button class="fc-info-btn" data-fc-tooltip="Does your flow address each element?"><span class="material-symbols-sharp">info</span></button>
+                  <span class="card-eyebrow">Movement Planes</span>
+                  <button class="fc-info-btn" data-fc-tooltip="Does your flow move in all three planes?"><span class="material-symbols-sharp">info</span></button>
                 </div>
               </div>
               <div class="fc-section-right">
-                <button class="fc-section-reset" data-key="big5" title="Reset big five"><span class="material-symbols-sharp">restart_alt</span></button>
+                <button class="fc-section-reset" data-key="plane" title="Reset movement planes"><span class="material-symbols-sharp">restart_alt</span></button>
                 <div class="fc-counter">
-                  <span class="fc-count" id="big5-count">0</span>
-                  <span class="fc-denom">/ 5</span>
+                  <span class="fc-count" id="plane-count">0</span>
+                  <span class="fc-denom">/ 4</span>
                 </div>
               </div>
             </div>
-            <div class="fc-progress"><div class="fc-progress-fill" id="big5-fill"></div></div>
-            <div class="fc-complete" id="big5-complete"><p>All elements addressed.</p></div>
-            <div class="fc-list" id="big5-list"></div>
+            <div class="fc-progress"><div class="fc-progress-fill" id="plane-fill"></div></div>
+            <div class="fc-complete" id="plane-complete"><p>All three planes covered.</p></div>
+            <div class="fc-list" id="plane-list"></div>
           </div>
 
         </div>
@@ -445,7 +405,6 @@
       var BODY_POSITIONS = EOF_DATA.BODY_POSITIONS;
       var PLANES         = EOF_DATA.PLANES;
       var GAIT           = EOF_DATA.GAIT;
-      var BIG_FIVE       = EOF_DATA.BIG_FIVE;
 
       // ── Storage ───────────────────────────────────────────────────────
 
@@ -453,14 +412,13 @@
         bp:    'flowschool_fc_positions',
         plane: 'flowschool_fc_planes',
         gait:  'flowschool_fc_gait',
-        big5:  'flowschool_fc_big5',
       };
 
-      var TOTALS = { bp: 13, plane: 4, gait: 6, big5: 5 };
+      var TOTALS = { bp: 13, plane: 4, gait: 4 };
 
       // ── State ─────────────────────────────────────────────────────────
 
-      var state = { bp: new Set(), plane: new Set(), gait: new Set(), big5: new Set() };
+      var state = { bp: new Set(), plane: new Set(), gait: new Set() };
 
       Object.keys(KEYS).forEach(function (key) {
         try { localStorage.removeItem(KEYS[key]); } catch (_) {}
@@ -490,10 +448,6 @@
         var html = '';
 
         items.forEach(function (item) {
-          if (item.id === '_divider') {
-            html += '<div class="fc-divider">' + item.label + '</div>';
-            return;
-          }
           var checked = state[key].has(item.id);
           html +=
             '<div class="fc-item' + (checked ? ' checked' : '') + '" ' +
@@ -535,10 +489,9 @@
 
       // ── Init ──────────────────────────────────────────────────────────
 
+      renderList('gait-list',  GAIT,           'gait');
       renderList('bp-list',    BODY_POSITIONS, 'bp');
       renderList('plane-list', PLANES,         'plane');
-      renderList('gait-list',  GAIT,           'gait');
-      renderList('big5-list',  BIG_FIVE,       'big5');
 
       // ── Global reset ──────────────────────────────────────────────────
 

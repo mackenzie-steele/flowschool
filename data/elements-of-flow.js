@@ -3,10 +3,20 @@
 // Single source for the Elements of Flow checklist. Consumed by:
 //   · elements-of-flow.html  (the standalone checker, archived from the nav)
 //   · your-flows.html        (the Peak Flow checklist inside the editor)
-// Edit here; both surfaces follow. 28 items total: 13 + 4 + 6 + 5.
+// Edit here; both surfaces follow. Sections follow the curriculum's
+// three elements of flow, in canon order: Gait (the four alternations),
+// Body Positions, Planes of Movement. 21 items total: 4 + 13 + 4.
 // ─────────────────────────────────────────────────────────────────────────────
 
 window.EOF_DATA = {
+
+  GAIT: [
+    { id: 'bent-straight', label: 'Bent → Straight',          sub: 'Do both legs alternate between bent and straight?' },
+    { id: 'square-open',   label: 'Square Hip → Open Hip',    sub: 'Do your hips rotate between square and open?' },
+    { id: 'arms-ud',       label: 'Arms Up → Arms Down',      sub: 'Do your arms move in multiple directions, not just up?' },
+    { id: 'back-fwd',      label: 'Backbend → Forward Fold',  sub: 'Does your spine both extend and flex?' },
+  ],
+
 
   BODY_POSITIONS: [
     { id: 'single-leg',   label: 'Single Leg',                      sub: 'Tree · Warrior 3 · Revolved Half Moon' },
@@ -24,6 +34,7 @@ window.EOF_DATA = {
     { id: 'backbend',     label: 'Spine Extension / Backbend',      sub: 'Bridge · Wild Thing · Up Dog' },
   ],
 
+
   // presented as the directions a flow travels; the anatomical plane rides
   // underneath (sagittal appears twice — split by direction, 4 items total)
   PLANES: [
@@ -33,21 +44,5 @@ window.EOF_DATA = {
     { id: 'transverse',  label: 'Twist / Rotation', sub: 'Transverse' },
   ],
 
-  GAIT: [
-    { id: 'bent-straight', label: 'Bent → Straight',          sub: 'Do both legs alternate between bent and straight?' },
-    { id: 'square-open',   label: 'Square Hip → Open Hip',    sub: 'Do your hips rotate between square and open?' },
-    { id: 'arms-ud',       label: 'Arms Up → Arms Down',      sub: 'Do your arms move in multiple directions, not just up?' },
-    { id: 'twist-lr',      label: 'Twist Left → Twist Right', sub: 'Does your flow twist in both directions?' },
-    { id: 'back-fwd',      label: 'Backbend → Forward Fold',  sub: 'Does your spine both extend and flex?' },
-    { id: 'fwd-bwd',       label: 'Forward → Backward',       sub: 'Does your flow move both forward and backward on the mat?' },
-  ],
-
-  BIG_FIVE: [
-    { id: 'mobility',     label: 'Mobility',     sub: 'Joint control and strength in range of motion' },
-    { id: 'stability',    label: 'Stability',    sub: 'Ability to control movement' },
-    { id: 'strength',     label: 'Strength',     sub: 'Power, endurance, and exertion of effort' },
-    { id: 'conditioning', label: 'Conditioning', sub: 'Rhythmic movement of the heart and lungs' },
-    { id: 'flow',         label: 'Flow',         sub: 'Transitions and postures sequenced across planes' },
-  ],
 
 };

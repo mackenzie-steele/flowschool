@@ -63,6 +63,7 @@
     }
 
     .flow-card {
+      box-shadow: var(--crest);
       border-radius: var(--r);
       position: relative;
       display: flex;
@@ -70,10 +71,14 @@
       border: 1px solid rgba(var(--ink-rgb), .13);
       padding: 16px 20px 16px;
       cursor: pointer;
-      transition: border-color var(--transition-base);
+      background: var(--raised), rgba(var(--ink-rgb), .022);
+      transition: border-color var(--transition-base), background .15s;
     }
 
-    .flow-card:hover { border-color: rgba(var(--ink-rgb), .32); }
+    .flow-card:hover {
+      border-color: rgba(var(--ink-rgb), .22);
+      background: var(--raised), rgba(var(--ink-rgb), .038);
+    }
 
     .fc-top {
       display: flex;
@@ -539,7 +544,7 @@
       <div class="inner">
         <p class="label-1">The building blocks.</p>
         <h3>Your Flows</h3>
-        <p>Flows are the small sequences you build classes out of &#8212; a warm-up you like, a good way into a peak. Save the ones you keep reaching for so you&#8217;re not rebuilding the same thing from scratch every time you sit down to plan.</p>
+        <p>Flows are the small sequences you build classes out of. Name them and write them in a way you can easily remember, reference, and repeat. Drop them into any class instead of rewriting them from scratch. Update a flow and it updates all classes it&#8217;s attached to.</p>
       </div>
     </section>
 
@@ -659,7 +664,7 @@
             <span class="label-1">The Flow</span>
             <span class="fl-count" id="fl-count" hidden></span>
           </div>
-          <textarea class="fl-area" id="fl-area" rows="3" placeholder="SEATED TWIST / BOAT / LOW BOAT / TWIST BOAT"></textarea>
+          <textarea class="fl-area" id="fl-area" rows="3" placeholder="SEATED TWIST / BOAT / PIGEON / SL DD"></textarea>
         </div>
 
         <!-- Elements of Flow — Peak Flows only. Optional checklist; checked
@@ -668,10 +673,17 @@
         <div class="fl-section" id="fl-elements" hidden>
           <button type="button" class="ef-head" id="ef-toggle" aria-expanded="false" aria-controls="ef-body">
             <span class="ef-title">Elements of Flow</span>
-            <span class="ef-progress" id="ef-progress">0/28</span>
+            <span class="ef-progress" id="ef-progress">0/21</span>
             <span class="material-symbols-sharp ef-chev i-md">expand_more</span>
           </button>
           <div class="ef-body" id="ef-body" hidden></div>
+        </div>
+
+        <!-- where this flow already lives — same module as the viewer;
+             a new, unsaved flow has no classes yet, so it stays hidden -->
+        <div class="fd-usedin" id="fl-usedin" hidden>
+          <span class="label-1">In Your Classes</span>
+          <div id="fl-usedin-list"></div>
         </div>
 
       </div>
@@ -701,11 +713,11 @@
     // the taxonomy, in class order
     var FLOW_TYPES = [
       { key: 'warmup',   name: 'Warm Up Flow',      desc: 'Begin the class connected to the earth.' },
-      { key: 'bridge',   name: 'Bridge Flow',       desc: 'Great for the middle of a class — bridging the warm up and the peak.' },
-      { key: 'nohands',  name: 'No Hands Flow',     desc: 'Standing flows without your hands on the ground.' },
-      { key: 'peak',     name: 'Peak Flow',         desc: 'Every body position, moving in all directions — on and off the ground.' },
+      { key: 'bridge',   name: 'Bridge Flow',       desc: 'Great for the middle of a class to bridge the warm up and peak flows.' },
+      { key: 'peak',     name: 'Peak Flow',         desc: 'Every body position, moving in all directions, including on and off the ground.' },
       { key: 'workshop', name: 'Mid Class Workshop', desc: 'Teach the small things that make a big difference.' },
-      { key: 'slomo',    name: 'Slo Mo Flow',       desc: 'Think “slow and strong” — one-ish times per side.' },
+      { key: 'slomo',    name: 'Slo Mo Flow',       desc: 'Think “slow and strong” and one-ish times per side.' },
+      { key: 'restorative', name: 'Restorative Flow', desc: 'When it’s time to rest and lay it all down.' },
     ];
 
     function typeOf(key) {
@@ -713,7 +725,12 @@
     }
 
     function loadFlows() {
-      try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch (_) { return []; }
+      try {
+        var list = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+        // legacy: No Hands flows became Bridge flows (Jul 2026)
+        list.forEach(function (f) { if (f.type === 'nohands') f.type = 'bridge'; });
+        return list;
+      } catch (_) { return []; }
     }
 
     var flows = loadFlows();
@@ -750,7 +767,7 @@
 
     // ─── LIST ────────────────────────────────────────────────────────────────────
 
-    var TAG_NAMES = { warmup: 'Warm Up', bridge: 'Bridge', nohands: 'No Hands', peak: 'Peak', workshop: 'Workshop', slomo: 'Slo Mo' };
+    var TAG_NAMES = { warmup: 'Warm Up', bridge: 'Bridge', peak: 'Peak', workshop: 'Workshop', slomo: 'Slo Mo', restorative: 'Restorative' };
     var listFilter = 'all';
     var searchQ = '';
 
@@ -775,8 +792,8 @@
         searchQ = '';
         index.innerHTML =
           '<div class="library-empty">' +
-          '<h4 class="library-empty-title">Classes are built from flows.</h4>' +
-          '<p class="library-empty-sub">Write the small sequences you reach for again and again &#8212; a warm up, a bridge, a peak. Name them, and build with them.</p>' +
+          '<h4 class="library-empty-title">Add your first flow.</h4>' +
+          '<p class="library-empty-sub">Write the sequences you&#8217;ll combine to create whole classes.</p>' +
           '<div class="library-empty-actions">' +
           '<button class="btn-primary" id="empty-new-btn">Write a Flow</button>' +
           '</div>' +
@@ -816,7 +833,7 @@
         var t = typeOf(listFilter);
         index.innerHTML =
           '<div class="flow-filter-empty">' +
-          '<p>No ' + (t ? t.name.toLowerCase() + 's' : 'flows') + ' yet.' + (t ? ' ' + t.desc : '') + '</p>' +
+          '<p>' + (t ? t.desc : 'No flows yet.') + '</p>' +
           (t ? '<button class="btn-ghost" id="filter-new-btn"><span class="material-symbols-sharp i-sm" style="margin-right:6px">add</span>Write a ' + t.name + '</button>' : '') +
           '</div>';
         var fnb = document.getElementById('filter-new-btn');
@@ -1070,6 +1087,9 @@
         autoGrow(area);
         editChallenge = f && f.challenge ? f.challenge.slice() : [];
 
+        document.getElementById('fl-usedin').hidden = !f;
+        if (f) renderUsedIn(f, document.getElementById('fl-usedin-list'));
+
         dirty = false;
         setSaveButton(f ? 'saved' : 'idle');
 
@@ -1102,10 +1122,9 @@
     // Checked state lives on the flow itself (f.elements) and syncs with it.
 
     var EF_SECTIONS = [
+      { key: 'gait',  label: 'Gait',            items: EOF_DATA.GAIT },
       { key: 'bp',    label: 'Body Positions',  items: EOF_DATA.BODY_POSITIONS },
       { key: 'plane', label: 'Movement Planes', items: EOF_DATA.PLANES },
-      { key: 'gait',  label: 'Gait',            items: EOF_DATA.GAIT },
-      { key: 'big5',  label: 'The Big Five',    items: EOF_DATA.BIG_FIVE },
     ];
     var EF_TOTAL = EF_SECTIONS.reduce(function (n, s) { return n + s.items.length; }, 0);
     var efState = {};

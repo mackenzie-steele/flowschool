@@ -404,7 +404,7 @@
 
     .chain-note-input::placeholder { color: var(--text-3); font-style: italic; }
     .chain-note-input:focus {
-      border-color: rgba(var(--ink-rgb), .35);
+      border-color: rgba(var(--accent-rgb), .60);
       background: rgba(255, 255, 255, 0.85);
     }
 
@@ -633,7 +633,7 @@
     <section class="hero">
       <p class="label-1">Connect the dots.</p>
       <h3>Pose Popcorn</h3>
-      <p>You get two poses, and your job is figuring out how to get from the first to the second. Most of us rush past transitions, but that&#8217;s where a lot of the teaching actually happens. Work them one at a time and your classes stop feeling like a list of poses.</p>
+      <p>Draw a starting and destination pose and figure out the path between them. How quickly and fluidly can you get there? Use the notes to list specific transitions or the chain of poses that link the two. Save the flow and notes when you&#8217;re done.</p>
     </section>
 
     <!-- Two decks, face down — draw each to begin; the stacks stay,
@@ -1420,6 +1420,27 @@
       if (!ta) return;
       ta.style.height = 'auto';
       ta.style.height = ta.scrollHeight + 'px';
+    });
+
+    // clicking away keeps the note too. Cancel's mousedown lands before
+    // the blur, so it can wave the save off; any other exit commits.
+    var noteCancelDown = false;
+    document.getElementById('chain-list').addEventListener('mousedown', function (e) {
+      noteCancelDown = !!e.target.closest('[data-action="cancel"]');
+    });
+    document.getElementById('chain-list').addEventListener('focusout', function (e) {
+      var ta = e.target.closest && e.target.closest('.chain-note-input');
+      if (!ta) return;
+      var wrap = ta.closest('.chain-note-wrap');
+      var idx  = parseInt(ta.dataset.idx);
+      setTimeout(function () {
+        if (noteCancelDown) { noteCancelDown = false; return; }
+        if (!wrap || !wrap.contains(ta) || isNaN(idx) || !chain[idx]) return;
+        chain[idx].note = ta.value;
+        saveToStorage();
+        syncSavedChain();
+        wrap.innerHTML = noteDisplayHTML(idx, ta.value);
+      }, 0);
     });
 
     // drawn poses are cheap — only WRITTEN notes are work worth a hand

@@ -695,7 +695,7 @@
         <span class="material-symbols-sharp">history</span>
       </button>
       <button class="btn-icon" id="ws-save-btn" data-tooltip="Save">
-        <span class="material-symbols-sharp" id="ws-save-icon">bookmark</span>
+        <span class="material-symbols-sharp save-icon" id="ws-save-icon">bookmark</span>
       </button>
       <button class="btn-icon" id="btn-pdf" data-tooltip="Copy script">
         <span class="material-symbols-sharp">content_copy</span>
@@ -1468,9 +1468,7 @@ function startRename() {
 }
 
 function setSaved(saved) {
-  const icon = document.getElementById('ws-save-icon');
-  const btn  = document.getElementById('ws-save-btn');
-  icon.style.fontVariationSettings = saved ? "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20" : '';
+  const btn = document.getElementById('ws-save-btn');
   btn.classList.toggle('saved', saved);
 }
 
