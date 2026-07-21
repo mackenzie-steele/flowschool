@@ -2,3 +2,6 @@
 .vercel
 .env*
 node_modules/
+
+# marketing landing page — local exploration only, not for deploy (2026-07)
+welcome.html

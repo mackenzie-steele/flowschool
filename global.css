@@ -104,15 +104,17 @@
   /* Native UI (scrollbars, form controls) follows the theme */
   color-scheme: light;
 
-  /* Background */
-  --bg: #F5F4F0;
+  /* Background — near-neutral warm. The old #F5F4F0 read as paper
+     when every surface was an ink wash; against the layered whites it
+     read tan. This keeps a whisper of warmth without the yellow. */
+  --bg: #F7F6F4;
 
   /* Ink / Paper tokens — swap in [data-theme="dark"] */
   --ink-rgb:     22, 22, 18;
   --ink-solid:   #161614;
-  --paper-solid: #F5F4F0;
+  --paper-solid: #F7F6F4;
   /* Paper as RGB — for translucent paper surfaces (headers, toggles, veils) */
-  --paper-rgb:   245, 244, 240;
+  --paper-rgb:   247, 246, 244;
   /* Sidebar surface — solid paper; nothing scrolls behind it */
   --sidebar-bg:  var(--paper-solid);
 
@@ -132,36 +134,69 @@
      keeps #A5A5A5 (its contrast was always fine). */
   --text-3: #6E6E6E;
 
-  /* Accent — muted plum in light mode: the daylight equivalent of volt,
-     so state stays visibly LIT instead of collapsing into ink */
-  --volt:          #8D6889;
-  --volt-rgb:      141, 104, 137;
-  --accent:        #8D6889;
-  --accent-dim:    rgba(141, 104, 137, .10);
-  --accent-border: rgba(141, 104, 137, .30);
+  /* Accent — fig by day, periwinkle by night. The old muted plum,
+     developed instead of retired: saturated and deepened until it
+     speaks (~6:1 on the paper — text-capable). Violet sits next to
+     the night periwinkle on the wheel, so the themes read as
+     cousins. (The token's past lives: a lime "volt", a muted plum,
+     briefly a cobalt. The fig is the plum grown up.) */
+  --accent:        #7A3E70;
+  --accent-rgb:    122, 62, 112;
+  --accent-dim:    rgba(122, 62, 112, .08);
+  --accent-border: rgba(122, 62, 112, .28);
 
-  /* Primary button hover fill */
-  --btn-hover: #2C2C28;
+  /* EMISSION (Jul 2026): the accent is allowed to glow in exactly
+     three places — behind the primary button, on the keyboard focus
+     ring, and as the active nav dot's halo. Fig casts by day,
+     periwinkle by night. Emission, never elevation. */
+  --glow: 0 6px 24px rgba(var(--accent-rgb), .18);
+  --glow-dot: 0 0 8px rgba(var(--accent-rgb), .55);
+
+  /* Primary button hover fill — retuned Jul 2026 for the neutral
+     ground + fig (the old #2C2C28 was warm-paper ink) */
+  --btn-hover: #2B2830;
 
   /* Semantic status */
   --danger: #E05252;
   --danger-rgb: 224, 82, 82;   /* alpha washes: rgba(var(--danger-rgb), .05) etc. */
 
   /* Slider fill — the highlight, both modes */
-  --slider-fill: var(--volt);
+  --slider-fill: var(--accent);
 
-  /* Radius — geometric */
-  --r:  0px;  /* cards, inputs, panels */
-  --rf: 2px;  /* fine detail (beta tag) */
-  --rs: 0px;  /* small controls */
-  --rb: 8px;  /* buttons, badges, toast — all buttons carry 8px (Jul 2026) */
+  /* Radius — soft geometry (Jul 2026): the system rounds. Surfaces
+     carry 12, buttons and small controls 8, fine detail 4. One family
+     of corners — the old square-card / round-button split is retired. */
+  --r:  12px; /* cards, inputs, panels, menus */
+  --rf: 4px;  /* fine detail (beta tag, mono tags, ghost bars) */
+  --rs: 8px;  /* small controls */
+  --rb: 8px;  /* buttons, badges, toast */
 
   /* ELEVATION (Jul 2026): exactly two shadows. FLOAT for anything
      hovering over content (menus, panels, FAB, floating CTAs);
      PRESS for modal cards only. Flat everything else — LED glows
-     (volt state dots) are emission, not elevation, and are exempt. */
+     (accent state dots) are emission, not elevation, and are exempt. */
   --shadow-float: 0 4px 20px rgba(var(--ink-rgb), .12);
   --shadow-press: 0 4px 32px rgba(var(--ink-rgb), .16), 0 20px 60px rgba(var(--ink-rgb), .10);
+
+  /* SURFACE MODEL (Jul 2026): three tiers under one light source.
+     BASE is the page itself. RAISED surfaces (cards, panels, menus,
+     modal cards) layer --raised — a breath of top-light — over their
+     wash, and in dark mode wear --crest, a 1px lit edge seated under
+     the lighter top border (the milled crest). OVERLAY is the glass
+     system. Depth comes from light, never from new shadows. */
+  /* daylight: the raised tiers carry real WHITE — white-on-warm is
+     how a bright room gets its depth. --raised-2 is the tier closer
+     to the light (menus, modal cards). Dark mode overrides both back
+     to the breath-gradient and lets the crest do the talking. */
+  --raised: linear-gradient(rgba(255, 255, 255, .78), rgba(255, 255, 255, .58) 72px);
+  --raised-2: linear-gradient(rgba(255, 255, 255, .94), rgba(255, 255, 255, .84) 72px);
+  --crest: inset 0 1px 0 rgba(255, 255, 255, 0); /* dark mode lights it */
+
+  /* WELLS (3.9): inputs recess where surfaces raise — a hair deeper
+     than their surroundings, with a lip of shadow at the top. The
+     existing focus states now read as the field waking. */
+  --well-bg: rgba(var(--ink-rgb), .045);
+  --well: inset 0 1.5px 3px rgba(20, 22, 27, .06);
 
   /* SPACING SCALE (Jul 2026): 4 · 8 · 12 · 16 · 20 · 24 · 28 · 32 ·
      40 · 48 · 56 · 64 · 72. Margins, paddings, and gaps sit on these
@@ -284,26 +319,35 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg:            #151515;
-  --ink-rgb:       239, 239, 239;
-  --ink-solid:     #EFEFEF;
-  --paper-solid:   #151515;
-  --surface:       #262626;
-  --surface-2:     #333333;
-  --border:        #333333;
-  --border-light:  #262626;
+  /* blue-black (Jul 2026): the same room at night, not a different
+     building. Every step of the ramp carries a trace of the accent's
+     blue — temperature is what separates a designed dark mode from an
+     inverted one. Lightness matches the old neutral ramp. */
+  --bg:            #14161B;
+  --ink-rgb:       235, 238, 245;
+  --ink-solid:     #EBEEF5;
+  --paper-solid:   #14161B;
+  --surface:       #23262E;
+  --surface-2:     #30343E;
+  --border:        #30343E;
+  --border-light:  #23262E;
   --accent:        #84AAF1;
+  --accent-rgb:    132, 170, 241;
   --accent-dim:    rgba(132, 170, 241, .10);
   --accent-border: rgba(132, 170, 241, .25);
-  --text-1:        #EFEFEF;
-  --text-2:        #C3C3C3;
-  --text-3:        #A5A5A5;
-  --volt:          #84AAF1;
-  --volt-rgb:      132, 170, 241;
-  --slider-fill:   var(--volt);
-  --paper-rgb:     21, 21, 21;
+  --text-1:        #EBEEF5;
+  --text-2:        #C1C6D0;
+  --text-3:        #A4A9B5;
+  --slider-fill:   var(--accent);
+  --paper-rgb:     20, 22, 27;
   --sidebar-bg:    var(--paper-solid);
-  --btn-hover:     #EFEFEF;
+  --btn-hover:     #EBEEF5;
+  --glow:          0 6px 28px rgba(var(--accent-rgb), .25);
+  --raised:        linear-gradient(rgba(255, 255, 255, .028), rgba(255, 255, 255, 0) 64px);
+  --raised-2:      linear-gradient(rgba(255, 255, 255, .028), rgba(255, 255, 255, 0) 64px);
+  --crest:         inset 0 1px 0 rgba(255, 255, 255, .045);
+  --well-bg:       rgba(0, 0, 0, .22);
+  --well:          inset 0 1.5px 3px rgba(0, 0, 0, .35);
 }
 
 /* ─── 1c. THEME TRANSITION ───────────────────────────────────── */
@@ -321,80 +365,32 @@
 
 
 /* ─── 1d. PAGE TRANSITIONS ───────────────────────────────────── */
-/* Opts every same-origin navigation into the browser's native cross-document
-   View Transition — a soft crossfade instead of an instant hard white-flash
-   swap. Browsers without support (older Safari/Firefox) just navigate
-   normally, no fallback needed. */
-
-@view-transition {
-  navigation: auto;
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 0.22s;
-  animation-timing-function: ease;
-}
-
-/* Chrome's default UA styles composite the old/new snapshots over a white
-   background — invisible in light mode, but it's exactly the white flash
-   seen when transitioning between two dark pages. */
-::view-transition-group(root),
-::view-transition-image-pair(root) {
-  background-color: var(--bg);
-}
-
-/* The sidebar is effectively identical from page to page (only the active
-   link differs) — naming it lets the browser treat it as one persistent
-   element that stays put during the transition, instead of crossfading it
-   along with the rest of the page. This is the piece that stops the nav
-   itself from feeling like it "jumps" on every click. */
-.app-sidebar {
-  view-transition-name: app-sidebar;
-}
-
-/* Named groups still crossfade by default, which reads as a flicker/reload
-   on an element that's supposed to look untouched. Cut the animation
-   entirely so the sidebar just stays put — only the main content area
-   transitions. */
-::view-transition-group(app-sidebar) {
-  animation: none;
-}
-
-/* The active row's LED dot is the one element that meaningfully MOVES
-   between pages. Naming it lets it slide from the old row to the new
-   one while the rest of the rail holds still — a thread of continuity
-   through the one part of the app that never reloads. Pages without an
-   active row (settings, profile) just fade it out gracefully. */
-.nav-dot {
-  view-transition-name: nav-dot;
-}
-
-::view-transition-group(nav-dot) {
-  animation-duration: .28s;
-  animation-timing-function: cubic-bezier(.2, .6, 0, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(nav-dot) { animation: none; }
-}
-
+/* Cross-document View Transitions were removed (Jul 2026) after a
+   deep audit: the browser snapshots the new page at first render —
+   while pageEnter still holds main invisible — so the crossfade
+   animated a bare-ground frame (the light-mode "white flash"), and
+   the pagereveal latch meant to suppress pageEnter for those
+   arrivals isn't reliably supported. Three systems fought over the
+   arrival; now ONE owns it: the pre-paint themed ground + pageEnter.
+   Deterministic in every browser. (Retired with the mechanism: the
+   sidebar pinning — moot without a crossfade — and the nav-dot
+   slide between pages.) */
 
 /* ─── 2. BASE RESET ──────────────────────────────────────────── */
 
 /* every counter, timer, and stat keeps its column — no jiggle */
 html { font-variant-numeric: tabular-nums; }
 
-/* text selection wears the highlight — volt on ink in the dark,
-   cobalt behind ink in the light */
+/* text selection wears the highlight — accent on ink in the dark,
+   accent behind ink in the light */
 ::selection {
-  background: rgba(var(--volt-rgb), .30);
+  background: rgba(var(--accent-rgb), .30);
   color: var(--text-1);
 }
 
 [data-theme="dark"] ::selection {
-  background: var(--volt);
-  color: var(--paper-solid); /* near-black on volt */
+  background: var(--accent);
+  color: var(--paper-solid); /* near-black on accent */
 }
 
 *,
@@ -477,7 +473,7 @@ main:focus { outline: none; }
    Components with their own focus treatment (boxed fields) opt out
    via their explicit outline: none. */
 :focus-visible {
-  outline: 2px solid rgba(var(--ink-rgb), .55);
+  outline: 2px solid rgba(var(--accent-rgb), .65);
   outline-offset: 2px;
 }
 
@@ -489,7 +485,7 @@ input:focus:focus-visible,
 textarea:focus:focus-visible,
 select:focus:focus-visible {
   outline: none;
-  border-color: rgba(var(--ink-rgb), .55);
+  border-color: rgba(var(--accent-rgb), .60);
 }
 
 /* the inset-seam textareas (feedback, log, class sections, flows)
@@ -498,10 +494,15 @@ textarea.fb-text:focus:focus-visible,
 textarea.lg-area:focus:focus-visible,
 textarea.cw-area:focus:focus-visible,
 textarea.fl-area:focus:focus-visible {
-  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .55);
+  box-shadow: var(--well), inset 0 0 0 1px rgba(var(--accent-rgb), .60);
 }
 
-/* ─── 3. TYPOGRAPHY ──────────────────────────────────────────── */
+/* ─── 3. TYPOGRAPHY ────────────────────────────────────────────
+   WEIGHT SPLIT (Jul 2026): display sizes (h1–h3) stay regular — the
+   editorial signature. Mid-scale headings (h4–h7) and card titles
+   carry medium, so pages scan with anchors instead of size alone.
+   Large CONTENT text (dealt rules, pose names, flow text) is not a
+   heading — it stays regular. ─── */
 
 h1 {
   font-family: var(--font);
@@ -533,7 +534,7 @@ h3 {
 h4 {
   font-family: var(--font);
   font-size: var(--fs-h4);
-  font-weight: var(--weight-regular) !important;
+  font-weight: var(--weight-medium) !important;
   letter-spacing: -.015em;
   line-height: var(--lh-heading);
   color: var(--text-1);
@@ -542,7 +543,7 @@ h4 {
 h5 {
   font-family: var(--font);
   font-size: var(--fs-h5);
-  font-weight: var(--weight-regular) !important;
+  font-weight: var(--weight-medium) !important;
   line-height: var(--lh-heading);
   color: var(--text-1);
 }
@@ -550,7 +551,7 @@ h5 {
 h6 {
   font-family: var(--font);
   font-size: var(--fs-h6);
-  font-weight: var(--weight-regular) !important;
+  font-weight: var(--weight-medium) !important;
   line-height: var(--lh-heading);
   color: var(--text-1);
 }
@@ -558,7 +559,7 @@ h6 {
 .h7 {
   font-family: var(--font);
   font-size: var(--fs-h7);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-medium);
   line-height: var(--lh-heading);
   color: var(--text-1);
 }
@@ -608,6 +609,27 @@ li {
 .material-symbols-sharp.i-sm { font-size: var(--icon-sm); }
 .material-symbols-sharp.i-md { font-size: var(--icon-md); }
 .material-symbols-sharp.i-lg { font-size: var(--icon-lg); }
+
+/* the owned icon set — lib/icons.js swaps each span's ligature text
+   for a 1.5px lucide stroke; until then (or if a name has no entry)
+   the text stays invisible inside its 1em box. !important: every
+   contextual icon color (.nav-item, .btn-icon, …) outranks this rule
+   in the cascade, and an unswapped span must never show its text. */
+.material-symbols-sharp:not(:has(svg)) { color: transparent !important; }
+
+.material-symbols-sharp svg {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
+
+/* the old FILL-1 states — stroke icons fill with their own color */
+.material-symbols-sharp.filled svg,
+.saved .save-icon svg,
+.fav-mark svg,
+.fav-filter.on .material-symbols-sharp svg {
+  fill: currentColor;
+}
 
 .material-symbols-sharp {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
@@ -857,7 +879,7 @@ body.has-sidebar .cta-bar {
   font-family: var(--font);
   cursor: pointer;
   transition: background var(--transition-base), transform .1s, box-shadow var(--transition-base);
-  box-shadow: none;
+  box-shadow: var(--glow);
   white-space: nowrap;
   text-decoration: none;
 }
@@ -965,7 +987,7 @@ button svg {
 .btn-icon.saved {
   background: var(--accent-dim);
   border-color: var(--accent-border);
-  color: var(--volt);
+  color: var(--accent);
 }
 
 .btn-icon .material-symbols-sharp {
@@ -1037,10 +1059,10 @@ button svg {
   margin-bottom: 16px;
 }
 
-/* favorited marker — filled volt heart beside a title */
+/* favorited marker — filled accent heart beside a title */
 .fav-mark {
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
-  color: var(--volt);
+  color: var(--accent);
   font-size: var(--icon-sm);
   margin-left: 8px;
   vertical-align: 1px;
@@ -1056,7 +1078,7 @@ button svg {
 .fav-filter.on { color: var(--text-1); }
 .fav-filter.on .material-symbols-sharp {
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
-  color: var(--volt);
+  color: var(--accent);
 }
 
 .result-count {
@@ -1135,8 +1157,8 @@ button svg {
 }
 .chip.on::before,
 .filter-chip.active::before {
-  background: var(--volt);
-  border-color: var(--volt);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 /* Count + time btns are compact controls — keep full contrast.
@@ -1180,7 +1202,9 @@ button svg {
   border-top-color: rgba(var(--ink-rgb), .22);
   border-radius: var(--r);
   padding: var(--card-pad);
-  background: rgba(var(--ink-rgb), .02);
+  /* RAISED — top-light over the wash, milled crest in the dark */
+  background: var(--raised), rgba(var(--ink-rgb), .02);
+  box-shadow: var(--crest);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -1192,7 +1216,8 @@ button svg {
   border: 1px solid rgba(var(--ink-rgb), .08);
   border-radius: var(--r);
   padding: var(--card-pad-light);
-  background: rgba(var(--ink-rgb), .018);
+  background: var(--raised), rgba(var(--ink-rgb), .018);
+  box-shadow: var(--crest);
 }
 
 /* Eyebrow — small uppercase label */
@@ -1271,7 +1296,7 @@ input[type=range].range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  border-radius: var(--r);
+  border-radius: 50%;
   background: var(--ink-solid);
   cursor: pointer;
   transition: transform .1s, box-shadow .1s;
@@ -1284,7 +1309,7 @@ input[type=range].range-slider::-webkit-slider-thumb:active {
 input[type=range].range-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
-  border-radius: var(--r);
+  border-radius: 50%;
   background: var(--ink-solid);
   border: none;
   cursor: pointer;
@@ -1902,10 +1927,10 @@ textarea.fs-autogrow {
 
 /* ── Page entrance ─────────────────────────────────────────────
    One restrained motion on arrival: main content fades in and
-   settles up 8px. The sidebar never moves (pinned via
-   view-transition-name), so navigation reads as the workspace
-   holding still while the page changes. Layers under the
-   cross-document crossfade in browsers that support it. */
+   settles up 8px. The sidebar paints in place (it's identical on
+   every page), so navigation reads as the workspace holding still
+   while the page changes. This is the ONLY arrival system — see
+   the §1d note on the retired cross-document crossfade. */
 @keyframes pageEnter {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: none; }
@@ -1998,7 +2023,8 @@ textarea.fs-autogrow {
   padding: 40px;
   border: none;
   border-radius: var(--r);
-  background: var(--bg);
+  background: var(--raised), var(--bg);
+  box-shadow: var(--crest);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   text-decoration: none;
@@ -2008,7 +2034,7 @@ textarea.fs-autogrow {
 }
 
 .tool-card:hover {
-  background: rgba(var(--ink-rgb), .03);
+  background: var(--raised), rgba(var(--ink-rgb), .03);
 }
 
 .tool-num {
@@ -2246,7 +2272,7 @@ textarea.fs-autogrow {
 }
 
 .nav-item:hover .material-symbols-sharp {
-  color: var(--text-1); /* full ink with the label — volt stays active-only */
+  color: var(--text-1); /* full ink with the label — accent stays active-only */
 }
 
 /* external rows (Studio B): the trailing mark says "this leaves the app" */
@@ -2263,6 +2289,7 @@ textarea.fs-autogrow {
   height: 5px;
   border-radius: 50%;
   background: var(--accent);
+  box-shadow: var(--glow-dot);
   margin-left: auto;
   flex-shrink: 0;
 }
@@ -2382,6 +2409,7 @@ textarea.fs-autogrow {
   position: relative;
   width: 32px;
   height: 16px;
+  border-radius: 999px;
   background: rgba(var(--ink-rgb), .08);
   box-shadow: inset 0 1px 2px rgba(var(--ink-rgb), .10);
   flex-shrink: 0;
@@ -2393,6 +2421,7 @@ textarea.fs-autogrow {
   left: 2px;
   width: 12px;
   height: 12px;
+  border-radius: 50%;
   background: rgba(var(--ink-rgb), .60);
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -2591,10 +2620,11 @@ body.sidebar-open .sidebar-toggle .nav-tg-close { opacity: 1; }
 .ns-row:active { background: rgba(var(--ink-rgb), .06); }
 .ns-row.on { color: var(--text-1); background: rgba(var(--ink-rgb), .05); }
 /* active icon goes accent — same convention as the desktop sidebar */
-.ns-row.on .material-symbols-sharp { color: var(--volt); }
+.ns-row.on .material-symbols-sharp { color: var(--accent); }
 .ns-dot {
   width: 5px; height: 5px; border-radius: 50%;
   background: var(--accent);
+  box-shadow: var(--glow-dot);
   margin-left: auto;
   flex-shrink: 0;
 }
@@ -2742,7 +2772,8 @@ body.has-sidebar {
 
 .field-input {
   width: 100%;
-  background: rgba(var(--ink-rgb), .04);
+  background: var(--well-bg);
+  box-shadow: var(--well);
   border: 1px solid rgba(var(--ink-rgb), .14);
   border-radius: var(--r);
   padding: 12px 16px;
@@ -2869,7 +2900,7 @@ body.has-sidebar {
 [data-theme="dark"] .btn-icon.saved {
   background: var(--accent-dim);
   border-color: var(--accent-border);
-  color: var(--volt);
+  color: var(--accent);
 }
 
 [data-theme="dark"] input[type=range].range-slider::-webkit-slider-thumb {
@@ -2888,15 +2919,15 @@ body.has-sidebar {
 /* Semi-transparent paper surfaces resolve per-theme via --paper-rgb —
    no per-element dark overrides needed. (--sidebar-bg is solid paper.) */
 
-/* Active nav icon → volt */
+/* Active nav icon → accent */
 .nav-item.active .material-symbols-sharp {
-  color: var(--volt);
+  color: var(--accent);
   opacity: 1;
 }
 
 [data-theme="dark"] .modal-card {
   --shadow-press: 0 4px 32px rgba(0, 0, 0, .50), 0 20px 60px rgba(0, 0, 0, .35);
-  box-shadow: var(--shadow-press);
+  box-shadow: var(--crest), var(--shadow-press);
 }
 
 /* Disabled btn text color fix in dark */
@@ -2989,7 +3020,7 @@ body.has-sidebar {
 
 .library-empty-title {
   font-size: var(--fs-h4);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-medium);
   letter-spacing: -.01em;
   line-height: var(--lh-heading);
   color: var(--text-1);
@@ -3049,6 +3080,7 @@ body.has-sidebar {
 .library-empty-ghost-row i {
   display: block;
   height: 13px;
+  border-radius: var(--rf);
   background: rgba(var(--ink-rgb), .07);
 }
 
@@ -3072,10 +3104,12 @@ body.has-sidebar {
   z-index: 5;
   min-width: 230px;
   max-width: 320px;
-  background: var(--paper-solid);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--raised-2), var(--paper-solid);
   border: 1px solid rgba(var(--ink-rgb), .16);
   border-top-color: rgba(var(--ink-rgb), .30);
-  box-shadow: var(--shadow-float);
+  box-shadow: var(--crest), var(--shadow-float);
 }
 
 .sh-row {
@@ -3132,7 +3166,7 @@ body.has-sidebar {
   color: var(--text-2);
   background: none;
   border: 1px solid rgba(var(--ink-rgb), .18);
-  border-radius: 0;
+  border-radius: var(--rf);
   padding: 3px 8px;
   white-space: nowrap;
   user-select: none;
@@ -3148,10 +3182,12 @@ body.has-sidebar {
   min-width: 214px;
   display: flex;
   flex-direction: column;
-  background: var(--paper-solid);
+  border-radius: var(--r);
+  overflow: hidden; /* row hovers stay inside the corners */
+  background: var(--raised-2), var(--paper-solid);
   border: 1px solid rgba(var(--ink-rgb), .16);
   border-top-color: rgba(var(--ink-rgb), .30);
-  box-shadow: var(--shadow-float);
+  box-shadow: var(--crest), var(--shadow-float);
 }
 
 .tv-menu-item, .fl-menu-item, .st-menu-item {
@@ -3277,7 +3313,8 @@ body.has-sidebar {
 
 .search-input {
   width: 100%;
-  background: rgba(var(--ink-rgb), .04);
+  background: var(--well-bg);
+  box-shadow: var(--well);
   border: 1px solid rgba(var(--ink-rgb), .14);
   border-radius: var(--r);
   padding: 12px 40px 12px 42px;
@@ -3399,11 +3436,11 @@ body.has-sidebar {
 
 .modal-card {
   position: relative;
-  background: var(--paper-solid);
+  background: var(--raised-2), var(--paper-solid);
   border: 1px solid rgba(var(--ink-rgb), .16);
   border-top-color: rgba(var(--ink-rgb), .30);
   border-radius: var(--r);
-  box-shadow: var(--shadow-press);
+  box-shadow: var(--crest), var(--shadow-press);
   padding: 32px;
   width: min(400px, calc(100vw - 40px));
   display: flex;
@@ -3416,7 +3453,8 @@ body.has-sidebar {
 .modal-input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(var(--ink-rgb), .04);
+  background: var(--well-bg);
+  box-shadow: var(--well);
   border: 1px solid rgba(var(--ink-rgb), .14);
   border-radius: var(--r);
   color: var(--text-1);
@@ -3522,9 +3560,9 @@ body.has-sidebar {
 
 .fb-text {
   width: 100%;
-  background: rgba(var(--ink-rgb), .04);
+  background: var(--well-bg);
   border: none;
-  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
+  box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .12);
   border-radius: var(--r);
   padding: 12px 14px;
   font-family: var(--font);
@@ -3539,7 +3577,7 @@ body.has-sidebar {
 .fb-text::placeholder { color: var(--text-3); }
 .fb-text:focus {
   background: rgba(var(--ink-rgb), .06);
-  box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .30);
+  box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .30);
 }
 
 .fb-fine {
@@ -3726,6 +3764,7 @@ body.has-sidebar {
   content: '';
   position: absolute;
   z-index: -1;
+  border-radius: var(--r);
   bottom: 0;                     /* full cards, not strips — a real card
                                     outline remains when the top one leaves */
   background: var(--bg);

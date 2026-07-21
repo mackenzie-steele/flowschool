@@ -4,14 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
-  <style>html{background:#151515;color-scheme:dark}html[data-theme="light"]{background:#F5F4F0;color-scheme:light}</style>
+  <style>html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F7F6F4;color-scheme:light}</style>
   <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Elements of Flow — Flow School</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" href="global.css">
+  <script src="lib/icons.js"></script>
   <style>
     /* ── Elements of Flow — page-specific ─────────────────────────────── */
 
@@ -160,7 +158,7 @@
       line-height: var(--lh-heading);
       font-variant-numeric: tabular-nums;
     }
-    [data-theme="dark"] .fc-count { color: var(--volt); }
+    [data-theme="dark"] .fc-count { color: var(--accent); }
 
     .fc-denom {
       font-family: var(--font-mono);
@@ -231,7 +229,7 @@
       width: 18px;
       height: 18px;
       border: 1.5px solid rgba(var(--ink-rgb), .22);
-      border-radius: 0;
+      border-radius: var(--rf);
       flex-shrink: 0;
       margin-top: 1px;
       display: flex;
@@ -241,8 +239,8 @@
     }
 
     .fc-item.checked .fc-box {
-      background: var(--volt);
-      border-color: var(--volt);
+      background: var(--accent);
+      border-color: var(--accent);
     }
 
     .fc-icon {
