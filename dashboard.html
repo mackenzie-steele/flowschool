@@ -1153,7 +1153,7 @@
           <div id="db-month-body"></div>
         </div>
 
-        <!-- 8. Yoga Strong — Bonnie's podcast: three per month, drawn
+        <!-- 8. Yoga Strong — Bonnie's podcast: the newest three, drawn
              from the last 100 episodes; listened ones never resurface -->
         <div class="db-card">
           <span class="db-eyebrow">Yoga Strong &#8212; the Podcast</span>
@@ -1274,9 +1274,9 @@
         DAILY_SUBLINES[(dayOfYear() + seed) % DAILY_SUBLINES.length];
     }
 
-    // ── Yoga Strong — three per month from the pool, listened ones
-    //    never resurface. The month seeds the shuffle, so everyone's
-    //    dashboard holds steady until the calendar turns. ──
+    // ── Yoga Strong — the three NEWEST episodes lead; listened ones
+    //    never resurface, so the shelf recedes into the back catalog
+    //    as you keep up. ──
     (function () {
       var HEARD_KEY = 'fs-podcast-heard';
       var el = document.getElementById('db-pod-grid');
@@ -1290,21 +1290,10 @@
         try { return JSON.parse(localStorage.getItem(HEARD_KEY) || '[]'); } catch (_) { return []; }
       }
 
-      // deterministic per-month shuffle rank for each episode
-      function monthRank(num) {
-        var seed = new Date().getFullYear() + '-' + new Date().getMonth() + '-' + num;
-        var h = 0;
-        for (var i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-        // avalanche so near-identical seeds land far apart
-        h = Math.imul(h ^ (h >>> 16), 2246822507) >>> 0;
-        h = Math.imul(h ^ (h >>> 13), 3266489909) >>> 0;
-        return (h ^ (h >>> 16)) >>> 0;
-      }
-
       function renderPods() {
         var gone = heard();
         var pool = YOGA_STRONG_EPISODES.filter(function (e) { return gone.indexOf(e.num) === -1; });
-        pool.sort(function (a, b) { return monthRank(a.num) - monthRank(b.num); });
+        pool.sort(function (a, b) { return b.num - a.num; });
         var picks = pool.slice(0, 3);
 
         if (!picks.length) {

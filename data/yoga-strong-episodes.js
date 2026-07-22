@@ -1,14 +1,16 @@
 // ─── YOGA STRONG — BONNIE'S PODCAST (last 100 episodes) ─────────────────────
 //
 // Snapshot of the Buzzsprout feed (rss.buzzsprout.com/619780.rss),
-// episodes 198–297, taken July 5, 2026. Episode links point to Apple
-// Podcasts (show id 1481932845, matched via the iTunes API, Jul 13 2026) —
-// the audience is Apple-Podcasts-primary. The dashboard surfaces three
-// per month from this pool, skipping ones marked as listened.
+// episodes 198–299, refreshed July 22, 2026. Episode links point to Apple
+// Podcasts (show id 1481932845, matched via the iTunes API) — the
+// audience is Apple-Podcasts-primary. The dashboard surfaces the three
+// newest from this pool, skipping ones marked as listened.
 // To refresh: re-run the feed snapshot (ask Claude) — don't hand-edit.
 // ─────────────────────────────────────────────────────────────────────────────
 
 var YOGA_STRONG_EPISODES = [
+  { num: 299, title: 'Finding Freedom to Choose with Jen Brewer', blurb: 'The second episode in a series with Flow School alumni: Jen Brewer, a multifaceted yoga teacher and retreat guide who loves supporting humans through transitions. We explore how yoga empowers us to make conscious choices and become more true to ourselves, embracing messiness in both teaching and life, finding grounded grace, and the power of community.', dur: '1 hr 18 min', date: 'Jul 18, 2026', url: 'https://podcasts.apple.com/us/podcast/299-finding-freedom-to-choose-with-jen-brewer/id1481932845?i=1000777396614' },
+  { num: 298, title: 'Flow School and Finding Your Voice w/Lizzie Fischer', blurb: 'The first in a series with Flow School alumni. Lizzie Fischer shares her journey into yoga, working with women in healing disordered eating, and her experience in Flow School — plus the nuances and craft of teaching, the importance of authenticity, and building a sustainable yoga practice and business that light you up.', dur: '1 hr 6 min', date: 'Jul 12, 2026', url: 'https://podcasts.apple.com/us/podcast/298-flow-school-and-finding-your-voice-w-lizzie-fischer/id1481932845?i=1000776518888' },
   { num: 297, title: 'How Do We Find Authenticity?', blurb: 'What does authenticity mean, and how does it influence our leadership, teaching, and personal growth? This is a juicy conversation about self-discovery and living true to oneself, as an ever-evolving process.', dur: '1 hr 1 min', date: 'Jun 5, 2026', url: 'https://podcasts.apple.com/us/podcast/297-how-do-we-find-authenticity/id1481932845?i=1000771379137' },
   { num: 296, title: 'New Teacher Series: How to Choose a 200 hour YTT and Prepare For It', blurb: 'Today I introduce a new series aimed at new yoga teachers, featuring relevant conversations, actionable insights, and support in building community. Join me to explore considerations when choosing a training and qualities to look for in a teacher.', dur: '35 min', date: 'Jan 22, 2026', url: 'https://podcasts.apple.com/us/podcast/296-new-teacher-series-how-to-choose-a-200-hour-ytt/id1481932845?i=1000746179725' },
   { num: 295, title: 'What Do Integrity and Authenticity Mean For Teachers?', blurb: 'Our energy impacts the rooms we lead. When we\'re navigating hard things in our personal lives, how do we show up and teach in ways that feel authentic and in integrity? How do we guide people effectively through things we might struggle with? Is that even okay to do? We explore some of these questions along the roles of trust, kindness, and vulnerability in navigating them.', dur: '39 min', date: 'Jan 8, 2026', url: 'https://podcasts.apple.com/us/podcast/295-what-do-integrity-and-authenticity-mean-for-teachers/id1481932845?i=1000744259039' },
