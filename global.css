@@ -1051,6 +1051,8 @@ button svg {
 .filter-row::-webkit-scrollbar { display: none; }
 
 /* sort toggle sits on its own quiet row; a result count may ride right */
+.sort-row[hidden] { display: none; }
+
 .sort-row {
   display: flex;
   align-items: center;

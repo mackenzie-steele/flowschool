@@ -10,78 +10,8 @@
   <link rel="stylesheet" href="global.css">
   <script src="lib/icons.js"></script>
   <style>
-
-    /* ── Worksheet toolbar ── */
-    .ws-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .ws-toolbar-btns { display: flex; gap: 8px; }
-    .ws-flow-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      opacity: 0;
-      transition: opacity .2s;
-    }
-    .ws-flow-title-wrap.visible { opacity: 1; }
-    .ws-flow-title {
-      font-size: var(--fs-h5);
-      font-weight: var(--weight-medium);
-      color: var(--text-1);
-    }
-    .ws-flow-title-input {
-      font-family: var(--font);
-      font-size: var(--fs-h5);
-      font-weight: var(--weight-medium);
-      color: var(--text-1);
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid rgba(var(--ink-rgb), .30);
-      outline: none;
-      padding: 0;
-      min-width: 40px;
-      width: auto;
-    }
-    .ws-edit-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-3);
-      padding: 0;
-      display: flex;
-      align-items: center;
-      transition: color var(--transition-base);
-      flex-shrink: 0;
-    }
-    .ws-edit-btn:hover { color: var(--text-1); }
-    .ws-edit-btn .material-symbols-sharp { font-size: var(--icon-md); }
-
-    /* ── Autosave indicator ── */
-    .ws-autosave-indicator {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--text-3);
-    }
-    .ws-autosave-indicator.visible { display: flex; }
-    .ws-autosave-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      flex-shrink: 0;
-      animation: ws-autosave-pulse 2s ease-in-out infinite;
-    }
-    @keyframes ws-autosave-pulse {
-      0%, 100% { opacity: .35; transform: scale(.85); }
-      50%      { opacity: 1;   transform: scale(1); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .ws-autosave-dot { animation: none; opacity: .6; }
-    }
+    /* hidden must always win — several components set their own display */
+    [hidden] { display: none !important; }
 
     /* ── Load modal flow list ── */
     .flow-list {
@@ -117,73 +47,147 @@
       text-overflow: ellipsis;
     }
     .flow-list-date { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-    .flow-list-del {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+
+    /* spoken for — visible, named, not clickable */
+    .flow-list-item.taken { cursor: default; }
+    .flow-list-item.taken .flow-list-name { color: var(--text-3); }
+    .flow-list-item.taken:hover { background: none; }
+
+    /* ── Worksheet container ── */
+    .cue-title-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 0 0 16px;
+      color: var(--text-1);
+      font-family: var(--font);
+      font-size: var(--fs-h4);
+      font-weight: var(--weight-medium);
+      letter-spacing: -.01em;
+      line-height: var(--lh-heading);
+    }
+
+    .cue-title-input::placeholder { color: var(--text-3); }
+
+    /* the attached flow — the folded-shelf drawer from the flows
+       page's cues section: mono title, the flow's name as context,
+       corners splitting between bar and panel while open */
+    .wsf { margin-bottom: 16px; position: relative; }
+
+    /* in edit mode a quiet x rides the bar — the chevron shifts left
+       to make room */
+    .wsf-editable .wsf-head { padding-right: 48px; }
+
+    .wsf-x {
+      position: absolute;
+      top: 13px;
+      right: 12px;
       background: none;
       border: none;
       cursor: pointer;
-      color: rgba(var(--ink-rgb), .22);
-      padding: 4px 8px;
-      font-size: 16px;
+      color: var(--text-3);
+      padding: 6px;
       line-height: 1;
-      flex-shrink: 0;
-      transition: color .12s, transform .12s;
-    }
-    .flow-list-del .material-symbols-sharp { font-size: var(--icon-sm); }
-    .flow-list-del:hover { color: var(--text-1); }
-    .flow-list-del.confirm-delete-armed,
-    .flow-list-del.confirm-delete-armed:hover {
-      color: var(--danger);
-      transform: scale(1.15);
+      border-radius: var(--rs);
+      transition: color var(--transition-base);
     }
 
-    /* ── Worksheet container ── */
-    .ws-more-wrap { position: relative; }
+    .wsf-x:hover { color: var(--text-1); }
 
-    /* the imported flow above the worksheet — reference, not workspace */
-    .ws-flowref {
-      box-shadow: var(--crest);
-      border-radius: var(--r);
-      border: 1px solid rgba(var(--ink-rgb), .12);
-      border-top-color: rgba(var(--ink-rgb), .22);
-      background: var(--raised), rgba(var(--ink-rgb), .02);
-      padding: 16px 20px;
-      margin-bottom: 16px;
-    }
+    .wsf-foot { display: flex; gap: 20px; margin-top: 14px; }
 
-    .ws-flowref-hdr {
-      display: flex;
+    .wsf-foot a {
+      display: inline-flex;
       align-items: center;
-      gap: 12px;
-    }
-
-    .ws-flowref-titles {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .ws-flowref-name {
-      font-size: var(--text-body-sm);
-      font-weight: var(--weight-medium);
-      color: var(--text-1);
-    }
-
-    .ws-flowref-tag {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: none;
       font-family: var(--font-mono);
       font-size: 10px;
       letter-spacing: var(--ls-label);
       text-transform: uppercase;
       color: var(--text-3);
+      transition: color var(--transition-base);
     }
 
+    .wsf-foot a:hover { color: var(--text-1); }
+
+    .wsf-head {
+      border-radius: var(--r);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(var(--ink-rgb), .02);
+      border: 1px solid rgba(var(--ink-rgb), .12);
+      border-top-color: rgba(var(--ink-rgb), .22);
+      font-family: var(--font);
+      text-align: left;
+      cursor: pointer;
+      transition: border-color var(--transition-base);
+    }
+
+    .wsf-head:hover { border-color: rgba(var(--ink-rgb), .30); }
+    .wsf-head[aria-expanded="true"] { border-radius: var(--r) var(--r) 0 0; }
+
+    /* the empty drawer — dashed where the flow will sit (after the
+       head rules: the border shorthand above must not win) */
+    .wsf-empty {
+      border-style: dashed;
+      border-top-color: rgba(var(--ink-rgb), .12);
+      background: none;
+      margin-bottom: 16px;
+    }
+
+    .wsf-empty .wsf-name { flex: 1; min-width: 0; }
+    .wsf-empty-name { color: var(--text-2); }
+    .wsf-empty:hover .wsf-empty-name { color: var(--text-1); }
+
+    .wsf-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: var(--weight-bold);
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
+      color: var(--text-2);
+      line-height: 1;
+    }
+
+    .wsf-context {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .wsf-context .flow-tag { flex-shrink: 0; }
+
+    .wsf-name {
+      font-size: var(--text-body-sm);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .wsf-chev { color: var(--text-3); transition: transform var(--transition-base); }
+    .wsf-head[aria-expanded="true"] .wsf-chev { transform: rotate(180deg); }
+
+    .wsf-body {
+      border-radius: 0 0 var(--r) var(--r);
+      border: 1px solid rgba(var(--ink-rgb), .12);
+      border-top: none;
+      padding: 16px 20px 20px;
+    }
+
+
     .ws-flowref-text {
-      margin-top: 10px;
       font-family: var(--font-mono);
       font-size: 12px;
       line-height: 1.7;
@@ -191,6 +195,7 @@
       white-space: pre-wrap;
       overflow-wrap: break-word;
     }
+
 
     .ws-card {
       border-radius: var(--r); overflow: hidden;
@@ -399,7 +404,7 @@
       display: flex;
       gap: 12px;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: flex-start;
       flex-wrap: wrap;
       margin-top: 28px;
     }
@@ -592,6 +597,158 @@
        checklist in your-flows. */
     .ws-main { min-width: 0; }
 
+    /* ── the library — bar and cards from the siblings' anatomy ── */
+    .library-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .library-bar .search-wrap { flex: 1; }
+
+    .library-bar .btn-primary {
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: var(--r-cta);
+    }
+
+    @media (max-width: 580px) {
+      .library-bar { flex-wrap: wrap; }
+      .library-bar .search-wrap { flex-basis: 100%; }
+    }
+
+    .cue-index {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .cue-index .library-empty { grid-column: 1 / -1; }
+
+    .cue-card {
+      box-shadow: var(--crest);
+      border-radius: var(--r);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(var(--ink-rgb), .13);
+      padding: 16px 20px 16px;
+      cursor: pointer;
+      background: var(--raised), rgba(var(--ink-rgb), .022);
+      transition: border-color var(--transition-base), background .15s;
+    }
+
+    .cue-card:hover {
+      border-color: rgba(var(--ink-rgb), .22);
+      background: var(--raised), rgba(var(--ink-rgb), .038);
+    }
+
+    .cue-card-title {
+      font-size: var(--fs-h5);
+      font-weight: var(--weight-medium);
+      letter-spacing: -.01em;
+      line-height: var(--lh-heading);
+      color: var(--text-1);
+      margin-bottom: 16px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    /* the sheet's opening sentences — reading type, two lines */
+    .cue-card-preview {
+      font-size: var(--text-small);
+      line-height: 1.55;
+      color: var(--text-2);
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      margin: -6px 0 16px;
+    }
+
+    .cue-card-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .04em;
+      color: var(--text-3);
+      border-top: 1px solid var(--border-light);
+      padding-top: 12px;
+    }
+
+
+
+    /* ── the detail — the sheet read like a script ── */
+    .cd-body { max-width: 640px; }
+    .cd-actions { position: relative; flex-shrink: 0; }
+
+    .cd-title {
+      font-size: var(--fs-h4);
+      font-weight: var(--weight-medium);
+      letter-spacing: -.01em;
+      line-height: var(--lh-heading);
+      color: var(--text-1);
+      margin-bottom: 8px;
+    }
+
+    .cd-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .04em;
+      color: var(--text-3);
+      margin-bottom: 28px;
+    }
+
+    .cd-flowref { margin-bottom: 28px; }
+
+    .cd-cue {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding: 10px 0;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .cd-cue:first-child { border-top: none; padding-top: 0; }
+
+    .cd-cue-breath {
+      flex-shrink: 0;
+      width: 52px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .cd-cue-text {
+      flex: 1;
+      min-width: 0;
+      font-size: var(--text-body);
+      line-height: 1.7;
+      color: var(--text-1);
+      overflow-wrap: break-word;
+    }
+
+    .cd-cue-pose {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .cd-empty {
+      font-size: var(--text-body-sm);
+      color: var(--text-3);
+      font-style: italic;
+    }
+
     .wb-shelf { margin-top: 40px; }
 
     .wb-head {
@@ -712,61 +869,151 @@
 
 <main>
 
-<!-- ── HERO ────────────────────────────────────────────────────── -->
+<!-- ── LIST VIEW — the library of cue sheets ───────────────────── -->
 
-<section class="hero">
-  <div class="inner">
-    <p class="label-1">The anatomy of a cue.</p>
-    <h3>Your Cues</h3>
-    <p>A clear cue has three parts: an action, body part, and direction of movement. When cued in this order, students can better understand what you&#8217;re saying and feel like you&#8217;re speaking directly to them. Write your flow, then fill out the worksheet with the directions to guide that flow. Save it and practice saying it out loud before you&#8217;re in front of a class.</p>
-  </div>
-</section>
+<div id="list-view">
 
-<div class="wrap" id="main-wrap">
-<div class="ws-layout">
-<div class="ws-main">
+  <section class="hero">
+    <div class="inner">
+      <p class="label-1">The anatomy of a cue.</p>
+      <h3>Your Cues</h3>
+      <p>A clear cue has three parts: an action, body part, and direction of movement. When cued in this order, students can better understand what you&#8217;re saying and feel like you&#8217;re speaking directly to them. Write your flow, then fill out the worksheet with the directions to guide that flow. Save it and practice saying it out loud before you&#8217;re in front of a class.</p>
+    </div>
+  </section>
 
-  <!-- ── WORKSHEET TOOLBAR ────────────────────────────────────── -->
-
-  <div class="ws-toolbar">
-    <div class="ws-flow-title-wrap" id="ws-flow-title-wrap">
-      <span class="ws-flow-title" id="ws-flow-title"></span>
-      <button class="ws-edit-btn" id="ws-edit-btn" title="Rename flow">
-        <span class="material-symbols-sharp">edit</span>
+  <div class="wrap">
+    <div class="library-bar">
+      <div class="search-wrap">
+        <span class="search-icon"><span class="material-symbols-sharp">search</span></span>
+        <input type="text" class="search-input" id="cue-search" placeholder="Search your cues&#8230;" autocomplete="off" aria-label="Search your cues">
+      </div>
+      <button class="btn-primary" id="new-sheet-btn">
+        <span class="material-symbols-sharp i-lg">add</span>
+        New Cue Sheet
       </button>
     </div>
-    <div class="ws-toolbar-btns">
-      <span class="ws-autosave-indicator" id="ws-autosave-indicator">
-        <span class="ws-autosave-dot"></span>
-        Auto Saved
-      </span>
-      <button class="btn-icon" id="ws-save-btn" data-tooltip="Save">
-        <span class="material-symbols-sharp save-icon" id="ws-save-icon">bookmark</span>
+    <div class="sort-row" id="sort-row" hidden>
+      <button class="btn-ghost sm" id="sort-btn" title="Toggle sort order" data-tooltip="Sort by">
+        <span class="material-symbols-sharp i-sm" style="margin-right:5px">swap_vert</span>
+        <span id="sort-label">Recently Edited</span>
       </button>
-      <div class="ws-more-wrap">
-        <button class="btn-icon" id="ws-more-btn" data-tooltip="More" title="More actions">
-          <span class="material-symbols-sharp">more_horiz</span>
+      <button class="btn-ghost sm fav-filter" id="fav-filter-btn" title="Only favorites" data-tooltip="Only favorites">
+        <span class="material-symbols-sharp i-sm" style="margin-right:5px">favorite</span>
+        Favorites
+      </button>
+      <span class="result-count" id="result-count"></span>
+    </div>
+    <div class="cue-index" id="cue-index"></div>
+  </div>
+
+</div>
+
+<!-- ── DETAIL VIEW — the sheet, read like a script ─────────────── -->
+
+<div id="detail-view" hidden>
+
+  <div class="post-bar">
+    <button class="btn-ghost" id="detail-back-btn">
+      <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
+      <span class="post-back-label">Your Cues</span>
+    </button>
+    <div class="post-actions cd-actions">
+      <button class="btn-icon" id="cd-edit-btn" title="Edit cue sheet" data-tooltip="Edit">
+        <span class="material-symbols-sharp">edit</span>
+      </button>
+      <button class="btn-icon" id="cd-more-btn" title="More actions" data-tooltip="More">
+        <span class="material-symbols-sharp">more_horiz</span>
+      </button>
+      <div class="ws-menu" id="cd-menu" hidden></div>
+    </div>
+  </div>
+
+  <div class="wrap" style="padding-top: 0;">
+    <div class="cd-body">
+      <h4 class="cd-title" id="cd-title"></h4>
+      <p class="cd-meta" id="cd-meta"></p>
+
+      <div class="wsf cd-flowref" id="cd-flowref" hidden>
+        <button type="button" class="wsf-head" id="cd-flowref-toggle" aria-expanded="false" aria-controls="cd-flowref-body">
+          <span class="wsf-context">
+            <span class="wsf-name" id="cd-flowref-name"></span>
+            <span class="flow-tag" id="cd-flowref-tag"></span>
+          </span>
+          <span class="wsf-title">Flow</span>
+          <span class="material-symbols-sharp wsf-chev i-md">expand_more</span>
         </button>
-        <div class="ws-menu" id="ws-menu" hidden></div>
+        <div class="wsf-body" id="cd-flowref-body" hidden>
+          <div class="ws-flowref-text" id="cd-flowref-text"></div>
+          <div class="wsf-foot">
+            <a id="cd-flowref-open" href="your-flows">Open in Your Flows</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="cd-cues" id="cd-cues"></div>
+
+      <div class="cue-actions">
+        <button class="btn-secondary" id="cd-pol-btn">
+          <span class="material-symbols-sharp i-md">record_voice_over</span>
+          Practice Out Loud
+        </button>
       </div>
     </div>
   </div>
+
+</div>
+
+<!-- ── EDIT VIEW — the worksheet, always live ──────────────────── -->
+
+<div id="sheet-view" hidden>
+
+<div class="post-bar">
+  <button class="btn-ghost" id="sheet-back-btn">
+    <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
+    <span class="post-back-label" id="sheet-back-label" style="max-width:240px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Your Cues</span>
+  </button>
+  <div class="post-edit-actions">
+    <button class="btn-ghost" id="cancel-btn">Cancel</button>
+    <button class="btn-primary" id="save-btn">Save</button>
+  </div>
+</div>
+
+<div class="wrap" id="main-wrap" style="padding-top: 0;">
+<div class="ws-layout">
+<div class="ws-main">
+
+  <input type="text" class="cue-title-input" id="cue-title" placeholder="Name your cue sheet&#8230;" maxlength="80" autocomplete="off" aria-label="Cue sheet name">
+
+  <!-- nothing linked yet — the empty drawer stands where the flow
+       will: same bar, dashed, holding the door open -->
+  <button type="button" class="wsf-head wsf-empty" id="ws-attach-btn" hidden>
+    <span class="wsf-name wsf-empty-name">Attach a flow</span>
+    <span class="wsf-title">Flow</span>
+    <span class="material-symbols-sharp wsf-chev i-md">add</span>
+  </button>
 
   <!-- ── WORKSHEET CARD ─────────────────────────────────────────── -->
 
   <!-- the imported flow — the poses this poem moves people through.
        Linked from Your Flows; the link rides with the saved worksheet. -->
-  <div class="ws-flowref" id="ws-flowref" hidden>
-    <div class="ws-flowref-hdr">
-      <div class="ws-flowref-titles">
-        <span class="ws-flowref-name" id="ws-flowref-name"></span>
-        <span class="ws-flowref-tag" id="ws-flowref-tag"></span>
+  <div class="wsf wsf-editable" id="ws-flowref" hidden>
+    <button type="button" class="wsf-head" id="ws-flowref-toggle" aria-expanded="false" aria-controls="ws-flowref-body">
+      <span class="wsf-context">
+        <span class="wsf-name" id="ws-flowref-name"></span>
+        <span class="flow-tag" id="ws-flowref-tag"></span>
+      </span>
+      <span class="wsf-title">Flow</span>
+      <span class="material-symbols-sharp wsf-chev i-md">expand_more</span>
+    </button>
+    <button type="button" class="wsf-x" id="ws-flowref-x" title="Detach flow" data-tooltip="Detach flow" aria-label="Detach flow">
+      <span class="material-symbols-sharp i-sm">close</span>
+    </button>
+    <div class="wsf-body" id="ws-flowref-body" hidden>
+      <div class="ws-flowref-text" id="ws-flowref-text"></div>
+      <div class="wsf-foot">
+        <a id="ws-flowref-open" href="your-flows">Open in Your Flows</a>
       </div>
-      <button class="btn-icon" id="ws-flowref-x" data-tooltip="Detach flow" title="Detach flow">
-        <span class="material-symbols-sharp i-sm">close</span>
-      </button>
     </div>
-    <div class="ws-flowref-text" id="ws-flowref-text"></div>
   </div>
 
   <div class="ws-card" id="ws-card">
@@ -811,12 +1058,6 @@
 
   <!-- ── CUE ACTIONS ───────────────────────────────────────────── -->
 
-  <div class="cue-actions">
-    <button class="btn-secondary" id="btn-pol" disabled>
-      <span class="material-symbols-sharp i-md">record_voice_over</span>
-      Practice Out Loud
-    </button>
-  </div>
 
 
 </div><!-- /ws-main -->
@@ -824,21 +1065,9 @@
 </div><!-- /ws-layout -->
 </div><!-- /wrap -->
 
+</div><!-- /sheet-view -->
+
 </main>
-
-<!-- ── SAVE MODAL ────────────────────────────────────────────── -->
-
-<div class="modal-backdrop" id="ws-modal" hidden>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ws-modal-heading">
-    <h3 id="ws-modal-heading">Name your Cue Sheet</h3>
-    <p class="modal-hint">Give it a name so you can find it later.</p>
-    <input type="text" class="modal-input" id="ws-modal-input" placeholder="Flow name" maxlength="80" autocomplete="off" aria-label="Flow name">
-    <div class="modal-actions">
-      <button class="btn-ghost" id="ws-modal-cancel">Cancel</button>
-      <button class="btn-primary" id="ws-modal-confirm">Save flow</button>
-    </div>
-  </div>
-</div>
 
 <!-- ── CLEAR CONFIRM ─────────────────────────────────────────── -->
 
@@ -853,15 +1082,15 @@
   </div>
 </div>
 
-<!-- ── LOAD MODAL ────────────────────────────────────────────── -->
+<!-- ── DISCARD GUARD ─────────────────────────────────────────── -->
 
-<div class="modal-backdrop" id="ws-load-modal" hidden>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ws-load-modal-heading">
-    <h3 id="ws-load-modal-heading">Load Saved Cues</h3>
-    <p class="modal-hint">Select previously saved cues to load them into the worksheet.</p>
-    <div class="flow-list" id="ws-flow-list"></div>
+<div class="modal-backdrop" id="discard-modal" hidden>
+  <div class="modal-card">
+    <h3>Discard changes?</h3>
+    <p class="modal-hint">Your cues haven&#8217;t been saved.</p>
     <div class="modal-actions">
-      <button class="btn-ghost" id="ws-load-modal-cancel">Cancel</button>
+      <button class="btn-ghost" id="discard-keep">Keep Editing</button>
+      <button class="btn-primary" id="discard-yes">Discard</button>
     </div>
   </div>
 </div>
@@ -1077,9 +1306,23 @@ const PLACEHOLDER_CUE = CUE_EXAMPLES[Math.floor(Math.random() * CUE_EXAMPLES.len
 const INITIAL_ROWS = 1;
 const LS_KEY = 'fs-cue-flows';
 let flowName = '';
+let sheetId = null; // the open sheet's id; null = a new, unsaved sheet
 
-function getFlowStore() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) { return {}; }
+// fs-cue-flows history: originally an object keyed by sheet NAME. The
+// library restructure (Jul 2026) made sheets id-keyed — an ARRAY of
+// {id, name, rows, flowId, savedAt} — so renames stop breaking links.
+// Ids derive deterministically from savedAt, so every reader that
+// normalizes the old shape lands on the same ids.
+function normalizeSheets(raw) {
+  const list = Array.isArray(raw) ? raw : Object.keys(raw || {}).map(k => raw[k]);
+  return list.filter(Boolean).map((e, i) => {
+    if (e.id == null) e.id = (Date.parse(e.savedAt) || 0) + i;
+    if (e.editedAt == null) e.editedAt = Date.parse(e.savedAt) || e.id;
+    return e;
+  });
+}
+function getSheets() {
+  try { return normalizeSheets(JSON.parse(localStorage.getItem(LS_KEY) || '[]')); } catch(e) { return []; }
 }
 
 // the flow library from Your Flows — read-only here
@@ -1091,11 +1334,12 @@ function loadFlowLib() {
     return list;
   } catch (e) { return []; }
 }
-function setFlowStore(store) {
-  localStorage.setItem(LS_KEY, JSON.stringify(store));
+function setSheets(list) {
+  localStorage.setItem(LS_KEY, JSON.stringify(list));
 }
 
 let rows = [];
+const confirmDiscard = typeof fsWireDiscardModal === 'function' ? fsWireDiscardModal() : (cb => cb(true));
 let linkedFlowId = null; // the Your Flows flow this poem moves people through
 let activeInput = null; // last focused .cue-input
 let polIndex = 0;
@@ -1203,8 +1447,6 @@ function doClearWorksheet() {
   closeClearModal();
   initRows(INITIAL_ROWS);
   renderRows();
-  flowName = '';
-  setFlowTitle('');
   showToast('Worksheet cleared.');
   markDirty();
 }
@@ -1358,48 +1600,268 @@ function copyScript() {
   if (!script) { showToast('No cues to copy.'); return; }
   navigator.clipboard.writeText(script)
     .then(() => {
-      fsCopied(document.querySelector('#ws-more-btn .material-symbols-sharp'));
+      fsCopied(document.querySelector('#cd-more-btn .material-symbols-sharp'));
       showToast('Cues copied to clipboard.');
     })
     .catch(() => showToast('Copy failed — try Export .txt.'));
 }
 
-function openSaveModal() {
-  if (!rows.some(r => buildCue(r))) { showToast('Add some cues before saving.'); return; }
-  const modal = document.getElementById('ws-modal');
-  const input = document.getElementById('ws-modal-input');
-  input.value = flowName;
-  modal.removeAttribute('hidden');
-  input.focus();
-  input.select();
+// ─── VIEWS — the library, the detail, the worksheet ──────────────────────────
+
+function cueViews() {
+  return [
+    document.getElementById('list-view'),
+    document.getElementById('detail-view'),
+    document.getElementById('sheet-view'),
+  ];
 }
 
-function closeSaveModal() {
-  document.getElementById('ws-modal').setAttribute('hidden', '');
+function rowHasWork(r) {
+  return !!((r.pose || '').trim() || (r.verb || '').trim() || (r.body || '').trim() || (r.dir || '').trim());
 }
 
+const SORT_KEY = 'fs-sort-cues';
+let favOnly = false;
+
+function renderList() {
+  const q = document.getElementById('cue-search').value.trim().toLowerCase();
+  const lib = loadFlowLib();
+  const all = getSheets();
+  const index = document.getElementById('cue-index');
+  const sortRow = document.getElementById('sort-row');
+
+  if (!all.length) {
+    sortRow.hidden = true;
+    index.innerHTML = '<div class="library-empty">' +
+      fsGhostRows() +
+      '<h4 class="library-empty-title">Add your first cue sheet.</h4>' +
+      '<p class="library-empty-sub">Everything you write lives here.</p>' +
+      '</div>';
+    return;
+  }
+
+  sortRow.hidden = false;
+  fsRenderSortLabel(fsSortMode(SORT_KEY));
+
+  const flowNameOf = id => {
+    const f = id != null ? lib.find(x => x.id === id) : null;
+    return f ? (f.name || 'Untitled Flow') : '';
+  };
+
+  let sheets = all.slice().sort(fsSorterFor(fsSortMode(SORT_KEY)));
+  if (favOnly) sheets = sheets.filter(e => e.pinned);
+  if (q) {
+    sheets = sheets.filter(e =>
+      (e.name || '').toLowerCase().indexOf(q) !== -1 ||
+      flowNameOf(e.flowId).toLowerCase().indexOf(q) !== -1);
+  }
+
+  document.getElementById('result-count').textContent =
+    sheets.length + ' result' + (sheets.length !== 1 ? 's' : '');
+
+  if (!sheets.length) {
+    index.innerHTML = '<div class="library-empty"><p class="library-empty-sub">' +
+      (q ? 'Nothing matches &#8220;' + esc(q) + '&#8221;.'
+         : 'No favorites yet \u2014 use the \u22EF menu on a cue sheet.') +
+      '</p></div>';
+    return;
+  }
+
+  index.innerHTML = sheets.map(e => {
+    const n = (e.rows || []).filter(rowHasWork).length;
+    const meta = [n + (n === 1 ? ' cue' : ' cues'), flowNameOf(e.flowId), fsFmtDate(Date.parse(e.savedAt))]
+      .filter(Boolean).join(' \u00B7 ');
+    // the card speaks the sheet's first sentences — the artifact,
+    // not just its filing
+    const preview = (e.rows || []).map(r => buildCue(r)).filter(Boolean).slice(0, 3).join(' ');
+    return '<div class="cue-card" data-id="' + e.id + '">' +
+      '<span class="cue-card-title">' + esc(e.name || 'Untitled') +
+        (e.pinned ? '<span class="material-symbols-sharp fav-mark">favorite</span>' : '') +
+      '</span>' +
+      (preview ? '<span class="cue-card-preview">' + esc(preview) + '</span>' : '') +
+      '<span class="cue-card-meta">' + esc(meta) + '</span>' +
+    '</div>';
+  }).join('');
+
+  index.querySelectorAll('.cue-card').forEach(card => {
+    card.addEventListener('click', () => {
+      showDetail(parseInt(card.dataset.id, 10), true);
+    });
+  });
+}
+
+function showList(push) {
+  fsSwapView(cueViews(), document.getElementById('list-view'), renderList);
+  document.title = 'Your Cues \u2014 Flow School';
+  if (push) history.pushState({}, '', 'your-cues');
+}
+
+// ── the detail — the sheet read like a script ──
+function renderDetail(e) {
+  document.getElementById('cd-title').innerHTML = esc(e.name || 'Untitled') +
+    (e.pinned ? '<span class="material-symbols-sharp fav-mark lg">favorite</span>' : '');
+  const flow = e.flowId != null ? loadFlowLib().find(x => x.id === e.flowId) : null;
+  const n = (e.rows || []).filter(rowHasWork).length;
+  document.getElementById('cd-meta').textContent =
+    [n + (n === 1 ? ' cue' : ' cues'), flow ? (flow.name || 'Untitled Flow') : '', fsFmtDate(Date.parse(e.savedAt))]
+      .filter(Boolean).join(' \u00B7 ');
+
+  // the linked flow rides along, read-only here
+  const ref = document.getElementById('cd-flowref');
+  const refBody = document.getElementById('cd-flowref-body');
+  refBody.hidden = true;
+  refBody._fsUnfoldOpen = false;
+  document.getElementById('cd-flowref-toggle').setAttribute('aria-expanded', 'false');
+  if (flow) {
+    document.getElementById('cd-flowref-name').textContent = flow.name || 'Untitled Flow';
+    document.getElementById('cd-flowref-tag').textContent = FLOW_TAGS[flow.type] || '';
+    document.getElementById('cd-flowref-text').textContent = flow.text || '';
+    document.getElementById('cd-flowref-open').href = 'your-flows?id=' + flow.id;
+    ref.removeAttribute('hidden');
+  } else {
+    ref.setAttribute('hidden', '');
+  }
+
+  const cued = (e.rows || []).filter(r => buildCue(r));
+  document.getElementById('cd-cues').innerHTML = cued.length
+    ? cued.map(r => {
+        const breath = r.inex && INEX_LABELS[r.inex] ? INEX_LABELS[r.inex] : '';
+        const pose = (r.pose || '').trim();
+        return '<div class="cd-cue">' +
+          '<span class="cd-cue-breath">' + esc(breath) + '</span>' +
+          '<span class="cd-cue-text">' + esc(buildCue(r)) + '</span>' +
+          (pose ? '<span class="cd-cue-pose">' + esc(pose) + '</span>' : '') +
+        '</div>';
+      }).join('')
+    : '<p class="cd-empty">Nothing written on this sheet yet.</p>';
+
+  document.getElementById('cd-pol-btn').disabled = !cued.length;
+}
+
+function showDetail(id, push) {
+  const e = getSheets().find(x => x.id === id);
+  if (!e) { showList(false); return; }
+  sheetId = e.id;
+  flowName = e.name || '';
+  rows = (e.rows || []).map(r => Object.assign(makeRow(), r));
+  linkedFlowId = e.flowId != null ? e.flowId : null;
+  fsSwapView(cueViews(), document.getElementById('detail-view'), () => renderDetail(e));
+  document.title = (flowName || 'Untitled') + ' \u2014 Flow School';
+  if (push) history.pushState({}, '', 'your-cues?id=' + id);
+}
+
+function openEdit(id, push) {
+  const e = getSheets().find(x => x.id === id);
+  if (!e) { showList(false); return; }
+  sheetId = e.id;
+  flowName = e.name || '';
+  rows = (e.rows || []).map(r => Object.assign(makeRow(), r));
+  linkedFlowId = e.flowId != null ? e.flowId : null;
+  fsSwapView(cueViews(), document.getElementById('sheet-view'), () => {
+    document.getElementById('cue-title').value = flowName;
+    renderRows();
+    renderFlowRef();
+    dirty = false;
+    setSaveButton('saved');
+    updatePolState();
+  });
+  document.getElementById('sheet-back-label').textContent = flowName || 'Untitled';
+  document.title = (flowName || 'Untitled') + ' \u2014 Flow School';
+  if (push) history.pushState({}, '', 'your-cues?edit=' + id);
+}
+
+function newSheet(push) {
+  sheetId = null;
+  flowName = '';
+  linkedFlowId = null;
+  initRows(INITIAL_ROWS);
+  fsSwapView(cueViews(), document.getElementById('sheet-view'), () => {
+    document.getElementById('cue-title').value = '';
+    renderRows();
+    renderFlowRef();
+    dirty = false;
+    setSaveButton('idle');
+    updatePolState();
+  });
+  document.getElementById('sheet-back-label').textContent = 'Your Cues';
+  document.title = 'New Cue Sheet \u2014 Flow School';
+  if (push) history.pushState({}, '', 'your-cues?new=1');
+}
+
+// leaving the worksheet — a dirty draft gets the discard guard; a
+// clean one returns to its detail (or the list, if it was never saved)
+function leaveSheet() {
+  function leave() {
+    dirty = false;
+    if (sheetId != null) showDetail(sheetId, true);
+    else showList(true);
+  }
+  if (dirty) {
+    confirmDiscard(yes => { if (yes) leave(); });
+  } else {
+    leave();
+  }
+}
+
+function route() {
+  const p = new URLSearchParams(window.location.search);
+  const legacy = p.get('flow');
+  if (legacy) {
+    // pre-restructure links addressed sheets by name
+    const hit = getSheets().find(x => x.name === legacy);
+    if (hit) {
+      history.replaceState({}, '', 'your-cues?id=' + hit.id);
+      showDetail(hit.id, false);
+      return;
+    }
+  }
+  if (p.get('new')) { newSheet(false); return; }
+  const editId = parseInt(p.get('edit'), 10);
+  if (!isNaN(editId)) { openEdit(editId, false); return; }
+  const id = parseInt(p.get('id'), 10);
+  if (!isNaN(id)) { showDetail(id, false); return; }
+  showList(false);
+}
+
+// the attached flow in the editor — the card when linked, the quiet
+// attach line when not
 function renderFlowRef() {
   const wrap = document.getElementById('ws-flowref');
+  const attach = document.getElementById('ws-attach-btn');
+  const body = document.getElementById('ws-flowref-body');
   const f = linkedFlowId != null ? loadFlowLib().find(x => x.id === linkedFlowId) : null;
+  attach.hidden = !!f;
+  body.hidden = true;
+  body._fsUnfoldOpen = false;
+  document.getElementById('ws-flowref-toggle').setAttribute('aria-expanded', 'false');
   if (!f) { wrap.setAttribute('hidden', ''); return; }
   document.getElementById('ws-flowref-name').textContent = f.name || 'Untitled Flow';
   document.getElementById('ws-flowref-tag').textContent = FLOW_TAGS[f.type] || '';
   document.getElementById('ws-flowref-text').textContent = f.text || '';
+  document.getElementById('ws-flowref-open').href = 'your-flows?id=' + f.id;
   wrap.removeAttribute('hidden');
 }
 
 function openImportModal() {
   const flows = loadFlowLib().sort((a, b) => (b.editedAt || b.id) - (a.editedAt || a.id));
   const list = document.getElementById('ws-import-list');
+  // one flow, one sheet — a flow with another sheet is spoken for
+  const takenBy = {};
+  getSheets().forEach(e => {
+    if (e.flowId != null && e.id !== sheetId) takenBy[e.flowId] = e.name || 'Untitled';
+  });
   list.innerHTML = flows.length
-    ? flows.map(f => `<div class="flow-list-item" data-fid="${f.id}">
-        <div class="flow-list-info">
-          <div class="flow-list-name">${esc(f.name || 'Untitled Flow')}</div>
-          <div class="flow-list-date">${FLOW_TAGS[f.type] || ''}</div>
-        </div>
-      </div>`).join('')
+    ? flows.map(f => {
+        const taken = takenBy[f.id] != null;
+        return `<div class="flow-list-item${taken ? ' taken' : ''}"${taken ? '' : ` data-fid="${f.id}"`}>
+          <div class="flow-list-info">
+            <div class="flow-list-name">${esc(f.name || 'Untitled Flow')}</div>
+            <div class="flow-list-date">${taken ? 'Linked to ' + esc(takenBy[f.id]) : (FLOW_TAGS[f.type] || '')}</div>
+          </div>
+        </div>`;
+      }).join('')
     : '<div class="flow-list-empty">No flows in your library yet. Write one in Your Flows first.</div>';
-  list.querySelectorAll('.flow-list-item').forEach(el => {
+  list.querySelectorAll('.flow-list-item:not(.taken)').forEach(el => {
     el.addEventListener('click', () => {
       linkedFlowId = parseInt(el.dataset.fid, 10);
       renderFlowRef();
@@ -1415,233 +1877,69 @@ function closeImportModal() {
   document.getElementById('ws-import-modal').setAttribute('hidden', '');
 }
 
-function openLoadModal() {
-  renderFlowList();
-  document.getElementById('ws-load-modal').removeAttribute('hidden');
-}
-
-function closeLoadModal() {
-  document.getElementById('ws-load-modal').setAttribute('hidden', '');
-}
-
-function renderFlowList() {
-  const store = getFlowStore();
-  const entries = Object.values(store).sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-  const list = document.getElementById('ws-flow-list');
-
-  if (!entries.length) {
-    list.innerHTML = '<div class="flow-list-empty">No saved cues yet.</div>';
-    return;
+// 'saved' → committed · 'idle' → nothing to save yet · 'ready' → unsaved changes
+function setSaveButton(state) {
+  const btn = document.getElementById('save-btn');
+  if (state === 'saved') {
+    fsSetLabel(btn, '<span class="material-symbols-sharp i-md fs-check-in">check</span>Saved');
+    btn.disabled = true;
+  } else {
+    fsSetLabel(btn, sheetId != null ? 'Save Changes' : 'Save');
+    btn.disabled = (state === 'idle');
   }
-
-  list.innerHTML = entries.map(entry => {
-    const d = new Date(entry.savedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    return `<div class="flow-list-item" data-name="${esc(entry.name)}">
-      <div class="flow-list-info">
-        <div class="flow-list-name">${esc(entry.name)}</div>
-        <div class="flow-list-date">${d}</div>
-      </div>
-      <button class="flow-list-del" data-del="${esc(entry.name)}" title="Delete">×</button>
-    </div>`;
-  }).join('');
-
-  list.querySelectorAll('.flow-list-item').forEach(el => {
-    el.addEventListener('click', e => {
-      if (e.target.closest('.flow-list-del')) return;
-      const name = el.dataset.name;
-      const store = getFlowStore();
-      const entry = store[name];
-      if (!entry) return;
-      flowName = entry.name;
-      rows = (entry.rows || []).map(r => Object.assign(makeRow(), r));
-      linkedFlowId = entry.flowId != null ? entry.flowId : null;
-      renderFlowRef();
-      renderRows();
-      setSaved(true);
-      setFlowTitle(flowName);
-      closeLoadModal();
-      showToast(`"${flowName}" loaded.`);
-    });
-  });
-
-  list.querySelectorAll('.flow-list-del').forEach(btn => {
-    wireConfirmDelete(btn, () => {
-      const name = btn.dataset.del;
-      const store = getFlowStore();
-      delete store[name];
-      setFlowStore(store);
-      renderFlowList();
-    });
-  });
 }
 
-function setFlowTitle(name) {
-  const wrap      = document.getElementById('ws-flow-title-wrap');
-  const el        = document.getElementById('ws-flow-title');
-  const indicator = document.getElementById('ws-autosave-indicator');
-  if (!wrap || !el) return;
-  el.textContent = name || '';
-  wrap.classList.toggle('visible', !!name);
-  if (indicator) indicator.classList.toggle('visible', !!name);
-}
-
-// Starts a blank flow. Only offered while viewing an already-saved flow —
-// that flow is already autosaved, so there's nothing to lose by leaving it.
-function startNewFlow() {
-  initRows(INITIAL_ROWS);
-  renderRows();
-  linkedFlowId = null;
-  renderFlowRef();
-  flowName = '';
-  setFlowTitle('');
-  setSaved(false);
-  showToast('Started a new cue sheet.');
-}
-
-function startRename() {
-  const titleEl = document.getElementById('ws-flow-title');
-  const editBtn = document.getElementById('ws-edit-btn');
-
-  const sizer = document.createElement('span');
-  sizer.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;pointer-events:none;padding:0;border:0';
-  document.body.appendChild(sizer);
-
-  const input = document.createElement('input');
-  input.setAttribute('aria-label', 'Flow name');
-  input.className = 'ws-flow-title-input';
-  input.value = flowName;
-
-  function syncWidth() {
-    sizer.textContent = input.value || ' ';
-    input.style.width = (sizer.offsetWidth + 4) + 'px';
-  }
-
-  input.addEventListener('input', syncWidth);
-
-  const saveBtn = document.createElement('button');
-  saveBtn.className = 'ws-edit-btn';
-  saveBtn.title = 'Save name';
-  saveBtn.innerHTML = '<span class="material-symbols-sharp">check</span>';
-
-  const cancelBtn = document.createElement('button');
-  cancelBtn.className = 'ws-edit-btn';
-  cancelBtn.title = 'Cancel';
-  cancelBtn.innerHTML = '<span class="material-symbols-sharp">close</span>';
-
-  titleEl.replaceWith(input);
-  editBtn.replaceWith(saveBtn);
-  saveBtn.after(cancelBtn);
-
-  // Copy computed styles after input is in DOM so sizer measures correctly
-  const cs = window.getComputedStyle(input);
-  sizer.style.fontFamily   = cs.fontFamily;
-  sizer.style.fontSize     = cs.fontSize;
-  sizer.style.fontWeight   = cs.fontWeight;
-  sizer.style.letterSpacing = cs.letterSpacing;
-  syncWidth();
-
-  input.focus();
-  input.select();
-
-  function restore(newName) {
-    sizer.remove();
-    const span = document.createElement('span');
-    span.className = 'ws-flow-title';
-    span.id = 'ws-flow-title';
-    span.textContent = newName;
-    input.replaceWith(span);
-    saveBtn.replaceWith(editBtn);
-    cancelBtn.remove();
-  }
-
-  function commit() {
-    const newName = input.value.trim();
-    if (newName && newName !== flowName) {
-      const store = getFlowStore();
-      if (store[flowName]) {
-        store[newName] = { ...store[flowName], name: newName };
-        delete store[flowName];
-        setFlowStore(store);
-      }
-      flowName = newName;
-    }
-    restore(flowName);
-  }
-
-  function cancel() {
-    restore(flowName);
-  }
-
-  saveBtn.addEventListener('click', commit);
-  cancelBtn.addEventListener('click', cancel);
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); commit(); }
-    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
-  });
-}
-
-function setSaved(saved) {
-  const btn = document.getElementById('ws-save-btn');
-  btn.classList.toggle('saved', saved);
-}
-
-let _autosaveTimer;
+let dirty = false;
 function markDirty() {
   updatePolState();
-  if (!flowName) { setSaved(false); return; }
-  clearTimeout(_autosaveTimer);
-  _autosaveTimer = setTimeout(autosaveFlow, 300);
+  if (document.getElementById('sheet-view').hidden) return;
+  if (!dirty) setSaveButton('ready');
+  dirty = true;
 }
 
-// Practice Out Loud needs cues to practice — the button wakes when the
-// worksheet holds any, whether typed now or loaded from a saved flow
 function updatePolState() {
-  const hasCues = rows.some(r => r.verb || r.body || r.dir);
-  document.getElementById('btn-pol').disabled = !hasCues;
+  // practice lives on the detail view now; its button state is set
+  // by renderDetail. Nothing to wake in the editor.
 }
 
-// Persists edits back into the currently open flow's own entry — used while
-// editing a flow that's already been named/saved, so edits don't spin off a
-// separate unnamed flow.
-function autosaveFlow() {
-  if (!flowName) return;
-  try {
-    const store = getFlowStore();
-    if (!store[flowName]) return;
-    store[flowName] = { name: flowName, rows, flowId: linkedFlowId, savedAt: new Date().toISOString() };
-    setFlowStore(store);
-    setSaved(true);
-  } catch (e) {}
-}
-
-// leaving with unsaved work — a named sheet autosaves on every edit,
-// so the only losable work is an UNNAMED sheet with something real on
-// it: typed cues or an attached flow. That gets the browser's hand up
-// before it's thrown away (the popcorn rule). A named sheet just gets
-// any pending autosave flushed on the way out.
-window.addEventListener('beforeunload', function (e) {
-  if (flowName) {
-    clearTimeout(_autosaveTimer);
-    autosaveFlow();
-    return;
-  }
-  const hasWork = linkedFlowId != null ||
-    rows.some(r => (r.pose || '').trim() || (r.verb || '').trim() || (r.body || '').trim() || (r.dir || '').trim());
-  if (hasWork) { e.preventDefault(); e.returnValue = ''; }
-});
-
-function saveToLocal(name) {
+// the draft commits on Save — the sibling editors' contract
+function saveSheet() {
+  const name = document.getElementById('cue-title').value.trim() || 'Untitled';
   flowName = name;
   try {
-    const store = getFlowStore();
-    store[name] = { name, rows, flowId: linkedFlowId, savedAt: new Date().toISOString() };
-    setFlowStore(store);
-    showToast('Flow saved.');
-    setSaved(true);
-  } catch(e) {
-    showToast('Could not save — storage may be full.');
+    const list = getSheets();
+    let e = sheetId != null ? list.find(x => x.id === sheetId) : null;
+    if (!e) {
+      e = { id: Date.now() };
+      list.push(e);
+      sheetId = e.id;
+      history.replaceState({}, '', 'your-cues?edit=' + sheetId);
+    }
+    e.name = name;
+    e.rows = rows;
+    e.flowId = linkedFlowId;
+    e.savedAt = new Date().toISOString();
+    e.editedAt = Date.now();
+    // one flow, one sheet — saving this link releases any other sheet's
+    if (linkedFlowId != null) {
+      list.forEach(o => { if (o.id !== e.id && o.flowId === linkedFlowId) o.flowId = null; });
+    }
+    setSheets(list);
+    dirty = false;
+    setSaveButton('saved');
+    document.getElementById('sheet-back-label').textContent = name;
+    document.title = name + ' \u2014 Flow School';
+  } catch (e2) {
+    showToast('Could not save \u2014 storage may be full.');
   }
 }
+
+window.addEventListener('beforeunload', function (e) {
+  if (!document.getElementById('sheet-view').hidden && dirty) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 // ─── PRACTICE OUT LOUD — TELEPROMPTER ─────────────────────────────────────────
 
@@ -2143,31 +2441,74 @@ function init() {
   // Check my cues
 
 
-  // Export / save
-  const wsMenu = fsWireItemMenu(document.getElementById('ws-menu'), {
+  // the flow drawers unfold with their chevrons
+  [['ws-flowref-toggle', 'ws-flowref-body'], ['cd-flowref-toggle', 'cd-flowref-body']].forEach(pair => {
+    document.getElementById(pair[0]).addEventListener('click', function () {
+      const open = this.getAttribute('aria-expanded') !== 'true';
+      fsUnfold(document.getElementById(pair[1]), open);
+      this.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+
+  // the editor's draft controls — the sibling editors' contract
+  document.getElementById('cancel-btn').addEventListener('click', leaveSheet);
+  document.getElementById('save-btn').addEventListener('click', saveSheet);
+  document.getElementById('cue-title').addEventListener('input', markDirty);
+  document.getElementById('ws-attach-btn').addEventListener('click', openImportModal);
+
+  // the library wiring
+  document.getElementById('sheet-back-btn').addEventListener('click', leaveSheet);
+  document.getElementById('new-sheet-btn').addEventListener('click', () => newSheet(true));
+  document.getElementById('cue-search').addEventListener('input', renderList);
+  document.getElementById('sort-btn').addEventListener('click', () => {
+    localStorage.setItem(SORT_KEY, fsSortMode(SORT_KEY) === 'edited' ? 'created' : 'edited');
+    renderList();
+  });
+  document.getElementById('fav-filter-btn').addEventListener('click', function () {
+    favOnly = !favOnly;
+    this.classList.toggle('on', favOnly);
+    renderList();
+  });
+  window.addEventListener('popstate', route);
+
+  // the detail wiring
+  document.getElementById('detail-back-btn').addEventListener('click', () => showList(true));
+  document.getElementById('cd-edit-btn').addEventListener('click', () => {
+    if (sheetId != null) openEdit(sheetId, true);
+  });
+  document.getElementById('cd-pol-btn').addEventListener('click', openPOL);
+  const cdMenu = fsWireItemMenu(document.getElementById('cd-menu'), {
     items: () => {
-      const items = [];
-      if (flowName) items.push({ act: 'new', icon: 'note_add', label: 'New Cue Sheet' });
-      items.push({ act: 'attach', icon: 'airline_stops', label: 'Attach a Flow' });
-      items.push({ act: 'load', icon: 'history', label: 'Load Saved Cues' });
-      items.push({ act: 'copy', icon: 'content_copy', label: 'Copy Cues' });
-      return items;
+      const e = getSheets().find(x => x.id === sheetId) || {};
+      return [
+        { act: 'pin', icon: 'favorite', iconClass: e.pinned ? 'filled' : '',
+          label: e.pinned ? 'Remove from favorites' : 'Add to favorites' },
+        { act: 'copy', icon: 'content_copy', label: 'Copy Cues' },
+        { act: 'del', icon: 'delete', label: 'Delete cue sheet' },
+      ];
     },
+    confirm: { del: 'Click again to delete' },
     on: act => {
-      if (act === 'new') startNewFlow();
-      else if (act === 'attach') openImportModal();
-      else if (act === 'load') openLoadModal();
-      else if (act === 'copy') copyScript();
+      if (act === 'pin') {
+        const list = getSheets();
+        const e = list.find(x => x.id === sheetId);
+        if (!e) return;
+        e.pinned = !e.pinned;
+        setSheets(list);
+        renderDetail(e);
+        showToast(e.pinned ? 'Added to your favorites.' : 'Removed from favorites.');
+      } else if (act === 'copy') {
+        copyScript();
+      } else if (act === 'del') {
+        setSheets(getSheets().filter(e => e.id !== sheetId));
+        showToast('Cue sheet removed.');
+        showList(true);
+      }
     },
   });
-  document.getElementById('ws-more-btn').addEventListener('click', e => {
+  document.getElementById('cd-more-btn').addEventListener('click', e => {
     e.stopPropagation();
-    wsMenu.toggle();
-  });
-  document.getElementById('ws-edit-btn').addEventListener('click', startRename);
-  document.getElementById('ws-load-modal-cancel').addEventListener('click', closeLoadModal);
-  document.getElementById('ws-load-modal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeLoadModal();
+    cdMenu.toggle();
   });
   document.getElementById('ws-import-modal-cancel').addEventListener('click', closeImportModal);
   document.getElementById('ws-import-modal').addEventListener('click', e => {
@@ -2179,30 +2520,9 @@ function init() {
     markDirty();
     showToast('Flow detached.');
   });
-  document.getElementById('ws-save-btn').addEventListener('click', openSaveModal);
-  document.getElementById('ws-modal-cancel').addEventListener('click', closeSaveModal);
-  document.getElementById('ws-modal-confirm').addEventListener('click', () => {
-    const input = document.getElementById('ws-modal-input');
-    const name = input.value.trim();
-    if (!name) {
-      input.classList.remove('shake'); void input.offsetWidth;
-      input.classList.add('shake'); input.focus();
-      return;
-    }
-    closeSaveModal();
-    saveToLocal(name);
-    setFlowTitle(name);
-  });
-  document.getElementById('ws-modal-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('ws-modal-confirm').click();
-    if (e.key === 'Escape') closeSaveModal();
-  });
-  document.getElementById('ws-modal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeSaveModal();
-  });
+
 
   // Practice Out Loud
-  document.getElementById('btn-pol').addEventListener('click', openPOL);
   updatePolState();
   document.getElementById('pol-close').addEventListener('click', closePOL);
 
@@ -2282,18 +2602,7 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
-  const _urlFlow = new URLSearchParams(window.location.search).get('flow');
-  if (_urlFlow) {
-    const store = getFlowStore();
-    const flow = store[_urlFlow];
-    if (flow) {
-      flowName = flow.name;
-      rows = JSON.parse(JSON.stringify(flow.rows));
-      renderRows();
-      setSaved(true);
-      setFlowTitle(flowName);
-    }
-  }
+  route();
 });
 
 </script>

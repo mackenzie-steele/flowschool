@@ -1648,10 +1648,12 @@
         });
       } catch (_) {}
       try {
-        var flows = JSON.parse(localStorage.getItem('fs-cue-flows') || '{}');
-        Object.values(flows).forEach(function (fl) {
+        var raw = JSON.parse(localStorage.getItem('fs-cue-flows') || '[]');
+        var cueList = Array.isArray(raw) ? raw : Object.values(raw || {});
+        cueList.filter(Boolean).forEach(function (fl, ci) {
+          var cueId = fl.id != null ? fl.id : (Date.parse(fl.savedAt) || 0) + ci;
           var time = fl.savedAt ? new Date(fl.savedAt).getTime() : 0;
-          items.push({ icon: 'edit_note', name: fl.name || 'Untitled Flow', sub: 'Your Cues', href: 'your-cues?flow=' + encodeURIComponent(fl.name), time: time });
+          items.push({ icon: 'edit_note', name: fl.name || 'Untitled', sub: 'Your Cues', href: 'your-cues?id=' + cueId, time: time });
         });
       } catch (_) {}
       try {

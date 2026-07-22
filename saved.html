@@ -350,11 +350,13 @@
         icon: 'edit_note',
         load: function () {
           try {
-            var flows = JSON.parse(localStorage.getItem('fs-cue-flows') || '{}');
-            return Object.values(flows).map(function (fl) {
+            var raw = JSON.parse(localStorage.getItem('fs-cue-flows') || '[]');
+            var list = Array.isArray(raw) ? raw : Object.values(raw || {});
+            return list.filter(Boolean).map(function (fl, i) {
+              var id = fl.id != null ? fl.id : (Date.parse(fl.savedAt) || 0) + i;
               return {
-                name: fl.name || 'Untitled Flow',
-                href: 'your-cues?flow=' + encodeURIComponent(fl.name),
+                name: fl.name || 'Untitled',
+                href: 'your-cues?id=' + id,
                 time: fl.savedAt ? new Date(fl.savedAt).getTime() : 0,
               };
             });

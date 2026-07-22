@@ -93,6 +93,20 @@
       text-overflow: ellipsis;
     }
 
+    /* the class's skeleton — its sections in order, one voice */
+    .cc-struct {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .04em;
+      line-height: 1.8;
+      color: var(--text-2);
+      margin: -6px 0 14px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+    }
+
     .cc-meta {
       font-family: var(--font-mono);
       font-size: 10px;
@@ -720,41 +734,6 @@
 
     .tv-title-fav svg { fill: currentColor; }
 
-    /* the poem of the flow — the words that move people through the
-       poses above, folded away until wanted mid-teach */
-    .tv-poem-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: none;
-      border: none;
-      padding: 0;
-      margin-top: 12px;
-      cursor: pointer;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      letter-spacing: var(--ls-label);
-      text-transform: uppercase;
-      color: var(--text-3);
-      transition: color var(--transition-base);
-    }
-
-    .tv-poem-toggle:hover { color: var(--text-1); }
-    .tv-poem-toggle .material-symbols-sharp { transition: transform var(--transition-base); }
-    .tv-poem-toggle[aria-expanded="true"] .material-symbols-sharp { transform: rotate(180deg); }
-
-    .tv-poem {
-      margin-top: 12px;
-      padding-left: 14px;
-      border-left: 1px solid var(--border-light);
-    }
-
-    .tv-poem p {
-      font-size: var(--text-body-sm);
-      line-height: 1.7;
-      color: var(--text-2);
-    }
-
     .tv-flow-name {
       font-family: var(--font-mono);
       font-size: 11px;
@@ -1052,7 +1031,7 @@
 
       /* the sheet is the teaching view and nothing else */
       .app-sidebar, .sidebar-toggle, .sidebar-overlay, .nav-sheet, .mobile-brand, nav,
-      .post-bar, footer, .post-actions, .tv-notes, .toast, .tv-menu, .tv-poem-toggle,
+      .post-bar, footer, .post-actions, .tv-notes, .toast, .tv-menu,
       #list-view, #edit-view, #empty-view { display: none !important; }
 
       #teach-view[hidden] { display: none !important; }
@@ -1207,6 +1186,18 @@
       <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
       Classes
       </button>
+      <div class="post-actions">
+        <button class="btn-icon" id="edit-btn" title="Edit class" data-tooltip="Edit">
+          <span class="material-symbols-sharp">edit</span>
+        </button>
+        <button class="btn-icon" id="wake-btn" title="Keep screen awake while teaching" data-tooltip="Keep screen awake" hidden>
+          <span class="material-symbols-sharp">visibility_lock</span>
+        </button>
+        <button class="btn-icon" id="more-btn" title="More actions" data-tooltip="More">
+          <span class="material-symbols-sharp">more_horiz</span>
+        </button>
+        <div class="tv-menu" id="tv-menu" hidden></div>
+      </div>
     </div>
     <div class="wrap" style="padding-top: 0;">
 
@@ -1217,18 +1208,6 @@
             <p class="tv-meta" id="tv-meta"></p>
             <p class="tv-playlist" id="tv-playlist" hidden><span class="material-symbols-sharp">music_note</span><span id="tv-playlist-body"></span></p>
             <p class="tv-playlist tv-props" id="tv-props" hidden><span class="material-symbols-sharp">widgets</span><span id="tv-props-body"></span></p>
-          </div>
-          <div class="post-actions">
-            <button class="btn-icon" id="edit-btn" title="Edit class" data-tooltip="Edit">
-              <span class="material-symbols-sharp">edit</span>
-            </button>
-            <button class="btn-icon" id="wake-btn" title="Keep screen awake while teaching" data-tooltip="Keep screen awake" hidden>
-              <span class="material-symbols-sharp">visibility_lock</span>
-            </button>
-            <button class="btn-icon" id="more-btn" title="More actions" data-tooltip="More">
-              <span class="material-symbols-sharp">more_horiz</span>
-            </button>
-            <div class="tv-menu" id="tv-menu" hidden></div>
           </div>
         </div>
         <div id="tv-stories"></div>
@@ -1262,7 +1241,7 @@
       </button>
       <div class="post-edit-actions">
         <button class="btn-ghost" id="cancel-btn">Cancel</button>
-        <button class="btn-primary" id="save-btn">Save to Your Library</button>
+        <button class="btn-primary" id="save-btn">Save</button>
       </div>
     </div>
     <div class="wrap cw-wrap-wide" style="padding-top: 0;">

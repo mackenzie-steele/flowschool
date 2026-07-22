@@ -205,21 +205,52 @@
       line-height: 1;
     }
 
-    .fd-cues-context {
-      margin-left: auto;
-      font-family: var(--font-mono);
-      font-size: var(--fs-label-2);
-      color: var(--text-3);
-      line-height: 1;
+    .fd-cues-name {
+      flex: 1;
+      min-width: 0;
+      font-size: var(--text-body-sm);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+      text-align: left;
     }
+
+    /* the empty drawer — dashed where the cues will sit */
+    .fd-cues-empty {
+      border-style: dashed;
+      border-top-color: rgba(var(--ink-rgb), .12);
+      background: none;
+    }
+
+    .fd-cues-empty-name { color: var(--text-2); }
+    .fd-cues-empty:hover .fd-cues-empty-name { color: var(--text-1); }
+
+    /* in edit mode a quiet x rides the bar — the chevron shifts left */
+    .fd-cues { position: relative; }
+    .fd-cues-editable .fd-cues-head { padding-right: 48px; }
+    .fd-cues-editable .fd-cues-empty { padding-right: 20px; }
+
+    .fd-cues-x {
+      position: absolute;
+      top: 13px;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      padding: 6px;
+      line-height: 1;
+      border-radius: var(--rs);
+      transition: color var(--transition-base);
+    }
+
+    .fd-cues-x:hover { color: var(--text-1); }
 
     .fd-cues-chev { color: var(--text-3); transition: transform var(--transition-base); }
     .fd-cues-head[aria-expanded="true"] .fd-cues-chev { transform: rotate(180deg); }
 
-    .fd-cues-attach,
     .fd-cues-foot a,
     .fd-cues-foot button {
       display: inline-flex;
@@ -238,7 +269,6 @@
       transition: color var(--transition-base);
     }
 
-    .fd-cues-attach:hover,
     .fd-cues-foot a:hover,
     .fd-cues-foot button:hover { color: var(--text-1); }
 
@@ -267,6 +297,11 @@
       font-family: var(--font);
       cursor: pointer;
     }
+
+    /* spoken for — visible, named, not clickable */
+    .fd-cues-row.taken { cursor: default; }
+    .fd-cues-row.taken .fl-class-title { color: var(--text-3); }
+    .fd-cues-row.taken:hover .fl-class-title { opacity: 1; }
 
     .fd-usedin { padding-top: 24px; }
 
@@ -690,6 +725,14 @@
         <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
         Your Flows
       </button>
+      <div class="post-actions fd-actions" id="fd-actions">
+        <button class="btn-icon" id="fd-edit-btn" title="Edit flow" data-tooltip="Edit">
+          <span class="material-symbols-sharp">edit</span>
+        </button>
+        <button class="btn-icon" id="fd-more-btn" title="More actions" data-tooltip="More">
+          <span class="material-symbols-sharp">more_horiz</span>
+        </button>
+      </div>
     </div>
     <div class="wrap" style="padding-top: 0;">
 
@@ -698,14 +741,6 @@
           <div class="fd-head-main">
             <h4 class="fd-title" id="fd-title"></h4>
             <p class="fd-meta" id="fd-meta"></p>
-          </div>
-          <div class="post-actions fd-actions" id="fd-actions">
-            <button class="btn-icon" id="fd-edit-btn" title="Edit flow" data-tooltip="Edit">
-              <span class="material-symbols-sharp">edit</span>
-            </button>
-            <button class="btn-icon" id="fd-more-btn" title="More actions" data-tooltip="More">
-              <span class="material-symbols-sharp">more_horiz</span>
-            </button>
           </div>
         </div>
 
@@ -724,12 +759,14 @@
              does, so both doors open the same room. Folded until wanted. -->
         <div class="fd-cues">
           <button type="button" class="fd-cues-head" id="fd-cues-toggle" aria-expanded="false" aria-controls="fd-cues-body" hidden>
+            <span class="fd-cues-name" id="fd-cues-label"></span>
             <span class="fd-cues-title">Cues</span>
-            <span class="fd-cues-context" id="fd-cues-label"></span>
             <span class="material-symbols-sharp fd-cues-chev i-md">expand_more</span>
           </button>
-          <button type="button" class="fd-cues-attach" id="fd-cues-attach" hidden>
-            <span class="material-symbols-sharp i-sm">edit_note</span>Attach cues
+          <button type="button" class="fd-cues-head fd-cues-empty" id="fd-cues-attach" hidden>
+            <span class="fd-cues-name fd-cues-empty-name">Attach cues</span>
+            <span class="fd-cues-title">Cues</span>
+            <span class="material-symbols-sharp fd-cues-chev i-md">add</span>
           </button>
           <div class="fd-cues-body" id="fd-cues-body" hidden></div>
         </div>
@@ -752,7 +789,7 @@
       </button>
       <div class="post-edit-actions">
         <button class="btn-ghost" id="cancel-btn">Cancel</button>
-        <button class="btn-primary" id="save-btn">Save to Your Library</button>
+        <button class="btn-primary" id="save-btn">Save</button>
       </div>
     </div>
     <div class="wrap" style="padding-top: 0;">
@@ -794,14 +831,19 @@
         <!-- the cue sheet rides along in the editor too — same drawer
              as the viewer, same link. Hidden for unsaved flows: there's
              no flow id to attach to yet. -->
-        <div class="fd-cues" id="fl-cues" hidden>
+        <div class="fd-cues fd-cues-editable" id="fl-cues" hidden>
           <button type="button" class="fd-cues-head" id="fl-cues-toggle" aria-expanded="false" aria-controls="fl-cues-body" hidden>
+            <span class="fd-cues-name" id="fl-cues-label"></span>
             <span class="fd-cues-title">Cues</span>
-            <span class="fd-cues-context" id="fl-cues-label"></span>
             <span class="material-symbols-sharp fd-cues-chev i-md">expand_more</span>
           </button>
-          <button type="button" class="fd-cues-attach" id="fl-cues-attach" hidden>
-            <span class="material-symbols-sharp i-sm">edit_note</span>Attach cues
+          <button type="button" class="fd-cues-x" id="fl-cues-x" title="Detach cues" data-tooltip="Detach cues" aria-label="Detach cues" hidden>
+            <span class="material-symbols-sharp i-sm">close</span>
+          </button>
+          <button type="button" class="fd-cues-head fd-cues-empty" id="fl-cues-attach" hidden>
+            <span class="fd-cues-name fd-cues-empty-name">Attach cues</span>
+            <span class="fd-cues-title">Cues</span>
+            <span class="material-symbols-sharp fd-cues-chev i-md">add</span>
           </button>
           <div class="fd-cues-body" id="fl-cues-body" hidden></div>
         </div>
@@ -1137,7 +1179,7 @@
         fsSetLabel(btn, '<span class="material-symbols-sharp i-md fs-check-in">check</span>Saved');
         btn.disabled = true;
       } else {
-        fsSetLabel(btn, editingId != null ? 'Save Changes' : 'Save to Your Library');
+        fsSetLabel(btn, editingId != null ? 'Save Changes' : 'Save');
         btn.disabled = (state === 'idle');
       }
     }
@@ -1193,16 +1235,26 @@
     // ─── THE CUE SHEET UNDER THE POSES ───────────────────────────────────────────
     // Cue building mirrors Your Cues' own buildCue, so every surface
     // speaks identical lines.
+    // fs-cue-flows is an id-keyed array since the Your Cues restructure
+    // (Jul 2026); the normalizer folds the old name-keyed shape in with
+    // the same deterministic ids Your Cues assigns
     function cueStore() {
-      try { return JSON.parse(localStorage.getItem('fs-cue-flows') || '{}'); } catch (e) { return {}; }
+      try {
+        var raw = JSON.parse(localStorage.getItem('fs-cue-flows') || '[]');
+        var list = Array.isArray(raw) ? raw : Object.keys(raw || {}).map(function (k) { return raw[k]; });
+        return list.filter(Boolean).map(function (e, i) {
+          if (e.id == null) e.id = (Date.parse(e.savedAt) || 0) + i;
+          return e;
+        });
+      } catch (e) { return []; }
     }
-    function setCueStore(store) {
-      localStorage.setItem('fs-cue-flows', JSON.stringify(store));
+    function setCueStore(list) {
+      localStorage.setItem('fs-cue-flows', JSON.stringify(list));
     }
+    function loadFlows2() { return flows; }
     function cueSheetFor(flowId) {
-      var store = cueStore();
-      var hits = Object.keys(store).map(function (k) { return store[k]; })
-        .filter(function (e) { return e && e.flowId === flowId; })
+      var hits = cueStore()
+        .filter(function (e) { return e.flowId === flowId; })
         .sort(function (a, b) { return new Date(b.savedAt) - new Date(a.savedAt); });
       return hits[0] || null;
     }
@@ -1219,38 +1271,65 @@
       }).filter(Boolean);
     }
 
+    // a NEW flow has no id for a cue sheet to point at yet, so its
+    // chosen sheet waits here and the link lands on first save.
+    // Dropped with the draft if the flow is discarded.
+    var pendingCueId = null;
+
+    function editorCueEntry() {
+      if (editingId != null) {
+        var f = byId(editingId);
+        return f ? cueSheetFor(f.id) : null;
+      }
+      if (pendingCueId == null) return null;
+      return cueStore().find(function (x) { return x.id === pendingCueId; }) || null;
+    }
+
     // one drawer, two rooms — the viewer ('fd') and the editor ('fl')
     // render through the same code against their own ids
-    function renderCuesUI(p, f) {
+    function renderCuesUI(p, entry) {
       var toggle = document.getElementById(p + '-cues-toggle');
       var attach = document.getElementById(p + '-cues-attach');
       var body   = document.getElementById(p + '-cues-body');
+      var x      = document.getElementById(p + '-cues-x');
       body.hidden = true;
       body._fsUnfoldOpen = false;
       toggle.setAttribute('aria-expanded', 'false');
-      var entry = cueSheetFor(f.id);
       toggle.hidden = !entry;
       attach.hidden = !!entry;
+      if (x) x.hidden = !entry;
       if (!entry) { body.innerHTML = ''; return; }
-      document.getElementById(p + '-cues-label').textContent = entry.name;
+      document.getElementById(p + '-cues-label').textContent = entry.name || 'Untitled';
       var lines = cueLines(entry);
       body.innerHTML =
         (lines.length
           ? lines.map(function (l) { return '<p>' + esc(l) + '</p>'; }).join('')
           : '<p class="fd-cues-none">Nothing written on this sheet yet.</p>') +
         '<div class="fd-cues-foot">' +
-          '<a href="your-cues?flow=' + encodeURIComponent(entry.name) + '">Edit in Your Cues</a>' +
-          '<button type="button" data-cues-detach>Detach</button>' +
+          '<a href="your-cues?edit=' + entry.id + '">Edit in Your Cues</a>' +
         '</div>';
-      body.querySelector('[data-cues-detach]').addEventListener('click', function () {
-        var store = cueStore();
-        if (store[entry.name]) { store[entry.name].flowId = null; setCueStore(store); }
-        renderCuesUI(p, f);
-        toast('Cues detached.');
-      });
     }
 
-    function renderFdCues(f) { renderCuesUI('fd', f); }
+    function renderFdCues(f) { renderCuesUI('fd', cueSheetFor(f.id)); }
+    function renderFlCues() { renderCuesUI('fl', editorCueEntry()); }
+
+    // the editor's x detaches — same gesture as the cue editor's flow x
+    document.getElementById('fl-cues-x').addEventListener('click', function () {
+      if (editingId == null) {
+        pendingCueId = null;
+      } else {
+        var f = byId(editingId);
+        if (!f) return;
+        var entry = cueSheetFor(f.id);
+        if (entry) {
+          var list = cueStore();
+          var hit = list.find(function (x) { return x.id === entry.id; });
+          if (hit) { hit.flowId = null; setCueStore(list); }
+        }
+      }
+      renderFlCues();
+      toast('Cues detached.');
+    });
 
     ['fd', 'fl'].forEach(function (p) {
       document.getElementById(p + '-cues-toggle').addEventListener('click', function () {
@@ -1269,29 +1348,41 @@
 
     function openCuesModal(p) {
       var f = byId(p === 'fd' ? currentId : editingId);
-      if (!f) return;
-      var store = cueStore();
-      var entries = Object.keys(store).map(function (k) { return store[k]; })
+      if (!f && !(p === 'fl' && editingId == null)) return;
+      var entries = cueStore()
         .sort(function (a, b) { return new Date(b.savedAt) - new Date(a.savedAt); });
       var list = document.getElementById('fd-cues-list');
+      // one sheet, one flow — a sheet linked elsewhere is spoken for
+      var flowNames = {};
+      loadFlows2().forEach(function (fl) { flowNames[fl.id] = fl.name || 'Untitled Flow'; });
       list.innerHTML = entries.length
         ? entries.map(function (e) {
             var d = new Date(e.savedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-            return '<button type="button" class="fl-class-row fd-cues-row" data-name="' + esc(e.name) + '">' +
-              '<span class="fl-class-title">' + esc(e.name) + '</span>' +
-              '<span class="fl-class-meta">' + d + '</span>' +
+            var taken = e.flowId != null && !(f && e.flowId === f.id);
+            return '<button type="button" class="fl-class-row fd-cues-row' + (taken ? ' taken' : '') + '"' +
+              (taken ? ' disabled' : ' data-id="' + e.id + '"') + '>' +
+              '<span class="fl-class-title">' + esc(e.name || 'Untitled') + '</span>' +
+              '<span class="fl-class-meta">' + (taken ? 'Linked to ' + esc(flowNames[e.flowId] || 'a flow') : d) + '</span>' +
             '</button>';
           }).join('')
         : '<p class="fd-cues-none">Nothing in Your Cues yet. Write a sheet there first.</p>';
-      list.querySelectorAll('.fd-cues-row').forEach(function (row) {
+      list.querySelectorAll('.fd-cues-row:not(.taken)').forEach(function (row) {
         row.addEventListener('click', function () {
-          var store = cueStore();
-          var entry = store[row.dataset.name];
+          var all = cueStore();
+          var entry = all.find(function (x) { return x.id === parseInt(row.dataset.id, 10); });
           if (!entry) return;
-          entry.flowId = f.id;
-          setCueStore(store);
+          if (p === 'fl' && editingId == null) {
+            // the link waits for the flow to exist
+            pendingCueId = entry.id;
+            markDirty();
+          } else {
+            entry.flowId = f.id;
+            // one flow, one sheet — this claim releases any other's
+            all.forEach(function (o) { if (o.id !== entry.id && o.flowId === f.id) o.flowId = null; });
+            setCueStore(all);
+          }
           closeCuesModal();
-          renderCuesUI(p, f);
+          if (p === 'fd') renderFdCues(f); else renderFlCues();
           toast('Cues attached.');
         });
       });
@@ -1371,8 +1462,9 @@
         document.getElementById('fl-usedin').hidden = !f;
         if (f) renderUsedIn(f, document.getElementById('fl-usedin-list'));
 
-        document.getElementById('fl-cues').hidden = !f;
-        if (f) renderCuesUI('fl', f);
+        pendingCueId = null;
+        document.getElementById('fl-cues').hidden = false;
+        renderFlCues();
 
         dirty = false;
         setSaveButton(f ? 'saved' : 'idle');
@@ -1652,6 +1744,18 @@
         history.replaceState({}, '', 'your-flows?edit=' + entry.id);
       }
       persist();
+      // a cue sheet chosen before the flow existed gets its link now
+      if (pendingCueId != null) {
+        var cues = cueStore();
+        var hit = cues.find(function (x) { return x.id === pendingCueId; });
+        if (hit) {
+          hit.flowId = editingId;
+          cues.forEach(function (o) { if (o.id !== hit.id && o.flowId === editingId) o.flowId = null; });
+          setCueStore(cues);
+        }
+        pendingCueId = null;
+        renderFlCues();
+      }
       dirty = false;
       setSaveButton('saved');
     });
