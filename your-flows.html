@@ -660,6 +660,74 @@
 
     .fl-area::placeholder { color: rgba(var(--ink-rgb), .30); }
 
+    @media print {
+      @page { margin: 16mm 18mm; }
+
+      /* the sheet is the flow and nothing else */
+      .app-sidebar, .sidebar-toggle, .sidebar-overlay, .nav-sheet, .mobile-brand, nav,
+      .post-bar, footer, .post-actions, .toast, .fl-menu, .skip-link,
+      .fd-cues, .fd-usedin, #list-view, #edit-view { display: none !important; }
+
+      #detail-view[hidden] { display: none !important; }
+
+      * { background: transparent !important; box-shadow: none !important; }
+
+      html, body { background: #fff !important; }
+
+      body, main, .wrap, .fd {
+        color: #151515 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+        animation: none !important;
+        display: block !important;
+      }
+
+      .fd * { color: #151515 !important; }
+
+      .fd-title { font-size: 24pt; margin-bottom: 6pt; }
+      .fd-title::after {
+        content: var(--print-byline, '');
+        display: block;
+        font-size: 10pt;
+        font-weight: var(--weight-regular);
+        letter-spacing: 0;
+        color: #555;
+        margin-top: 4pt;
+      }
+      .fd-title .fav-mark { display: none !important; }
+      .fd-head-main { padding-bottom: 10pt; border-bottom: 1px solid #ddd; }
+      .fd-meta { color: #555 !important; }
+
+      .fl-challenge {
+        border: none !important;
+        border-bottom: 1px solid #ddd !important;
+        border-radius: 0;
+        padding: 10pt 0 12pt !important;
+        margin: 0 !important;
+      }
+
+      .fd-flow {
+        font-family: var(--font-mono) !important;
+        font-size: 11pt !important;
+        line-height: 1.65 !important;
+        margin: 14pt 0 0 !important;
+        padding: 0 !important;
+      }
+
+      /* the signature line */
+      .fd::after {
+        content: 'Flow School \00B7\00A0 flowschool.io';
+        display: block;
+        margin-top: 22pt;
+        padding-top: 8pt;
+        border-top: 1px solid #ddd;
+        font-family: var(--font-mono);
+        font-size: 8pt;
+        letter-spacing: .08em;
+        color: #888;
+      }
+    }
   </style>
 </head>
 
@@ -1075,6 +1143,7 @@
             iconClass: f.pinned ? 'fav-mark' : '',
             iconStyle: f.pinned ? 'margin:0;vertical-align:0;font-size:16px' : '',
             label: f.pinned ? 'Remove from favorites' : 'Add to favorites' },
+          { act: 'print', icon: 'print', label: 'Print flow sheet' },
           { act: 'dup', icon: 'content_copy', label: 'Duplicate' },
           { act: 'del', icon: 'delete', label: 'Delete flow' },
         ];
@@ -1083,7 +1152,9 @@
       on: function (act) {
         var f = byId(currentId);
         if (!f) return;
-        if (act === 'pin') {
+        if (act === 'print') {
+          window.print();
+        } else if (act === 'pin') {
           f.pinned = !f.pinned;
           persist();
           renderFdTitle(f);
@@ -1196,6 +1267,7 @@
     }
 
     function showList(push) {
+      document.title = 'Your Flows \u2014 Flow School';
       fsSwapView(flowViews(), document.getElementById('list-view'), function () {
         renderList();
       });
@@ -1394,6 +1466,7 @@
       if (!f) { showList(); return; }
       currentId = id;
 
+      document.title = (f.name || 'Untitled Flow') + ' \u2014 Flow School';
       fsSwapView(flowViews(), document.getElementById('detail-view'), function () {
         renderFdTitle(f);
         renderFdMeta(f);
@@ -1870,6 +1943,20 @@
         showList();
       }
     }
+
+    // the printed sheet signs itself (your-classes' pattern)
+    (function () {
+      var name = localStorage.getItem('fs-display-name') || '';
+      if (!name) {
+        try {
+          var tok = JSON.parse(localStorage.getItem('sb-zizuopmcpzicbwngjagp-auth-token'));
+          var meta = (tok && tok.user && tok.user.user_metadata) || {};
+          name = meta.full_name || meta.name || '';
+        } catch (_) {}
+      }
+      name = name.replace(/["\\]/g, '').trim();
+      if (name) document.documentElement.style.setProperty('--print-byline', '"By: ' + name + '"');
+    })();
 
     window.addEventListener('popstate', function () {
       if (isEditing() && dirty) {

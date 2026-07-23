@@ -13,6 +13,72 @@
     /* hidden must always win — several components set their own display */
     [hidden] { display: none !important; }
 
+    @media print {
+      @page { margin: 16mm 18mm; }
+
+      /* the sheet is the script and nothing else */
+      .app-sidebar, .sidebar-toggle, .sidebar-overlay, .nav-sheet, .mobile-brand, nav,
+      .post-bar, footer, .post-actions, .toast, .ws-menu, .skip-link,
+      .wsf, .cue-actions, #list-view, #sheet-view { display: none !important; }
+
+      * { background: transparent !important; box-shadow: none !important; }
+
+      html, body { background: #fff !important; }
+
+      body, main, .wrap, .cd-body {
+        color: #151515 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+        animation: none !important;
+        display: block !important;
+      }
+
+      .cd-body * { color: #151515 !important; }
+
+      .cd-title { font-size: 24pt; margin-bottom: 6pt; }
+      .cd-title::after {
+        content: var(--print-byline, '');
+        display: block;
+        font-size: 10pt;
+        font-weight: var(--weight-regular);
+        letter-spacing: 0;
+        color: #555;
+        margin-top: 4pt;
+      }
+      .cd-title .fav-mark { display: none !important; }
+      .cd-meta {
+        color: #555 !important;
+        padding-bottom: 10pt;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 6pt;
+      }
+
+      .cd-cue {
+        border-top: none !important;
+        border-bottom: 1px solid #eee;
+        padding: 7pt 0 !important;
+        break-inside: avoid;
+      }
+
+      .cd-cue-breath { color: #555 !important; font-size: 8pt; }
+      .cd-cue-text { font-size: 12pt !important; line-height: 1.5 !important; }
+      .cd-cue-pose { color: #555 !important; font-size: 8pt; }
+
+      /* the signature line */
+      .cd-body::after {
+        content: 'Flow School \00B7\00A0 flowschool.io';
+        display: block;
+        margin-top: 22pt;
+        padding-top: 8pt;
+        border-top: 1px solid #ddd;
+        font-family: var(--font-mono);
+        font-size: 8pt;
+        letter-spacing: .08em;
+        color: #888;
+      }
+    }
+
     /* ── Load modal flow list ── */
     .flow-list {
       border-radius: var(--r); overflow: hidden;
@@ -732,13 +798,6 @@
       line-height: 1.7;
       color: var(--text-1);
       overflow-wrap: break-word;
-    }
-
-    /* a row that's only a pose — the shorthand register at reading scale */
-    .cd-cue-onlypose {
-      font-family: var(--font-mono);
-      font-size: 15px;
-      letter-spacing: .04em;
     }
 
     .cd-cue-pose {
@@ -1748,19 +1807,21 @@ function renderDetail(e) {
   // the breath margin only exists when the sheet marks breaths — an
   // unmarked sheet reads flush left
   const hasBreath = worked.some(r => r.inex && INEX_LABELS[r.inex]);
+  // one anatomy for every row: breath, the sentence (or its empty
+  // seat), and the pose always in its quiet mono place on the right
   document.getElementById('cd-cues').innerHTML = worked.length
     ? worked.map(r => {
         const breath = r.inex && INEX_LABELS[r.inex] ? INEX_LABELS[r.inex] : '';
         const bSpan = hasBreath ? '<span class="cd-cue-breath">' + esc(breath) + '</span>' : '';
         const sentence = buildCue(r);
         const pose = (r.pose || '').trim();
-        if (!sentence) {
-          return '<div class="cd-cue">' + bSpan +
-            '<span class="cd-cue-text cd-cue-onlypose">' + esc(pose.toUpperCase()) + '</span>' +
-          '</div>';
-        }
+        // the pose rides the line: alone it reads like a cue; with a
+        // cue it lands at the sentence's end with its own period —
+        // and either way it keeps the quiet seat on the right
+        let line = sentence || pose;
+        if (sentence && pose) line = sentence + ' ' + pose + '.';
         return '<div class="cd-cue">' + bSpan +
-          '<span class="cd-cue-text">' + esc(sentence) + '</span>' +
+          '<span class="cd-cue-text">' + esc(line) + '</span>' +
           (pose ? '<span class="cd-cue-pose">' + esc(pose) + '</span>' : '') +
         '</div>';
       }).join('')
@@ -2562,13 +2623,16 @@ function init() {
       return [
         { act: 'pin', icon: 'favorite', iconClass: e.pinned ? 'filled' : '',
           label: e.pinned ? 'Remove from favorites' : 'Add to favorites' },
+        { act: 'print', icon: 'print', label: 'Print cue sheet' },
         { act: 'copy', icon: 'content_copy', label: 'Copy Cues' },
         { act: 'del', icon: 'delete', label: 'Delete cue sheet' },
       ];
     },
     confirm: { del: 'Click again to delete' },
     on: act => {
-      if (act === 'pin') {
+      if (act === 'print') {
+        window.print();
+      } else if (act === 'pin') {
         const list = getSheets();
         const e = list.find(x => x.id === sheetId);
         if (!e) return;
@@ -2678,6 +2742,20 @@ function init() {
   });
   renderWBWords();
 }
+
+// the printed sheet signs itself (your-classes' pattern)
+(function () {
+  var name = localStorage.getItem('fs-display-name') || '';
+  if (!name) {
+    try {
+      var tok = JSON.parse(localStorage.getItem('sb-zizuopmcpzicbwngjagp-auth-token'));
+      var meta = (tok && tok.user && tok.user.user_metadata) || {};
+      name = meta.full_name || meta.name || '';
+    } catch (_) {}
+  }
+  name = name.replace(/["\\]/g, '').trim();
+  if (name) document.documentElement.style.setProperty('--print-byline', '"By: ' + name + '"');
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
