@@ -328,6 +328,7 @@
     document.getElementById('signout-btn').addEventListener('click', async () => {
       if (window.fsSync) { try { await fsSync.signOutCleanup(); } catch (_) {} }
       localStorage.removeItem('fs-display-name');
+      localStorage.removeItem('fs-full-name');
       localStorage.removeItem('fs-avatar-url');
       localStorage.removeItem('fs-handle');
       await db.auth.signOut();
@@ -418,6 +419,7 @@
       // the account is gone — clear every local trace and leave
       if (window.fsSync) { try { fsSync.clearCache(); } catch (_) {} }
       localStorage.removeItem('fs-display-name');
+      localStorage.removeItem('fs-full-name');
       localStorage.removeItem('fs-avatar-url');
       localStorage.removeItem('fs-handle');
       try { await db.auth.signOut(); } catch (_) {} // session may already be dead

@@ -280,6 +280,35 @@
       color: var(--text-1);
       margin-bottom: 10px;
     }
+
+    /* ── shared classes — editorial rows, hairline-divided ── */
+    .tps-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-light);
+      text-decoration: none;
+      color: inherit;
+    }
+    .tps-row:last-child { border-bottom: none; }
+    .tps-title {
+      font-size: var(--text-body-sm);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      transition: opacity var(--transition-base);
+    }
+    .tps-row:hover .tps-title { opacity: .65; }
+    .tps-meta {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-3);
+    }
   </style>
 </head>
 
@@ -292,6 +321,7 @@
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
   <script src="lib/community.js"></script>
+  <script src="lib/publish.js"></script>
   <div class="toast" id="toast"></div>
 
   <main>
@@ -349,6 +379,13 @@
       <section class="tp-section fs-arrive" id="tp-classes-sec" hidden>
         <span class="label-1">Practice with me</span>
         <div id="tp-classes"></div>
+      </section>
+
+      <!-- classes this teacher has chosen to share — read live from
+           community_classes; absent entirely when they share nothing -->
+      <section class="tp-section fs-arrive" id="tp-shared-sec" hidden>
+        <span class="label-1">Shared classes</span>
+        <div id="tp-shared"></div>
       </section>
 
     </div>
@@ -689,6 +726,7 @@
           document.getElementById('tp-preview-note').hidden = false;
           const { data: ownClasses } = await db.from('schedules').select('*').eq('user_id', myId);
           renderClasses((ownClasses || []).filter(c => !c.on_date || c.on_date >= new Date().toISOString().slice(0, 10)), true);
+          renderShared(myId);
           show('tp-view');
           return;
         }
@@ -723,8 +761,29 @@
       if (sErr) console.warn('Schedule could not load:', sErr.message || sErr);
       renderClasses(classes || [], myId === teacher.id);
 
+      renderShared(teacher.id);
+
       show('tp-view');
     })();
+
+    // ── shared classes — the section exists only if they share something ──
+    async function renderShared(ownerId) {
+      try {
+        const { data, error } = await fsPublish.byOwner(ownerId);
+        if (error || !data.length) return;
+        document.getElementById('tp-shared').innerHTML = data.map(r => {
+          const meta = [r.class_type, (r.length_minutes || 60) + ' min']
+            .filter(Boolean).join(' · ');
+          return `<a class="tps-row" href="class?p=${esc(r.id)}">` +
+            `<span class="tps-title">${esc(r.title || 'Untitled Class')}</span>` +
+            `<span class="tps-meta">${esc(meta)}</span>` +
+          `</a>`;
+        }).join('');
+        document.getElementById('tp-shared-sec').hidden = false;
+      } catch (e) {
+        console.warn('Shared classes could not load:', e && e.message);
+      }
+    }
   </script>
   <script src="lib/toast.js"></script>
 

@@ -89,7 +89,7 @@
       flex-direction: row;
       align-items: baseline;
       gap: 14px;
-      padding: 13px 4px;
+      padding: 13px 32px 13px 4px; /* the right seat holds the heart */
       background: none;
       box-shadow: none;
       border: none;
@@ -118,7 +118,22 @@
     }
     #flow-index.list-view .fc-text { display: none; }
     #flow-index.list-view .fc-meta { margin: 0; padding: 0; border: none; white-space: nowrap; }
-    #flow-index.list-view .fc-fav { position: static; order: 5; margin: 0; }
+    /* the heart sits centered between the hairlines, every screen size */
+    #flow-index.list-view .fc-fav {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      margin: 0;
+    }
+
+    /* small screens: the row stacks — chip, then title, then meta */
+    @media (max-width: 640px) {
+      #flow-index.list-view .flow-card { flex-wrap: wrap; row-gap: 4px; }
+      #flow-index.list-view .fc-top { flex-basis: 100%; width: auto; margin-bottom: 4px; } /* the chip gets its own breath above the title */
+      #flow-index.list-view .fc-title { flex-basis: 100%; }
+      #flow-index.list-view .fc-meta { flex-basis: 100%; white-space: normal; }
+    }
 
     .fc-top {
       display: flex;
@@ -202,6 +217,7 @@
 
     /* exactly as written — the teaching-view treatment */
     .fd-flow {
+      font-family: var(--font-mono); /* the printed sheet's voice, on screen too */
       font-size: var(--fs-h6);
       font-weight: var(--weight-regular);
       line-height: 1.6;
@@ -793,6 +809,20 @@
 
     .fl-area::placeholder { color: rgba(var(--ink-rgb), .30); }
 
+
+    /* the printed sheet wears the mark, top right — screen never sees it */
+    .print-logo { display: none; }
+    @media print {
+      .print-logo {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 22pt;
+        width: auto;
+      }
+    }
+
     @media print {
       @page { margin: 16mm 18mm; }
 
@@ -818,19 +848,20 @@
 
       .fd * { color: #151515 !important; }
 
-      .fd-title { font-size: 24pt; margin-bottom: 6pt; }
+      .fd-title { font-size: 24pt; margin-bottom: 0; }
       .fd-title::after {
         content: var(--print-byline, '');
         display: block;
         font-size: 10pt;
         font-weight: var(--weight-regular);
         letter-spacing: 0;
-        color: #555;
-        margin-top: 4pt;
+        color: #151515; /* the byline carries the title's ink */
+        margin-top: 2pt;
       }
       .fd-title .fav-mark { display: none !important; }
-      .fd-head-main { padding-bottom: 10pt; border-bottom: 1px solid #ddd; }
-      .fd-meta { color: #555 !important; }
+      /* the head column stretches so its hairline crosses the page */
+      .fd-head-main { flex: 1; width: 100%; padding-bottom: 10pt; border-bottom: 1px solid #ddd; }
+      .fd-meta { margin-top: 6pt; color: #555 !important; }
 
       .fl-challenge {
         border: none !important;
@@ -846,19 +877,6 @@
         line-height: 1.65 !important;
         margin: 14pt 0 0 !important;
         padding: 0 !important;
-      }
-
-      /* the signature line */
-      .fd::after {
-        content: 'Flow School \00B7\00A0 flowschool.io';
-        display: block;
-        margin-top: 22pt;
-        padding-top: 8pt;
-        border-top: 1px solid #ddd;
-        font-family: var(--font-mono);
-        font-size: 8pt;
-        letter-spacing: .08em;
-        color: #888;
       }
     }
   </style>
@@ -943,6 +961,7 @@
     <div class="wrap" style="padding-top: 0;">
 
       <div class="fd">
+        <img class="print-logo" src="img/flow-school-logo_black.png" alt="">
         <div class="fd-head">
           <div class="fd-head-main">
             <h4 class="fd-title" id="fd-title"></h4>
@@ -1135,6 +1154,8 @@
 
     function persist() {
       localStorage.setItem(LS_KEY, JSON.stringify(flows));
+      // flow text rides inside shared classes' public copies
+      if (window.fsPublish) fsPublish.refreshShared();
     }
 
     function byId(id) {
@@ -1246,7 +1267,9 @@
         var used = classesUsing(f).length;
         var bits = [n + (n === 1 ? ' pose' : ' poses')];
         if (used) bits.push('in ' + used + (used === 1 ? ' class' : ' classes'));
-        bits.push(fmtDate(stampFor(f).ts));
+        // the card date speaks the sort's language: created order shows
+        // created dates, edited order shows edited dates
+        bits.push(fmtDate(sortMode() === 'edited' ? (f.editedAt || f.id) : f.id));
         return '<div class="flow-card" data-id="' + f.id + '">' +
           (f.pinned ? '<span class="material-symbols-sharp fav-mark fc-fav">favorite</span>' : '') +
           '<div class="fc-top">' +
@@ -2199,9 +2222,10 @@
       apply(localStorage.getItem(KEY) || 'grid');
     })();
 
-    // the printed sheet signs itself (your-classes' pattern)
+    // the printed sheet signs itself (your-classes' pattern) — with the
+    // person's real name first, then auth metadata, then display name
     (function () {
-      var name = localStorage.getItem('fs-display-name') || '';
+      var name = localStorage.getItem('fs-full-name') || '';
       if (!name) {
         try {
           var tok = JSON.parse(localStorage.getItem('sb-zizuopmcpzicbwngjagp-auth-token'));
@@ -2209,8 +2233,9 @@
           name = meta.full_name || meta.name || '';
         } catch (_) {}
       }
+      if (!name) name = localStorage.getItem('fs-display-name') || '';
       name = name.replace(/["\\]/g, '').trim();
-      if (name) document.documentElement.style.setProperty('--print-byline', '"By: ' + name + '"');
+      if (name) document.documentElement.style.setProperty('--print-byline', '"by: ' + name + '"');
     })();
 
     window.addEventListener('popstate', function () {

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
+  <style>html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F7F6F4;color-scheme:light}</style>
+  <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Class — Flow School</title>
+  <link rel="stylesheet" href="global.css">
+  <script src="lib/icons.js"></script>
+  <style>
+    [hidden] { display: none !important; }
+
+    /* ── the teach view's page, someone else's class: the same .wrap,
+          the same 640px reading column, the same title scale ── */
+    .pc { max-width: 640px; }
+
+    .pc-head { padding-bottom: 28px; }
+
+    .pc-title {
+      font-size: var(--fs-h4);
+      font-weight: var(--weight-medium);
+      letter-spacing: -.01em;
+      line-height: var(--lh-heading);
+      color: var(--text-1);
+      margin: 0 0 8px;
+      overflow-wrap: break-word;
+    }
+
+    /* the byline is the point — credit reads as part of the title block,
+       in the headline's own ink */
+    .pc-byline {
+      font-size: var(--text-body-sm);
+      color: var(--text-1);
+      margin: 0 0 8px;
+    }
+    .pc-byline a { color: inherit; text-decoration: none; border-bottom: 1px solid rgba(var(--ink-rgb), .25); }
+    .pc-byline a:hover { color: var(--text-1); }
+
+    .pc-meta {
+      font-family: var(--font-mono);
+      font-size: var(--fs-meta);
+      letter-spacing: .04em;
+      color: var(--text-3);
+    }
+
+    /* playlist + props under the meta — the teach view's logistics
+       block, to the letter */
+    .pc-logistic {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: .04em;
+      color: var(--text-2);
+      margin-top: 12px;
+    }
+    .pc-logistic .material-symbols-sharp { font-size: var(--icon-sm); color: var(--text-3); }
+    .pc-logistic.pc-props { margin-top: 4px; }
+
+    .pc-playlist-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-2);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: rgba(var(--ink-rgb), .25);
+      transition: color var(--transition-base);
+    }
+    .pc-playlist-link:hover { color: var(--text-1); }
+    .pc-playlist-link .material-symbols-sharp { font-size: var(--icon-sm); }
+
+    /* your own shared class, seen from outside — one quiet line */
+    .pc-own {
+      font-size: var(--text-body-sm);
+      color: var(--text-3);
+      margin-top: 16px;
+    }
+    .pc-own a { color: var(--text-2); }
+    .pc-own a:hover { color: var(--text-1); }
+
+    /* ── sections — the teach view's anatomy, read-only ── */
+    .pc-section { padding: 24px 0 12px; }
+    .pc-label {
+      padding: 8px 0;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .pc-flow-name {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .04em;
+      text-transform: none;
+      color: var(--text-3);
+    }
+    .pc-flow {
+      font-family: var(--font-mono); /* the printed sheet's voice, on screen too */
+      font-size: var(--fs-h6);
+      font-weight: var(--weight-regular);
+      line-height: 1.6;
+      color: var(--text-1);
+      white-space: pre-wrap;
+      padding: 2px 0;
+    }
+
+    /* ── cue drawers under a linked flow — the teach view's anatomy,
+          read-only ── */
+    .pc-cues-stack { margin-top: 16px; }
+    .pc-cues-stack .fd-cues { margin-bottom: 12px; }
+
+    .fd-cues-head {
+      border-radius: var(--r);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(var(--ink-rgb), .02);
+      border: 1px solid rgba(var(--ink-rgb), .12);
+      border-top-color: rgba(var(--ink-rgb), .22);
+      font-family: var(--font);
+      text-align: left;
+      cursor: pointer;
+      transition: border-color var(--transition-base);
+    }
+
+    .fd-cues-head:hover { border-color: rgba(var(--ink-rgb), .30); }
+    .fd-cues-head[aria-expanded="true"] { border-radius: var(--r) var(--r) 0 0; }
+
+    .fd-cues-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: var(--weight-bold);
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
+      color: var(--text-2);
+      line-height: 1;
+    }
+
+    .fd-cues-name {
+      flex: 1;
+      min-width: 0;
+      font-size: var(--text-body-sm);
+      font-weight: var(--weight-medium);
+      color: var(--text-1);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      text-align: left;
+    }
+
+    .fd-cues-chev { color: var(--text-3); transition: transform var(--transition-base); }
+    .fd-cues-head[aria-expanded="true"] .fd-cues-chev { transform: rotate(180deg); }
+
+    .fd-cues-body {
+      border-radius: 0 0 var(--r) var(--r);
+      border: 1px solid rgba(var(--ink-rgb), .12);
+      border-top: none;
+      padding: 16px 20px 20px;
+    }
+
+    .fd-cue {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding: 8px 0;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .fd-cue:first-child { border-top: none; padding-top: 0; }
+
+    .fd-cue-breath {
+      flex-shrink: 0;
+      width: 46px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .fd-cue-text {
+      flex: 1;
+      min-width: 0;
+      font-size: var(--text-body-sm);
+      line-height: 1.6;
+      color: var(--text-1);
+      overflow-wrap: break-word;
+    }
+
+    .fd-cue-pose {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .fd-cues-none { font-style: italic; color: var(--text-3); }
+
+    /* ── empty / gone states ── */
+    .pc-state {
+      max-width: 480px;
+      margin: 80px auto 0;
+      text-align: center;
+    }
+    .pc-state p {
+      font-size: var(--text-body-sm);
+      color: var(--text-2);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    /* ── PRINT — the class sheet, credited. One spec shared with the
+          Your Classes sheet: same scale, same rhythm, same signature.
+          Black on white, made to be read from the mat. ── */
+
+    /* the printed sheet wears the mark, top right — screen never sees it */
+    .print-logo { display: none; }
+    @media print {
+      .print-logo {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 22pt;
+        width: auto;
+      }
+    }
+
+    @media print {
+      @page { margin: 16mm 18mm; }
+
+      .app-sidebar, .sidebar-toggle, .sidebar-overlay, .nav-sheet, .mobile-brand, nav,
+      .post-bar, footer, .toast, .pc-own, .pc-cues-stack { display: none !important; }
+
+      /* white paper everywhere, whatever the theme */
+      * { background: transparent !important; box-shadow: none !important; }
+      html, body { background: #fff !important; }
+
+      body, main, .wrap, .pc {
+        color: #151515 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+        animation: none !important;
+        display: block !important;
+      }
+      .pc * { color: #151515 !important; }
+
+      /* head: title full ink, the credit and meta lines quiet */
+      /* the byline is its own element here (the tv sheet's rides
+         inside the title), so the title's margin moves to the meta —
+         same measured gaps: title →2pt→ byline →2pt→ meta */
+      .pc-title { font-size: 24pt; margin-bottom: 0; }
+      .pc-byline {
+        font-size: 10pt;
+        font-weight: var(--weight-regular);
+        color: #151515 !important; /* the byline carries the title's ink */
+        margin: 2pt 0 0;
+      }
+      .pc-byline a { color: #151515 !important; text-decoration: none !important; border-bottom: none !important; }
+      .pc-head { padding-bottom: 10pt; border-bottom: 1px solid #ddd; }
+      .pc-meta { margin-top: 6pt; }
+      .pc-meta, .pc-logistic { color: #555 !important; }
+      .pc-logistic .material-symbols-sharp { font-size: 10pt; }
+      .pc-playlist-link { text-decoration: none !important; }
+      .pc-playlist-link .material-symbols-sharp:last-child { display: none; }
+
+      /* sections: mono, exactly as written */
+      .pc-label { padding: 14pt 0 4pt !important; margin: 0 !important; }
+      .pc-label .label-1, .pc-flow-name { color: #555 !important; }
+      .pc-flow {
+        font-family: var(--font-mono) !important;
+        font-size: 11pt !important;
+        line-height: 1.65 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .pc-section { padding: 0 !important; break-inside: avoid; }
+    }
+  </style>
+</head>
+
+<body class="has-sidebar">
+
+  <script src="lib/version.js"></script>
+  <script src="lib/nav.js"></script>
+  <script src="lib/vendor/supabase-js-v2.110.7.min.js"></script>
+  <script src="lib/supabase.js"></script>
+  <script src="lib/telemetry.js"></script>
+  <script src="lib/sync.js"></script>
+  <script src="lib/publish.js"></script>
+  <script src="lib/motion.js"></script>
+  <div class="toast" id="toast"></div>
+
+  <main>
+  <div class="post-bar">
+    <a class="btn-ghost" id="pc-back" href="circle">
+      <span class="material-symbols-sharp i-md" style="margin-right:6px" aria-hidden="true">arrow_back</span>
+      <span class="post-back-label" id="pc-back-label">The Circle</span>
+    </a>
+    <div class="post-actions">
+      <button type="button" class="btn-icon" id="pc-print" title="Print class sheet" data-tooltip="Print" hidden>
+        <span class="material-symbols-sharp" aria-hidden="true">print</span>
+      </button>
+      <button type="button" class="btn-primary" id="pc-save" hidden></button>
+    </div>
+  </div>
+
+  <div class="wrap" style="padding-top: 0;">
+  <div class="pc">
+
+    <!-- ── the class ── -->
+    <article id="pc-view" class="fs-arrive" hidden>
+      <img class="print-logo" src="img/flow-school-logo_black.png" alt="">
+      <header class="pc-head">
+        <h1 class="pc-title" id="pc-title"></h1>
+        <p class="pc-byline" id="pc-byline"></p>
+        <p class="pc-meta" id="pc-meta"></p>
+        <p class="pc-logistic" id="pc-playlist-row" hidden><span class="material-symbols-sharp" aria-hidden="true">music_note</span><span id="pc-playlist"></span></p>
+        <p class="pc-logistic pc-props" id="pc-props-row" hidden><span class="material-symbols-sharp" aria-hidden="true">widgets</span><span id="pc-props"></span></p>
+        <p class="pc-own" id="pc-own" hidden></p>
+      </header>
+
+      <div id="pc-sections"></div>
+    </article>
+
+    <!-- ── gone / never here (one state — existence isn't leaked) ── -->
+    <div class="pc-state fs-arrive" id="pc-missing" hidden>
+      <p>This class isn&#8217;t shared right now. Teachers choose what stays on their profile &#8212; and sometimes a class goes home.</p>
+      <a class="btn-secondary" href="circle">Back to The Circle</a>
+    </div>
+
+    <!-- ── couldn't load ── -->
+    <div class="pc-state fs-arrive" id="pc-error" hidden>
+      <p>This class couldn&#8217;t load. It&#8217;s probably your connection &#8212; try again in a moment.</p>
+      <button type="button" class="btn-secondary" id="pc-retry">Try Again</button>
+    </div>
+
+  </div>
+  </div>
+  </main>
+
+  <script>
+    // ─── PUBLIC CLASS (/class?p=uuid) ────────────────────────────────────────────
+    // Reads one row from community_classes — the author's whitelisted
+    // projection, joined to their public identity. Nothing here ever
+    // touches another user's private library; the database only knows
+    // how to answer with published rows.
+
+    let row = null;
+    let myId = null;
+    let saved = false;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // link hygiene — only http(s) leaves the page (teacher.html's rule)
+    function safeUrl(raw) {
+      if (!raw) return null;
+      let u = String(raw).trim();
+      if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+      try {
+        const parsed = new URL(u);
+        return (parsed.protocol === 'http:' || parsed.protocol === 'https:') ? parsed.href : null;
+      } catch (e) { return null; }
+    }
+
+    function routeId() {
+      const p = new URLSearchParams(window.location.search).get('p') || '';
+      return /^[0-9a-f-]{36}$/i.test(p) ? p : null;
+    }
+
+    // one cue row's parts — the cue viewer's grammar, pose always in caps
+    const PC_INEX = { IN: 'Inhale', EX: 'Exhale' };
+    function cueLineParts(r) {
+      const verb = (r.verb || '').trim();
+      const body = (r.body || '').trim();
+      const dir  = (r.dir  || '').trim();
+      const pose = (r.pose || '').trim().toUpperCase();
+      if (!verb && !body && !dir && !pose) return null;
+      let sentence = '';
+      if (verb || body || dir) {
+        const bodyNorm = body && !/\byour\b/i.test(body) ? 'your ' + body : body;
+        sentence = [verb, bodyNorm, dir].filter(Boolean).join(' ');
+        if (sentence.slice(-1) !== '.') sentence += '.';
+        sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+      }
+      let line = sentence || pose;
+      if (sentence && pose) line = sentence + ' ' + pose + '.';
+      return { breath: PC_INEX[r.inex] || '', line, pose };
+    }
+
+    function cueDrawerHtml(sheet) {
+      const parts = (sheet.rows || []).map(cueLineParts).filter(Boolean);
+      const hasBreath = parts.some(x => x.breath);
+      return '<div class="fd-cues">' +
+        '<button type="button" class="fd-cues-head" aria-expanded="false">' +
+          '<span class="fd-cues-name">' + esc(sheet.name || 'Untitled') + '</span>' +
+          '<span class="fd-cues-title">Cues</span>' +
+          '<span class="material-symbols-sharp fd-cues-chev i-md">expand_more</span>' +
+        '</button>' +
+        '<div class="fd-cues-body" hidden>' +
+          (parts.length
+            ? parts.map(x =>
+                '<div class="fd-cue">' +
+                  (hasBreath ? '<span class="fd-cue-breath">' + esc(x.breath) + '</span>' : '') +
+                  '<span class="fd-cue-text">' + esc(x.line) + '</span>' +
+                  (x.pose ? '<span class="fd-cue-pose">' + esc(x.pose) + '</span>' : '') +
+                '</div>'
+              ).join('')
+            : '<p class="fd-cues-none">Nothing written on this sheet yet.</p>') +
+        '</div>' +
+      '</div>';
+    }
+
+    // one delegated ear — heads unfold; survives every render
+    document.getElementById('pc-sections').addEventListener('click', function (e) {
+      const head = e.target.closest('.fd-cues-head');
+      if (!head) return;
+      const body = head.parentElement.querySelector('.fd-cues-body');
+      const open = head.getAttribute('aria-expanded') !== 'true';
+      fsUnfold(body, open);
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    function renderSaveBtn() {
+      const btn = document.getElementById('pc-save');
+      btn.hidden = false;
+      fsSetLabel(btn, saved
+        ? '<span class="material-symbols-sharp i-md" style="margin-right:6px">check</span>Saved'
+        : 'Save Class');
+      btn.classList.toggle('btn-primary', !saved);
+      btn.classList.toggle('btn-secondary', saved);
+    }
+
+    function render() {
+      document.title = (row.title || 'Class') + ' — Flow School';
+      document.getElementById('pc-title').textContent = row.title || 'Untitled Class';
+
+      const name = row.author_name || 'A Flow School teacher';
+      document.getElementById('pc-byline').innerHTML = row.author_handle
+        ? 'by: <a href="/@' + esc(row.author_handle) + '">' + esc(name) + '</a>'
+        : 'by: ' + esc(name);
+      if (row.author_handle) {
+        document.getElementById('pc-back').href = '/@' + row.author_handle;
+        document.getElementById('pc-back-label').textContent = name;
+      }
+
+      const secs = (row.payload && row.payload.sections) || [];
+      // circles: the flow sections — Begin and Cool Down bookend, not count
+      const nc = secs.filter(s => s.label !== 'Begin' && s.label !== 'Cool Down').length;
+      document.getElementById('pc-meta').textContent = [
+        row.class_type,
+        (row.length_minutes || 60) + ' min',
+        nc ? nc + (nc === 1 ? ' circle' : ' circles') : null,
+      ].filter(Boolean).join(' · ');
+
+      document.getElementById('pc-sections').innerHTML = secs.map(s =>
+        '<div class="pc-section">' +
+          '<div class="pc-label"><span class="label-1">' + esc(s.label || '') + '</span>' +
+            (s.flow_name ? '<span class="pc-flow-name">' + esc(s.flow_name) + '</span>' : '') +
+          '</div>' +
+          '<div class="pc-flow">' + esc(s.text || '') + '</div>' +
+          (s.cues && s.cues.length
+            ? '<div class="pc-cues-stack">' + s.cues.map(cueDrawerHtml).join('') + '</div>'
+            : '') +
+        '</div>'
+      ).join('');
+
+      const pl = row.payload && row.payload.playlist;
+      if (pl && (pl.name || pl.url)) {
+        const url = safeUrl(pl.url);
+        document.getElementById('pc-playlist').innerHTML = url
+          ? '<a class="pc-playlist-link" href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(pl.name || 'Open playlist') +
+            '<span class="material-symbols-sharp" aria-hidden="true">open_in_new</span></a>'
+          : esc(pl.name || '');
+        document.getElementById('pc-playlist-row').hidden = false;
+      }
+
+      const props = (row.payload && row.payload.props) || [];
+      if (props.length) {
+        const shown = props.map(p => {
+          if (p !== 'Blocks') return p;
+          const n = (row.payload && row.payload.block_count) || 2;
+          return n + (n === 1 ? ' Block' : ' Blocks');
+        });
+        document.getElementById('pc-props').textContent = shown.join(' · ');
+        document.getElementById('pc-props-row').hidden = false;
+      }
+
+      // your own class wears no save button — just the way home
+      if (myId && row.owner_id === myId) {
+        const own = document.getElementById('pc-own');
+        own.innerHTML = 'This is your class — <a href="your-classes?id=' + esc(String(row.source_id)) + '">open it in Your Classes</a>.';
+        own.hidden = false;
+      } else {
+        renderSaveBtn();
+      }
+
+      document.getElementById('pc-print').hidden = false;
+      document.getElementById('pc-view').hidden = false;
+    }
+
+    document.getElementById('pc-print').addEventListener('click', function () {
+      window.print(); // the PDF names itself from document.title
+    });
+
+    async function load() {
+      const id = routeId();
+      if (!id) { document.getElementById('pc-missing').hidden = false; return; }
+      try {
+        myId = await fsPublish.me();
+        const [res, saves] = await Promise.all([fsPublish.get(id), fsPublish.mySaves()]);
+        if (res.error) { document.getElementById('pc-error').hidden = false; return; }
+        if (!res.data) { document.getElementById('pc-missing').hidden = false; return; }
+        row = res.data;
+        saved = saves.has(row.id);
+        render();
+      } catch (e) {
+        console.warn('Class could not load:', e && e.message);
+        document.getElementById('pc-error').hidden = false;
+      }
+    }
+
+    document.getElementById('pc-retry').addEventListener('click', function () {
+      document.getElementById('pc-error').hidden = true;
+      load();
+    });
+
+    // ── save / unsave — a reference, never a copy ──
+    let saving = false;
+    document.getElementById('pc-save').addEventListener('click', async function () {
+      if (!row || saving) return;
+      saving = true;
+      const next = !saved;
+      const res = next ? await fsPublish.save(row.id) : await fsPublish.unsave(row.id);
+      saving = false;
+      if (res && res.error) { toast('That didn’t save. Try again in a moment.'); return; }
+      saved = next;
+      renderSaveBtn();
+      toast(saved ? 'Saved — find it under Your Classes · Saved.' : 'Removed from your saved classes.');
+    });
+
+    load();
+  </script>
+  <script src="lib/toast.js"></script>
+
+</body>
+
+</html>

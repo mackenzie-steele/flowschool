@@ -638,8 +638,10 @@ async function init() {
   if (profile) {
     setFields(profile);
     originalData = { ...profile };
-    // the nav reads this cache for the identity block
+    // the nav reads this cache for the identity block; the print
+    // byline reads the full name
     localStorage.setItem('fs-display-name', profile.display_name || '');
+    localStorage.setItem('fs-full-name', profile.full_name || '');
     if (profile.avatar_url) localStorage.setItem('fs-avatar-url', profile.avatar_url);
     else localStorage.removeItem('fs-avatar-url');
   }
@@ -1143,6 +1145,7 @@ document.getElementById('save-btn').addEventListener('click', async () => {
   } else {
     originalData = { ...originalData, ...vals }; // keep avatar_url/email — vals is text fields only
     localStorage.setItem('fs-display-name', vals.display_name || '');
+    localStorage.setItem('fs-full-name', vals.full_name || '');
     setFields(originalData); // reflect canonical forms back into the inputs
     toast('Profile saved.');
     updateButtons();

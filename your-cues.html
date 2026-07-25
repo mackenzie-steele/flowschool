@@ -18,6 +18,20 @@
     /* hidden must always win — several components set their own display */
     [hidden] { display: none !important; }
 
+
+    /* the printed sheet wears the mark, top right — screen never sees it */
+    .print-logo { display: none; }
+    @media print {
+      .print-logo {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 22pt;
+        width: auto;
+      }
+    }
+
     @media print {
       @page { margin: 16mm 18mm; }
 
@@ -48,11 +62,12 @@
         font-size: 10pt;
         font-weight: var(--weight-regular);
         letter-spacing: 0;
-        color: #555;
-        margin-top: 4pt;
+        color: #151515; /* the byline carries the title's ink */
+        margin-top: 2pt;
       }
       .cd-title .fav-mark { display: none !important; }
       .cd-meta {
+        margin-top: 6pt;
         color: #555 !important;
         padding-bottom: 10pt;
         border-bottom: 1px solid #ddd;
@@ -69,19 +84,6 @@
       .cd-cue-breath { color: #555 !important; font-size: 8pt; }
       .cd-cue-text { font-size: 12pt !important; line-height: 1.5 !important; }
       .cd-cue-pose { color: #555 !important; font-size: 8pt; }
-
-      /* the signature line */
-      .cd-body::after {
-        content: 'Flow School \00B7\00A0 flowschool.io';
-        display: block;
-        margin-top: 22pt;
-        padding-top: 8pt;
-        border-top: 1px solid #ddd;
-        font-family: var(--font-mono);
-        font-size: 8pt;
-        letter-spacing: .08em;
-        color: #888;
-      }
     }
 
     /* ── Load modal flow list ── */
@@ -744,8 +746,22 @@
     }
     .cue-index.list-view .cue-card-preview { display: none; }
     .cue-index.list-view .cue-card-meta { border: none; padding: 0; white-space: nowrap; }
-    .cue-index.list-view .cue-fav { position: static; order: 5; margin: 0; }
+    /* the heart sits centered between the hairlines, every screen size */
+    .cue-index.list-view .cue-fav {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      margin: 0;
+    }
     .cue-index.list-view .cue-card.pinned .cue-card-title { padding-right: 0; }
+
+    /* small screens: the row stacks — title, then meta */
+    @media (max-width: 640px) {
+      .cue-index.list-view .cue-card { flex-wrap: wrap; row-gap: 4px; }
+      .cue-index.list-view .cue-card-title { flex-basis: 100%; }
+      .cue-index.list-view .cue-card-meta { flex-basis: 100%; white-space: normal; }
+    }
 
     .cue-card-title {
       font-size: var(--fs-h5);
@@ -968,6 +984,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/publish.js"></script>
   <script src="lib/motion.js"></script>
 <script src="data/shorthand.js"></script>
 <script src="lib/library.js"></script>
@@ -1040,6 +1057,7 @@
 
   <div class="wrap" style="padding-top: 0;">
     <div class="cd-body">
+      <img class="print-logo" src="img/flow-school-logo_black.png" alt="">
       <h4 class="cd-title" id="cd-title"></h4>
       <p class="cd-meta" id="cd-meta"></p>
 
@@ -1417,6 +1435,8 @@ function loadFlowLib() {
 }
 function setSheets(list) {
   localStorage.setItem(LS_KEY, JSON.stringify(list));
+  // cue sheets ride inside shared classes' public copies — keep them current
+  if (window.fsPublish) fsPublish.refreshShared();
 }
 
 let rows = [];
@@ -1770,7 +1790,9 @@ function renderList() {
 
   index.innerHTML = sheets.map(e => {
     const n = (e.rows || []).filter(rowHasWork).length;
-    const meta = [n + (n === 1 ? ' cue' : ' cues'), flowNamesFor(e), fsFmtDate(fsStampFor(e).ts)]
+    // the card date speaks the sort's language
+    const meta = [n + (n === 1 ? ' cue' : ' cues'), flowNamesFor(e),
+      fsFmtDate(fsSortMode(SORT_KEY) === 'edited' ? (e.editedAt || e.id) : e.id)]
       .filter(Boolean).join(' \u00B7 ');
     // the card speaks the sheet's first sentences — the artifact,
     // not just its filing
@@ -1806,9 +1828,12 @@ function renderDetail(e) {
     .filter(Boolean);
   const nameSummary = names.length ? names[0] + (names.length > 1 ? ' +' + (names.length - 1) : '') : '';
   const n = (e.rows || []).filter(rowHasWork).length;
-  document.getElementById('cd-meta').textContent =
-    [n + (n === 1 ? ' cue' : ' cues'), nameSummary, fsFmtDate(Date.parse(e.savedAt))]
-      .filter(Boolean).join(' \u00B7 ');
+  // the date is the flows/classes stamp \u2014 click flips created \u2194 edited
+  const st = fsStampFor(e);
+  document.getElementById('cd-meta').innerHTML =
+    [n + (n === 1 ? ' cue' : ' cues'), esc(nameSummary)].filter(Boolean).join(' \u00B7 ') + ' \u00B7 ' +
+    '<span class="date-toggle" title="Show ' + (fsDateMode() === 'edited' ? 'created' : 'edited') + ' date">' +
+    st.label + ' ' + fsFmtDate(st.ts) + '</span>';
 
   // the linked flows ride along, read-only here — one drawer each
   renderFlowStack('cd-flowrefs', e.flowIds || [], false);
@@ -2662,6 +2687,13 @@ function init() {
   });
   // practice moved home: the breath pacer reads this sheet, paced by
   // breath instead of words-per-minute
+  // the date stamp flips created ↔ edited — the flows/classes pattern
+  document.getElementById('cd-meta').addEventListener('click', e => {
+    if (!e.target.closest('.date-toggle')) return;
+    fsToggleDateMode();
+    const cur = getSheets().find(x => x.id === sheetId);
+    if (cur) renderDetail(cur);
+  });
   document.getElementById('cd-pol-btn').addEventListener('click', () => {
     if (sheetId != null) window.location.href = 'breath-pace?sheet=' + sheetId;
   });
@@ -2828,7 +2860,9 @@ function init() {
 
 // the printed sheet signs itself (your-classes' pattern)
 (function () {
-  var name = localStorage.getItem('fs-display-name') || '';
+  // the byline signs with the person's real name (first + last),
+  // falling back to auth metadata, then the display name
+  var name = localStorage.getItem('fs-full-name') || '';
   if (!name) {
     try {
       var tok = JSON.parse(localStorage.getItem('sb-zizuopmcpzicbwngjagp-auth-token'));
@@ -2836,8 +2870,9 @@ function init() {
       name = meta.full_name || meta.name || '';
     } catch (_) {}
   }
+  if (!name) name = localStorage.getItem('fs-display-name') || '';
   name = name.replace(/["\\]/g, '').trim();
-  if (name) document.documentElement.style.setProperty('--print-byline', '"By: ' + name + '"');
+  if (name) document.documentElement.style.setProperty('--print-byline', '"by: ' + name + '"');
 })();
 
 document.addEventListener('DOMContentLoaded', () => {

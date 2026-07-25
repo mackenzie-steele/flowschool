@@ -71,6 +71,16 @@
       margin: 0;
     }
 
+    /* the shared globe shares the corner, yielding to the heart */
+    .cc-shared {
+      position: absolute;
+      top: 19px;
+      right: 20px;
+      font-size: var(--icon-sm);
+      color: var(--text-3);
+    }
+    .class-card.pinned .cc-shared { right: 46px; }
+
     .class-card:hover {
       border-color: rgba(var(--ink-rgb), .22);
       background: var(--raised), rgba(var(--ink-rgb), .038);
@@ -96,20 +106,6 @@
       text-overflow: ellipsis;
     }
 
-    /* the class's skeleton — its sections in order, one voice */
-    .cc-struct {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      letter-spacing: .04em;
-      line-height: 1.8;
-      color: var(--text-2);
-      margin: -6px 0 14px;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-    }
-
     /* ── list view — the same cards, worn as scannable rows ── */
     .class-index.list-view { grid-template-columns: 1fr; gap: 0; }
 
@@ -117,7 +113,7 @@
       flex-direction: row;
       align-items: baseline;
       gap: 14px;
-      padding: 13px 4px;
+      padding: 13px 56px 13px 4px; /* the right seat holds the marks */
       background: none;
       box-shadow: none;
       border: none;
@@ -144,9 +140,26 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .class-index.list-view .cc-struct { display: none; }
     .class-index.list-view .cc-meta { border: none; padding: 0; margin: 0; white-space: nowrap; }
-    .class-index.list-view .cc-fav { position: static; order: 5; margin: 0; }
+    /* the marks sit centered between the hairlines, every screen size */
+    .class-index.list-view .cc-fav,
+    .class-index.list-view .cc-shared {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      margin: 0;
+    }
+    .class-index.list-view .class-card.pinned .cc-shared { right: 30px; }
+
+    /* small screens: the row stacks — chip, then title, then meta */
+    @media (max-width: 640px) {
+      .class-index.list-view .class-card { flex-wrap: wrap; row-gap: 4px; }
+      .class-index.list-view .cc-top { flex-basis: 100%; width: auto; margin-bottom: 4px; } /* the chip gets its own breath above the title */
+      .class-index.list-view .cc-top:empty { display: none; }
+      .class-index.list-view .cc-title { flex-basis: 100%; }
+      .class-index.list-view .cc-meta { flex-basis: 100%; white-space: normal; }
+    }
 
     .cc-meta {
       font-family: var(--font-mono);
@@ -799,6 +812,16 @@
 
     .tv-title-fav svg { fill: currentColor; }
 
+    .tv-mark { display: inline-block; }
+
+    /* shared marker — the share menu's globe, worn quietly */
+    .tv-title-shared {
+      font-size: 17px;
+      color: var(--text-3);
+      margin-left: 12px;
+      vertical-align: 3px;
+    }
+
     /* attached stories carry their formatting into the teach view */
     .tv-story-title {
       font-size: var(--fs-h6);
@@ -898,6 +921,7 @@
 
     /* the flow exactly as written — slashes, line breaks and all */
     .tv-flow {
+      font-family: var(--font-mono); /* the printed sheet's voice, on screen too */
       font-size: var(--fs-h6);
       font-weight: var(--weight-regular);
       line-height: 1.6;
@@ -1221,6 +1245,20 @@
     }
     /* ── PRINT — the class sheet. Text-first, mono flows exactly as
           typed, black on white regardless of theme. One page. ── */
+
+    /* the printed sheet wears the mark, top right — screen never sees it */
+    .print-logo { display: none; }
+    @media print {
+      .print-logo {
+        display: block !important;
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 22pt;
+        width: auto;
+      }
+    }
+
     @media print {
       @page { margin: 16mm 18mm; }
 
@@ -1251,7 +1289,7 @@
       .tv * { color: #151515 !important; }
 
       /* head: title full ink, meta lines quiet */
-      .tv-title { font-size: 24pt; margin-bottom: 6pt; }
+      .tv-title { font-size: 24pt; margin-bottom: 0; }
       /* the byline — set as a whole string in --print-byline so an
          unsigned sheet shows nothing, never a bare "By:" */
       .tv-title::after {
@@ -1260,11 +1298,13 @@
         font-size: 10pt;
         font-weight: var(--weight-regular);
         letter-spacing: 0;
-        color: #555;
-        margin-top: 4pt;
+        color: #151515; /* the byline carries the title's ink */
+        margin-top: 2pt;
       }
-      .tv-title .tv-title-fav { display: none !important; }
+      /* screen-state marks (favorite, shared) stay off the paper */
+      .tv-title .tv-mark, .tv-title .tv-title-fav, .tv-title .tv-title-shared { display: none !important; }
       .tv-head-main { padding-bottom: 10pt; border-bottom: 1px solid #ddd; }
+      .tv-meta { margin-top: 6pt; }
       .tv-meta, .tv-playlist, .tv-props { color: #555 !important; }
       .tv-playlist .material-symbols-sharp { font-size: 10pt; }
       .tv-playlist-link { text-decoration: none !important; }
@@ -1302,21 +1342,9 @@
         padding: 0 !important;
       }
 
-      .tv-section { break-inside: avoid; }
-
-      /* the signature line */
-      .tv::after {
-        content: 'Flow School \00B7\00A0 flowschool.io';
-        display: block;
-        margin-top: 22pt;
-        padding-top: 8pt;
-        border-top: 1px solid #ddd;
-        font-family: var(--font-mono);
-        font-size: 7.5pt;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        color: #999 !important;
-      }
+      /* one rhythm with the public class sheet: the 14pt label seat
+         carries the spacing between blocks */
+      .tv-section { padding: 0 !important; break-inside: avoid; }
     }
   </style>
 </head>
@@ -1329,6 +1357,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/publish.js"></script>
   <script src="lib/motion.js"></script>
   <script src="data/shorthand.js"></script>
   <script src="lib/toast.js"></script>
@@ -1369,6 +1398,10 @@
           <span class="material-symbols-sharp i-sm" style="margin-right:5px">favorite</span>
           Favorites
         </button>
+        <button class="btn-ghost sm fav-filter" id="saved-filter-btn" title="Classes saved from other teachers" data-tooltip="Saved from other teachers">
+          <span class="material-symbols-sharp i-sm" style="margin-right:5px">bookmark</span>
+          Saved
+        </button>
         <div class="view-toggle" role="group" aria-label="View">
           <button type="button" class="vt-btn active" id="vt-grid" data-tooltip="Grid view" aria-label="Grid view"><span class="material-symbols-sharp">grid_view</span></button>
           <button type="button" class="vt-btn" id="vt-list" data-tooltip="List view" aria-label="List view"><span class="material-symbols-sharp">view_list</span></button>
@@ -1390,9 +1423,6 @@
         <button class="btn-icon" id="edit-btn" title="Edit class" data-tooltip="Edit">
           <span class="material-symbols-sharp">edit</span>
         </button>
-        <button class="btn-icon" id="wake-btn" title="Keep screen awake while teaching" data-tooltip="Keep screen awake" hidden>
-          <span class="material-symbols-sharp">visibility_lock</span>
-        </button>
         <button class="btn-icon" id="more-btn" title="More actions" data-tooltip="More">
           <span class="material-symbols-sharp">more_horiz</span>
         </button>
@@ -1402,6 +1432,7 @@
     <div class="wrap" style="padding-top: 0;">
 
       <div class="tv">
+        <img class="print-logo" src="img/flow-school-logo_black.png" alt="">
         <div class="tv-head">
           <div class="tv-head-main">
             <h4 class="tv-title" id="tv-title"></h4>
@@ -1539,6 +1570,29 @@
   </div>
 
   </main>
+
+  <!-- ── SHARE TO PROFILE ── -->
+  <div class="modal-backdrop" id="share-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="share-heading">
+      <h3 id="share-heading">Share to your profile</h3>
+      <p class="modal-hint">This class joins your public profile, where any Flow School teacher can read it and save it to their own library. Only the teaching content travels &#8212; your teaching log, attached stories, and private notes stay yours. While it&#8217;s shared, every save keeps the public copy current.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="share-cancel">Cancel</button>
+        <button class="btn-primary" id="share-confirm">Share Class</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="unshare-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="unshare-heading">
+      <h3 id="unshare-heading">Make this class private?</h3>
+      <p class="modal-hint">It leaves your profile, and teachers who saved it lose access until you share it again. Nothing changes in your own library.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="unshare-cancel">Cancel</button>
+        <button class="btn-primary" id="unshare-confirm">Make Private</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── SAVE SECTION AS FLOW ── -->
   <div class="modal-backdrop" id="sf-modal" hidden>
