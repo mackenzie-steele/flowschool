@@ -488,7 +488,7 @@
     function loveWall(items) {
       if (!items || !items.length) return '<span class="muted">No love notes yet — they’ll appear here as teachers send them.</span>';
       return '<div class="adm-love">' + items.map(function (q) {
-        var who = (q.email || '').split('@')[0] || 'a teacher';
+        var who = (q.name && q.name.trim()) ? q.name.trim() : ((q.email || '').split('@')[0] || 'a teacher');
         return '<figure class="adm-love-card"><blockquote>' + esc(q.message) + '</blockquote><figcaption>' + esc(who) + ' · ' + A.fmtDate(q.at) + '</figcaption></figure>';
       }).join('') + '</div>';
     }

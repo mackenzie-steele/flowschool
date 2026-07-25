@@ -260,8 +260,11 @@ begin
                  case when yr <= 2 then 1 when yr <= 5 then 2 when yr <= 10 then 3 when yr <= 20 then 4 else 5 end ord, count(*) c
           from (select cy - teaching_since::int yr from profiles where teaching_since ~ '^(19|20)[0-9]{2}$') x group by 1, 2) z)
     ),
-    'love', (select coalesce(jsonb_agg(jsonb_build_object('message', message, 'email', email, 'at', created_at) order by created_at desc), '[]'::jsonb)
-        from (select * from feedback where kind='love' order by created_at desc limit 24) f)
+    'love', (select coalesce(jsonb_agg(jsonb_build_object(
+        'message', f.message, 'email', f.email, 'at', f.created_at,
+        'name', coalesce(nullif(trim(p.full_name),''), p.display_name)) order by f.created_at desc), '[]'::jsonb)
+        from (select * from feedback where kind='love' order by created_at desc limit 24) f
+        left join profiles p on p.id = f.user_id)
   ) into r;
   return r;
 end $$;
