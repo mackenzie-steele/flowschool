@@ -16,12 +16,19 @@
     .adm-updated { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
     .adm-headright { display: flex; align-items: center; gap: 10px; }
 
-    /* section tabs */
-    .adm-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 20px 0 28px; border-bottom: 1px solid var(--border-light); }
-    .adm-tab { border: none; background: none; cursor: pointer; padding: 10px 14px; font-family: var(--font); font-size: var(--text-ui);
+    /* section nav — two tiers: group pills (primary) + section sub-tabs */
+    .adm-gtabs { display: flex; gap: 4px; flex-wrap: wrap; margin: 20px 0 0; }
+    .adm-gtabs.solo { margin-bottom: 28px; }
+    .adm-gtab { border: 1px solid transparent; background: none; cursor: pointer; padding: 8px 16px;
+      font-family: var(--font); font-size: var(--text-ui); font-weight: var(--weight-medium); color: var(--text-3);
+      border-radius: var(--rb); transition: color var(--transition-base), background var(--transition-base); }
+    .adm-gtab:hover { color: var(--text-1); background: rgba(var(--ink-rgb), .05); }
+    .adm-gtab.active { color: var(--accent); background: var(--accent-dim); }
+    .adm-subtabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 14px 0 28px; border-bottom: 1px solid var(--border-light); }
+    .adm-subtab { border: none; background: none; cursor: pointer; padding: 8px 12px; font-family: var(--font); font-size: 13px;
       color: var(--text-3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color var(--transition-base), border-color var(--transition-base); }
-    .adm-tab:hover { color: var(--text-1); }
-    .adm-tab.active { color: var(--text-1); border-bottom-color: var(--accent); }
+    .adm-subtab:hover { color: var(--text-1); }
+    .adm-subtab.active { color: var(--text-1); border-bottom-color: var(--accent); }
 
     /* metric cards */
     .adm-metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; }
@@ -59,6 +66,11 @@
       padding: 8px 10px; border-radius: var(--rb); box-shadow: var(--shadow-float);
       z-index: 400; pointer-events: none;
     }
+    .adm-metric--link { cursor: pointer; transition: border-color var(--transition-base), box-shadow var(--transition-base); }
+    .adm-metric--link:hover { border-color: var(--accent-border); box-shadow: var(--shadow-float); }
+    .adm-metric--link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .adm-metric--link::after { content: '↗'; position: absolute; bottom: 9px; right: 12px; font-size: 12px; color: var(--text-3); opacity: 0; transition: opacity var(--transition-base); }
+    .adm-metric--link:hover::after { opacity: 1; }
     .adm-metric .val { font-size: 28px; font-weight: var(--weight-medium); letter-spacing: -.02em; margin-top: 6px; color: var(--text-1); }
     .adm-metric .sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
     .adm-delta { font-size: 11px; margin-top: 5px; font-variant-numeric: tabular-nums; }
@@ -96,6 +108,46 @@
     .adm-panel-head h2 { font-size: var(--fs-h6); font-weight: var(--weight-medium); }
     .adm-note { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .03em; color: var(--text-3);
       background: rgba(var(--ink-rgb), .04); border-radius: var(--rs); padding: 8px 12px; margin-bottom: 14px; }
+    /* section intro line — what this view is for */
+    .adm-intro { color: var(--text-2); font-size: 13px; line-height: 1.5; margin: 2px 0 20px; max-width: 68ch; }
+    /* tabular figures wherever numbers stack/align */
+    .adm-metric .val, .adm-table .num { font-variant-numeric: tabular-nums; }
+    /* retention fill, colored by cohort health */
+    .adm-retfill.high { background: var(--accent); }
+    .adm-retfill.mid  { background: color-mix(in srgb, var(--accent) 55%, var(--text-3)); }
+    .adm-retfill.low  { background: var(--danger); opacity: .8; }
+    /* time-series midline gridline */
+    .suc-grid { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--border-light); opacity: .6; pointer-events: none; }
+    /* impact: growth curve + love wall */
+    .adm-growth-svg { width: 100%; height: 140px; display: block; }
+    .adm-growth-svg .area { fill: var(--accent); opacity: .12; }
+    .adm-growth-svg .line { fill: none; stroke: var(--accent); stroke-width: 2; }
+    .adm-growth-cap { font-size: 11px; color: var(--text-3); margin-top: 8px; }
+    .adm-love { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+    .adm-love-card { margin: 0; border-left: 3px solid var(--accent); background: var(--well-bg); border-radius: var(--rs); padding: 14px 16px; }
+    .adm-love-card blockquote { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: var(--text-1); }
+    .adm-love-card figcaption { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em; color: var(--text-3); text-transform: uppercase; }
+    /* activation funnel */
+    .adm-funnel { display: flex; flex-direction: column; gap: 16px; }
+    .adm-funnel-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+    .adm-funnel-label { font-size: 13px; color: var(--text-2); }
+    .adm-funnel-count { font-size: 17px; font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; color: var(--text-1); }
+    .adm-funnel-track { height: 22px; background: var(--well-bg); border-radius: var(--rs); overflow: hidden; }
+    .adm-funnel-fill { height: 100%; background: var(--accent); border-radius: var(--rs); min-width: 2px; }
+    .adm-funnel-conv { display: block; margin-top: 5px; font-size: 11px; color: var(--text-3); }
+    /* tool-usage horizontal bars (opens vs actions) */
+    .adm-tbars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .adm-tbar-row { display: flex; align-items: center; gap: 10px; }
+    .adm-tbar-label { flex: none; width: 130px; font-size: 13px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .adm-tbar-track { flex: 1; height: 14px; background: var(--well-bg); border-radius: 999px; overflow: hidden; }
+    .adm-tbar-fill { display: flex; height: 100%; border-radius: 999px; overflow: hidden; min-width: 2px; }
+    .adm-tbar-fill .seg.open { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+    .adm-tbar-fill .seg.act { background: var(--accent); }
+    .adm-tbar-num { flex: none; width: 46px; text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--text-3); }
+    .adm-tbar-legend { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-3); margin-bottom: 20px; }
+    .adm-tbar-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+    .adm-tbar-legend i.open { background: color-mix(in srgb, var(--accent) 30%, transparent); margin-left: 10px; }
+    .adm-tbar-legend i.act { background: var(--accent); margin-left: 10px; }
 
     /* table */
     .adm-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -135,6 +187,11 @@
     .adm-state { text-align: center; padding: 48px 20px; color: var(--text-3); }
     .adm-state .material-symbols-sharp { font-size: 28px; display: block; margin: 0 auto 10px; color: var(--text-3); }
     .adm-state.err { color: var(--danger); }
+    .adm-state-ico { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+      border-radius: 999px; background: var(--accent-dim); color: var(--accent); margin: 0 auto 12px; }
+    .adm-state-ico .material-symbols-sharp { font-size: 22px; display: block; margin: 0; color: inherit; }
+    .adm-state.err .adm-state-ico { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+    .adm-state-msg { font-size: 13px; }
     .adm-skel { height: 44px; border-radius: var(--rs); background: rgba(var(--ink-rgb), .06); margin: 8px 0; animation: admpulse 1.4s ease-in-out infinite; }
     @keyframes admpulse { 0%,100% { opacity: .5 } 50% { opacity: 1 } }
 
@@ -168,7 +225,7 @@
     /* new-users bar chart */
     .suc { position: relative; padding-top: 20px; }
     .suc-ymax { position: absolute; top: 0; left: 0; font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
-    .suc-plot { display: flex; align-items: flex-end; gap: 3px; height: 150px;
+    .suc-plot { position: relative; display: flex; align-items: flex-end; gap: 3px; height: 150px;
       border-top: 1px dashed var(--border-light); border-bottom: 1px solid var(--border); padding-top: 6px; }
     .suc-col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
     .suc-bar { width: 100%; max-width: 26px; margin: 0 auto; background: var(--accent); opacity: .8;
@@ -231,6 +288,7 @@
     // section registry
     var SECTIONS = [
       { id: 'overview',    label: 'Overview',            render: renderOverview },
+      { id: 'impact',      label: 'Impact',              render: renderImpact },
       { id: 'users',       label: 'Users',               render: renderUsers },
       { id: 'retention',   label: 'Retention',           render: renderRetention },
       { id: 'tools',       label: 'Tool Analytics',      render: renderTools },
@@ -244,27 +302,50 @@
       { id: 'exports',     label: 'Exports',             render: renderExports },
     ];
 
+    // section groups — top-level nav (a group holds one or more sections)
+    var GROUPS = [
+      { label: 'Overview', sections: ['overview'] },
+      { label: 'Impact',   sections: ['impact'] },
+      { label: 'People',   sections: ['users', 'retention', 'activity'] },
+      { label: 'Content',  sections: ['public', 'saved', 'experiments'] },
+      { label: 'Product',  sections: ['tools'] },
+      { label: 'System',   sections: ['feedback', 'health', 'admins', 'exports'] },
+    ];
+    function groupOf(id) { return GROUPS.filter(function (g) { return g.sections.indexOf(id) !== -1; })[0] || GROUPS[0]; }
+    function sectionById(id) { return SECTIONS.filter(function (s) { return s.id === id; })[0]; }
+    var groupLast = {};   // group label → last section viewed in it (so a pill returns you where you were)
+
     // ── shell ──
     function shell(activeId) {
-      var tabs = SECTIONS.map(function (s) {
-        return '<button class="adm-tab' + (s.id === activeId ? ' active' : '') + '" data-sec="' + s.id + '">' + esc(s.label) + '</button>';
+      var g = groupOf(activeId);
+      var solo = g.sections.length === 1;
+      var pills = GROUPS.map(function (grp) {
+        var target = groupLast[grp.label] || grp.sections[0];
+        return '<button class="adm-gtab' + (grp === g ? ' active' : '') + '" data-sec="' + target + '">' + esc(grp.label) + '</button>';
       }).join('');
+      var subtabs = solo ? '' : '<div class="adm-subtabs">' + g.sections.map(function (id) {
+        var s = sectionById(id);
+        return '<button class="adm-subtab' + (id === activeId ? ' active' : '') + '" data-sec="' + id + '">' + esc(s.label) + '</button>';
+      }).join('') + '</div>';
       root.innerHTML =
         '<div class="adm-head"><div><h1>Admin Center</h1></div>' +
         '<div class="adm-headright"><span class="adm-updated" id="adm-updated"></span>' +
+        '<select class="adm-select" id="adm-range" aria-label="Time range">' + ADM_RANGES.map(function (r) { return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>' +
         '<button class="btn-icon" id="adm-refresh" data-tooltip="Refresh" aria-label="Refresh"><span class="material-symbols-sharp">refresh</span></button></div></div>' +
-        '<div class="adm-tabs">' + tabs + '</div>' +
+        '<div class="adm-gtabs' + (solo ? ' solo' : '') + '">' + pills + '</div>' + subtabs +
         '<div id="adm-body"><div class="adm-state"><div class="adm-skel"></div><div class="adm-skel"></div></div></div>';
-      root.querySelectorAll('.adm-tab').forEach(function (t) {
+      root.querySelectorAll('.adm-gtab, .adm-subtab').forEach(function (t) {
         t.addEventListener('click', function () { location.hash = '#' + t.dataset.sec; });
       });
       var rf = document.getElementById('adm-refresh');
       if (rf) rf.addEventListener('click', function () { route(); });
+      var rng = document.getElementById('adm-range');
+      if (rng) { rng.value = String(admRange); rng.addEventListener('change', function () { admRange = parseInt(rng.value, 10); route(); }); }
     }
     function bodyEl() { return document.getElementById('adm-body'); }
     function stateLoading() { return '<div class="adm-state"><div class="adm-skel"></div><div class="adm-skel"></div><div class="adm-skel"></div></div>'; }
-    function stateEmpty(msg) { return '<div class="adm-state"><span class="material-symbols-sharp">info</span>' + esc(msg || 'Nothing here yet.') + '</div>'; }
-    function stateError(msg) { return '<div class="adm-state err"><span class="material-symbols-sharp">error</span>' + esc(msg || 'Something went wrong loading this.') + '</div>'; }
+    function stateEmpty(msg) { return '<div class="adm-state"><span class="adm-state-ico"><span class="material-symbols-sharp">info</span></span><div class="adm-state-msg">' + esc(msg || 'Nothing here yet.') + '</div></div>'; }
+    function stateError(msg) { return '<div class="adm-state err"><span class="adm-state-ico"><span class="material-symbols-sharp">error</span></span><div class="adm-state-msg">' + esc(msg || 'Something went wrong loading this.') + '</div></div>'; }
 
     function num(n) { return A.fmtNum(n); }
     function thInfo(tip) { return '<span class="adm-thinfo" data-tip="' + esc(tip) + '"><span class="material-symbols-sharp">info</span></span>'; }
@@ -296,10 +377,12 @@
       try {
         var o = await A.rpc('admin_overview');
         var pub = await A.rpc('admin_public_content', { p_sort: 'most_saved', p_limit: 6, p_offset: 0 }).catch(function (e) { console.warn('[admin] overview public-classes fetch failed:', e && e.message); return { rows: [] }; });
+        var funnel = await A.rpc('admin_funnel').catch(function (e) { console.warn('[admin] funnel fetch failed:', e && e.message); return null; });
         document.getElementById('adm-updated').textContent = 'Updated ' + A.fmtDateTime(o.generated_at);
         var since = o.events_tracked_since ? A.fmtDate(o.events_tracked_since) : 'launch';
-        var metric = function (lbl, val, sub, tip, delta) {
-          return '<div class="adm-metric">' +
+        var metric = function (lbl, val, sub, tip, delta, navKey) {
+          var attrs = navKey ? ' adm-metric--link" data-nav="' + navKey + '" role="button" tabindex="0' : '';
+          return '<div class="adm-metric' + attrs + '">' +
                  (tip ? '<span class="adm-info" data-tip="' + esc(tip) + '"><span class="material-symbols-sharp">info</span></span>' : '') +
                  '<div class="lbl">' + esc(lbl) + '</div><div class="val">' + num(val) + '</div>' +
                  (delta || '') +
@@ -309,36 +392,168 @@
           return '<div class="adm-group-label">' + esc(label) + '</div><div class="adm-metrics">' + cards + '</div>';
         };
         var growth =
-          metric('Total users', o.total_users, null, 'Every account that has ever signed up — active or deactivated.') +
-          metric('New · 7 days', o.new_users_7d, null, 'Accounts created in the last 7 days.', deltaHtml(o.new_users_7d, o.new_users_prev_7d, 'vs prior 7 days')) +
-          metric('New · 30 days', o.new_users_30d, null, 'Accounts created in the last 30 days.', deltaHtml(o.new_users_30d, o.new_users_prev_30d, 'vs prior 30 days')) +
-          metric('Never used', o.inactive_users, 'signed up, no content', 'Accounts that signed up but have never created or saved any content.');
+          metric('Total users', o.total_users, null, 'Every account that has ever signed up — active or deactivated.', null, 'users_all') +
+          metric('New · 7 days', o.new_users_7d, null, 'Accounts created in the last 7 days.', deltaHtml(o.new_users_7d, o.new_users_prev_7d, 'vs prior 7 days'), 'users_new7') +
+          metric('New · 30 days', o.new_users_30d, null, 'Accounts created in the last 30 days.', deltaHtml(o.new_users_30d, o.new_users_prev_30d, 'vs prior 30 days'), 'users_new30') +
+          metric('Never used', o.inactive_users, 'signed up, no content', 'Accounts that signed up but have never created or saved any content.', null, 'users_inactive');
         var engagement =
-          metric('Active today', o.active_today, null, 'Distinct users who used the platform in the last 24 hours — signed in, opened a tool, or saved or edited content. Just staying logged in with no activity does not count. Broader than DAU, which counts only meaningful actions.', deltaHtml(o.active_today, o.active_yesterday, 'vs prior 24h')) +
-          metric('DAU', o.dau, 'since ' + since, 'Daily active users: distinct people who took a meaningful action (created, saved, edited, published, printed, or generated) in the last 24 hours. Counts only actions recorded since tracking began.') +
-          metric('WAU', o.wau, 'since ' + since, 'Weekly active users: distinct people who took a meaningful action in the last 7 days. Since tracking began.') +
-          metric('MAU', o.mau, 'since ' + since, 'Monthly active users: distinct people who took a meaningful action in the last 30 days. Since tracking began.');
+          metric('Active today', o.active_today, null, 'Distinct users who used the platform in the last 24 hours — signed in, opened a tool, or saved or edited content. Just staying logged in with no activity does not count. Broader than DAU, which counts only meaningful actions.', deltaHtml(o.active_today, o.active_yesterday, 'vs prior 24h'), 'activity') +
+          metric('DAU', o.dau, 'since ' + since, 'Daily active users: distinct people who took a meaningful action (created, saved, edited, published, printed, or generated) in the last 24 hours. Counts only actions recorded since tracking began.', null, 'activity') +
+          metric('WAU', o.wau, 'since ' + since, 'Weekly active users: distinct people who took a meaningful action in the last 7 days. Since tracking began.', null, 'activity') +
+          metric('MAU', o.mau, 'since ' + since, 'Monthly active users: distinct people who took a meaningful action in the last 30 days. Since tracking began.', null, 'activity');
         var contentCards =
-          metric('Public classes', o.total_public_classes, null, 'Classes currently shared publicly by teachers.') +
-          metric('Public saves', o.total_public_saves, null, 'Total times a public class has been saved by another user. Saves are live references, not copies.') +
-          metric('Experiment saves', o.total_experiment_saves, null, 'Total Movement Experiments saved across all users (a saved experiment is a favorite).') +
-          metric('Saved items · all', o.total_saved_items, null, 'Every item in every user’s library — classes, flows, cue sheets, stories, playlists, rules, and more.');
+          metric('Public classes', o.total_public_classes, null, 'Classes currently shared publicly by teachers.', null, 'public') +
+          metric('Public saves', o.total_public_saves, null, 'Total times a public class has been saved by another user. Saves are live references, not copies.', null, 'public') +
+          metric('Experiment saves', o.total_experiment_saves, null, 'Total Movement Experiments saved across all users (a saved experiment is a favorite).', null, 'experiments') +
+          metric('Saved items · all', o.total_saved_items, null, 'Every item in every user’s library — classes, flows, cue sheets, stories, playlists, rules, and more.', null, 'saved');
 
         b.innerHTML =
-          '<div class="adm-note">Active-user metrics (DAU/WAU/MAU) and tool usage count meaningful actions recorded since tracking began (' + esc(since) + '). Signups, public saves, and experiment saves are complete historically.</div>' +
+          '<div class="adm-intro">A live snapshot of who’s here and what they’re making. Active-user metrics (DAU/WAU/MAU) and tool usage count meaningful actions recorded since tracking began (' + esc(since) + '); signups, public saves, and experiment saves are complete historically.</div>' +
           group('Growth', growth) + group('Engagement', engagement) + group('Content', contentCards) +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>New users over time</h2>' + suRangeSelect() + '</div>' +
+          (funnel ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Activation funnel</h2></div>' + funnelHtml(funnel) + '</div>' : '') +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>New users over time</h2></div>' +
             '<div id="su-chart">' + stateLoading() + '</div></div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Most-used tools</h2>' + toolRangeSelect() + '</div><div id="tools-mini">' + stateLoading() + '</div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Most-used tools</h2></div><div id="tools-mini">' + stateLoading() + '</div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Most-saved public classes</h2></div>' + pubMini(pub.rows) + '</div>';
-        var sel = document.getElementById('su-range');
-        if (sel) { sel.value = String(suRange); sel.addEventListener('change', function () { suRange = parseInt(sel.value, 10); loadSignups(); }); }
+        wireMetricLinks(b);
         loadSignups();
-        var tsel = document.getElementById('tool-range');
-        if (tsel) { tsel.value = String(toolRange); tsel.addEventListener('change', function () { toolRange = parseInt(tsel.value, 10); loadTools(); }); }
         loadTools();
       } catch (e) { b.innerHTML = stateError(e && e.message); }
     }
+    // ── click-through: each Overview metric opens the list behind it ──
+    function resetUsers() { usersState.search = ''; usersState.status = ''; usersState.signupDays = 0; usersState.sort = 'recent_activity'; usersState.page = 0; }
+    var NAV = {
+      users_all:      function () { resetUsers(); location.hash = '#users'; },
+      users_new7:     function () { resetUsers(); usersState.signupDays = 7; location.hash = '#users'; },
+      users_new30:    function () { resetUsers(); usersState.signupDays = 30; location.hash = '#users'; },
+      users_inactive: function () { resetUsers(); usersState.status = 'inactive'; location.hash = '#users'; },
+      activity:       function () { location.hash = '#activity'; },
+      public:         function () { location.hash = '#public'; },
+      experiments:    function () { location.hash = '#experiments'; },
+      saved:          function () { location.hash = '#saved'; },
+    };
+    function wireMetricLinks(scope) {
+      scope.querySelectorAll('.adm-metric--link').forEach(function (card) {
+        var go = function () { var fn = NAV[card.dataset.nav]; if (fn) fn(); };
+        card.addEventListener('click', go);
+        card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      });
+    }
+    // ── activation funnel: signed up → created content → shared a class ──
+    function funnelHtml(f) {
+      var signed = Number(f.signed_up || 0), created = Number(f.created_content || 0), shared = Number(f.shared_class || 0);
+      var max = signed || 1;
+      var pctCreated = signed ? Math.round(created / signed * 100) : 0;
+      var pctShared = created ? Math.round(shared / created * 100) : 0;
+      var stages = [
+        { label: 'Signed up', count: signed, note: '' },
+        { label: 'Created content', count: created, note: pctCreated + '% of signups activated' },
+        { label: 'Shared a class', count: shared, note: pctShared + '% of those went on to share' },
+      ];
+      return '<div class="adm-funnel">' + stages.map(function (s) {
+        var w = Math.round(s.count / max * 100);
+        return '<div class="adm-funnel-row">' +
+          '<div class="adm-funnel-head"><span class="adm-funnel-label">' + esc(s.label) + '</span><span class="adm-funnel-count">' + num(s.count) + '</span></div>' +
+          '<div class="adm-funnel-track"><div class="adm-funnel-fill" style="width:' + w + '%"></div></div>' +
+          (s.note ? '<span class="adm-funnel-conv">' + esc(s.note) + '</span>' : '') + '</div>';
+      }).join('') + '</div>';
+    }
+
+    // ── IMPACT / by-the-numbers (marketing-facing) ──
+    var impactData = null;
+    function mcard(lbl, val, sub) { return '<div class="adm-metric"><div class="lbl">' + esc(lbl) + '</div><div class="val">' + num(val) + '</div>' + (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</div>'; }
+    function nextMilestone(n) { var s = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000]; for (var i = 0; i < s.length; i++) if (n < s[i]) return s[i]; return null; }
+    function milestoneSub(n) { var nx = nextMilestone(n); return nx ? num(nx - n) + ' to ' + num(nx) : null; }
+    function impactBars(items, labelKey, countKey) {
+      if (!items || !items.length) return '<span class="muted">No data yet.</span>';
+      var max = Math.max.apply(null, items.map(function (x) { return Number(x[countKey] || 0); }).concat([1]));
+      return '<div class="adm-tbars">' + items.map(function (x) {
+        var c = Number(x[countKey] || 0), w = Math.round(c / max * 100);
+        return '<div class="adm-tbar-row"><span class="adm-tbar-label" title="' + esc(String(x[labelKey])) + '">' + esc(String(x[labelKey])) + '</span>' +
+          '<div class="adm-tbar-track"><div class="adm-tbar-fill" style="width:' + w + '%"><span class="seg act" style="width:100%"></span></div></div>' +
+          '<span class="adm-tbar-num">' + num(c) + '</span></div>';
+      }).join('') + '</div>';
+    }
+    function growthCurve(daily) {
+      var pts = [], acc = 0;
+      (daily || []).forEach(function (d) { acc += Number(d.count || 0); pts.push(acc); });
+      if (pts.length < 2 || acc === 0) return stateEmpty('Not enough history yet for a growth curve.');
+      var w = 600, h = 140, pad = 6, maxT = pts[pts.length - 1] || 1;
+      var xy = pts.map(function (t, i) { return [pad + (i / (pts.length - 1)) * (w - 2 * pad), (h - pad) - (t / maxT) * (h - 2 * pad)]; });
+      var line = xy.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+      var area = 'M' + xy[0][0].toFixed(1) + ',' + (h - pad) + ' ' + xy.map(function (p) { return 'L' + p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + ' L' + xy[xy.length - 1][0].toFixed(1) + ',' + (h - pad) + ' Z';
+      return '<div class="adm-growth"><svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" class="adm-growth-svg" aria-hidden="true"><path class="area" d="' + area + '"/><path class="line" d="' + line + '" vector-effect="non-scaling-stroke"/></svg>' +
+        '<div class="adm-growth-cap">' + num(maxT) + ' teachers · cumulative over the last year</div></div>';
+    }
+    function loveWall(items) {
+      if (!items || !items.length) return '<span class="muted">No love notes yet — they’ll appear here as teachers send them.</span>';
+      return '<div class="adm-love">' + items.map(function (q) {
+        var who = (q.email || '').split('@')[0] || 'a teacher';
+        return '<figure class="adm-love-card"><blockquote>' + esc(q.message) + '</blockquote><figcaption>' + esc(who) + ' · ' + A.fmtDate(q.at) + '</figcaption></figure>';
+      }).join('') + '</div>';
+    }
+    function copyImpactSummary() {
+      var m = impactData; if (!m) return;
+      var c = m.content || {}, hours = Math.round(Number(m.teaching_minutes || 0) / 60);
+      var text = ['Flow School — by the numbers',
+        '• ' + num(m.teachers) + ' teachers',
+        '• ' + num(c.total) + ' things built (' + num(c.classes) + ' classes, ' + num(c.flows) + ' flows, ' + num(c.cue_sheets) + ' cue sheets, ' + num(c.stories) + ' stories)',
+        '• ' + num(hours) + ' teaching hours designed',
+        '• ' + num(m.shared_classes) + ' classes shared, saved ' + num(m.total_saves) + ' times',
+        '• ' + num(m.generations) + ' sequences generated'].join('\n');
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast('Summary copied to clipboard.'); }, function () { toast('Copy failed.'); });
+      else toast('Copy isn’t supported here.');
+    }
+    async function renderImpact() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var m = await A.rpc('admin_impact');
+        var ret = await A.rpc('admin_retention').catch(function () { return []; });
+        var signups = await A.rpc('admin_series', { p_kind: 'signups', p_days: 365 }).catch(function () { return []; });
+        impactData = m;
+        var c = m.content || {}, reach = m.reach || {}, ex = m.experience || {};
+        var teachers = Number(m.teachers || 0), hours = Math.round(Number(m.teaching_minutes || 0) / 60);
+        var avgClasses = teachers ? Math.round(Number(c.classes || 0) / teachers * 10) / 10 : 0;
+        var rs = 0, ra = 0; (ret || []).forEach(function (x) { rs += Number(x.signups || 0); ra += Number(x.active_30d || 0); });
+        var overallRet = rs ? Math.round(ra / rs * 100) : 0;
+        b.innerHTML =
+          '<div class="adm-intro">The numbers that tell Flow School’s story — what teachers have built, how engaged they are, and who they are. Everything here is aggregate; no individual’s private content is shown. Use “Copy summary” to grab the headline stats for a post or a deck.</div>' +
+          '<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn-secondary" id="impact-copy">Copy summary</button></div>' +
+          '<div class="adm-group-label">Headline</div><div class="adm-metrics">' +
+            mcard('Teachers', teachers, milestoneSub(teachers)) +
+            mcard('Things built', c.total, 'classes, flows, cue sheets, stories & more') +
+            mcard('Teaching hours designed', hours, 'across all classes') +
+            mcard('Classes shared', m.shared_classes, 'published to the community') +
+          '</div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Teacher growth</h2></div>' + growthCurve(signups) + '</div>' +
+          '<div class="adm-group-label">What teachers have built</div><div class="adm-metrics">' +
+            mcard('Classes', c.classes) + mcard('Flows', c.flows) + mcard('Cue sheets', c.cue_sheets) + mcard('Stories', c.stories) +
+          '</div>' +
+          '<div class="adm-group-label">Community & engagement</div><div class="adm-metrics">' +
+            mcard('Active this month', m.active_30d, overallRet + '% of all teachers') +
+            mcard('Class saves', m.total_saves, 'teachers saving each other’s work') +
+            mcard('Experiment saves', m.experiment_saves) +
+            mcard('Sequences generated', m.generations, 'rules, poses, playlists & more') +
+            mcard('Avg classes / teacher', avgClasses) +
+          '</div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Reach</h2></div>' +
+            '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Cities &amp; towns</div><div class="val">' + num(reach.distinct_locations || 0) + '</div><div class="sub">' + num(reach.located_teachers || 0) + ' teachers shared a location</div></div></div>' +
+            impactBars(reach.top || [], 'location', 'count') + '</div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Teaching experience</h2></div>' +
+            (Number(ex.shared || 0) ? '<div class="adm-intro" style="margin-bottom:12px">From teachers in their first year to ' + num(ex.veteran_years || 0) + '-year veterans — ' + num(ex.shared) + ' shared how long they’ve taught.</div>' + impactBars(ex.buckets || [], 'bucket', 'count') : '<span class="muted">No teaching-experience data yet.</span>') + '</div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>What teachers are saying</h2></div>' + loveWall(m.love || []) + '</div>';
+        var cp = document.getElementById('impact-copy');
+        if (cp) cp.addEventListener('click', copyImpactSummary);
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── global time range: one control in the header, every panel obeys it ──
+    var admRange = 30;
+    var ADM_RANGES = [
+      { d: 7, label: '7 days' }, { d: 30, label: '30 days' }, { d: 90, label: '90 days' },
+      { d: 180, label: '6 months' }, { d: 365, label: '1 year' },
+    ];
+    function admRangeLabel(d) { var m = ADM_RANGES.filter(function (r) { return r.d === d; })[0]; return m ? m.label : d + ' days'; }
 
     // ── New users over time: filterable, bucketed bar chart ──
     var suRange = 30;
@@ -392,7 +607,7 @@
         '<span>' + esc(buckets[n - 1].short) + '</span>';
       return '<div class="suc">' +
         '<div class="suc-ymax">' + num(max) + ' max</div>' +
-        '<div class="suc-plot">' + cols + '</div>' +
+        '<div class="suc-plot"><div class="suc-grid" style="top:50%"></div><div class="suc-grid" style="top:25%"></div>' + cols + '</div>' +
         '<div class="suc-axis">' + axis + '</div>' +
         '<div class="suc-total">' + num(total) + ' ' + unit + (total === 1 ? '' : 's') + ' · each bar = ' + unit + 's per ' +
           (days <= 30 ? 'day' : days <= 180 ? 'week' : 'month') + ' · hover a bar for the exact count</div>' +
@@ -406,8 +621,8 @@
       var el = document.getElementById('su-chart'); if (!el) return;
       el.innerHTML = stateLoading();
       try {
-        var daily = await A.rpc('admin_series', { p_kind: 'signups', p_days: suRange });
-        el.innerHTML = seriesChart(daily || [], suRange, 'new user');
+        var daily = await A.rpc('admin_series', { p_kind: 'signups', p_days: admRange });
+        el.innerHTML = seriesChart(daily || [], admRange, 'new user');
       } catch (e) { el.innerHTML = stateError(e && e.message); }
     }
     // ── public-saves-over-time + experiment-saves-over-time (data is historical) ──
@@ -415,14 +630,14 @@
     async function loadPubSaveChart() {
       var el = document.getElementById('pubsave-chart'); if (!el) return;
       el.innerHTML = stateLoading();
-      try { var d = await A.rpc('admin_series', { p_kind: 'public_saves', p_days: pubSaveRange }); el.innerHTML = seriesChart(d || [], pubSaveRange, 'save'); }
+      try { var d = await A.rpc('admin_series', { p_kind: 'public_saves', p_days: admRange }); el.innerHTML = seriesChart(d || [], admRange, 'save'); }
       catch (e) { el.innerHTML = stateError(e && e.message); }
     }
     var expSaveRange = 90;
     async function loadExpSaveChart() {
       var el = document.getElementById('expsave-chart'); if (!el) return;
       el.innerHTML = stateLoading();
-      try { var d = await A.rpc('admin_series', { p_kind: 'experiment_saves', p_days: expSaveRange }); el.innerHTML = seriesChart(d || [], expSaveRange, 'experiment save'); }
+      try { var d = await A.rpc('admin_series', { p_kind: 'experiment_saves', p_days: admRange }); el.innerHTML = seriesChart(d || [], admRange, 'experiment save'); }
       catch (e) { el.innerHTML = stateError(e && e.message); }
     }
 
@@ -439,7 +654,7 @@
     async function loadTools() {
       var el = document.getElementById('tools-mini'); if (!el) return;
       el.innerHTML = stateLoading();
-      try { var tools = await A.rpc('admin_top_tools', { p_days: toolRange }); el.innerHTML = toolsMini(tools || []); }
+      try { var tools = await A.rpc('admin_top_tools', { p_days: admRange }); el.innerHTML = toolsMini(tools || []); }
       catch (e) { el.innerHTML = stateError(e && e.message); }
     }
     function toolsMini(tools) {
@@ -460,6 +675,7 @@
     async function renderUsers() {
       var b = bodyEl();
       b.innerHTML =
+        '<div class="adm-intro">Everyone who’s signed up. Search, filter by status or signup date, open a row for the full profile, or tick rows to export a subset.</div>' +
         '<div class="adm-controls">' +
           '<div class="search-wrap"><span class="search-icon material-symbols-sharp">search</span>' +
           '<input class="search-input" id="u-search" placeholder="Search name, email, handle" value="' + esc(usersState.search) + '"></div>' +
@@ -576,10 +792,11 @@
         var overall = totalUsers ? Math.round(totalActive / totalUsers * 100) : 0;
         var body = rows.map(function (r) {
           var pct = Number(r.retention_pct || 0);
+          var lvl = pct >= 60 ? 'high' : pct >= 30 ? 'mid' : 'low';
           return '<tr><td>' + esc(r.cohort) + '</td>' +
             '<td class="num">' + num(r.signups) + '</td>' +
             '<td class="num">' + num(r.active_30d) + '</td>' +
-            '<td><div class="adm-retcell"><div class="adm-retbar"><div class="adm-retfill" style="width:' + pct + '%"></div></div><span>' + pct + '%</span></div></td></tr>';
+            '<td><div class="adm-retcell"><div class="adm-retbar"><div class="adm-retfill ' + lvl + '" style="width:' + pct + '%"></div></div><span>' + pct + '%</span></div></td></tr>';
         }).join('');
         b.innerHTML =
           '<div class="adm-note">Each user is placed in the month they signed up. “Retained” means they took any action — signed in, opened a tool, or saved or edited content — in the last 30 days. Because the library stores only each user’s most recent activity, this shows current retention per cohort, not a week-by-week retention curve.</div>' +
@@ -678,18 +895,31 @@
     var toolsRange = 90;
     var toolsRows = [];
     function toolsRangeLabel(d) { var m = TOOL_RANGES.filter(function (r) { return r.d === d; })[0]; return m ? m.label.toLowerCase() : d + ' days'; }
+    // horizontal opens-vs-actions bars, ranked, above the detail table
+    function toolsBars(rows) {
+      if (!rows || !rows.length) return '';
+      var ranked = rows.slice().sort(function (a, b) { return (Number(b.opens || 0) + Number(b.actions || 0)) - (Number(a.opens || 0) + Number(a.actions || 0)); });
+      var maxTotal = Math.max.apply(null, ranked.map(function (t) { return Number(t.opens || 0) + Number(t.actions || 0); }).concat([1]));
+      var bars = ranked.map(function (t) {
+        var opens = Number(t.opens || 0), actions = Number(t.actions || 0), total = opens + actions;
+        var w = Math.round(total / maxTotal * 100);
+        var op = total ? (opens / total * 100) : 0, ap = total ? (actions / total * 100) : 0;
+        return '<div class="adm-tbar-row">' +
+          '<span class="adm-tbar-label" title="' + esc(t.tool) + '">' + esc(t.tool) + '</span>' +
+          '<div class="adm-tbar-track"><div class="adm-tbar-fill" style="width:' + w + '%" title="' + esc(t.tool + ' · ' + opens + ' opens · ' + actions + ' actions') + '">' +
+            '<span class="seg open" style="width:' + op.toFixed(1) + '%"></span><span class="seg act" style="width:' + ap.toFixed(1) + '%"></span></div></div>' +
+          '<span class="adm-tbar-num">' + num(total) + '</span></div>';
+      }).join('');
+      return '<div class="adm-tbars">' + bars + '</div>' +
+        '<div class="adm-tbar-legend"><i class="open"></i>Opens<i class="act"></i>Actions · bar length = total events</div>';
+    }
     async function renderTools() {
       var b = bodyEl();
       b.innerHTML =
-        '<div class="adm-note">Tool usage counts events recorded since tracking began. Opens = tool page loads; Actions = meaningful actions (create, save, generate, publish, print).</div>' +
+        '<div class="adm-intro">How much each tool is used — opens are page loads, actions are meaningful uses (create, save, generate, publish, print). Counts events recorded since tracking began; use the time range in the header to change the window.</div>' +
         '<div class="adm-panel-head" style="margin-top:4px"><h2 id="t-title">Most-used tools</h2>' +
-        '<div style="display:flex;gap:8px;align-items:center">' +
-        '<select class="adm-select" id="t-range">' + TOOL_RANGES.map(function (r) { return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>' +
-        '<button class="btn-secondary" id="t-export">Export CSV</button></div></div>' +
+        '<button class="btn-secondary" id="t-export">Export CSV</button></div>' +
         '<div id="t-table">' + stateLoading() + '</div>';
-      var sel = document.getElementById('t-range');
-      sel.value = String(toolsRange);
-      sel.addEventListener('change', function () { toolsRange = parseInt(sel.value, 10); loadToolsTable(); });
       document.getElementById('t-export').addEventListener('click', function () {
         A.exportCSV('tool-usage', toolsRows, [{ label: 'Tool', key: 'tool' }, { label: 'Opens', key: 'opens' }, { label: 'Actions', key: 'actions' }, { label: 'Unique users', key: 'unique_users' }]);
       });
@@ -697,13 +927,13 @@
     }
     async function loadToolsTable() {
       var t = document.getElementById('t-table'); if (!t) return;
-      var title = document.getElementById('t-title'); if (title) title.textContent = 'Most-used tools · ' + toolsRangeLabel(toolsRange);
+      var title = document.getElementById('t-title'); if (title) title.textContent = 'Most-used tools · ' + admRangeLabel(admRange).toLowerCase();
       t.innerHTML = stateLoading();
       try {
-        var tools = await A.rpc('admin_top_tools', { p_days: toolsRange });
+        var tools = await A.rpc('admin_top_tools', { p_days: admRange });
         toolsRows = tools || [];
         if (!toolsRows.length) { t.innerHTML = stateEmpty('No tool events in this range.'); return; }
-        t.innerHTML =
+        t.innerHTML = toolsBars(toolsRows) +
           '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Opens</th><th class="num">Actions</th><th class="num">Unique users</th></tr></thead><tbody>' +
           toolsRows.map(function (t2) { return '<tr><td class="name">' + esc(t2.tool) + '</td><td class="num">' + num(t2.opens) + '</td><td class="num">' + num(t2.actions) + '</td><td class="num">' + num(t2.unique_users) + '</td></tr>'; }).join('') +
           '</tbody></table></div>';
@@ -718,9 +948,10 @@
         var total = (rows || []).reduce(function (a, r) { return a + Number(r.saves || 0); }, 0);
         if (!rows || !rows.length) { b.innerHTML = stateEmpty('No experiments have been saved yet.'); return; }
         b.innerHTML =
+          '<div class="adm-intro">How Movement Experiments are landing — total saves, how many of the 28 are being saved at all, and the save trend over time.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Experiments saved · total</div><div class="val">' + num(total) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Distinct experiments saved</div><div class="val">' + num(rows.length) + '</div><div class="sub">of 28</div></div></div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Experiment saves over time</h2>' + rangeSelect('expsave-range') + '</div><div id="expsave-chart">' + stateLoading() + '</div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Experiment saves over time</h2></div><div id="expsave-chart">' + stateLoading() + '</div></div>' +
           '<div class="adm-panel-head" style="margin-top:16px"><h2>Which experiments were saved</h2><button class="btn-secondary" id="e-export">Export CSV</button></div>' +
           '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>#</th><th>Experiment</th><th class="num">Saves</th><th class="num">Unique savers</th><th>Last save</th></tr></thead><tbody>' +
           rows.map(function (r) { return '<tr><td class="muted adm-mono">' + esc(r.experiment_id) + '</td><td class="name">' + esc(r.title || '—') + '</td><td class="num">' + num(r.saves) + '</td><td class="num">' + num(r.unique_savers) + '</td><td class="muted">' + (r.last_save ? A.fmtDate(new Date(Number(r.last_save))) : '—') + '</td></tr>'; }).join('') +
@@ -732,8 +963,6 @@
             { label: 'Last save (epoch ms)', key: 'last_save' },
           ]);
         });
-        var esel = document.getElementById('expsave-range');
-        if (esel) { esel.value = String(expSaveRange); esel.addEventListener('change', function () { expSaveRange = parseInt(esel.value, 10); loadExpSaveChart(); }); }
         loadExpSaveChart();
       } catch (e) { b.innerHTML = stateError(e && e.message); }
     }
@@ -744,7 +973,7 @@
       var b = bodyEl();
       b.innerHTML =
         '<div class="adm-note">Public content = shared <strong>classes</strong> only. Flows and cue sheets are private and are never published on their own. Saves are live references to the creator’s class, not copies.</div>' +
-        '<div class="adm-panel"><div class="adm-panel-head"><h2>Public saves over time</h2>' + rangeSelect('pubsave-range') + '</div><div id="pubsave-chart">' + stateLoading() + '</div></div>' +
+        '<div class="adm-panel"><div class="adm-panel-head"><h2>Public saves over time</h2></div><div id="pubsave-chart">' + stateLoading() + '</div></div>' +
         '<div class="adm-controls" style="margin-top:16px"><div class="search-wrap"><span class="search-icon material-symbols-sharp">search</span>' +
         '<input class="search-input" id="p-search" placeholder="Search title or creator" value="' + esc(pubState.search) + '"></div>' +
         '<select class="adm-select" id="p-sort"><option value="most_saved">Most saved</option><option value="recent_save">Recently saved</option><option value="recent_publish">Recently published</option><option value="title">Title A–Z</option></select><button class="btn-secondary" id="p-export" style="margin-left:auto">Export CSV</button></div>' +
@@ -756,8 +985,6 @@
         clearTimeout(pdeb); var v = e.target.value; pdeb = setTimeout(function () { pubState.search = v; pubState.page = 0; loadPublic(); }, 300);
       });
       document.getElementById('p-export').addEventListener('click', exportPublic);
-      var psel = document.getElementById('pubsave-range');
-      if (psel) { psel.value = String(pubSaveRange); psel.addEventListener('change', function () { pubSaveRange = parseInt(psel.value, 10); loadPubSaveChart(); }); }
       loadPubSaveChart();
       loadPublic();
     }
@@ -830,6 +1057,7 @@
         var savers = (s.top_savers || []).map(function (t) { return '<tr><td>' + esc(t.name || t.email || '—') + '<br><span class="muted adm-mono">' + esc(t.email || '') + '</span></td><td class="num">' + num(t.items) + '</td></tr>'; }).join('');
         var recent = (s.recent_public_saves || []).map(function (r) { return '<tr><td class="muted adm-mono">' + esc(r.user_email || '') + '</td><td>' + esc(r.class_title) + (r.active ? '' : ' <span class="adm-pill off">gone</span>') + '</td><td class="muted">' + A.fmtDate(r.saved_at) + '</td><td class="muted">reference</td></tr>'; }).join('');
         b.innerHTML =
+          '<div class="adm-intro">Everything teachers are keeping in their libraries — broken down by type and by who’s saving the most.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Saved items · all</div><div class="val">' + num(s.total_items) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Unique savers</div><div class="val">' + num(s.unique_savers) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Public-content saves</div><div class="val">' + num(s.public_saves) + '</div></div></div>' +
@@ -854,6 +1082,7 @@
             audit.map(function (a) { return '<tr><td class="muted">' + A.fmtDateTime(a.created_at) + '</td><td class="muted adm-mono">' + esc(a.actor_email || '') + '</td><td>' + esc(a.action) + '</td><td class="muted adm-mono">' + esc(a.target_email || '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
           : stateEmpty('No admin actions logged yet.');
         b.innerHTML =
+          '<div class="adm-intro">A live pulse of the most recent meaningful actions across every teacher.</div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Recent product activity</h2></div>' + feedHtml + '</div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Admin audit log</h2><button class="btn-secondary" id="a-export">Export CSV</button></div>' + auditHtml + '</div>';
         var ae = document.getElementById('a-export');
@@ -876,6 +1105,7 @@
               '<td class="adm-actcell">' + (f.id != null ? '<button class="btn-icon adm-del" data-id="' + esc(String(f.id)) + '" data-tooltip="Delete" aria-label="Delete feedback"><span class="material-symbols-sharp">delete</span></button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
           : stateEmpty('No feedback yet.');
         b.innerHTML =
+          '<div class="adm-intro">Everything teachers have sent through the in-app feedback door — bugs, ideas, and love.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Total feedback</div><div class="val">' + num(sum.total) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Last 7 days</div><div class="val">' + num(sum.last_7d) + '</div></div>' + kindCards + '</div>' +
           '<div class="adm-panel-head" style="margin-top:16px"><h2>Recent feedback</h2><button class="btn-secondary" id="fb-export">Export CSV</button></div>' + table;
@@ -955,6 +1185,7 @@
             rows.map(function (e2) { return '<tr><td class="muted">' + A.fmtDateTime(e2.created_at) + '</td><td class="wrap">' + esc(e2.message) + '</td><td class="muted adm-mono">' + esc(e2.page || '') + '</td><td class="muted adm-mono">' + esc(e2.email || '') + '</td><td class="muted adm-mono">' + esc(e2.version || '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
           : stateEmpty('No errors logged — clean bill of health.');
         b.innerHTML =
+          '<div class="adm-intro">Client-side errors teachers have hit, so problems surface here before they reach you.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Errors · 24h</div><div class="val">' + num(sum.today) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Errors · 7 days</div><div class="val">' + num(sum.window) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Users affected · 7d</div><div class="val">' + num(sum.affected_users) + '</div></div>' +
@@ -986,6 +1217,7 @@
     function route() {
       var id = (location.hash || '#overview').slice(1);
       var sec = SECTIONS.filter(function (s) { return s.id === id; })[0] || SECTIONS[0];
+      groupLast[groupOf(sec.id).label] = sec.id;
       shell(sec.id);
       sec.render();
     }

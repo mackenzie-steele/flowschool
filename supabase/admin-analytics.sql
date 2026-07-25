@@ -203,6 +203,69 @@ begin
   return r;
 end $$;
 
+-- ── activation funnel: signed up → created content → shared a class ─────────
+create or replace function public.admin_funnel()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+  select jsonb_build_object(
+    'signed_up',       (select count(*) from auth.users),
+    'created_content', (select count(*) from auth.users u
+                          where exists (select 1 from user_data d where d.user_id = u.id and jsonb_arr_len(d.payload) > 0)),
+    'shared_class',    (select count(distinct owner_id) from public_classes)
+  ) into r;
+  return r;
+end $$;
+
+-- ── impact / by-the-numbers (marketing-facing aggregates) ───────────────────
+create or replace function public.admin_impact()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb; cy int := extract(year from now())::int;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+  select jsonb_build_object(
+    'teachers', (select count(*) from auth.users),
+    'content', jsonb_build_object(
+      'classes',    (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data where collection='flowschool_classes'),
+      'flows',      (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data where collection='flowschool_flows'),
+      'cue_sheets', (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data where collection='fs-cue-flows'),
+      'stories',    (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data where collection='flowschool_stories'),
+      'total',      (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data)
+    ),
+    'teaching_minutes', (select coalesce(sum((e->>'length')::numeric),0)::bigint
+        from user_data d, jsonb_array_elements(d.payload) e
+        where d.collection='flowschool_classes' and jsonb_typeof(d.payload)='array' and (e->>'length') ~ '^[0-9]+$'),
+    'shared_classes', (select count(*) from public_classes where published),
+    'total_saves', (select count(*) from class_saves),
+    'experiment_saves', (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data where collection='flowschool_favs'),
+    'generations', (select count(*) from analytics_events where event_name='item_generated'),
+    'active_30d', (select count(*) from auth.users u where
+        u.last_sign_in_at >= now() - interval '30 days'
+        or exists (select 1 from user_data d where d.user_id=u.id and d.updated_at >= now()-interval '30 days')
+        or exists (select 1 from analytics_events ae where ae.user_id=u.id and ae.created_at >= now()-interval '30 days' and admin_is_meaningful(ae.event_name))),
+    'reach', jsonb_build_object(
+      'located_teachers',   (select count(*) from profiles where nullif(trim(location),'') is not null),
+      'distinct_locations', (select count(distinct lower(trim(location))) from profiles where nullif(trim(location),'') is not null),
+      'top', (select coalesce(jsonb_agg(jsonb_build_object('location', loc, 'count', c) order by c desc), '[]'::jsonb)
+          from (select trim(location) loc, count(*) c from profiles where nullif(trim(location),'') is not null
+                group by trim(location) order by count(*) desc limit 12) z)
+    ),
+    'experience', jsonb_build_object(
+      'shared',        (select count(*) from profiles where teaching_since ~ '^(19|20)[0-9]{2}$'),
+      'newest_years',  (select cy - max(teaching_since::int) from profiles where teaching_since ~ '^(19|20)[0-9]{2}$'),
+      'veteran_years', (select cy - min(teaching_since::int) from profiles where teaching_since ~ '^(19|20)[0-9]{2}$'),
+      'buckets', (select coalesce(jsonb_agg(jsonb_build_object('bucket', b, 'count', c) order by ord), '[]'::jsonb) from (
+          select case when yr <= 2 then '0–2 yrs' when yr <= 5 then '3–5 yrs' when yr <= 10 then '6–10 yrs' when yr <= 20 then '11–20 yrs' else '20+ yrs' end b,
+                 case when yr <= 2 then 1 when yr <= 5 then 2 when yr <= 10 then 3 when yr <= 20 then 4 else 5 end ord, count(*) c
+          from (select cy - teaching_since::int yr from profiles where teaching_since ~ '^(19|20)[0-9]{2}$') x group by 1, 2) z)
+    ),
+    'love', (select coalesce(jsonb_agg(jsonb_build_object('message', message, 'email', email, 'at', created_at) order by created_at desc), '[]'::jsonb)
+        from (select * from feedback where kind='love' order by created_at desc limit 24) f)
+  ) into r;
+  return r;
+end $$;
+
 -- ── users list (search + sort + status filter + signup filter + pagination) ─
 -- drop the pre-signup-filter signature so the new one isn't left as an
 -- ambiguous overload (adding a param makes a NEW function, not a replacement)
