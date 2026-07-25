@@ -3975,4 +3975,8 @@ body:has(.cta-bar) .site-footer {
   .sidebar-overlay,
   .nav-sheet,
   .toast { display: none !important; }
+
+  /* the "Watch this flow" video link is for the screen — printed PDFs
+     are for teaching from, so the link would just be dead ink */
+  .fd-flow-video { display: none !important; }
 }
