@@ -453,7 +453,7 @@
           <p class="pc-logistic pc-props" id="pc-props-row" hidden><span class="material-symbols-sharp" aria-hidden="true">widgets</span><span id="pc-props"></span></p>
           <p class="pc-own" id="pc-own" hidden></p>
         </div>
-        <a class="btn-icon pc-video" id="pc-video" data-tooltip="Watch the class" aria-label="Watch the class video" target="_blank" rel="noopener" hidden>
+        <a class="btn-icon pc-video" id="pc-video" data-tooltip="Watch this class" aria-label="Watch the class video" target="_blank" rel="noopener" hidden>
           <span class="material-symbols-sharp" aria-hidden="true">play_arrow</span>
         </a>
       </header>
@@ -502,6 +502,13 @@
         const parsed = new URL(u);
         return (parsed.protocol === 'http:' || parsed.protocol === 'https:') ? parsed.href : null;
       } catch (e) { return null; }
+    }
+
+    // a flow's video link — quiet watch button below its cues
+    function flowVideoBtn(raw) {
+      const u = safeUrl(raw);
+      return u ? '<a class="fd-flow-video" href="' + esc(u) + '" target="_blank" rel="noopener">' +
+        '<span class="material-symbols-sharp i-sm" aria-hidden="true">play_circle</span>Watch this flow</a>' : '';
     }
 
     function routeId() {
@@ -642,6 +649,7 @@
             (s.flow_name ? '<span class="pc-flow-name">' + esc(s.flow_name) + '</span>' : '') +
           '</div>' +
           '<div class="pc-flow">' + esc(s.text || '') + '</div>' +
+          flowVideoBtn(s.video) +
           (s.cues && s.cues.length
             ? '<div class="pc-cues-stack">' + s.cues.map((c2, ci) => cueDrawerHtml(c2, si, ci)).join('') + '</div>'
             : '') +

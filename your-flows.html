@@ -809,6 +809,26 @@
 
     .fl-area::placeholder { color: rgba(var(--ink-rgb), .30); }
 
+    .fl-video-input {
+      width: 100%;
+      display: block;
+      background: var(--well-bg);
+      border: none;
+      box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .12);
+      border-radius: var(--r);
+      padding: 13px 16px;
+      color: var(--text-1);
+      font-family: var(--font);
+      font-size: var(--text-body-sm);
+      outline: none;
+      transition: box-shadow var(--transition-base), background var(--transition-base);
+    }
+    .fl-video-input:focus {
+      background: rgba(var(--ink-rgb), .06);
+      box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .30);
+    }
+    .fl-video-input::placeholder { color: rgba(var(--ink-rgb), .30); }
+
 
     /* the printed sheet wears the mark, top right — screen never sees it */
     .print-logo { display: none; }
@@ -994,6 +1014,7 @@
           <div id="fd-challenge-body"></div>
         </div>
         <div class="fd-flow" id="fd-flow"></div>
+        <div id="fd-flow-video"></div>
 
         <!-- the cue sheet — the words that move people through the poses
              above. One link, owned by the sheet (fs-cue-flows entry.flowId):
@@ -1056,6 +1077,11 @@
             <span class="fl-count" id="fl-count" hidden></span>
           </div>
           <textarea class="fl-area" id="fl-area" rows="3" placeholder="SEATED TWIST / BOAT / PIGEON / SL DD"></textarea>
+        </div>
+
+        <div class="fl-section">
+          <div class="fl-head"><span class="label-1">Video</span></div>
+          <input type="url" class="fl-video-input" id="fl-video-url" placeholder="Link to your flow video" maxlength="500" aria-label="Flow video link">
         </div>
 
         <!-- the cue sheet rides along in the editor too — same drawer
@@ -1597,6 +1623,23 @@
     function renderFdCues(f) { renderCuesUI('fd', cueSheetsFor(f.id)); }
     function renderFlCues() { renderCuesUI('fl', editorCueEntries()); }
 
+    // the flow's video link — a quiet watch button below the cues
+    function safeUrl(raw) {
+      if (!raw) return null;
+      var u = String(raw).trim();
+      if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+      try { var p = new URL(u); return (p.protocol === 'http:' || p.protocol === 'https:') ? p.href : null; }
+      catch (e) { return null; }
+    }
+    function flowVideoBtn(url) {
+      var u = safeUrl(url);
+      return u ? '<a class="fd-flow-video" href="' + esc(u) + '" target="_blank" rel="noopener">' +
+        '<span class="material-symbols-sharp i-sm" aria-hidden="true">play_circle</span>Watch this flow</a>' : '';
+    }
+    function renderFdVideo(f) {
+      document.getElementById('fd-flow-video').innerHTML = flowVideoBtn(f && f.videoUrl);
+    }
+
     // one delegated ear per stack: heads unfold, the x detaches
     ['fd', 'fl'].forEach(function (p) {
       document.getElementById(p + '-cues-stack').addEventListener('click', function (ev) {
@@ -1757,6 +1800,7 @@
         document.getElementById('fd-challenge-body').innerHTML = challengeRows(challenge);
         document.getElementById('fd-flow').textContent = f.text || '';
         renderFdCues(f);
+        renderFdVideo(f);
         renderUsedIn(f, document.getElementById('fd-usedin-list'));
       });
 
@@ -1792,6 +1836,7 @@
           fsBackLabel(f ? (f.name || 'Untitled Flow') : 'Your Flows');
 
         document.getElementById('fl-title').value = f ? (f.name || '') : '';
+        document.getElementById('fl-video-url').value = f ? (f.videoUrl || '') : '';
         var area = document.getElementById('fl-area');
         area.value = f ? (f.text || '') : '';
         renderTypes();
@@ -2072,6 +2117,7 @@
     document.getElementById('save-btn').addEventListener('click', function () {
       var name = document.getElementById('fl-title').value.trim();
       var text = document.getElementById('fl-area').value.trim();
+      var video = document.getElementById('fl-video-url').value.trim();
       if (!editType) { toast('Pick what kind of flow this is.'); return; }
       if (!text) { toast('A flow needs at least a pose.'); document.getElementById('fl-area').focus(); return; }
 
@@ -2081,6 +2127,7 @@
         f.name = name || 'Untitled Flow';
         f.type = editType;
         f.text = text;
+        f.videoUrl = video;
         f.elements = efSerialize();
         f.pillars = pwSerialize();
         f.challenge = editChallenge.slice();
@@ -2091,6 +2138,7 @@
           name: name || 'Untitled Flow',
           type: editType,
           text: text,
+          videoUrl: video,
           elements: efSerialize(),
           pillars: pwSerialize(),
           challenge: editChallenge.slice(),
@@ -2181,6 +2229,7 @@
     });
 
     document.getElementById('fl-title').addEventListener('input', markDirty);
+    document.getElementById('fl-video-url').addEventListener('input', markDirty);
 
     document.getElementById('fl-types').addEventListener('click', function (e) {
       var btn = e.target.closest('.fl-type');

@@ -2897,6 +2897,33 @@ body.has-sidebar {
   font-weight: var(--weight-medium);
 }
 
+/* the per-flow "watch the flow" link — a small icon+text button that sits
+   below a flow's cues, on the flow detail, the class teach view, and the
+   public class page. Deliberately quiet, not the accent-filled video seal. */
+.fd-flow-video {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  color: var(--accent);
+  text-decoration: none;
+  transition: transform var(--transition-base);
+}
+.fd-flow-video:hover { transform: translateY(-1px); }
+.fd-flow-video:active { transform: translateY(0); }
+.fd-flow-video:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--rs); }
+.fd-flow-video .material-symbols-sharp {
+  font-size: var(--icon-sm);
+  transition: transform var(--transition-base);
+}
+.fd-flow-video:hover .material-symbols-sharp { transform: scale(1.12); }
+@media (prefers-reduced-motion: reduce) {
+  .fd-flow-video:hover, .fd-flow-video:active,
+  .fd-flow-video:hover .material-symbols-sharp { transform: none; }
+}
+
 .auth-success {
   font-size: var(--text-small);
   color: var(--text-2);
