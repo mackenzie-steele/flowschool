@@ -381,6 +381,7 @@
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      overflow-wrap: anywhere; /* unbroken strings wrap, never push the layout */
     }
 
     /* ── Teacher Practice — Uscreen feedback library ───────── */
@@ -1094,8 +1095,9 @@
         </div>
 
         <!-- Teacher Practice — submitted sequences live on Uscreen; teachers
-             watch each other's flows and leave feedback there -->
-        <div class="db-card db-drive">
+             watch each other's flows and leave feedback there.
+             Resting for now (Jul 2026) — remove `hidden` to bring it back -->
+        <div class="db-card db-drive" hidden>
           <div class="db-drive-info">
             <span class="db-eyebrow">Teacher Practice</span>
             <h4 class="db-drive-title">Submit your sequence &amp; get the kind of feedback you really want.</h4>
@@ -1111,9 +1113,10 @@
           <div class="db-continue-scroll" id="db-continue-scroll"></div>
         </div>
 
-        <!-- 4. New Drop — content from data/dashboard-content.js -->
+        <!-- 4. Try this Class Combo — the month's featured combo from
+             data/dashboard-content.js (CLASS_COMBOS) -->
         <div class="db-card" id="db-drop-card">
-          <span class="db-eyebrow">New Drop</span>
+          <span class="db-eyebrow">Try this Class Combo</span>
           <div id="db-drop-body"></div>
         </div>
 
@@ -1769,13 +1772,21 @@
 
     function renderDrop() {
       var card = document.getElementById('db-drop-card');
-      var drop = window.NEW_DROP;
+      var entries = window.CLASS_COMBOS || {};
+      var now = new Date();
+      var key = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+      // current month, else the most recent earlier entry — never blank
+      var drop = entries[key];
+      if (!drop) {
+        var keys = Object.keys(entries).filter(function (k) { return k <= key; }).sort();
+        if (!keys.length) keys = Object.keys(entries).sort();
+        drop = keys.length ? entries[keys[keys.length - 1]] : null;
+      }
       if (!drop) { card.hidden = true; return; }
       card.hidden = false;
       document.getElementById('db-drop-body').innerHTML =
         '<a class="db-new-drop" href="' + escHTML(drop.url) + '" target="_blank" rel="noopener">' +
           '<div class="db-drop-thumb"><img src="' + escHTML(drop.image) + '" alt="' + escHTML(drop.title) + '"></div>' +
-          '<span class="db-drop-tag">' + escHTML(drop.tag) + '</span>' +
           '<div class="db-drop-title">' + escHTML(drop.title) + '</div>' +
           '<p class="db-drop-desc">' + escHTML(drop.description) + '</p>' +
         '</a>';

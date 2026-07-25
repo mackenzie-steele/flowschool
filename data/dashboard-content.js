@@ -15,14 +15,37 @@ var EVENTS = [
   { date: '2026-11-09', title: 'In-Person Flow School', time: 'Nov 9–13 · Portland, Oregon', url: 'https://www.bonnieweeks.com/pages/flow-school-in-person', linkLabel: 'Sign up' },
 ];
 
-// ── NEW DROP ─────────────────────────────────────────────────────
-// The featured release card. Set to null to hide the card entirely.
-var NEW_DROP = {
-  tag: 'Slo Mo Flow',
-  title: 'Pigeon Kick Through & Tree Lean',
-  description: "A full class plan for a slow & strong flow. Can be taught once per side or repeated depending on time. Works well for all-levels vinyasa that doesn't lean on repetition or sun salutations.",
-  image: 'img/slo-mo-flow-cover.jpg',
-  url: 'https://flowschool.uscreen.io/programs/slo-mo-pigeon-kick-through-tree-lean',
+// ── TRY THIS CLASS COMBO ─────────────────────────────────────────
+// The featured class combo, one entry per month, keyed 'YYYY-MM'.
+// The current month shows; if a month hasn't been written yet, the
+// most recent earlier entry stays up (never blank, never stale-
+// silently). Add a month: copy an entry, change the key, drop the
+// image in img/. Set the whole object to null to hide the card.
+var CLASS_COMBOS = {
+  '2026-07': {
+    title: 'Spinning Lotus with a Bird',
+    description: "Weave these flows together to create an experience where each part builds to create a whole class experience. This can be taught as a Slo Mo Flow, things strong but only doing each pose one time (maybe two). This can also be taught to breath pace, but start slow and then build familiarity through repetition.",
+    image: 'img/spinning-lotus-with-a-bird-class.jpeg',
+    url: 'https://flowschool.uscreen.io/programs/spinning-lotus-with-a-bird-class',
+  },
+  '2026-08': {
+    title: 'May I Have This Dance',
+    description: "Weave these flows together to create an experience where each part builds to create a whole class experience. This can be taught as a Slo Mo Flow, things strong but only doing each pose one time (maybe two). This can also be taught to breath pace, but start slow and then build familiarity through repetition.",
+    image: 'img/may-i-have-this-dance-class.jpeg',
+    url: 'https://flowschool.uscreen.io/programs/may-i-have-this-dance-class',
+  },
+  '2026-09': {
+    title: 'Side to Side Rainbow',
+    description: "Weave these flows together to create an experience where each part builds to create a whole class experience. This can be taught as a Slo Mo Flow, things strong but only doing each pose one time (maybe two). This can also be taught to breath pace, but start slow and then build familiarity through repetition.",
+    image: 'img/side-to-side-rainbow-class.jpeg',
+    url: 'https://flowschool.uscreen.io/programs/side-to-side-rainbow-class',
+  },
+  '2026-10': {
+    title: 'Step Up & Serve the Room',
+    description: "Weave these flows together to create an experience where each part builds to create a whole class experience. This can be taught as a Slo Mo Flow, things strong but only doing each pose one time (maybe two). This can also be taught to breath pace, but start slow and then build familiarity through repetition.",
+    image: 'img/step-up-and-serve-the-room-class.jpeg',
+    url: 'https://flowschool.uscreen.io/programs/step-up-and-serve-the-room-class',
+  },
 };
 
 // ── THIS MONTH ───────────────────────────────────────────────────
