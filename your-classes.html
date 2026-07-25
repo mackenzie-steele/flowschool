@@ -258,11 +258,15 @@
     .cw-spec .cw-length,
     .cw-spec .cw-props,
     .cw-spec .cw-stories,
-    .cw-spec .cw-playlist {
+    .cw-spec .cw-playlist,
+    .cw-spec .cw-video {
       margin: 0 0 24px;
       padding: 0;
       border: none;
     }
+
+    .cw-video .label-1 { display: block; margin-bottom: 12px; }
+    .cw-video-input { display: block; width: 100%; }
 
     .cw-spec > :last-child { margin-bottom: 0; }
 
@@ -319,6 +323,7 @@
     }
 
     .cw-note-text {
+      overflow-wrap: anywhere; /* unbroken strings wrap, never overflow */
       cursor: pointer;
       transition: opacity var(--transition-base);
     }
@@ -822,6 +827,21 @@
       margin-bottom: 8px;
     }
 
+    /* the video seal — the one sanctioned accent-filled control
+       (video lives here): the movement experiments' watch button */
+    #tv-video,
+    #tv-video:hover {
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--paper-solid);
+    }
+    #tv-video:hover { transform: translateY(-1px); }
+    #tv-video .material-symbols-sharp {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    }
+    #tv-video .material-symbols-sharp svg { fill: currentColor; }
+
     /* favorited marker beside the title */
     .tv-title-fav {
       font-size: 17px;
@@ -1172,6 +1192,8 @@
       color: var(--text-2);
       line-height: 1.6;
       white-space: pre-wrap;
+      overflow-wrap: anywhere; /* unbroken strings wrap, never overflow */
+      min-width: 0;
     }
 
     .tv-note-del,
@@ -1287,7 +1309,7 @@
       /* the sheet is the teaching view and nothing else — the cue
          drawers are an on-screen aside, not part of the printed sheet */
       .app-sidebar, .sidebar-toggle, .sidebar-overlay, .nav-sheet, .mobile-brand, nav,
-      .post-bar, footer, .post-actions, .tv-notes, .toast, .tv-menu, .tv-cues-stack,
+      .post-bar, footer, .post-actions, .tv-notes, .toast, .tv-menu, .tv-cues-stack, .tv-video,
       #list-view, #edit-view, #empty-view { display: none !important; }
 
       #teach-view[hidden] { display: none !important; }
@@ -1462,6 +1484,9 @@
             <p class="tv-playlist" id="tv-playlist" hidden><span class="material-symbols-sharp">music_note</span><span id="tv-playlist-body"></span></p>
             <p class="tv-playlist tv-props" id="tv-props" hidden><span class="material-symbols-sharp">widgets</span><span id="tv-props-body"></span></p>
           </div>
+          <a class="btn-icon tv-video" id="tv-video" data-tooltip="Watch the class" aria-label="Watch the class video" target="_blank" rel="noopener" hidden>
+            <span class="material-symbols-sharp" aria-hidden="true">play_arrow</span>
+          </a>
         </div>
         <div id="tv-stories"></div>
         <div id="tv-sections"></div>
@@ -1579,6 +1604,10 @@
               <input type="text" class="cw-playlist-input" id="cw-playlist" placeholder="Playlist title" maxlength="120" aria-label="Playlist name">
               <input type="url" class="cw-playlist-url" id="cw-playlist-url" placeholder="Playlist link" maxlength="500" aria-label="Playlist link">
             </div>
+          </div>
+          <div class="cw-video">
+            <span class="label-1">Video</span>
+            <input type="url" class="cw-playlist-url cw-video-input" id="cw-video-url" placeholder="Link to your class video" maxlength="500" aria-label="Class video link">
           </div>
           </div>
           <div class="cw-notes" id="cw-notes" hidden>

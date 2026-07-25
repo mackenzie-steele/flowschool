@@ -18,7 +18,29 @@
           the same 640px reading column, the same title scale ── */
     .pc { max-width: 640px; }
 
-    .pc-head { padding-bottom: 28px; }
+    .pc-head {
+      padding-bottom: 28px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .pc-head-main { flex: 1; min-width: 0; }
+
+    /* the video seal — the one sanctioned accent-filled control
+       (video lives here): the movement experiments' watch button */
+    #pc-video,
+    #pc-video:hover {
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--paper-solid);
+    }
+    #pc-video:hover { transform: translateY(-1px); }
+    #pc-video .material-symbols-sharp {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    }
+    #pc-video .material-symbols-sharp svg { fill: currentColor; }
 
     .pc-title {
       font-size: var(--fs-h4);
@@ -292,7 +314,8 @@
         margin: 2pt 0 0;
       }
       .pc-byline a { color: #151515 !important; text-decoration: none !important; border-bottom: none !important; }
-      .pc-head { padding-bottom: 10pt; border-bottom: 1px solid #ddd; }
+      .pc-head { padding-bottom: 10pt; border-bottom: 1px solid #ddd; display: block; }
+      .pc-video { display: none !important; }
       .pc-meta { margin-top: 6pt; }
       .pc-meta, .pc-logistic { color: #555 !important; }
       .pc-logistic .material-symbols-sharp { font-size: 10pt; }
@@ -396,12 +419,17 @@
     <article id="pc-view" class="fs-arrive" hidden>
       <img class="print-logo" src="img/flow-school-logo_black.png" alt="">
       <header class="pc-head">
-        <h1 class="pc-title" id="pc-title"></h1>
-        <p class="pc-byline" id="pc-byline"></p>
-        <p class="pc-meta" id="pc-meta"></p>
-        <p class="pc-logistic" id="pc-playlist-row" hidden><span class="material-symbols-sharp" aria-hidden="true">music_note</span><span id="pc-playlist"></span></p>
-        <p class="pc-logistic pc-props" id="pc-props-row" hidden><span class="material-symbols-sharp" aria-hidden="true">widgets</span><span id="pc-props"></span></p>
-        <p class="pc-own" id="pc-own" hidden></p>
+        <div class="pc-head-main">
+          <h1 class="pc-title" id="pc-title"></h1>
+          <p class="pc-byline" id="pc-byline"></p>
+          <p class="pc-meta" id="pc-meta"></p>
+          <p class="pc-logistic" id="pc-playlist-row" hidden><span class="material-symbols-sharp" aria-hidden="true">music_note</span><span id="pc-playlist"></span></p>
+          <p class="pc-logistic pc-props" id="pc-props-row" hidden><span class="material-symbols-sharp" aria-hidden="true">widgets</span><span id="pc-props"></span></p>
+          <p class="pc-own" id="pc-own" hidden></p>
+        </div>
+        <a class="btn-icon pc-video" id="pc-video" data-tooltip="Watch the class" aria-label="Watch the class video" target="_blank" rel="noopener" hidden>
+          <span class="material-symbols-sharp" aria-hidden="true">play_arrow</span>
+        </a>
       </header>
 
       <div id="pc-sections"></div>
@@ -611,6 +639,12 @@
         document.getElementById('pc-props').textContent = shown.join(' · ');
         document.getElementById('pc-props-row').hidden = false;
       }
+
+      // the video seal — present only when the author linked one
+      const vUrl = row.payload && row.payload.video ? safeUrl(row.payload.video) : null;
+      const vBtn = document.getElementById('pc-video');
+      vBtn.hidden = !vUrl;
+      if (vUrl) vBtn.href = vUrl;
 
       // your own class wears no save button — just the way home
       if (myId && row.owner_id === myId) {
