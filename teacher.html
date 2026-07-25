@@ -520,12 +520,9 @@
     function renderClasses(rows, isOwn) {
       const sec = document.getElementById('tp-classes-sec');
       if (!rows || !rows.length) {
-        // someone else with no classes: the section simply doesn't exist.
-        // your own empty page keeps a gentle nudge — only you see it.
-        if (!isOwn) { sec.hidden = true; return; }
-        sec.hidden = false;
-        document.getElementById('tp-classes').innerHTML =
-          '<p class="tp-quiet">No public classes listed yet \u2014 add them from Edit Profile.</p>';
+        // an empty section simply doesn't exist — on anyone's page,
+        // including your own
+        sec.hidden = true;
         return;
       }
       // soonest first — one row per class, never a year of instances

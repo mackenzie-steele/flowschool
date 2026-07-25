@@ -137,6 +137,9 @@
       border-radius: 0;
     }
 
+    /* saved rows (they link out to class?p=) carry no marks — no seat */
+    .class-index.list-view .class-card[href^="class?p="] { padding-right: 4px; }
+
     .class-index.list-view .class-card:hover { background: rgba(var(--ink-rgb), .03); }
     /* the tag zone is a lead column sized to the widest tag actually
        in the list (set per render) — tagged or not, every title starts

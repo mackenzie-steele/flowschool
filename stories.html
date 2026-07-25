@@ -39,37 +39,46 @@
     /* ── Story index — typography first ── */
     .story-index { margin-top: 24px; }
 
+    /* the libraries' list-view anatomy — one scannable line per story,
+       same paddings, type, and hover as flows/classes/cues rows */
     .story-row {
+      position: relative;
       display: flex;
       align-items: baseline;
-      gap: 20px;
-      padding: 24px 0;
+      gap: 14px;
+      padding: 13px 132px 13px 4px; /* the right seat holds the date + heart */
       border-bottom: 1px solid var(--border-light);
       text-decoration: none;
       color: inherit;
     }
 
-    .story-row:last-child { border-bottom: none; }
+    /* the heart sits centered between the hairlines, every screen size */
+    .story-row-fav {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      margin: 0;
+    }
+
+    .story-row:hover { background: rgba(var(--ink-rgb), .03); }
 
     .story-row-main { flex: 1; min-width: 0; }
 
     .story-row-title {
-      font-size: var(--fs-h5);
+      display: block;
+      font-size: 15px;
       font-weight: var(--weight-medium);
       letter-spacing: -.01em;
       line-height: var(--lh-heading);
       color: var(--text-1);
-      margin-bottom: 8px;
+      margin: 0;
       overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      transition: opacity var(--transition-base);
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
-    .story-row:hover .story-row-title { opacity: .65; }
-
-    /* one line of the story itself */
+    /* one quiet line from the story's first paragraph */
     .story-row-preview {
       display: block;
       font-size: var(--text-small);
@@ -78,26 +87,33 @@
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      margin-bottom: 6px;
+      margin-top: 3px;
     }
 
-    .story-row-meta {
+    /* the starter sits the list out */
+    .story-row-meta { display: none; }
+
+    /* the date rides the right rail with the heart, centered between
+       the hairlines */
+    .story-row-date {
+      position: absolute;
+      right: 32px;
+      top: 50%;
+      transform: translateY(-50%);
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 10px;
       letter-spacing: .04em;
       color: var(--text-3);
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: block;
     }
 
-    .story-row-date {
-      flex-shrink: 0;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-3);
-      white-space: nowrap;
+    /* small screens: the date steps back into the flow, under the
+       title (the siblings' stacked-meta pattern); the heart keeps
+       its centered seat */
+    @media (max-width: 640px) {
+      .story-row { flex-wrap: wrap; row-gap: 4px; padding-right: 32px; }
+      .story-row-main { flex-basis: 100%; }
+      .story-row-date { position: static; transform: none; flex-basis: 100%; }
     }
 
     /* ── Detail view — bar component from global.css ── */
@@ -335,8 +351,6 @@
     }
 
     @media (max-width: 580px) {
-      .story-row { gap: 16px; padding: 24px 0; }
-      .story-row-date { display: none; }
       .post-title { font-size: clamp(1.5rem, 6vw, 2rem); }
     }
 
@@ -659,20 +673,21 @@
         list.length + ' result' + (list.length !== 1 ? 's' : '');
 
       index.innerHTML = list.map(function (s) {
-        // one line of the story itself; an untitled row already leads
-        // with its first line, so the preview picks up after it
+        // one line from the FIRST PARAGRAPH; an untitled row already
+        // leads with its first line, so the preview picks up after it
         var body = (s.text || '').trim();
         if (!s.title) body = body.slice(firstLine(body).length).trim();
-        var preview = body.split(/\n+/).join(' ');
+        var preview = (body.split(/\n{2,}/)[0] || '').split(/\n+/).join(' ');
         return '<a href="stories?id=' + s.id + '" class="story-row" data-id="' + s.id + '">' +
           '<span class="story-row-main">' +
-            '<span class="story-row-title">' + esc(s.title || firstLine(s.text)) +
-              (s.pinned ? '<span class="material-symbols-sharp fav-mark">favorite</span>' : '') +
-            '</span>' +
+            '<span class="story-row-title">' + esc(s.title || firstLine(s.text)) + '</span>' +
             (preview ? '<span class="story-row-preview">' + esc(preview) + '</span>' : '') +
             (s.starter ? '<span class="story-row-meta">' + esc(s.starter) + '</span>' : '') +
           '</span>' +
-          '<span class="story-row-date">' + fmtDate(stampFor(s).ts) + '</span>' +
+          // the row date speaks the sort's language: created order shows
+          // created dates, edited order shows edited dates
+          '<span class="story-row-date">' + fmtDate(sortMode() === 'edited' ? (s.editedAt || s.id) : s.id) + '</span>' +
+          (s.pinned ? '<span class="material-symbols-sharp fav-mark story-row-fav">favorite</span>' : '') +
         '</a>';
       }).join('');
       fsGhostSettle(index, hadGhosts);
