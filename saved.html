@@ -147,6 +147,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/publish.js"></script>
 <script src="lib/library.js"></script>
   <script src="lib/toast.js"></script>
   <div class="toast" id="toast"></div>
@@ -229,6 +230,14 @@
     // page's title, icons match the sidebar
     var sections = [
       {
+        // classes saved from other teachers' profiles — references,
+        // read live; items arrive async below
+        key: 'saved-classes',
+        label: 'Saved Classes',
+        icon: 'bookmark',
+        load: function () { return []; },
+      },
+      {
         key: 'arbitrary-rules',
         label: 'Arbitrary Rules',
         icon: 'casino',
@@ -294,75 +303,6 @@
           } catch (_) { return []; }
         },
       },
-      {
-        key: 'classes',
-        label: 'Your Classes',
-        icon: 'edit_document',
-        load: function () {
-          try {
-            return JSON.parse(localStorage.getItem('flowschool_classes') || '[]').map(function (c) {
-              return {
-                name: c.title || 'Untitled Class',
-                href: 'your-classes?id=' + c.id,
-                time: c.editedAt || c.id || 0,
-              };
-            });
-          } catch (_) { return []; }
-        },
-      },
-      {
-        key: 'flows',
-        label: 'Your Flows',
-        icon: 'airline_stops',
-        load: function () {
-          try {
-            return JSON.parse(localStorage.getItem('flowschool_flows') || '[]').map(function (f) {
-              return {
-                name: f.name || 'Untitled Flow',
-                href: 'your-flows?id=' + f.id,
-                time: f.editedAt || f.id || 0,
-              };
-            });
-          } catch (_) { return []; }
-        },
-      },
-      {
-        key: 'stories',
-        label: 'Your Stories',
-        icon: 'library_books',
-        load: function () {
-          try {
-            return JSON.parse(localStorage.getItem('flowschool_stories') || '[]').map(function (st) {
-              var name = st.text || 'Saved Story';
-              if (name.length > 80) name = name.slice(0, 77) + '…';
-              return {
-                name: name,
-                href: 'stories?id=' + st.id,
-                time: st.id || 0,
-              };
-            });
-          } catch (_) { return []; }
-        },
-      },
-      {
-        key: 'cue-flows',
-        label: 'Your Cues',
-        icon: 'edit_note',
-        load: function () {
-          try {
-            var raw = JSON.parse(localStorage.getItem('fs-cue-flows') || '[]');
-            var list = Array.isArray(raw) ? raw : Object.values(raw || {});
-            return list.filter(Boolean).map(function (fl, i) {
-              var id = fl.id != null ? fl.id : (Date.parse(fl.savedAt) || 0) + i;
-              return {
-                name: fl.name || 'Untitled',
-                href: 'your-cues?id=' + id,
-                time: fl.savedAt ? new Date(fl.savedAt).getTime() : 0,
-              };
-            });
-          } catch (_) { return []; }
-        },
-      },
     ];
 
     function renderSection(s, items) {
@@ -373,7 +313,8 @@
               + '<div class="sv-icon"><span class="material-symbols-sharp">' + s.icon + '</span></div>'
               + '<div class="sv-info">'
               +   '<span class="sv-name">' + esc(item.name) + '</span>'
-              +   (item.time ? '<span class="sv-time">' + timeAgo(item.time) + '</span>' : '')
+              +   (item.sub ? '<span class="sv-time">' + esc(item.sub) + '</span>'
+                    : (item.time ? '<span class="sv-time">' + timeAgo(item.time) + '</span>' : ''))
               + '</div>'
               + '<span class="material-symbols-sharp sv-arrow i-md">arrow_forward</span>'
               + '</a>';
@@ -448,22 +389,48 @@
       root.innerHTML = html;
     }
 
-    if (allItems === 0) {
-      root.innerHTML = '<div class="library-empty">'
-        + fsGhostRows()
-        + '<p class="library-empty-headline">Everything you keep, in one place.</p>'
-        + '<p class="library-empty-sub">Save a challenge, a chain, a cue sheet, or a playlist as you practice \u2014 this shelf fills itself.</p>'
-        + '<div class="library-empty-actions"><a href="dashboard" class="btn-primary">Back to Dashboard</a></div>'
-        + '</div>';
-    } else {
+    var searchWired = false;
+    function boot() {
+      if (allItems === 0) {
+        root.innerHTML = '<div class="library-empty">'
+          + fsGhostRows()
+          + '<p class="library-empty-headline">Everything you keep, in one place.</p>'
+          + '<p class="library-empty-sub">Save a challenge, a chain, a cue sheet, or a playlist as you practice \u2014 this shelf fills itself.</p>'
+          + '<div class="library-empty-actions"><a href="dashboard" class="btn-primary">Back to Dashboard</a></div>'
+          + '</div>';
+        return;
+      }
       bar.hidden = false;
       filterRow.hidden = false;
-      var searchT; // the list changes at typing pauses, not per keystroke
-      search.addEventListener('input', function () {
-        clearTimeout(searchT);
-        searchT = setTimeout(render, 140);
-      });
+      if (!searchWired) {
+        searchWired = true;
+        var searchT; // the list changes at typing pauses, not per keystroke
+        search.addEventListener('input', function () {
+          clearTimeout(searchT);
+          searchT = setTimeout(render, 140);
+        });
+      }
       render();
+    }
+    boot();
+
+    // saved classes read live from the community — they arrive after
+    // the local shelves and slot into their section quietly
+    if (window.fsPublish) {
+      fsPublish.savedClasses().then(function (res) {
+        if (res.error || !res.data.length) return;
+        var g = loaded.find(function (x) { return x.section.key === 'saved-classes'; });
+        g.items = res.data.map(function (r) {
+          return {
+            name: r.title || 'Untitled Class',
+            sub: 'By ' + (r.author_name || 'a teacher'),
+            href: 'class?p=' + r.id,
+            time: r.saved_at ? new Date(r.saved_at).getTime() : 0,
+          };
+        });
+        allItems += g.items.length;
+        boot();
+      }, function () {});
     }
   })();
 

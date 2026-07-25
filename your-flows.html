@@ -217,7 +217,7 @@
 
     /* exactly as written — the teaching-view treatment */
     .fd-flow {
-      font-family: var(--font-mono); /* the printed sheet's voice, on screen too */
+      font-family: var(--font); /* the reading face — same as the headlines */
       font-size: var(--fs-h6);
       font-weight: var(--weight-regular);
       line-height: 1.6;
@@ -874,7 +874,7 @@
       }
 
       .fd-flow {
-        font-family: var(--font-mono) !important;
+        font-family: var(--font) !important;
         font-size: 11pt !important;
         line-height: 1.65 !important;
         margin: 14pt 0 0 !important;
@@ -950,7 +950,7 @@
     <div class="post-bar">
       <button class="btn-ghost" id="detail-back-btn">
         <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
-        Your Flows
+        <span class="post-back-label" id="detail-back-label">Your Flows</span>
       </button>
       <div class="post-actions fd-actions" id="fd-actions">
         <button class="btn-icon" id="fd-edit-btn" title="Edit flow" data-tooltip="Edit">
@@ -1448,7 +1448,7 @@
       fsSwapView(flowViews(), document.getElementById('list-view'), function () {
         renderList();
       });
-      if (push) history.pushState({}, '', 'your-flows');
+      if (push) fsPushState('your-flows');
     }
 
     // only the explicit link counts — matching text is coincidence,
@@ -1730,6 +1730,8 @@
       var f = byId(id);
       if (!f) { showList(); return; }
       currentId = id;
+      // the back button names where one step actually lands
+      document.getElementById('detail-back-label').textContent = fsBackLabel('Your Flows');
 
       document.title = (f.name || 'Untitled Flow') + ' \u2014 Flow School';
       fsSwapView(flowViews(), document.getElementById('detail-view'), function () {
@@ -1744,7 +1746,7 @@
         renderUsedIn(f, document.getElementById('fd-usedin-list'));
       });
 
-      if (push) history.pushState({}, '', 'your-flows?id=' + id);
+      if (push) fsPushState('your-flows?id=' + id);
     }
 
     function renderFdTitle(f) {
@@ -1773,7 +1775,7 @@
 
       fsSwapView(flowViews(), document.getElementById('edit-view'), function () {
         document.getElementById('editor-back-label').textContent =
-          f ? (f.name || 'Untitled Flow') : 'Your Flows';
+          fsBackLabel(f ? (f.name || 'Untitled Flow') : 'Your Flows');
 
         document.getElementById('fl-title').value = f ? (f.name || '') : '';
         var area = document.getElementById('fl-area');
@@ -1823,7 +1825,7 @@
         if (after) after();
       });
 
-      if (push) history.pushState({}, '', f ? 'your-flows?edit=' + f.id : 'your-flows?new=1');
+      if (push) fsPushState(f ? 'your-flows?edit=' + f.id : 'your-flows?new=1');
     }
 
     // ─── ELEMENTS OF FLOW (Peak Flows only) ──────────────────────────────────────
@@ -2041,7 +2043,17 @@
     }
 
     document.getElementById('cancel-btn').addEventListener('click', leaveEditor);
-    document.getElementById('editor-back-btn').addEventListener('click', leaveEditor);
+    document.getElementById('editor-back-btn').addEventListener('click', function () {
+      // back rides history (guarded); Cancel keeps its explicit destination
+      function leave() {
+        dirty = false;
+        fsGoBack(function () {
+          if (editingId != null) showDetail(editingId, true); else showList(true);
+        });
+      }
+      if (dirty) { confirmDiscard(function (yes) { if (yes) leave(); }); }
+      else { leave(); }
+    });
 
     // ─── SAVE ────────────────────────────────────────────────────────────────────
 
@@ -2074,7 +2086,7 @@
         };
         flows.push(entry);
         editingId = entry.id;
-        history.replaceState({}, '', 'your-flows?edit=' + entry.id);
+        fsReplaceState('your-flows?edit=' + entry.id);
       }
       persist();
       // cue sheets chosen before the flow existed get their links now
@@ -2118,7 +2130,7 @@
     });
 
     document.getElementById('detail-back-btn').addEventListener('click', function () {
-      showList(true);
+      fsGoBack(function () { showList(true); });
     });
 
     document.getElementById('fd-edit-btn').addEventListener('click', function () {
@@ -2243,11 +2255,12 @@
       if (name) document.documentElement.style.setProperty('--print-byline', '"by: ' + name + '"');
     })();
 
-    window.addEventListener('popstate', function () {
+    window.addEventListener('popstate', function (e) {
+      fsSyncNavDepth(e.state);
       if (isEditing() && dirty) {
         confirmDiscard(function (yes) {
           if (yes) { dirty = false; route(); }
-          else { history.pushState({}, '', editorUrl()); }
+          else { fsPushState(editorUrl()); }
         });
       } else {
         route();

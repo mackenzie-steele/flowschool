@@ -123,7 +123,7 @@
       color: var(--text-3);
     }
     .pc-flow {
-      font-family: var(--font-mono); /* the printed sheet's voice, on screen too */
+      font-family: var(--font); /* the reading face — same as the headlines */
       font-size: var(--fs-h6);
       font-weight: var(--weight-regular);
       line-height: 1.6;
@@ -326,7 +326,7 @@
       .pc-label { padding: 14pt 0 4pt !important; margin: 0 !important; }
       .pc-label .label-1, .pc-flow-name { color: #555 !important; }
       .pc-flow {
-        font-family: var(--font-mono) !important;
+        font-family: var(--font) !important;
         font-size: 11pt !important;
         line-height: 1.65 !important;
         margin: 0 !important;
@@ -390,6 +390,7 @@
   <script src="lib/sync.js"></script>
   <script src="lib/publish.js"></script>
   <script src="lib/motion.js"></script>
+  <script src="lib/library.js"></script>
   <div class="toast" id="toast"></div>
 
   <main>
@@ -595,8 +596,11 @@
         : 'by: ' + esc(name);
       if (row.author_handle) {
         document.getElementById('pc-back').href = '/@' + row.author_handle;
-        document.getElementById('pc-back-label').textContent = name;
       }
+      // the back button names where one step actually lands (the
+      // author is the fallback for direct links)
+      document.getElementById('pc-back-label').textContent =
+        fsBackLabel(row.author_handle ? name : 'The Circle');
 
       const secs = (row.payload && row.payload.sections) || [];
       // circles: the flow sections — Begin and Cool Down bookend, not count
@@ -685,6 +689,12 @@
         document.getElementById('pc-error').hidden = false;
       }
     }
+
+    // the back anchor rides history when there is one; its href (the
+    // author's profile / The Circle) is the fallback for direct links
+    document.getElementById('pc-back').addEventListener('click', function (e) {
+      if (window.history.length > 1) { e.preventDefault(); history.back(); }
+    });
 
     document.getElementById('pc-retry').addEventListener('click', function () {
       document.getElementById('pc-error').hidden = true;

@@ -322,13 +322,14 @@
   <script src="lib/sync.js"></script>
   <script src="lib/community.js"></script>
   <script src="lib/publish.js"></script>
+  <script src="lib/library.js"></script>
   <div class="toast" id="toast"></div>
 
   <main>
   <div class="post-bar">
     <a class="btn-ghost" href="circle">
       <span class="material-symbols-sharp i-md" style="margin-right:6px" aria-hidden="true">arrow_back</span>
-      <span class="post-back-label">The Circle</span>
+      <span class="post-back-label" id="tp-back-label">The Circle</span>
     </a>
   </div>
   <div class="tp-wrap">
@@ -692,6 +693,14 @@
       if (error) { toast('That didn’t save. Try again in a moment.'); return; }
       window.location.reload();
     });
+
+    // the back anchor rides history when there is one; The Circle is
+    // the fallback for direct links
+    document.querySelector('.post-bar .btn-ghost').addEventListener('click', function (e) {
+      if (window.history.length > 1) { e.preventDefault(); history.back(); }
+    });
+    // ...and names where that step lands
+    document.getElementById('tp-back-label').textContent = fsBackLabel('The Circle');
 
     // ─── LOAD ────────────────────────────────────────────────────────────────────
     (async function init() {

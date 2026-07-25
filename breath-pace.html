@@ -335,6 +335,19 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
       color: var(--text-3);
     }
 
+    /* a sheet with no breath marks can't be read here — dimmed, inert */
+    .bp-sheet-row.is-locked { cursor: not-allowed; }
+    .bp-sheet-row.is-locked .bp-sheet-title { color: var(--text-3); }
+    .bp-sheet-row.is-locked:hover .bp-sheet-title { opacity: 1; }
+    .bp-sheet-note {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .04em;
+      color: var(--text-3);
+      opacity: .7;
+    }
+
     .bp-sheet-empty {
       font-size: var(--text-body-sm);
       color: var(--text-3);
@@ -432,9 +445,19 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
       padding-block: 190px;
     }
 
-    body.bp-full .bp-line-text { font-size: 40px; }
+    /* the cue reads large on a laptop and scales down to feel natural on
+       a phone, never smaller than a comfortable 26px */
+    body.bp-full .bp-line-text { font-size: clamp(26px, 5.5vw, 40px); }
     body.bp-full .bp-line { padding: 14px 8px; gap: 20px; }
     body.bp-full .bp-line-breath { width: 64px; }
+
+    /* on a phone: a smaller cue, a slimmer breath rail, and real air on
+       the right so wrapped lines never kiss the edge */
+    @media (max-width: 580px) {
+      body.bp-full .bp-line-text { font-size: clamp(22px, 6.2vw, 28px); }
+      body.bp-full .bp-line { padding: 12px 30px 12px 4px; gap: 12px; }
+      body.bp-full .bp-line-breath { width: 44px; }
+    }
 
     body.bp-full #bp-full-btn,
     body.bp-full #bp-change-btn { display: none; }
@@ -450,6 +473,158 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
     }
 
     body.bp-full .bp-sheet-name { max-width: 40vw; }
+
+    /* ── Practice Out Loud — the full-screen room launched locked to one
+          sheet from Your Cues. The breath dial rejoins the reading above
+          the cues, and the pace controls tuck behind a reveal. ── */
+
+    /* the dial grows into the freed space — the countdown is the room's
+       centerpiece now that the reading is trimmed to three cues */
+    body.bp-practice #pacer-svg {
+      display: block !important;
+      width: clamp(200px, 30vh, 300px);
+      height: clamp(200px, 30vh, 300px);
+      margin: 0 auto;
+      flex: none;
+    }
+
+    /* stack the room: dial up top, the three-cue window a short step
+       below it, the transport pinned to the floor */
+    body.bp-practice .pacer-section {
+      justify-content: flex-start;
+      padding-top: clamp(36px, 6vh, 68px);
+      gap: clamp(8px, 2vh, 24px);
+    }
+
+    /* the reading holds only three cues — the current pinned to center,
+       a peek of the one before and the one after fading at the edges */
+    body.bp-practice .bp-script {
+      flex: none;
+      height: clamp(210px, 30vh, 300px);
+      min-height: 0;
+      width: min(880px, 94vw);
+    }
+    body.bp-practice .bp-script-body {
+      /* runway = half the window, so any cue (first and last included)
+         can sit dead center */
+      padding-block: clamp(100px, 15vh, 148px);
+      /* a tighter fade keeps the focus on the middle cue */
+      -webkit-mask-image: linear-gradient(transparent, black 34%, black 66%, transparent);
+      mask-image: linear-gradient(transparent, black 34%, black 66%, transparent);
+    }
+
+    /* the transport gains two companions: pace and mute — and stays on
+       the floor while the dial and cues sit closer up top */
+    body.bp-practice .bp-transport-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      margin-top: auto;
+      padding-bottom: 8px;
+    }
+
+    /* the big dial already carries the breath — the ring around the
+       play button is redundant in the room */
+    body.bp-practice .bp-ring { display: none !important; }
+
+    /* no reading-progress bar in the room — the cues speak for themselves */
+    body.bp-practice .bp-full-progress { display: none !important; }
+
+    .bp-fs-ctl { display: none; }
+    body.bp-practice .bp-fs-ctl {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      background: none;
+      border: 1px solid rgba(var(--ink-rgb), .16);
+      border-radius: 50%;
+      color: var(--text-3);
+      cursor: pointer;
+      transition: color var(--transition-base), border-color var(--transition-base);
+    }
+    body.bp-practice .bp-fs-ctl:hover { color: var(--text-1); border-color: rgba(var(--ink-rgb), .32); }
+    body.bp-pace-open #bp-pace-btn { color: var(--text-1); border-color: var(--accent); }
+
+    /* audio, once it joins the cluster, wears the same round chrome */
+    body.bp-practice .bp-transport-row .audio-btn {
+      position: static;
+      top: auto;
+      right: auto;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+    }
+
+    /* the pace panel — the real inhale/exhale + first-breath controls,
+       floated above the cluster, revealed by the pace button */
+    body.bp-practice .controls-card {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: 108px;
+      transform: translateX(-50%) translateY(8px);
+      width: min(520px, 92vw);
+      margin: 0;
+      z-index: 303;
+      background: var(--paper-solid);
+      border: 1px solid var(--border-light);
+      border-radius: var(--r);
+      box-shadow: var(--shadow-float);
+      padding: 22px 24px 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    body.bp-practice.bp-pace-open .controls-card {
+      display: block;
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    /* the room owns the viewport from the first frame. main carries a
+       page-enter animation whose transform makes it the containing block
+       for this fixed overlay — anchoring it to main (inset by the
+       sidebar) until the animation ends, which is the snap-to-full we
+       don't want. Held still, the overlay measures the viewport at once. */
+    body.bp-full main { animation: none !important; transform: none !important; }
+
+    /* the paper is instant — no flash of the page beneath — and the
+       content settles in over it, then fades back out on the way to the
+       cue sheet */
+    @keyframes bpRoomIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes bpFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      body.bp-practice #pacer-svg,
+      body.bp-practice .bp-transport-row,
+      body.bp-practice .bp-script-top,
+      body.bp-practice .bp-full-close {
+        animation: bpRoomIn .34s cubic-bezier(.2, .6, 0, 1) backwards;
+      }
+      /* the reading fades WITHOUT a transform: a transformed .bp-script
+         would become the containing block for its fixed title child and
+         drop it to mid-page until the animation ended */
+      body.bp-practice .bp-script {
+        animation: bpFadeIn .34s cubic-bezier(.2, .6, 0, 1) .04s backwards;
+      }
+      body.bp-practice .bp-transport-row { animation-delay: .07s; }
+    }
+
+    /* leaving: the content dims under the held paper, then we step back */
+    body.bp-leaving .pacer-section > *,
+    body.bp-leaving .controls-card {
+      transition: opacity .16s ease;
+      opacity: 0 !important;
+    }
 
     /* ── Controls card ── */
     .controls-card {
@@ -543,6 +718,13 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
 
 <body class="has-sidebar">
 
+  <script>
+    // arriving to practice a sheet: raise the room before first paint so
+    // the counter page beneath never flashes
+    if (new URLSearchParams(location.search).get('sheet')) {
+      document.body.classList.add('bp-full', 'bp-practice');
+    }
+  </script>
 
   <script src="lib/version.js"></script>
   <script src="lib/nav.js"></script>
@@ -574,7 +756,9 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
         <span class="material-symbols-sharp i-md">close</span>
       </button>
 
-      <div class="bp-views" id="bp-faces" role="tablist" aria-label="Pacer view">
+      <!-- the reading face left this page for a full-screen Practice Out
+           Loud, launched from Your Cues — this page is the counter now -->
+      <div class="bp-views" id="bp-faces" role="tablist" aria-label="Pacer view" hidden>
         <button class="bp-view-btn active" data-view="breath" role="tab" aria-selected="true">Counter</button>
         <button class="bp-view-btn" data-view="cues" role="tab" aria-selected="false">Cues</button>
       </div>
@@ -611,6 +795,9 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
       </div>
 
       <div class="bp-transport-row">
+        <button type="button" class="bp-fs-ctl" id="bp-pace-btn" title="Breath pace" data-tooltip="Pace" aria-label="Breath pace">
+          <span class="material-symbols-sharp i-md">settings</span>
+        </button>
         <div class="bp-transport-wrap">
         <svg class="bp-ring" viewBox="0 0 72 72" aria-hidden="true">
           <circle class="bp-ring-track" cx="36" cy="36" r="35" />
@@ -896,7 +1083,10 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
       const phaseProgress = Math.min(1, elapsed / phaseDurMs);
       if (phase.id === 'inhale') breathProgress = phaseProgress;
       else if (phase.id === 'exhale') breathProgress = 1 - phaseProgress;
-      setTickOpacity(breathProgress, 0.16, phase.id === 'exhale');
+      // one lit edge for both breaths, like the ring around the play
+      // button: it sweeps clockwise as the inhale fills, and the same
+      // edge recedes counterclockwise as the exhale empties
+      setTickOpacity(breathProgress, 0.16, false);
 
       // Fire tick at each new whole-second boundary within the phase.
       const currentPhaseSec = Math.floor(elapsed / 1000);
@@ -950,17 +1140,43 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
       const verb = (r.verb || '').trim();
       const body = (r.body || '').trim();
       const dir  = (r.dir  || '').trim();
+      const pose = (r.pose || '').trim().toUpperCase();
       const breath = r.inex && INEX_LABELS[r.inex] ? INEX_LABELS[r.inex] : '';
-      if (!verb && !body && !dir) {
-        // a row that's only a pose still gets its breath
-        const pose = (r.pose || '').trim();
-        return pose ? { breath: breath, text: pose.toUpperCase(), poseOnly: true } : null;
+      let sentence = '';
+      if (verb || body || dir) {
+        const bodyNorm = body && !/\byour\b/i.test(body) ? 'your ' + body : body;
+        sentence = [verb, bodyNorm, dir].filter(Boolean).join(' ');
+        if (sentence.slice(-1) !== '.') sentence += '.';
+        sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
       }
-      const bodyNorm = body && !/\byour\b/i.test(body) ? 'your ' + body : body;
-      let cue = [verb, bodyNorm, dir].filter(Boolean).join(' ');
-      if (cue.slice(-1) !== '.') cue += '.';
-      cue = cue.charAt(0).toUpperCase() + cue.slice(1);
-      return { breath: breath, text: cue };
+      // the pose rides the same line, same voice: "…chest. PIGEON." —
+      // and stands alone as the line when the row is only a pose
+      let text = sentence;
+      if (sentence && pose) text = sentence + ' ' + pose + '.';
+      else if (!sentence && pose) text = pose;
+      if (!text) return null;
+      return { breath: breath, text: text };
+    }
+
+    // the pacer reads breath: a sheet with no inhale/exhale mark has no
+    // rhythm to group cues around, so it can't be read here
+    function bpSheetHasBreath(e) {
+      return !!(e && (e.rows || []).some(r => r.inex && INEX_LABELS[r.inex]));
+    }
+
+    // cues gather around each breath mark: a marked row opens a group,
+    // the unmarked rows after it fold in, until the next mark opens the
+    // next group. one group reads as one sentence and takes one breath.
+    function bpGroupLines(rows) {
+      const groups = [];
+      (rows || []).map(bpBuildLine).filter(Boolean).forEach(l => {
+        if (l.breath || !groups.length) {
+          groups.push({ breath: l.breath, parts: [l.text] });
+        } else {
+          groups[groups.length - 1].parts.push(l.text);
+        }
+      });
+      return groups.map(g => ({ breath: g.breath, text: g.parts.join(' ') }));
     }
 
     function setFirstBreath(v) {
@@ -971,8 +1187,12 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
     }
 
     function bpLoadSheet(id) {
-      bpSheet = bpSheets().find(e => e.id === id) || null;
-      bpLines = bpSheet ? (bpSheet.rows || []).map(bpBuildLine).filter(Boolean) : [];
+      const found = bpSheets().find(e => e.id === id) || null;
+      // guard: only marked sheets are readable here (the picker enforces
+      // this too, but a remembered sheet may have lost its marks since)
+      if (found && !bpSheetHasBreath(found)) return;
+      bpSheet = found;
+      bpLines = bpSheet ? bpGroupLines(bpSheet.rows || []) : [];
       bpLineIdx = 0;
       if (bpSheet) localStorage.setItem(BP_SHEET_KEY, String(bpSheet.id));
       // a marked sheet sets the session's first breath: the first line
@@ -1001,7 +1221,7 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
       body.innerHTML = bpLines.map((l, i) =>
         '<div class="bp-line" data-idx="' + i + '">' +
           (hasBreath ? '<span class="bp-line-breath">' + escHtml(l.breath) + '</span>' : '') +
-          '<span class="bp-line-text' + (l.poseOnly ? ' bp-line-onlypose' : '') + '">' + escHtml(l.text) + '</span>' +
+          '<span class="bp-line-text">' + escHtml(l.text) + '</span>' +
         '</div>'
       ).join('');
       body.querySelectorAll('.bp-line').forEach(el => {
@@ -1068,13 +1288,16 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
       list.innerHTML = sheets.length
         ? sheets.map(e => {
             const d = new Date(e.savedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-            return '<button type="button" class="bp-sheet-row" data-id="' + e.id + '">' +
+            const ok = bpSheetHasBreath(e);
+            return '<button type="button" class="bp-sheet-row' + (ok ? '' : ' is-locked') + '"' +
+              (ok ? ' data-id="' + e.id + '"' : ' disabled aria-disabled="true"') + '>' +
               '<span class="bp-sheet-title">' + escHtml(e.name || 'Untitled') + '</span>' +
-              '<span class="bp-sheet-date">' + d + '</span>' +
+              (ok ? '<span class="bp-sheet-date">' + d + '</span>'
+                  : '<span class="bp-sheet-note">No breath marks</span>') +
             '</button>';
           }).join('')
         : '<p class="bp-sheet-empty">Nothing in Your Cues yet. Write a sheet there first.</p>';
-      list.querySelectorAll('.bp-sheet-row').forEach(row => {
+      list.querySelectorAll('.bp-sheet-row[data-id]').forEach(row => {
         row.addEventListener('click', () => {
           bpLoadSheet(parseInt(row.dataset.id, 10));
           closeSheetModal();
@@ -1107,10 +1330,57 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
       document.getElementById('bp-full-fill').style.width = pct + '%';
     }
 
+    // ── Practice Out Loud — the room, launched locked to one sheet ──
+    let bpPractice = false;
+
+    function enterPractice() {
+      bpPractice = true;
+      setFull(true);                 // raises the room, sets the cues view
+      document.body.classList.add('bp-practice');
+      document.getElementById('pacer-svg').style.display = ''; // the dial rejoins
+      // the pace + audio controls join the transport cluster. The page is
+      // only ever left by navigation, so this move needs no undo.
+      document.querySelector('.bp-transport-row').appendChild(document.getElementById('audio-btn'));
+    }
+
+    function leavePractice() {
+      // the room belongs to the cue sheet — step back to it
+      const go = () => {
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = 'your-cues';
+      };
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) { go(); return; }
+      // dim the room under its held paper, then step back
+      document.body.classList.add('bp-leaving');
+      setTimeout(go, 170);
+    }
+
+    document.getElementById('bp-pace-btn').addEventListener('click', () => {
+      document.body.classList.toggle('bp-pace-open');
+    });
+
+    // a click anywhere off the panel (and off its own button) closes it
+    document.addEventListener('click', (e) => {
+      if (!document.body.classList.contains('bp-pace-open')) return;
+      if (e.target.closest('#bp-pace-btn') || e.target.closest('.controls-card')) return;
+      document.body.classList.remove('bp-pace-open');
+    });
+
     document.getElementById('bp-full-btn').addEventListener('click', () => setFull(true));
-    document.getElementById('bp-full-close').addEventListener('click', () => setFull(false));
+    document.getElementById('bp-full-close').addEventListener('click', () => {
+      if (bpPractice) leavePractice(); else setFull(false);
+    });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && document.body.classList.contains('bp-full')) setFull(false);
+      if (e.key !== 'Escape') return;
+      // the pace panel closes first, then the room
+      if (document.body.classList.contains('bp-pace-open')) {
+        document.body.classList.remove('bp-pace-open');
+      } else if (bpPractice) {
+        leavePractice();
+      } else if (document.body.classList.contains('bp-full')) {
+        setFull(false);
+      }
     });
 
     document.getElementById('bp-choose-btn').addEventListener('click', openSheetModal);
@@ -1155,6 +1425,8 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
       if (running) {
         stopPacer();
       } else {
+        // starting clears the pace panel so the reading stands alone
+        document.body.classList.remove('bp-pace-open');
         // Start fresh — it counts as a session after 60 real seconds
         clearTimeout(bpSessionTimer);
         bpSessionTimer = setTimeout(() => {
@@ -1221,13 +1493,13 @@ html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F
     buildTicks();
     // arriving from a cue sheet's Practice button: that sheet loads
     // and the script face is already up
+    // arriving from a cue sheet's Practice Out Loud: load it and raise the
+    // full-screen room straight away (this page is otherwise the counter)
     const _bpParam = parseInt(new URLSearchParams(window.location.search).get('sheet'), 10);
     if (!isNaN(_bpParam)) {
       bpLoadSheet(_bpParam);
-      if (bpSheet) setView('cues');
-    } else {
-      const _bpRemembered = parseInt(localStorage.getItem(BP_SHEET_KEY), 10);
-      if (!isNaN(_bpRemembered)) bpLoadSheet(_bpRemembered);
+      if (bpSheet) enterPractice();
+      else document.body.classList.remove('bp-full', 'bp-practice'); // markless: fall back to the counter
     }
     renderScript();
   </script>

@@ -372,14 +372,8 @@
     .cw-story-block { padding: 12px 0 20px; }
     .cw-story-block .cw-add-row { display: flex; }
 
-    .cw-story-item {
-      background: var(--raised), rgba(var(--ink-rgb), .025);
-      box-shadow: var(--crest), inset 0 0 0 1px rgba(var(--ink-rgb), .09);
-      border-radius: var(--r);
-      padding: 16px 16px;
-      margin-top: 12px;
-    }
-
+    /* the attached story is a drawer (.fd-cues) — this is just spacing */
+    .cw-story-item { margin-top: 12px; }
     .cw-story-item:first-child { margin-top: 0; }
 
     .cw-story-item-head {
@@ -928,15 +922,9 @@
     .tv-playlist-link:hover { color: var(--text-1); }
     .tv-playlist-link .material-symbols-sharp { font-size: var(--icon-sm); }
 
-    .tv-story {
-      box-shadow: var(--crest);
-      border-radius: var(--r);
-      padding: 16px 20px;
-      background: var(--raised), rgba(var(--ink-rgb), .03);
-      border: 1px solid var(--border-light);
-      border-top-color: rgba(var(--ink-rgb), .18);
-      margin-bottom: 16px;
-    }
+    /* the drawer chrome comes from .fd-cues-head/.fd-cues-body — this
+       is just the spacing between stacked story drawers */
+    .tv-story { margin-bottom: 12px; }
 
     .tv-story-starter {
       font-size: var(--text-small);
@@ -961,7 +949,7 @@
 
     /* the flow exactly as written — slashes, line breaks and all */
     .tv-flow {
-      font-family: var(--font-mono); /* the printed sheet's voice, on screen too */
+      font-family: var(--font); /* the reading face — same as the headlines */
       font-size: var(--fs-h6);
       font-weight: var(--weight-regular);
       line-height: 1.6;
@@ -993,6 +981,24 @@
 
     .fd-cues-head:hover { border-color: rgba(var(--ink-rgb), .30); }
     .fd-cues-head[aria-expanded="true"] { border-radius: var(--r) var(--r) 0 0; }
+
+    /* editable drawer (edit view) — a detach control seated top-right */
+    .fd-cues { position: relative; }
+    .fd-cues-editable .fd-cues-head { padding-right: 48px; }
+    .fd-cues-x {
+      position: absolute;
+      top: 13px;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      padding: 6px;
+      line-height: 1;
+      border-radius: var(--rs);
+      transition: color var(--transition-base);
+    }
+    .fd-cues-x:hover { color: var(--text-1); }
 
     .fd-cues-title {
       font-family: var(--font-mono);
@@ -1355,16 +1361,8 @@
       .tv-playlist-link .material-symbols-sharp:last-child { display: none; }
       .date-toggle { pointer-events: none; }
 
-      /* story: read it once before the room fills */
-      .tv-story {
-        background: none !important;
-        box-shadow: none !important;
-        border: none !important;
-        border-bottom: 1px solid #ddd;
-        border-radius: 0;
-        padding: 10pt 0 12pt !important;
-        margin: 0 !important;
-      }
+      /* stories are a screen-only aside — the printed sheet is the flow */
+      #tv-stories, .tv-story { display: none !important; }
 
       /* sections: mono, exactly as typed */
       .tv-label {
@@ -1379,7 +1377,7 @@
       .tv-flow-name { color: #555 !important; }
 
       .tv-flow {
-        font-family: var(--font-mono) !important;
+        font-family: var(--font) !important;
         font-size: 11pt !important;
         line-height: 1.65 !important;
         margin: 0 !important;
@@ -1461,7 +1459,7 @@
     <div class="post-bar">
       <button class="btn-ghost" id="back-btn">
       <span class="material-symbols-sharp i-md" style="margin-right:6px">arrow_back</span>
-      Classes
+      <span class="post-back-label" id="back-label">Classes</span>
       </button>
       <div class="post-actions">
         <button class="btn-icon" id="edit-btn" title="Edit class" data-tooltip="Edit">

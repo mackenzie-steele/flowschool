@@ -406,6 +406,80 @@
     @media (max-width: 640px) {
       .structure-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── the printed story — one rhythm with the flow & class sheets ── */
+    .print-logo { display: none; }
+
+    @media print {
+      .print-logo {
+        display: block !important;
+        /* absolute, not fixed — the mark belongs to the first page only */
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 22pt;
+        width: auto;
+      }
+    }
+
+    @media print {
+      @page { margin: 16mm 18mm; }
+
+      /* the sheet is the story and nothing else */
+      .app-sidebar, .sidebar-toggle, .sidebar-overlay, .nav-sheet, .mobile-brand, nav,
+      .post-bar, .post-format-bar, footer, .post-actions, .post-edit-actions,
+      .toast, .st-menu, .skip-link, #post-edit, #list-view { display: none !important; }
+
+      #detail-view[hidden] { display: none !important; }
+
+      * { background: transparent !important; box-shadow: none !important; }
+
+      html, body { background: #fff !important; }
+
+      body, main, .wrap, .post {
+        color: #151515 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+        animation: none !important;
+        display: block !important;
+      }
+
+      .post * { color: #151515 !important; }
+
+      /* the starter loses its card, keeps its words — a quiet aside */
+      .post-spec {
+        border: none !important;
+        border-bottom: 1px solid #ddd !important;
+        border-radius: 0;
+        padding: 0 0 12pt !important;
+        margin: 0 0 14pt !important;
+      }
+      .post-spec-starter { color: #555 !important; }
+
+      .post-title { font-size: 24pt; margin-bottom: 0; }
+      .post-title::after {
+        content: var(--print-byline, '');
+        display: block;
+        font-size: 10pt;
+        font-weight: var(--weight-regular);
+        letter-spacing: 0;
+        color: #151515; /* the byline carries the title's ink */
+        margin-top: 2pt;
+      }
+      .post-title .fav-mark { display: none !important; }
+
+      /* the head column stretches so its hairline crosses the page */
+      .post-head-main { flex: 1; width: 100%; padding-bottom: 10pt; border-bottom: 1px solid #ddd; }
+      .post-meta { margin-top: 6pt; margin-bottom: 0; color: #555 !important; }
+
+      .post-body { margin-top: 14pt !important; }
+      .post-body p {
+        font-size: 11pt !important;
+        line-height: 1.65 !important;
+        margin-bottom: 1em !important;
+      }
+    }
   </style>
 </head>
 
@@ -538,6 +612,8 @@
     <div class="wrap" style="padding-top: 0;">
 
       <article class="post">
+
+        <img class="print-logo" src="img/flow-school-logo_black.png" alt="">
 
         <!-- where the story began — the drawn starter, above the title -->
         <div class="post-spec" id="post-margin" hidden>
@@ -734,9 +810,9 @@
       document.getElementById('post-title').hidden = on || !currentTitle();
       // while editing, back names where it goes — the story itself
       var backLabel = document.getElementById('story-back-label');
-      backLabel.textContent = (on && !composing)
+      backLabel.textContent = fsBackLabel((on && !composing)
         ? (currentTitle() || 'Untitled Story')
-        : 'Your Stories';
+        : 'Your Stories');
       // the starter lives in the margin box in both modes; the date is
       // a reading detail and steps aside while editing
       var pm = document.getElementById('post-meta');
@@ -792,7 +868,7 @@
         document.getElementById('post-title-input').focus();
         if (after) after();
       });
-      if (push) history.pushState({}, '', st ? 'stories?new=' + starterId : 'stories?new=blank');
+      if (push) fsPushState(st ? 'stories?new=' + starterId : 'stories?new=blank');
     }
 
     // ─── VIEW SWITCHING ──────────────────────────────────────────────────────────
@@ -808,14 +884,14 @@
       fsSwapView(storyViews(), document.getElementById('list-view'), function () {
         renderList(document.getElementById('stories-search').value);
       });
-      if (push) history.pushState({}, '', 'stories');
+      if (push) fsPushState('stories');
     }
 
     function showDetail(id, push) {
       fsSwapView(storyViews(), document.getElementById('detail-view'), function () {
         renderDetail(id);
       });
-      if (push) history.pushState({}, '', 'stories?id=' + id);
+      if (push) fsPushState('stories?id=' + id);
     }
 
     function route() {
@@ -836,12 +912,13 @@
       }
     }
 
-    window.addEventListener('popstate', function () {
+    window.addEventListener('popstate', function (e) {
+      fsSyncNavDepth(e.state);
       if (isStoryDirty()) {
         confirmDiscard(function (yes) {
           if (yes) { editing = false; composing = false; route(); }
           else {
-            history.pushState({}, '', composing
+            fsPushState(composing
               ? 'stories?new=' + (composeStarter ? composeStarter.id : 'blank')
               : 'stories?edit=' + currentId);
           }
@@ -994,7 +1071,7 @@
       editing = false;
       composing = false;
       setEditing(false);
-      if (push) history.pushState({}, '', 'stories?id=' + currentId);
+      if (push) fsPushState('stories?id=' + currentId);
     }
 
     // back steps OUT one layer, like the sibling editors: editing an
@@ -1002,8 +1079,12 @@
     // returns to the list
     document.getElementById('back-btn').addEventListener('click', function () {
       function leave() {
-        if (editing && !composing) { stopEditing(true); }
-        else { editing = false; composing = false; showList(true); }
+        // back rides history (edit and detail states are pushed, so one
+        // step lands right); the old layered exit is the fallback
+        fsGoBack(function () {
+          if (editing && !composing) { stopEditing(true); }
+          else { editing = false; composing = false; showList(true); }
+        });
       }
       if (isStoryDirty()) { confirmDiscard(function (yes) { if (yes) leave(); }); }
       else { leave(); }
@@ -1011,7 +1092,7 @@
 
     document.getElementById('edit-btn').addEventListener('click', function () {
       setEditing(true);
-      history.pushState({}, '', 'stories?edit=' + currentId);
+      fsPushState('stories?edit=' + currentId);
     });
 
     document.getElementById('cancel-edit-btn').addEventListener('click', function () {
@@ -1039,7 +1120,7 @@
         };
         stories.push(entry);
         persist(stories);
-        history.replaceState({}, '', 'stories?id=' + entry.id);
+        fsReplaceState('stories?id=' + entry.id);
         renderDetail(entry.id);
         toast('Story saved.');
         return;
@@ -1052,7 +1133,7 @@
       s.editedAt = Date.now();
       persist(stories);
       renderDetail(currentId);
-      history.replaceState({}, '', 'stories?id=' + currentId);
+      fsReplaceState('stories?id=' + currentId);
       toast('Story updated.');
     });
 
@@ -1073,12 +1154,14 @@
             iconClass: src.pinned ? 'fav-mark' : '',
             iconStyle: src.pinned ? 'margin:0;vertical-align:0;font-size:16px' : '',
             label: src.pinned ? 'Remove from favorites' : 'Add to favorites' },
+          { act: 'print', icon: 'print', label: 'Print story' },
           { act: 'dup', icon: 'content_copy', label: 'Duplicate' },
           { act: 'del', icon: 'delete', label: 'Delete story' },
         ];
       },
       confirm: { del: 'Click again to delete' },
       on: function (act) {
+        if (act === 'print') { window.print(); return; }
         var src = stories.find(function (x) { return x.id === currentId; });
         if (!src) return;
         if (act === 'pin') {
@@ -1114,6 +1197,22 @@
       e.stopPropagation();
       menu.toggle();
     });
+
+    // the printed sheet signs itself (the flow & class pattern) — the
+    // person's real name first, then auth metadata, then display name
+    (function () {
+      var name = localStorage.getItem('fs-full-name') || '';
+      if (!name) {
+        try {
+          var tok = JSON.parse(localStorage.getItem('sb-zizuopmcpzicbwngjagp-auth-token'));
+          var meta = (tok && tok.user && tok.user.user_metadata) || {};
+          name = meta.full_name || meta.name || '';
+        } catch (_) {}
+      }
+      if (!name) name = localStorage.getItem('fs-display-name') || '';
+      name = name.replace(/["\\]/g, '').trim();
+      if (name) document.documentElement.style.setProperty('--print-byline', '"by: ' + name + '"');
+    })();
 
     // ─── INIT ────────────────────────────────────────────────────────────────────
 
