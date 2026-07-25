@@ -165,11 +165,15 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
 
   if (error) {
     const msg = error.message || '';
-    errEl.textContent = msg.includes('Invalid login') || msg.includes('invalid_credentials')
-      ? 'Email or password is incorrect.'
-      : msg.includes('Email not confirmed')
-        ? 'Please confirm your email before signing in.'
-        : msg || 'Something went wrong. Please try again.';
+    if (error.code === 'user_banned' || /banned/i.test(msg)) {
+      errEl.innerHTML = 'Your account has been deactivated, to reactivate, <a href="https://flowschool.uscreen.io/" target="_blank" rel="noopener noreferrer">select a plan</a>.';
+    } else {
+      errEl.textContent = msg.includes('Invalid login') || msg.includes('invalid_credentials')
+        ? 'Email or password is incorrect.'
+        : msg.includes('Email not confirmed')
+          ? 'Please confirm your email before signing in.'
+          : msg || 'Something went wrong. Please try again.';
+    }
     errEl.classList.add('show');
     fsWorking(btn, false, 'Sign in');
   } else {

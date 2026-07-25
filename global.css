@@ -2891,6 +2891,12 @@ body.has-sidebar {
   display: block;
 }
 
+.auth-error a {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: var(--weight-medium);
+}
+
 .auth-success {
   font-size: var(--text-small);
   color: var(--text-2);
