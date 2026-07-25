@@ -206,6 +206,28 @@
 
     .fd-cues-none { font-style: italic; color: var(--text-3); }
 
+    .fd-cues-foot { display: flex; gap: 20px; margin-top: 14px; }
+
+    .fd-cues-print {
+      display: inline-flex;
+      align-items: center;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      color: var(--text-3);
+      transition: color var(--transition-base);
+      position: relative; /* anchors the house tooltip */
+    }
+    .fd-cues-print:hover { color: var(--text-1); }
+
+    /* saved wears the house saved-button state (.btn-icon.saved in
+       global.css) — this only fills the bookmark glyph */
+    #pc-save.saved .material-symbols-sharp svg { fill: currentColor; }
+
+    /* the paper-only cue sheet */
+    #cue-print { display: none; }
+
     /* ── empty / gone states ── */
     .pc-state {
       max-width: 480px;
@@ -228,7 +250,9 @@
     @media print {
       .print-logo {
         display: block !important;
-        position: fixed;
+        /* absolute, not fixed — the mark belongs to the first page
+           only, not every page's corner */
+        position: absolute;
         top: 0;
         right: 0;
         height: 22pt;
@@ -286,6 +310,49 @@
         padding: 0 !important;
       }
       .pc-section { padding: 0 !important; break-inside: avoid; }
+
+      /* printing ONE cue sheet: the class steps aside, the sheet is
+         the page — the Your Cues sheet's dress, credited */
+      body.print-cue #pc-view, body.print-cue .pc-state { display: none !important; }
+      body.print-cue #cue-print { display: block !important; color: #151515 !important; }
+      #cue-print * { color: #151515 !important; }
+      .cp-title { font-size: 24pt; margin-bottom: 0; }
+      .cp-byline { font-size: 10pt; font-weight: var(--weight-regular); margin: 2pt 0 0; }
+      .cp-meta {
+        font-family: var(--font-mono);
+        font-size: 8pt;
+        letter-spacing: .04em;
+        color: #555 !important;
+        margin-top: 6pt;
+        padding-bottom: 10pt;
+        border-bottom: 1px solid #ddd;
+      }
+      .cp-cue {
+        display: flex;
+        align-items: baseline;
+        gap: 12pt;
+        padding: 7pt 0;
+        border-bottom: 1px solid #eee;
+        break-inside: avoid;
+      }
+      .cp-breath {
+        flex-shrink: 0;
+        width: 52pt;
+        font-family: var(--font-mono);
+        font-size: 8pt;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: #555 !important;
+      }
+      .cp-text { flex: 1; min-width: 0; font-size: 12pt; line-height: 1.5; }
+      .cp-pose {
+        flex-shrink: 0;
+        font-family: var(--font-mono);
+        font-size: 8pt;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: #555 !important;
+      }
     }
   </style>
 </head>
@@ -312,12 +379,18 @@
       <button type="button" class="btn-icon" id="pc-print" title="Print class sheet" data-tooltip="Print" hidden>
         <span class="material-symbols-sharp" aria-hidden="true">print</span>
       </button>
-      <button type="button" class="btn-primary" id="pc-save" hidden></button>
+      <button type="button" class="btn-icon" id="pc-save" data-tooltip="Save class" aria-label="Save class" hidden>
+        <span class="material-symbols-sharp" aria-hidden="true">bookmark</span>
+      </button>
     </div>
   </div>
 
   <div class="wrap" style="padding-top: 0;">
   <div class="pc">
+
+    <!-- one attached cue sheet, dressed for paper - populated and shown
+         only while printing that sheet -->
+    <div id="cue-print" aria-hidden="true"></div>
 
     <!-- ── the class ── -->
     <article id="pc-view" class="fs-arrive" hidden>
@@ -402,10 +475,10 @@
       return { breath: PC_INEX[r.inex] || '', line, pose };
     }
 
-    function cueDrawerHtml(sheet) {
+    function cueDrawerHtml(sheet, si, ci) {
       const parts = (sheet.rows || []).map(cueLineParts).filter(Boolean);
       const hasBreath = parts.some(x => x.breath);
-      return '<div class="fd-cues">' +
+      return '<div class="fd-cues" data-si="' + si + '" data-ci="' + ci + '">' +
         '<button type="button" class="fd-cues-head" aria-expanded="false">' +
           '<span class="fd-cues-name">' + esc(sheet.name || 'Untitled') + '</span>' +
           '<span class="fd-cues-title">Cues</span>' +
@@ -421,12 +494,25 @@
                 '</div>'
               ).join('')
             : '<p class="fd-cues-none">Nothing written on this sheet yet.</p>') +
+          '<div class="fd-cues-foot">' +
+            '<button type="button" class="fd-cues-print" data-tooltip="Print cue sheet" aria-label="Print cue sheet">' +
+              '<span class="material-symbols-sharp i-sm">print</span>' +
+            '</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
     }
 
-    // one delegated ear — heads unfold; survives every render
+    // one delegated ear — heads unfold, the foot prints; survives renders
     document.getElementById('pc-sections').addEventListener('click', function (e) {
+      const pr = e.target.closest('.fd-cues-print');
+      if (pr) {
+        const d = pr.closest('.fd-cues');
+        const secs2 = (row.payload && row.payload.sections) || [];
+        const sheet = secs2[+d.dataset.si] && (secs2[+d.dataset.si].cues || [])[+d.dataset.ci];
+        if (sheet) printCueSheet(sheet);
+        return;
+      }
       const head = e.target.closest('.fd-cues-head');
       if (!head) return;
       const body = head.parentElement.querySelector('.fd-cues-body');
@@ -435,14 +521,40 @@
       head.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
 
+    // one cue sheet, dressed for paper: the Your Cues sheet's anatomy,
+    // credited to the class's author
+    function printCueSheet(sheet) {
+      const parts = (sheet.rows || []).map(cueLineParts).filter(Boolean);
+      const hasBreath = parts.some(x => x.breath);
+      const name = row.author_name || 'A Flow School teacher';
+      document.getElementById('cue-print').innerHTML =
+        '<img class="print-logo" src="img/flow-school-logo_black.png" alt="">' +
+        '<h1 class="cp-title">' + esc(sheet.name || 'Untitled') + '</h1>' +
+        '<p class="cp-byline">by: ' + esc(name) + '</p>' +
+        '<p class="cp-meta">' + parts.length + (parts.length === 1 ? ' cue' : ' cues') + '</p>' +
+        parts.map(x =>
+          '<div class="cp-cue">' +
+            (hasBreath ? '<span class="cp-breath">' + esc(x.breath) + '</span>' : '') +
+            '<span class="cp-text">' + esc(x.line) + '</span>' +
+            (x.pose ? '<span class="cp-pose">' + esc(x.pose) + '</span>' : '') +
+          '</div>'
+        ).join('');
+      const prev = document.title;
+      document.title = (sheet.name || 'Cue Sheet') + ' — Flow School';
+      document.body.classList.add('print-cue');
+      window.print();
+      document.body.classList.remove('print-cue');
+      document.title = prev;
+    }
+
+    // the bookmark, the app's saving language: outlined free, accent
+    // filled once it's yours
     function renderSaveBtn() {
       const btn = document.getElementById('pc-save');
       btn.hidden = false;
-      fsSetLabel(btn, saved
-        ? '<span class="material-symbols-sharp i-md" style="margin-right:6px">check</span>Saved'
-        : 'Save Class');
-      btn.classList.toggle('btn-primary', !saved);
-      btn.classList.toggle('btn-secondary', saved);
+      btn.classList.toggle('saved', saved);
+      btn.setAttribute('data-tooltip', saved ? 'Saved to your classes' : 'Save class');
+      btn.setAttribute('aria-label', saved ? 'Remove from saved classes' : 'Save class');
     }
 
     function render() {
@@ -467,14 +579,14 @@
         nc ? nc + (nc === 1 ? ' circle' : ' circles') : null,
       ].filter(Boolean).join(' · ');
 
-      document.getElementById('pc-sections').innerHTML = secs.map(s =>
+      document.getElementById('pc-sections').innerHTML = secs.map((s, si) =>
         '<div class="pc-section">' +
           '<div class="pc-label"><span class="label-1">' + esc(s.label || '') + '</span>' +
             (s.flow_name ? '<span class="pc-flow-name">' + esc(s.flow_name) + '</span>' : '') +
           '</div>' +
           '<div class="pc-flow">' + esc(s.text || '') + '</div>' +
           (s.cues && s.cues.length
-            ? '<div class="pc-cues-stack">' + s.cues.map(cueDrawerHtml).join('') + '</div>'
+            ? '<div class="pc-cues-stack">' + s.cues.map((c2, ci) => cueDrawerHtml(c2, si, ci)).join('') + '</div>'
             : '') +
         '</div>'
       ).join('');
@@ -522,7 +634,13 @@
       if (!id) { document.getElementById('pc-missing').hidden = false; return; }
       try {
         myId = await fsPublish.me();
-        const [res, saves] = await Promise.all([fsPublish.get(id), fsPublish.mySaves()]);
+        let [res, saves] = await Promise.all([fsPublish.get(id), fsPublish.mySaves()]);
+        // your own page always shows the current class — reconcile the
+        // projection first, then read it back
+        if (res.data && myId && res.data.owner_id === myId) {
+          await fsPublish.refreshShared(true);
+          res = await fsPublish.get(id);
+        }
         if (res.error) { document.getElementById('pc-error').hidden = false; return; }
         if (!res.data) { document.getElementById('pc-missing').hidden = false; return; }
         row = res.data;

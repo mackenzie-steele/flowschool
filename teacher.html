@@ -769,6 +769,8 @@
     // ── shared classes — the section exists only if they share something ──
     async function renderShared(ownerId) {
       try {
+        // your own page reconciles first, so it never shows stale copies
+        if (myId && ownerId === myId) await fsPublish.refreshShared(true);
         const { data, error } = await fsPublish.byOwner(ownerId);
         if (error || !data.length) return;
         document.getElementById('tp-shared').innerHTML = data.map(r => {

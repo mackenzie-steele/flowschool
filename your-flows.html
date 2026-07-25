@@ -815,7 +815,9 @@
     @media print {
       .print-logo {
         display: block !important;
-        position: fixed;
+        /* absolute, not fixed — the mark belongs to the first page
+           only, not every page's corner */
+        position: absolute;
         top: 0;
         right: 0;
         height: 22pt;
@@ -890,6 +892,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/publish.js"></script>
   <script src="lib/motion.js"></script>
   <script src="data/shorthand.js"></script>
   <script src="data/elements-of-flow.js"></script>
@@ -1494,6 +1497,8 @@
     }
     function setCueStore(list) {
       localStorage.setItem('fs-cue-flows', JSON.stringify(list));
+      // attachments ride inside shared classes' public copies
+      if (window.fsPublish) fsPublish.refreshShared();
     }
     function loadFlows2() { return flows; }
     function cueSheetsFor(flowId) {

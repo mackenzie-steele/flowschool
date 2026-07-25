@@ -106,6 +106,22 @@
       text-overflow: ellipsis;
     }
 
+    /* the peak flow speaks for the class — two mono lines, the flows
+       card's preview anatomy */
+    .cc-preview {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .03em;
+      line-height: 1.7;
+      color: var(--text-2);
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      margin: -6px 0 16px;
+      flex: 1;
+    }
+
     /* ── list view — the same cards, worn as scannable rows ── */
     .class-index.list-view { grid-template-columns: 1fr; gap: 0; }
 
@@ -140,6 +156,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .class-index.list-view .cc-preview { display: none; }
     .class-index.list-view .cc-meta { border: none; padding: 0; margin: 0; white-space: nowrap; }
     /* the marks sit centered between the hairlines, every screen size */
     .class-index.list-view .cc-fav,
@@ -1251,7 +1268,9 @@
     @media print {
       .print-logo {
         display: block !important;
-        position: fixed;
+        /* absolute, not fixed — the mark belongs to the first page
+           only, not every page's corner */
+        position: absolute;
         top: 0;
         right: 0;
         height: 22pt;

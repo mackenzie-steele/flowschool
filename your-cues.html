@@ -24,7 +24,9 @@
     @media print {
       .print-logo {
         display: block !important;
-        position: fixed;
+        /* absolute, not fixed — the mark belongs to the first page
+           only, not every page's corner */
+        position: absolute;
         top: 0;
         right: 0;
         height: 22pt;
@@ -727,7 +729,7 @@
       flex-direction: row;
       align-items: baseline;
       gap: 14px;
-      padding: 13px 4px;
+      padding: 13px 32px 13px 4px; /* the right seat holds the heart */
       background: none;
       box-shadow: none;
       border: none;
@@ -1766,7 +1768,7 @@ function renderList() {
   const flowNamesFor = e => {
     const names = (e.flowIds || []).map(flowNameOf).filter(Boolean);
     if (!names.length) return '';
-    return names[0] + (names.length > 1 ? ' +' + (names.length - 1) : '');
+    return 'for ' + names[0] + (names.length > 1 ? ' +' + (names.length - 1) : '');
   };
 
   let sheets = all.slice().sort(fsSorterFor(fsSortMode(SORT_KEY)));

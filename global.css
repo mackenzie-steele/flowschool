@@ -1002,6 +1002,7 @@ button svg {
 .vt-btn[data-tooltip],
 .wsf-open[data-tooltip],
 .fd-cues-open[data-tooltip],
+.fd-cues-print[data-tooltip],
 .tv-mark[data-tooltip] {
   position: relative;
 }
@@ -1012,6 +1013,7 @@ button svg {
 .vt-btn[data-tooltip]::before,
 .wsf-open[data-tooltip]::before,
 .fd-cues-open[data-tooltip]::before,
+.fd-cues-print[data-tooltip]::before,
 .tv-mark[data-tooltip]::before {
   content: attr(data-tooltip);
   position: absolute;
@@ -1039,6 +1041,7 @@ button svg {
 .vt-btn[data-tooltip]:hover::before,
 .wsf-open[data-tooltip]:hover::before,
 .fd-cues-open[data-tooltip]:hover::before,
+.fd-cues-print[data-tooltip]:hover::before,
 .tv-mark[data-tooltip]:hover::before {
   opacity: 1;
   transform: translateX(-50%) translateY(0);

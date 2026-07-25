@@ -74,12 +74,17 @@ create policy "users manage their own saves"
   with check (user_id = auth.uid());
 
 -- ── the read view: published classes wearing their author ─────────────────
--- security_invoker: the underlying RLS (published-only, profiles readable
--- to authenticated) applies to whoever asks. Anonymous keys get nothing,
--- the same posture as circle_directory.
+-- DEFINER view, the circle_directory pattern: it reads profiles/handles
+-- with owner rights so attribution works even when the profiles table's
+-- own RLS is locked to own-row-only. The bypass is the intent — and it
+-- is bounded by the select list below (public byline fields only) plus
+-- the WHERE pc.published visibility rule. Anonymous keys get nothing.
+-- LEFT joins: an author who never opened their profile page still
+-- appears (the client falls back to "A Flow School teacher").
 
-create or replace view community_classes
-with (security_invoker = on) as
+drop view if exists community_classes;
+
+create view community_classes as
 select
   pc.id,
   pc.owner_id,
@@ -96,7 +101,7 @@ select
   p.avatar_url   as author_avatar,
   h.handle       as author_handle
 from public_classes pc
-join profiles p on p.id = pc.owner_id
+left join profiles p on p.id = pc.owner_id
 left join handles h on h.user_id = pc.owner_id
 where pc.published;
 
