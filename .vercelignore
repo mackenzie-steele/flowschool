@@ -1,0 +1,5 @@
+# Kept in git, never deployed/served — these are ops/dev files, not the app.
+# Prevents the DB schema, RLS logic, and internal docs from being publicly
+# fetchable at flowschool.io/supabase/... or /docs/...
+supabase/
+docs/

@@ -71,15 +71,16 @@
       margin: 0;
     }
 
-    /* the shared globe shares the corner, yielding to the heart */
+    /* the shared globe keeps the left mark slot always — favorited or not —
+       so it never scoots when the heart appears; the corner stays the
+       heart's seat (empty or filled) */
     .cc-shared {
       position: absolute;
       top: 19px;
-      right: 20px;
+      right: 46px;
       font-size: var(--icon-sm);
       color: var(--text-3);
     }
-    .class-card.pinned .cc-shared { right: 46px; }
 
     .class-card:hover {
       border-color: rgba(var(--ink-rgb), .22);
@@ -170,7 +171,7 @@
       transform: translateY(-50%);
       margin: 0;
     }
-    .class-index.list-view .class-card.pinned .cc-shared { right: 30px; }
+    .class-index.list-view .cc-shared { right: 30px; }
 
     /* small screens: the row stacks — chip, then title, then meta */
     @media (max-width: 640px) {
@@ -1412,6 +1413,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
   <script src="lib/publish.js"></script>
   <script src="lib/motion.js"></script>
   <script src="data/shorthand.js"></script>

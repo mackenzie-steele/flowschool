@@ -625,6 +625,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
   <script src="lib/motion.js"></script>
 
   <main class="wrap">
@@ -786,6 +787,7 @@
       var all = POSES.concat(invOn() ? POSES_INVERSIONS : []);
       var pool = all.filter(function(p) { return !used[p]; });
       if (!pool.length) pool = all.filter(function(p) { return p !== excludeName; });
+      if (window.fsTrack) fsTrack('item_generated', { resourceType: 'pose' });
       return pool[Math.floor(Math.random() * pool.length)];
     }
 

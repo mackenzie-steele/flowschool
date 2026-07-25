@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · Flow School</title>
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
+  <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
+  <link rel="stylesheet" href="global.css">
+  <script src="lib/icons.js"></script>
+  <style>
+    .adm { max-width: 1180px; margin: 0 auto; padding: 40px 28px 120px; }
+    .adm-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 4px; }
+    .adm-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); }
+    .adm-head h1 { font-size: var(--fs-h4); font-weight: var(--weight-medium); letter-spacing: -.015em; }
+    .adm-updated { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+    .adm-headright { display: flex; align-items: center; gap: 10px; }
+
+    /* section tabs */
+    .adm-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 20px 0 28px; border-bottom: 1px solid var(--border-light); }
+    .adm-tab { border: none; background: none; cursor: pointer; padding: 10px 14px; font-family: var(--font); font-size: var(--text-ui);
+      color: var(--text-3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color var(--transition-base), border-color var(--transition-base); }
+    .adm-tab:hover { color: var(--text-1); }
+    .adm-tab.active { color: var(--text-1); border-bottom-color: var(--accent); }
+
+    /* metric cards */
+    .adm-metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .adm-metric { position: relative; border: 1px solid var(--border-light); border-top-color: rgba(var(--ink-rgb), .18); border-radius: var(--r);
+      background: var(--raised), rgba(var(--ink-rgb), .02); box-shadow: var(--crest); padding: 16px 18px; }
+    .adm-metric .lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); padding-right: 18px; }
+
+    /* a quiet info affordance top-right; its tooltip says what the number means */
+    .adm-info { position: absolute; top: 12px; right: 12px; color: var(--text-3); cursor: help; line-height: 0; }
+    .adm-info .material-symbols-sharp { font-size: 15px; }
+    .adm-info:hover { color: var(--text-1); }
+    .adm-info[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute; top: calc(100% + 8px); right: 0;
+      width: max-content; max-width: min(240px, 78vw); white-space: normal; text-align: left;
+      background: var(--ink-solid); color: var(--paper-solid);
+      font-family: var(--font); font-size: 11.5px; line-height: 1.45; font-weight: var(--weight-regular);
+      letter-spacing: 0; text-transform: none;
+      padding: 9px 11px; border-radius: var(--rb); box-shadow: var(--shadow-float);
+      z-index: 400; pointer-events: none;
+    }
+
+    /* inline info affordance for table-column headers (tooltip opens
+       downward into the table so the horizontal-scroll wrapper can't clip it) */
+    .adm-thinfo { position: relative; display: inline-block; margin-left: 3px; color: var(--text-3); cursor: help; vertical-align: middle; line-height: 0; }
+    .adm-thinfo .material-symbols-sharp { font-size: 13px; }
+    .adm-thinfo:hover { color: var(--text-1); }
+    .adm-thinfo[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute; top: calc(100% + 7px); right: 0;
+      width: max-content; max-width: min(230px, 78vw); white-space: normal; text-align: left;
+      background: var(--ink-solid); color: var(--paper-solid);
+      font-family: var(--font); font-size: 11px; line-height: 1.45; font-weight: var(--weight-regular);
+      letter-spacing: 0; text-transform: none;
+      padding: 8px 10px; border-radius: var(--rb); box-shadow: var(--shadow-float);
+      z-index: 400; pointer-events: none;
+    }
+    .adm-metric .val { font-size: 28px; font-weight: var(--weight-medium); letter-spacing: -.02em; margin-top: 6px; color: var(--text-1); }
+    .adm-metric .sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+    .adm-delta { font-size: 11px; margin-top: 5px; font-variant-numeric: tabular-nums; }
+    .adm-delta.up   { color: var(--accent); }
+    .adm-delta.down { color: var(--danger); }
+    .adm-delta.flat { color: var(--text-3); }
+    .adm-group-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--text-3); margin: 4px 0 8px; }
+    .adm-retcell { display: flex; align-items: center; gap: 8px; min-width: 140px; }
+    .adm-retbar { flex: 1; height: 6px; border-radius: 999px; background: var(--well-bg); overflow: hidden; }
+    .adm-retfill { height: 100%; background: var(--accent); border-radius: 999px; }
+    .adm-retcell span { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--text-2); min-width: 34px; text-align: right; }
+    .adm-table td.adm-actcell { text-align: right; white-space: nowrap; width: 1%; }
+    .adm-del { color: var(--text-3); }
+    .adm-del:hover { color: var(--text-1); }
+    .adm-del.armed { color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); border-radius: var(--rb); }
+    .adm-rmadmin.armed { color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+    .adm-table th.adm-checkcell, .adm-table td.adm-checkcell { width: 1%; text-align: center; padding-right: 8px; }
+    .adm-checkcell input { cursor: pointer; accent-color: var(--accent); }
+    .adm-del .material-symbols-sharp { font-size: 18px; }
+    .adm-spk { display: flex; align-items: flex-end; gap: 3px; height: 40px; margin-top: 8px; }
+    .adm-spk-col { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+    .adm-spk-bar { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; }
+    .adm-spk-cap { font-size: 11px; color: var(--text-3); margin-top: 6px; }
+    .adm-tsrow { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+    .adm-tslabel { font-size: 12px; color: var(--text-2); min-width: 96px; }
+    .adm-tsbar { flex: 1; height: 6px; background: var(--well-bg); border-radius: 999px; overflow: hidden; }
+    .adm-tsfill { height: 100%; background: var(--accent); border-radius: 999px; }
+    .adm-tsnum { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--text-3); min-width: 24px; text-align: right; }
+
+    /* panels */
+    .adm-panel { border: 1px solid var(--border-light); border-radius: var(--r); background: var(--raised), rgba(var(--ink-rgb), .02);
+      box-shadow: var(--crest); padding: 20px 22px; margin-top: 16px; }
+    .adm-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .adm-panel-head h2 { font-size: var(--fs-h6); font-weight: var(--weight-medium); }
+    .adm-note { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .03em; color: var(--text-3);
+      background: rgba(var(--ink-rgb), .04); border-radius: var(--rs); padding: 8px 12px; margin-bottom: 14px; }
+
+    /* table */
+    .adm-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table.adm-table { width: 100%; border-collapse: collapse; font-size: var(--text-body-sm); }
+    .adm-table th { text-align: left; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text-3); font-weight: var(--weight-regular); padding: 8px 12px; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+    .adm-table th.num, .adm-table td.num { text-align: right; }
+    .adm-table td { padding: 11px 12px; border-bottom: 1px solid var(--border-light); color: var(--text-1); white-space: nowrap; }
+    .adm-table td.wrap { white-space: normal; max-width: 420px; }
+    .adm-table tbody tr { cursor: default; transition: background var(--transition-base); }
+    .adm-table tbody tr.clickable { cursor: pointer; }
+    .adm-table tbody tr.clickable:hover { background: rgba(var(--ink-rgb), .035); }
+    .adm-table td .muted { color: var(--text-3); }
+    .adm-table td .name { font-weight: var(--weight-medium); }
+    .adm-mono { font-family: var(--font-mono); font-size: 12px; }
+
+    /* status pills */
+    .adm-pill { display: inline-block; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: var(--rf); border: 1px solid var(--border-light); color: var(--text-2); }
+    .adm-pill.on { color: var(--accent); border-color: var(--accent-border); }
+    .adm-pill.off { color: var(--danger); border-color: rgba(var(--danger-rgb), .35); }
+    .adm-pill.admin { color: var(--accent); border-color: var(--accent-border); }
+
+    /* controls row */
+    .adm-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .adm-controls .search-wrap { flex: 1; min-width: 200px; }
+    .adm-select { font-family: var(--font); font-size: var(--text-ui); color: var(--text-1);
+      -webkit-appearance: none; -moz-appearance: none; appearance: none;
+      background-color: var(--well-bg);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center; background-size: 14px;
+      border: 1px solid var(--border-light); border-radius: var(--rs); padding: 9px 34px 9px 12px; }
+    .adm-count { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); margin-left: auto; }
+    .adm-pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 14px; font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+
+    /* states */
+    .adm-state { text-align: center; padding: 48px 20px; color: var(--text-3); }
+    .adm-state .material-symbols-sharp { font-size: 28px; display: block; margin: 0 auto 10px; color: var(--text-3); }
+    .adm-state.err { color: var(--danger); }
+    .adm-skel { height: 44px; border-radius: var(--rs); background: rgba(var(--ink-rgb), .06); margin: 8px 0; animation: admpulse 1.4s ease-in-out infinite; }
+    @keyframes admpulse { 0%,100% { opacity: .5 } 50% { opacity: 1 } }
+
+    /* denied */
+    .adm-denied { max-width: 460px; margin: 120px auto; text-align: center; }
+    .adm-denied .material-symbols-sharp { font-size: 40px; color: var(--text-3); }
+    .adm-denied h1 { font-size: var(--fs-h5); font-weight: var(--weight-medium); margin: 14px 0 8px; }
+    .adm-denied p { color: var(--text-3); }
+
+    /* detail drawer */
+    .adm-drawer-backdrop { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.4); }
+    .adm-drawer-backdrop[hidden] { display: none; }
+    .adm-drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 301; width: min(560px, 94vw); overflow-y: auto;
+      background: var(--paper-solid); border-left: 1px solid var(--border); box-shadow: var(--shadow-float); padding: 28px; }
+    .adm-drawer-close { display: inline-flex; margin: 0 0 16px -6px; }
+    .adm-drawer h2 { font-size: var(--fs-h5); font-weight: var(--weight-medium); }
+    .adm-drawer .dsub { font-family: var(--font-mono); font-size: 12px; color: var(--text-3); margin-top: 4px; }
+    .adm-kv { display: grid; grid-template-columns: 130px 1fr; gap: 6px 14px; margin: 18px 0; font-size: var(--text-body-sm); }
+    .adm-kv dt { font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); padding-top: 2px; }
+    .adm-kv dd { color: var(--text-1); }
+    .adm-dsec { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-light); }
+    .adm-dsec h3 { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; }
+    .adm-chiplist { display: flex; flex-wrap: wrap; gap: 6px; }
+    .adm-chip { font-size: 12px; padding: 4px 10px; border: 1px solid var(--border-light); border-radius: var(--rf); color: var(--text-2); }
+    .adm-danger-zone { margin-top: 24px; padding: 16px; border: 1px solid rgba(var(--danger-rgb), .3); border-radius: var(--r); }
+    .adm-danger-zone h3 { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--danger); margin-bottom: 4px; }
+    .btn-danger { background: var(--danger); color: #fff; border: none; padding: 12px 18px; border-radius: var(--rb);
+      font-family: var(--font); font-weight: var(--weight-semibold); cursor: pointer; }
+    .btn-danger:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* new-users bar chart */
+    .suc { position: relative; padding-top: 20px; }
+    .suc-ymax { position: absolute; top: 0; left: 0; font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+    .suc-plot { display: flex; align-items: flex-end; gap: 3px; height: 150px;
+      border-top: 1px dashed var(--border-light); border-bottom: 1px solid var(--border); padding-top: 6px; }
+    .suc-col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
+    .suc-bar { width: 100%; max-width: 26px; margin: 0 auto; background: var(--accent); opacity: .8;
+      border-radius: 2px 2px 0 0; transition: opacity var(--transition-base); }
+    .suc-col:hover .suc-bar { opacity: 1; }
+    .suc-axis { display: flex; justify-content: space-between; margin-top: 8px; font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+    .suc-total { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); margin-top: 12px; }
+
+    @media (max-width: 640px) {
+      .adm { padding: 24px 16px 100px; }
+      .adm-metric .val { font-size: 24px; }
+      /* condensed record cards: on a phone the Users table stacks into cards */
+      .adm-cardable thead { display: none; }
+      .adm-cardable, .adm-cardable tbody, .adm-cardable tr, .adm-cardable td { display: block; width: 100%; }
+      .adm-cardable tr { border: 1px solid var(--border-light); border-radius: var(--r); padding: 6px 12px; margin-bottom: 10px; background: var(--paper-solid); }
+      .adm-cardable td { border: none !important; padding: 5px 0; text-align: left !important;
+        display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
+      .adm-cardable td::before { content: attr(data-label); flex: none; color: var(--text-3);
+        font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+      .adm-cardable td.adm-checkcell { justify-content: flex-end; padding-top: 2px; }
+      .adm-cardable td.adm-checkcell::before { content: 'Select'; margin-right: auto; }
+      .adm-cardable td .name { font-weight: var(--weight-medium); }
+    }
+  </style>
+</head>
+<body class="has-sidebar">
+  <script src="lib/version.js"></script>
+  <script src="lib/nav.js"></script>
+  <script src="lib/vendor/supabase-js-v2.110.7.min.js"></script>
+  <script src="lib/supabase.js"></script>
+  <script src="lib/telemetry.js"></script>
+  <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
+  <script src="lib/admin.js"></script>
+  <script src="lib/toast.js"></script>
+  <div class="toast" id="toast"></div>
+
+  <main>
+    <div class="adm" id="adm-root">
+      <div class="adm-state" id="adm-boot"><div class="adm-skel"></div><div class="adm-skel"></div><div class="adm-skel"></div></div>
+    </div>
+  </main>
+
+  <!-- user detail drawer -->
+  <div class="adm-drawer-backdrop" id="drawer-backdrop" hidden></div>
+  <div class="adm-drawer" id="drawer" hidden aria-modal="true" role="dialog">
+    <button class="btn-icon adm-drawer-close" id="drawer-close" data-tooltip="Close" aria-label="Close">
+      <span class="material-symbols-sharp">close</span>
+    </button>
+    <div id="drawer-body"></div>
+  </div>
+
+  <script>
+  (function () {
+    var A = window.fsAdmin;
+    var root = document.getElementById('adm-root');
+    var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+    // section registry
+    var SECTIONS = [
+      { id: 'overview',    label: 'Overview',            render: renderOverview },
+      { id: 'users',       label: 'Users',               render: renderUsers },
+      { id: 'retention',   label: 'Retention',           render: renderRetention },
+      { id: 'tools',       label: 'Tool Analytics',      render: renderTools },
+      { id: 'experiments', label: 'Movement Experiments',render: renderExperiments },
+      { id: 'public',      label: 'Shared Classes',      render: renderPublic },
+      { id: 'saved',       label: 'Saved Content',       render: renderSaved },
+      { id: 'activity',    label: 'Activity',            render: renderActivity },
+      { id: 'feedback',    label: 'Feedback',            render: renderFeedback },
+      { id: 'health',      label: 'Health',              render: renderHealth },
+      { id: 'admins',      label: 'Admins',              render: renderAdmins },
+      { id: 'exports',     label: 'Exports',             render: renderExports },
+    ];
+
+    // ── shell ──
+    function shell(activeId) {
+      var tabs = SECTIONS.map(function (s) {
+        return '<button class="adm-tab' + (s.id === activeId ? ' active' : '') + '" data-sec="' + s.id + '">' + esc(s.label) + '</button>';
+      }).join('');
+      root.innerHTML =
+        '<div class="adm-head"><div><h1>Admin Center</h1></div>' +
+        '<div class="adm-headright"><span class="adm-updated" id="adm-updated"></span>' +
+        '<button class="btn-icon" id="adm-refresh" data-tooltip="Refresh" aria-label="Refresh"><span class="material-symbols-sharp">refresh</span></button></div></div>' +
+        '<div class="adm-tabs">' + tabs + '</div>' +
+        '<div id="adm-body"><div class="adm-state"><div class="adm-skel"></div><div class="adm-skel"></div></div></div>';
+      root.querySelectorAll('.adm-tab').forEach(function (t) {
+        t.addEventListener('click', function () { location.hash = '#' + t.dataset.sec; });
+      });
+      var rf = document.getElementById('adm-refresh');
+      if (rf) rf.addEventListener('click', function () { route(); });
+    }
+    function bodyEl() { return document.getElementById('adm-body'); }
+    function stateLoading() { return '<div class="adm-state"><div class="adm-skel"></div><div class="adm-skel"></div><div class="adm-skel"></div></div>'; }
+    function stateEmpty(msg) { return '<div class="adm-state"><span class="material-symbols-sharp">info</span>' + esc(msg || 'Nothing here yet.') + '</div>'; }
+    function stateError(msg) { return '<div class="adm-state err"><span class="material-symbols-sharp">error</span>' + esc(msg || 'Something went wrong loading this.') + '</div>'; }
+
+    function num(n) { return A.fmtNum(n); }
+    function thInfo(tip) { return '<span class="adm-thinfo" data-tip="' + esc(tip) + '"><span class="material-symbols-sharp">info</span></span>'; }
+    // small +/- indicator comparing a period to the one before it
+    function deltaHtml(cur, prev, label) {
+      cur = Number(cur || 0); prev = Number(prev || 0);
+      var diff = cur - prev;
+      var cls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat';
+      var arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '–';
+      return '<div class="adm-delta ' + cls + '">' + arrow + ' ' + num(Math.abs(diff)) + ' ' + esc(label) + '</div>';
+    }
+    // compact 14-day activity sparkline for the user drawer
+    function miniSpark(daily) {
+      daily = daily || [];
+      var total = daily.reduce(function (a, x) { return a + Number(x.count || 0); }, 0);
+      if (!total) return '';
+      var max = Math.max.apply(null, daily.map(function (x) { return Number(x.count || 0); }).concat([1]));
+      var bars = daily.map(function (x) {
+        var c = Number(x.count || 0);
+        var h = c > 0 ? Math.max(8, Math.round(c / max * 100)) : 0;
+        return '<div class="adm-spk-col" title="' + esc(A.fmtDate(x.day) + ' · ' + c + (c === 1 ? ' action' : ' actions')) + '">' + (h ? '<div class="adm-spk-bar" style="height:' + h + '%"></div>' : '') + '</div>';
+      }).join('');
+      return '<div class="adm-spk">' + bars + '</div><div class="adm-spk-cap">' + num(total) + (total === 1 ? ' action' : ' actions') + ' · last 14 days</div>';
+    }
+
+    // ── OVERVIEW ──
+    async function renderOverview() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var o = await A.rpc('admin_overview');
+        var pub = await A.rpc('admin_public_content', { p_sort: 'most_saved', p_limit: 6, p_offset: 0 }).catch(function (e) { console.warn('[admin] overview public-classes fetch failed:', e && e.message); return { rows: [] }; });
+        document.getElementById('adm-updated').textContent = 'Updated ' + A.fmtDateTime(o.generated_at);
+        var since = o.events_tracked_since ? A.fmtDate(o.events_tracked_since) : 'launch';
+        var metric = function (lbl, val, sub, tip, delta) {
+          return '<div class="adm-metric">' +
+                 (tip ? '<span class="adm-info" data-tip="' + esc(tip) + '"><span class="material-symbols-sharp">info</span></span>' : '') +
+                 '<div class="lbl">' + esc(lbl) + '</div><div class="val">' + num(val) + '</div>' +
+                 (delta || '') +
+                 (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</div>';
+        };
+        var group = function (label, cards) {
+          return '<div class="adm-group-label">' + esc(label) + '</div><div class="adm-metrics">' + cards + '</div>';
+        };
+        var growth =
+          metric('Total users', o.total_users, null, 'Every account that has ever signed up — active or deactivated.') +
+          metric('New · 7 days', o.new_users_7d, null, 'Accounts created in the last 7 days.', deltaHtml(o.new_users_7d, o.new_users_prev_7d, 'vs prior 7 days')) +
+          metric('New · 30 days', o.new_users_30d, null, 'Accounts created in the last 30 days.', deltaHtml(o.new_users_30d, o.new_users_prev_30d, 'vs prior 30 days')) +
+          metric('Never used', o.inactive_users, 'signed up, no content', 'Accounts that signed up but have never created or saved any content.');
+        var engagement =
+          metric('Active today', o.active_today, null, 'Distinct users who used the platform in the last 24 hours — signed in, opened a tool, or saved or edited content. Just staying logged in with no activity does not count. Broader than DAU, which counts only meaningful actions.', deltaHtml(o.active_today, o.active_yesterday, 'vs prior 24h')) +
+          metric('DAU', o.dau, 'since ' + since, 'Daily active users: distinct people who took a meaningful action (created, saved, edited, published, printed, or generated) in the last 24 hours. Counts only actions recorded since tracking began.') +
+          metric('WAU', o.wau, 'since ' + since, 'Weekly active users: distinct people who took a meaningful action in the last 7 days. Since tracking began.') +
+          metric('MAU', o.mau, 'since ' + since, 'Monthly active users: distinct people who took a meaningful action in the last 30 days. Since tracking began.');
+        var contentCards =
+          metric('Public classes', o.total_public_classes, null, 'Classes currently shared publicly by teachers.') +
+          metric('Public saves', o.total_public_saves, null, 'Total times a public class has been saved by another user. Saves are live references, not copies.') +
+          metric('Experiment saves', o.total_experiment_saves, null, 'Total Movement Experiments saved across all users (a saved experiment is a favorite).') +
+          metric('Saved items · all', o.total_saved_items, null, 'Every item in every user’s library — classes, flows, cue sheets, stories, playlists, rules, and more.');
+
+        b.innerHTML =
+          '<div class="adm-note">Active-user metrics (DAU/WAU/MAU) and tool usage count meaningful actions recorded since tracking began (' + esc(since) + '). Signups, public saves, and experiment saves are complete historically.</div>' +
+          group('Growth', growth) + group('Engagement', engagement) + group('Content', contentCards) +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>New users over time</h2>' + suRangeSelect() + '</div>' +
+            '<div id="su-chart">' + stateLoading() + '</div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Most-used tools</h2>' + toolRangeSelect() + '</div><div id="tools-mini">' + stateLoading() + '</div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Most-saved public classes</h2></div>' + pubMini(pub.rows) + '</div>';
+        var sel = document.getElementById('su-range');
+        if (sel) { sel.value = String(suRange); sel.addEventListener('change', function () { suRange = parseInt(sel.value, 10); loadSignups(); }); }
+        loadSignups();
+        var tsel = document.getElementById('tool-range');
+        if (tsel) { tsel.value = String(toolRange); tsel.addEventListener('change', function () { toolRange = parseInt(tsel.value, 10); loadTools(); }); }
+        loadTools();
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── New users over time: filterable, bucketed bar chart ──
+    var suRange = 30;
+    var SU_RANGES = [
+      { d: 7, label: 'Past week' }, { d: 30, label: 'Last 30 days' }, { d: 90, label: 'Last 90 days' },
+      { d: 180, label: 'Last 6 months' }, { d: 365, label: 'Last year' },
+    ];
+    function suRangeSelect() {
+      return '<select class="adm-select" id="su-range">' + SU_RANGES.map(function (r) {
+        return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>';
+    }
+    function suGranularity(days) { return days <= 30 ? 'daily' : days <= 180 ? 'weekly' : 'monthly'; }
+    function suShort(iso) { try { return new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) { return iso; } }
+    function suBucket(daily, days) {
+      // daily rows → adaptive buckets so a long range stays readable
+      if (days <= 30) return (daily || []).map(function (d) {
+        return { label: A.fmtDate(d.day), short: suShort(d.day), count: Number(d.count || 0) };
+      });
+      var byKey = {}, order = [], monthly = days > 180;
+      (daily || []).forEach(function (d) {
+        var dt = new Date(d.day + 'T00:00:00'); var key, label, short;
+        if (monthly) {
+          key = dt.getFullYear() + '-' + dt.getMonth();
+          label = dt.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+          short = dt.toLocaleDateString(undefined, { month: 'short' });
+        } else {
+          var wk = new Date(dt); wk.setDate(dt.getDate() - dt.getDay());   // week start (Sun)
+          key = wk.toISOString().slice(0, 10);
+          label = 'Week of ' + wk.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          short = suShort(wk.toISOString().slice(0, 10));
+        }
+        if (!(key in byKey)) { byKey[key] = { label: label, short: short, count: 0 }; order.push(key); }
+        byKey[key].count += Number(d.count || 0);
+      });
+      return order.map(function (k) { return byKey[k]; });
+    }
+    // reusable bar chart for any daily series (unit = singular noun)
+    function seriesChart(daily, days, unit) {
+      var buckets = suBucket(daily, days);
+      var total = buckets.reduce(function (a, x) { return a + x.count; }, 0);
+      if (!buckets.length || !total) return stateEmpty('No ' + unit + 's in this range.');
+      var max = Math.max.apply(null, buckets.map(function (x) { return x.count; }).concat([1]));
+      var n = buckets.length;
+      var cols = buckets.map(function (x) {
+        var h = x.count > 0 ? Math.max(3, Math.round(x.count / max * 100)) : 0;
+        return '<div class="suc-col" title="' + esc(x.label + ' · ' + x.count + ' ' + unit + (x.count === 1 ? '' : 's')) + '">' +
+          (h ? '<div class="suc-bar" style="height:' + h + '%"></div>' : '') + '</div>';
+      }).join('');
+      var axis = '<span>' + esc(buckets[0].short) + '</span>' +
+        (n > 2 ? '<span>' + esc(buckets[Math.floor((n - 1) / 2)].short) + '</span>' : '') +
+        '<span>' + esc(buckets[n - 1].short) + '</span>';
+      return '<div class="suc">' +
+        '<div class="suc-ymax">' + num(max) + ' max</div>' +
+        '<div class="suc-plot">' + cols + '</div>' +
+        '<div class="suc-axis">' + axis + '</div>' +
+        '<div class="suc-total">' + num(total) + ' ' + unit + (total === 1 ? '' : 's') + ' · each bar = ' + unit + 's per ' +
+          (days <= 30 ? 'day' : days <= 180 ? 'week' : 'month') + ' · hover a bar for the exact count</div>' +
+      '</div>';
+    }
+    function rangeSelect(id) {
+      return '<select class="adm-select" id="' + id + '">' + SU_RANGES.map(function (r) {
+        return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>';
+    }
+    async function loadSignups() {
+      var el = document.getElementById('su-chart'); if (!el) return;
+      el.innerHTML = stateLoading();
+      try {
+        var daily = await A.rpc('admin_series', { p_kind: 'signups', p_days: suRange });
+        el.innerHTML = seriesChart(daily || [], suRange, 'new user');
+      } catch (e) { el.innerHTML = stateError(e && e.message); }
+    }
+    // ── public-saves-over-time + experiment-saves-over-time (data is historical) ──
+    var pubSaveRange = 30;
+    async function loadPubSaveChart() {
+      var el = document.getElementById('pubsave-chart'); if (!el) return;
+      el.innerHTML = stateLoading();
+      try { var d = await A.rpc('admin_series', { p_kind: 'public_saves', p_days: pubSaveRange }); el.innerHTML = seriesChart(d || [], pubSaveRange, 'save'); }
+      catch (e) { el.innerHTML = stateError(e && e.message); }
+    }
+    var expSaveRange = 90;
+    async function loadExpSaveChart() {
+      var el = document.getElementById('expsave-chart'); if (!el) return;
+      el.innerHTML = stateLoading();
+      try { var d = await A.rpc('admin_series', { p_kind: 'experiment_saves', p_days: expSaveRange }); el.innerHTML = seriesChart(d || [], expSaveRange, 'experiment save'); }
+      catch (e) { el.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── Most-used tools: filterable by range ──
+    var toolRange = 30;
+    var TOOL_RANGES = [
+      { d: 1, label: 'Today' }, { d: 7, label: 'This week' }, { d: 30, label: 'Last 30 days' },
+      { d: 90, label: 'Last 90 days' }, { d: 180, label: 'Last 6 months' }, { d: 365, label: 'Last year' },
+    ];
+    function toolRangeSelect() {
+      return '<select class="adm-select" id="tool-range">' + TOOL_RANGES.map(function (r) {
+        return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>';
+    }
+    async function loadTools() {
+      var el = document.getElementById('tools-mini'); if (!el) return;
+      el.innerHTML = stateLoading();
+      try { var tools = await A.rpc('admin_top_tools', { p_days: toolRange }); el.innerHTML = toolsMini(tools || []); }
+      catch (e) { el.innerHTML = stateError(e && e.message); }
+    }
+    function toolsMini(tools) {
+      if (!tools || !tools.length) return stateEmpty('No tool activity recorded yet — tracking begins at launch.');
+      return '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Opens</th><th class="num">Actions</th><th class="num">Users</th></tr></thead><tbody>' +
+        tools.map(function (t) { return '<tr><td>' + esc(t.tool) + '</td><td class="num">' + num(t.opens) + '</td><td class="num">' + num(t.actions) + '</td><td class="num">' + num(t.unique_users) + '</td></tr>'; }).join('') +
+        '</tbody></table></div>';
+    }
+    function pubMini(rows) {
+      if (!rows || !rows.length) return stateEmpty('No public classes yet.');
+      return '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Class</th><th>Creator</th><th class="num">Saves</th></tr></thead><tbody>' +
+        rows.map(function (r) { return '<tr><td class="name">' + esc(r.title) + '</td><td class="muted">' + esc(r.creator_name || '—') + '</td><td class="num">' + num(r.saves) + '</td></tr>'; }).join('') +
+        '</tbody></table></div>';
+    }
+
+    // ── USERS ──
+    var usersState = { search: '', sort: 'recent_activity', status: '', signupDays: 0, page: 0, limit: 50, total: 0, rows: [] };
+    async function renderUsers() {
+      var b = bodyEl();
+      b.innerHTML =
+        '<div class="adm-controls">' +
+          '<div class="search-wrap"><span class="search-icon material-symbols-sharp">search</span>' +
+          '<input class="search-input" id="u-search" placeholder="Search name, email, handle" value="' + esc(usersState.search) + '"></div>' +
+          '<select class="adm-select" id="u-status"><option value="">All statuses</option><option value="active">Active</option><option value="deactivated">Deactivated</option><option value="admin">Admins</option><option value="inactive">Never used</option></select>' +
+          '<select class="adm-select" id="u-signup"><option value="0">Any signup date</option><option value="7">Signed up · 7 days</option><option value="30">Signed up · 30 days</option><option value="90">Signed up · 90 days</option></select>' +
+          '<select class="adm-select" id="u-sort"><option value="recent_activity">Recent activity</option><option value="signup">Newest signup</option><option value="saved_items">Most saved items</option><option value="events">Most actions</option><option value="name">Name A–Z</option></select>' +
+          '<button class="btn-secondary" id="u-export-sel" disabled>Export selected</button>' +
+          '<button class="btn-secondary" id="u-export">Export CSV</button>' +
+        '</div><div id="u-table">' + stateLoading() + '</div>';
+      document.getElementById('u-status').value = usersState.status;
+      document.getElementById('u-signup').value = String(usersState.signupDays);
+      document.getElementById('u-sort').value = usersState.sort;
+      var deb;
+      document.getElementById('u-search').addEventListener('input', function (e) {
+        clearTimeout(deb); var v = e.target.value; deb = setTimeout(function () { usersState.search = v; usersState.page = 0; loadUsers(); }, 300);
+      });
+      document.getElementById('u-status').addEventListener('change', function (e) { usersState.status = e.target.value; usersState.page = 0; loadUsers(); });
+      document.getElementById('u-signup').addEventListener('change', function (e) { usersState.signupDays = parseInt(e.target.value, 10) || 0; usersState.page = 0; loadUsers(); });
+      document.getElementById('u-sort').addEventListener('change', function (e) { usersState.sort = e.target.value; usersState.page = 0; loadUsers(); });
+      document.getElementById('u-export').addEventListener('click', exportUsers);
+      document.getElementById('u-export-sel').addEventListener('click', exportSelectedUsers);
+      loadUsers();
+    }
+    var uSelected = {};
+    function syncSelExport() {
+      var n = Object.keys(uSelected).length;
+      var btn = document.getElementById('u-export-sel');
+      if (btn) { btn.disabled = n === 0; btn.textContent = n ? 'Export selected (' + n + ')' : 'Export selected'; }
+    }
+    async function loadUsers() {
+      var t = document.getElementById('u-table'); t.innerHTML = stateLoading();
+      uSelected = {}; syncSelExport();
+      try {
+        var res = await A.rpc('admin_list_users', { p_search: usersState.search || null, p_sort: usersState.sort, p_status: usersState.status || null, p_signup_days: usersState.signupDays || null, p_limit: usersState.limit, p_offset: usersState.page * usersState.limit });
+        usersState.total = res.total; usersState.rows = res.rows || [];
+        if (!usersState.rows.length) { t.innerHTML = stateEmpty((usersState.search || usersState.status || usersState.signupDays) ? 'No users match those filters.' : 'No users yet.'); return; }
+        var body = usersState.rows.map(function (u) {
+          var statusPill = u.deactivated ? '<span class="adm-pill off">Deactivated</span>' : '<span class="adm-pill on">Active</span>';
+          var adminPill = u.is_admin ? ' <span class="adm-pill admin">Admin</span>' : '';
+          return '<tr class="clickable" data-uid="' + esc(u.user_id) + '">' +
+            '<td class="adm-checkcell"><input type="checkbox" class="u-check" data-uid="' + esc(u.user_id) + '"></td>' +
+            '<td data-label="User"><span class="name">' + esc(u.name || '—') + '</span>' + adminPill + '<br><span class="muted adm-mono">' + esc(u.email) + '</span></td>' +
+            '<td data-label="Status">' + statusPill + '</td>' +
+            '<td class="muted" data-label="Signed up">' + A.fmtDate(u.signed_up) + '</td>' +
+            '<td class="muted" data-label="Last activity">' + A.ago(u.last_activity) + '</td>' +
+            '<td class="num" data-label="Items">' + num(u.saved_items) + '</td>' +
+            '<td class="num" data-label="Published">' + num(u.public_classes) + '</td>' +
+            '<td class="num" data-label="Saves">' + num(u.public_saves) + '</td>' +
+            '<td class="num" data-label="Actions">' + num(u.events) + '</td></tr>';
+        }).join('');
+        var pages = Math.ceil(usersState.total / usersState.limit) || 1;
+        t.innerHTML =
+          '<div class="adm-scroll"><table class="adm-table adm-cardable"><thead><tr><th class="adm-checkcell"><input type="checkbox" id="u-checkall" aria-label="Select all on this page"></th><th>User</th><th>Status</th><th>Signed up</th><th>Last activity</th>' +
+          '<th class="num">Items ' + thInfo('Total items in this user’s library — classes, flows, cue sheets, stories, playlists, rules, and saved experiments.') + '</th>' +
+          '<th class="num">Published ' + thInfo('Classes this user has shared publicly.') + '</th>' +
+          '<th class="num">Saves ' + thInfo('Public classes this user has saved from other teachers.') + '</th>' +
+          '<th class="num">Actions ' + thInfo('Recorded product actions by this user — create, save, edit, publish, print, generate — since tracking began.') + '</th>' +
+          '</tr></thead><tbody>' + body + '</tbody></table></div>' +
+          '<div class="adm-pager"><span>' + num(usersState.total) + ' users · page ' + (usersState.page + 1) + ' of ' + pages + '</span>' +
+          '<button class="btn-ghost sm" id="u-prev"' + (usersState.page === 0 ? ' disabled' : '') + '>Prev</button>' +
+          '<button class="btn-ghost sm" id="u-next"' + (usersState.page + 1 >= pages ? ' disabled' : '') + '>Next</button></div>';
+        t.querySelectorAll('tr.clickable').forEach(function (tr) { tr.addEventListener('click', function () { openUser(tr.dataset.uid); }); });
+        t.querySelectorAll('.u-check').forEach(function (cb) {
+          cb.addEventListener('click', function (e) { e.stopPropagation(); });
+          cb.addEventListener('change', function () {
+            if (cb.checked) uSelected[cb.dataset.uid] = true; else delete uSelected[cb.dataset.uid];
+            var all = document.getElementById('u-checkall');
+            if (all) all.checked = t.querySelectorAll('.u-check:checked').length === t.querySelectorAll('.u-check').length;
+            syncSelExport();
+          });
+        });
+        var allcb = document.getElementById('u-checkall');
+        if (allcb) allcb.addEventListener('change', function () {
+          t.querySelectorAll('.u-check').forEach(function (cb) { cb.checked = allcb.checked; if (allcb.checked) uSelected[cb.dataset.uid] = true; else delete uSelected[cb.dataset.uid]; });
+          syncSelExport();
+        });
+        var pv = document.getElementById('u-prev'), nx = document.getElementById('u-next');
+        if (pv) pv.addEventListener('click', function () { if (usersState.page > 0) { usersState.page--; loadUsers(); } });
+        if (nx) nx.addEventListener('click', function () { usersState.page++; loadUsers(); });
+      } catch (e) { t.innerHTML = stateError(e && e.message); }
+    }
+    var USER_CSV_COLS = [
+      { label: 'Name', key: 'name' }, { label: 'Email', key: 'email' }, { label: 'User ID', key: 'user_id' },
+      { label: 'Handle', key: 'handle' }, { label: 'Admin', value: function (r) { return r.is_admin ? 'yes' : 'no'; } },
+      { label: 'Status', value: function (r) { return r.deactivated ? 'deactivated' : 'active'; } },
+      { label: 'Email confirmed', value: function (r) { return r.email_confirmed ? 'yes' : 'no'; } },
+      { label: 'Signed up', key: 'signed_up' }, { label: 'Last sign-in', key: 'last_sign_in_at' },
+      { label: 'Last activity', key: 'last_activity' }, { label: 'Saved items', key: 'saved_items' },
+      { label: 'Classes', key: 'classes' }, { label: 'Experiments saved', key: 'experiments' },
+      { label: 'Public classes', key: 'public_classes' }, { label: 'Public saves', key: 'public_saves' },
+      { label: 'Recorded actions', key: 'events' },
+    ];
+    async function exportUsers() {
+      try {
+        toast('Preparing export…');
+        var res = await A.rpc('admin_list_users', { p_search: usersState.search || null, p_sort: usersState.sort, p_status: usersState.status || null, p_signup_days: usersState.signupDays || null, p_limit: 100000, p_offset: 0 });
+        A.exportCSV('users', res.rows || [], USER_CSV_COLS);
+      } catch (e) { toast('Export failed: ' + (e && e.message)); }
+    }
+    function exportSelectedUsers() {
+      var rows = (usersState.rows || []).filter(function (u) { return uSelected[u.user_id]; });
+      if (!rows.length) { toast('Select at least one user first.'); return; }
+      A.exportCSV('users-selected', rows, USER_CSV_COLS);
+    }
+
+    // ── RETENTION (signup-month cohorts) ──
+    async function renderRetention() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var rows = await A.rpc('admin_retention') || [];
+        if (!rows.length) { b.innerHTML = stateEmpty('No cohorts yet.'); return; }
+        var totalUsers = rows.reduce(function (a, r) { return a + Number(r.signups || 0); }, 0);
+        var totalActive = rows.reduce(function (a, r) { return a + Number(r.active_30d || 0); }, 0);
+        var overall = totalUsers ? Math.round(totalActive / totalUsers * 100) : 0;
+        var body = rows.map(function (r) {
+          var pct = Number(r.retention_pct || 0);
+          return '<tr><td>' + esc(r.cohort) + '</td>' +
+            '<td class="num">' + num(r.signups) + '</td>' +
+            '<td class="num">' + num(r.active_30d) + '</td>' +
+            '<td><div class="adm-retcell"><div class="adm-retbar"><div class="adm-retfill" style="width:' + pct + '%"></div></div><span>' + pct + '%</span></div></td></tr>';
+        }).join('');
+        b.innerHTML =
+          '<div class="adm-note">Each user is placed in the month they signed up. “Retained” means they took any action — signed in, opened a tool, or saved or edited content — in the last 30 days. Because the library stores only each user’s most recent activity, this shows current retention per cohort, not a week-by-week retention curve.</div>' +
+          '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Overall retention</div><div class="val">' + overall + '%</div><div class="sub">active in last 30 days</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Active · last 30 days</div><div class="val">' + num(totalActive) + '</div><div class="sub">of ' + num(totalUsers) + ' users</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Cohorts</div><div class="val">' + num(rows.length) + '</div><div class="sub">signup months</div></div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Retention by signup cohort</h2></div>' +
+          '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Cohort</th><th class="num">Signed up</th><th class="num">Active · 30d</th><th>Retention</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── USER DETAIL DRAWER ──
+    var backdrop = document.getElementById('drawer-backdrop'), drawer = document.getElementById('drawer'), dbody = document.getElementById('drawer-body');
+    function closeDrawer() { drawer.hidden = true; backdrop.hidden = true; }
+    document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+    backdrop.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !drawer.hidden) closeDrawer(); });
+
+    async function openUser(uid) {
+      backdrop.hidden = false; drawer.hidden = false; dbody.innerHTML = stateLoading();
+      try {
+        var d = await A.rpc('admin_user_detail', { p_uid: uid });
+        var u = d.user || {};
+        var content = (d.content || []).map(function (c) { return '<span class="adm-chip">' + esc(c.type) + ' · ' + num(c.count) + '</span>'; }).join('');
+        var pubc = (d.published_classes || []).map(function (c) { return '<span class="adm-chip">' + esc(c.title) + ' · ' + num(c.saves) + ' saves' + (c.published ? '' : ' · unpublished') + '</span>'; }).join('');
+        var savedc = (d.saved_public_classes || []).map(function (c) { return '<span class="adm-chip">' + esc(c.title) + (c.active ? '' : ' · gone') + '</span>'; }).join('');
+        var tsplit = (d.tool_usage || []);
+        var tsMax = tsplit.length ? Math.max.apply(null, tsplit.map(function (t) { return Number(t.count || 0); }).concat([1])) : 1;
+        var tools = tsplit.length
+          ? tsplit.map(function (t) { var c = Number(t.count || 0); return '<div class="adm-tsrow"><span class="adm-tslabel">' + esc(t.tool) + '</span><div class="adm-tsbar"><div class="adm-tsfill" style="width:' + Math.round(c / tsMax * 100) + '%"></div></div><span class="adm-tsnum">' + num(c) + '</span></div>'; }).join('')
+          : (d.tools_used || []).map(function (t) { return '<span class="adm-chip">' + esc(t) + '</span>'; }).join('');
+        var spark = miniSpark(d.activity_daily);
+        var acts = (d.recent_activity || []).slice(0, 12).map(function (a) { return '<div class="adm-mono muted" style="padding:3px 0">' + esc(a.event) + (a.resource_type ? ' · ' + esc(a.resource_type) : '') + ' · ' + A.ago(a.at) + '</div>'; }).join('') || '<span class="muted">No recorded actions yet.</span>';
+        dbody.innerHTML =
+          '<h2>' + esc(u.name || 'Unnamed') + '</h2><div class="dsub">' + esc(u.email) + (u.handle ? ' · @' + esc(u.handle) : '') + '</div>' +
+          '<dl class="adm-kv">' +
+            '<dt>Status</dt><dd>' + (u.deactivated ? '<span class="adm-pill off">Deactivated</span>' : '<span class="adm-pill on">Active</span>') + (u.is_admin ? ' <span class="adm-pill admin">Admin</span>' : '') + '</dd>' +
+            '<dt>User ID</dt><dd class="adm-mono">' + esc(u.user_id) + '</dd>' +
+            '<dt>Signed up</dt><dd>' + A.fmtDate(u.signed_up) + '</dd>' +
+            '<dt>Last sign-in</dt><dd>' + A.fmtDateTime(u.last_sign_in_at) + '</dd>' +
+            '<dt>Last activity</dt><dd>' + A.ago(u.last_activity) + '</dd>' +
+            '<dt>Email</dt><dd>' + (u.email_confirmed ? 'confirmed' : 'unconfirmed') + '</dd>' +
+            (u.location ? '<dt>Location</dt><dd>' + esc(u.location) + '</dd>' : '') +
+            (u.in_circle != null ? '<dt>In Circle</dt><dd>' + (u.in_circle ? 'yes' : 'no') + '</dd>' : '') +
+          '</dl>' +
+          '<div class="adm-dsec"><h3>Library (' + num(d.saved_items_total) + ' items)</h3><div class="adm-chiplist">' + (content || '<span class="muted">Empty — never created content.</span>') + '</div></div>' +
+          (pubc ? '<div class="adm-dsec"><h3>Published public classes</h3><div class="adm-chiplist">' + pubc + '</div></div>' : '') +
+          (savedc ? '<div class="adm-dsec"><h3>Saved public classes</h3><div class="adm-chiplist">' + savedc + '</div></div>' : '') +
+          (tsplit.length ? '<div class="adm-dsec"><h3>Tools used</h3>' + tools + '</div>' : (tools ? '<div class="adm-dsec"><h3>Tools used</h3><div class="adm-chiplist">' + tools + '</div></div>' : '')) +
+          (spark ? '<div class="adm-dsec"><h3>Activity</h3>' + spark + '</div>' : '') +
+          '<div class="adm-dsec"><h3>Recent activity</h3>' + acts + '</div>' +
+          renderDanger(u);
+        wireDanger(u);
+      } catch (e) { dbody.innerHTML = stateError(e && e.message); }
+    }
+    function renderDanger(u) {
+      return '<div class="adm-danger-zone"><h3>Account controls</h3>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+        (u.deactivated
+          ? '<button class="btn-secondary" data-act="reactivate">Reactivate</button>'
+          : '<button class="btn-secondary" data-act="deactivate">Deactivate</button>') +
+        (u.is_admin
+          ? '<button class="btn-ghost sm" data-act="remove_admin">Remove admin</button>'
+          : '<button class="btn-ghost sm" data-act="add_admin">Make admin</button>') +
+        '</div>' +
+        '<div style="margin-top:16px"><div class="adm-note" style="margin:0 0 8px">Permanent deletion removes this user, their private library, and their public classes (and others’ saves of them). Analytics are anonymized, not deleted. This cannot be undone.</div>' +
+        '<input class="modal-input" id="del-confirm" placeholder="Type ' + esc(u.email) + ' to confirm" style="margin-bottom:8px">' +
+        '<button class="btn-danger" id="del-btn" disabled>Permanently delete</button></div></div>';
+    }
+    function wireDanger(u) {
+      dbody.querySelectorAll('[data-act]').forEach(function (btn) {
+        btn.addEventListener('click', function () { doAction(btn.dataset.act, u); });
+      });
+      var ci = document.getElementById('del-confirm'), db2 = document.getElementById('del-btn');
+      if (ci && db2) {
+        ci.addEventListener('input', function () { db2.disabled = ci.value.trim().toLowerCase() !== (u.email || '').toLowerCase(); });
+        db2.addEventListener('click', function () { doDelete(u, ci.value.trim()); });
+      }
+    }
+    async function doAction(act, u) {
+      try {
+        await A.action({ action: act, target_user_id: u.user_id });
+        toast(act === 'deactivate' ? 'User deactivated.' : act === 'reactivate' ? 'User reactivated.' : act === 'add_admin' ? 'Admin granted.' : 'Admin removed.');
+        openUser(u.user_id); loadUsers();
+      } catch (e) { toast(e && e.message ? e.message : 'Action failed'); }
+    }
+    async function doDelete(u, confirmEmail) {
+      var btn = document.getElementById('del-btn'); if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+      try {
+        await A.action({ action: 'delete', target_user_id: u.user_id, confirm_email: confirmEmail });
+        toast('User permanently deleted.'); closeDrawer(); loadUsers();
+      } catch (e) { toast(e && e.message ? e.message : 'Delete failed'); if (btn) { btn.disabled = false; btn.textContent = 'Permanently delete'; } }
+    }
+
+    // ── TOOLS ──
+    var toolsRange = 90;
+    var toolsRows = [];
+    function toolsRangeLabel(d) { var m = TOOL_RANGES.filter(function (r) { return r.d === d; })[0]; return m ? m.label.toLowerCase() : d + ' days'; }
+    async function renderTools() {
+      var b = bodyEl();
+      b.innerHTML =
+        '<div class="adm-note">Tool usage counts events recorded since tracking began. Opens = tool page loads; Actions = meaningful actions (create, save, generate, publish, print).</div>' +
+        '<div class="adm-panel-head" style="margin-top:4px"><h2 id="t-title">Most-used tools</h2>' +
+        '<div style="display:flex;gap:8px;align-items:center">' +
+        '<select class="adm-select" id="t-range">' + TOOL_RANGES.map(function (r) { return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>' +
+        '<button class="btn-secondary" id="t-export">Export CSV</button></div></div>' +
+        '<div id="t-table">' + stateLoading() + '</div>';
+      var sel = document.getElementById('t-range');
+      sel.value = String(toolsRange);
+      sel.addEventListener('change', function () { toolsRange = parseInt(sel.value, 10); loadToolsTable(); });
+      document.getElementById('t-export').addEventListener('click', function () {
+        A.exportCSV('tool-usage', toolsRows, [{ label: 'Tool', key: 'tool' }, { label: 'Opens', key: 'opens' }, { label: 'Actions', key: 'actions' }, { label: 'Unique users', key: 'unique_users' }]);
+      });
+      loadToolsTable();
+    }
+    async function loadToolsTable() {
+      var t = document.getElementById('t-table'); if (!t) return;
+      var title = document.getElementById('t-title'); if (title) title.textContent = 'Most-used tools · ' + toolsRangeLabel(toolsRange);
+      t.innerHTML = stateLoading();
+      try {
+        var tools = await A.rpc('admin_top_tools', { p_days: toolsRange });
+        toolsRows = tools || [];
+        if (!toolsRows.length) { t.innerHTML = stateEmpty('No tool events in this range.'); return; }
+        t.innerHTML =
+          '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Opens</th><th class="num">Actions</th><th class="num">Unique users</th></tr></thead><tbody>' +
+          toolsRows.map(function (t2) { return '<tr><td class="name">' + esc(t2.tool) + '</td><td class="num">' + num(t2.opens) + '</td><td class="num">' + num(t2.actions) + '</td><td class="num">' + num(t2.unique_users) + '</td></tr>'; }).join('') +
+          '</tbody></table></div>';
+      } catch (e) { t.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── MOVEMENT EXPERIMENTS ──
+    async function renderExperiments() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var rows = await A.rpc('admin_experiment_saves');
+        var total = (rows || []).reduce(function (a, r) { return a + Number(r.saves || 0); }, 0);
+        if (!rows || !rows.length) { b.innerHTML = stateEmpty('No experiments have been saved yet.'); return; }
+        b.innerHTML =
+          '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Experiments saved · total</div><div class="val">' + num(total) + '</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Distinct experiments saved</div><div class="val">' + num(rows.length) + '</div><div class="sub">of 28</div></div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Experiment saves over time</h2>' + rangeSelect('expsave-range') + '</div><div id="expsave-chart">' + stateLoading() + '</div></div>' +
+          '<div class="adm-panel-head" style="margin-top:16px"><h2>Which experiments were saved</h2><button class="btn-secondary" id="e-export">Export CSV</button></div>' +
+          '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>#</th><th>Experiment</th><th class="num">Saves</th><th class="num">Unique savers</th><th>Last save</th></tr></thead><tbody>' +
+          rows.map(function (r) { return '<tr><td class="muted adm-mono">' + esc(r.experiment_id) + '</td><td class="name">' + esc(r.title || '—') + '</td><td class="num">' + num(r.saves) + '</td><td class="num">' + num(r.unique_savers) + '</td><td class="muted">' + (r.last_save ? A.fmtDate(new Date(Number(r.last_save))) : '—') + '</td></tr>'; }).join('') +
+          '</tbody></table></div>';
+        document.getElementById('e-export').addEventListener('click', function () {
+          A.exportCSV('movement-experiments', rows, [
+            { label: 'Experiment ID', key: 'experiment_id' }, { label: 'Title', key: 'title' },
+            { label: 'Saves', key: 'saves' }, { label: 'Unique savers', key: 'unique_savers' },
+            { label: 'Last save (epoch ms)', key: 'last_save' },
+          ]);
+        });
+        var esel = document.getElementById('expsave-range');
+        if (esel) { esel.value = String(expSaveRange); esel.addEventListener('change', function () { expSaveRange = parseInt(esel.value, 10); loadExpSaveChart(); }); }
+        loadExpSaveChart();
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── PUBLIC CONTENT ──
+    var pubState = { sort: 'most_saved', search: '', page: 0, limit: 50, total: 0, rows: [] };
+    async function renderPublic() {
+      var b = bodyEl();
+      b.innerHTML =
+        '<div class="adm-note">Public content = shared <strong>classes</strong> only. Flows and cue sheets are private and are never published on their own. Saves are live references to the creator’s class, not copies.</div>' +
+        '<div class="adm-panel"><div class="adm-panel-head"><h2>Public saves over time</h2>' + rangeSelect('pubsave-range') + '</div><div id="pubsave-chart">' + stateLoading() + '</div></div>' +
+        '<div class="adm-controls" style="margin-top:16px"><div class="search-wrap"><span class="search-icon material-symbols-sharp">search</span>' +
+        '<input class="search-input" id="p-search" placeholder="Search title or creator" value="' + esc(pubState.search) + '"></div>' +
+        '<select class="adm-select" id="p-sort"><option value="most_saved">Most saved</option><option value="recent_save">Recently saved</option><option value="recent_publish">Recently published</option><option value="title">Title A–Z</option></select><button class="btn-secondary" id="p-export" style="margin-left:auto">Export CSV</button></div>' +
+        '<div id="p-table">' + stateLoading() + '</div>';
+      document.getElementById('p-sort').value = pubState.sort;
+      document.getElementById('p-sort').addEventListener('change', function (e) { pubState.sort = e.target.value; pubState.page = 0; loadPublic(); });
+      var pdeb;
+      document.getElementById('p-search').addEventListener('input', function (e) {
+        clearTimeout(pdeb); var v = e.target.value; pdeb = setTimeout(function () { pubState.search = v; pubState.page = 0; loadPublic(); }, 300);
+      });
+      document.getElementById('p-export').addEventListener('click', exportPublic);
+      var psel = document.getElementById('pubsave-range');
+      if (psel) { psel.value = String(pubSaveRange); psel.addEventListener('change', function () { pubSaveRange = parseInt(psel.value, 10); loadPubSaveChart(); }); }
+      loadPubSaveChart();
+      loadPublic();
+    }
+    async function loadPublic() {
+      var t = document.getElementById('p-table'); t.innerHTML = stateLoading();
+      try {
+        var res = await A.rpc('admin_public_content', { p_sort: pubState.sort, p_search: pubState.search || null, p_limit: pubState.limit, p_offset: pubState.page * pubState.limit });
+        pubState.total = res.total; pubState.rows = res.rows || [];
+        if (!pubState.rows.length) { t.innerHTML = stateEmpty(pubState.search ? 'No public classes match that search.' : 'No public classes yet.'); return; }
+        var body = pubState.rows.map(function (r) {
+          return '<tr class="clickable" data-pcid="' + esc(r.id) + '"><td class="name">' + esc(r.title) + (r.published ? '' : ' <span class="adm-pill off">Unpublished</span>') + '</td>' +
+            '<td>' + esc(r.creator_name || '—') + '<br><span class="muted adm-mono">' + esc(r.creator_email || '') + '</span></td>' +
+            '<td class="muted">' + A.fmtDate(r.published_at) + '</td>' +
+            '<td class="num">' + num(r.saves) + '</td><td class="num">' + num(r.unique_savers) + '</td>' +
+            '<td class="muted">' + (r.last_save ? A.ago(r.last_save) : '—') + '</td></tr>';
+        }).join('');
+        var pages = Math.ceil(pubState.total / pubState.limit) || 1;
+        t.innerHTML =
+          '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Class</th><th>Creator</th><th>Published</th><th class="num">Saves</th><th class="num">Unique savers</th><th>Last save</th></tr></thead><tbody>' + body + '</tbody></table></div>' +
+          '<div class="adm-pager"><span>' + num(pubState.total) + ' public classes · page ' + (pubState.page + 1) + ' of ' + pages + '</span>' +
+          '<button class="btn-ghost sm" id="p-prev"' + (pubState.page === 0 ? ' disabled' : '') + '>Prev</button>' +
+          '<button class="btn-ghost sm" id="p-next"' + (pubState.page + 1 >= pages ? ' disabled' : '') + '>Next</button></div>';
+        t.querySelectorAll('tr.clickable').forEach(function (tr) { tr.addEventListener('click', function () { openPublic(tr.dataset.pcid, tr); }); });
+        var pv = document.getElementById('p-prev'), nx = document.getElementById('p-next');
+        if (pv) pv.addEventListener('click', function () { if (pubState.page > 0) { pubState.page--; loadPublic(); } });
+        if (nx) nx.addEventListener('click', function () { pubState.page++; loadPublic(); });
+      } catch (e) { t.innerHTML = stateError(e && e.message); }
+    }
+    async function openPublic(pcid, tr) {
+      var row = pubState.rows.filter(function (r) { return r.id === pcid; })[0] || {};
+      backdrop.hidden = false; drawer.hidden = false; dbody.innerHTML = stateLoading();
+      try {
+        var savers = await A.rpc('admin_public_content_savers', { p_pcid: pcid });
+        dbody.innerHTML =
+          '<h2>' + esc(row.title || 'Class') + '</h2><div class="dsub">' + esc(row.creator_name || '') + (row.creator_email ? ' · ' + esc(row.creator_email) : '') + '</div>' +
+          '<dl class="adm-kv">' +
+            '<dt>Status</dt><dd>' + (row.published ? '<span class="adm-pill on">Published</span>' : '<span class="adm-pill off">Unpublished</span>') + '</dd>' +
+            '<dt>Type</dt><dd>' + esc(row.class_type || '—') + '</dd>' +
+            '<dt>Length</dt><dd>' + (row.length_minutes ? row.length_minutes + ' min' : '—') + '</dd>' +
+            '<dt>Published</dt><dd>' + A.fmtDate(row.published_at) + '</dd>' +
+            '<dt>Updated</dt><dd>' + A.fmtDate(row.updated_at) + '</dd>' +
+            '<dt>Saves</dt><dd>' + num(row.saves) + ' (' + num(row.unique_savers) + ' unique) · live references</dd>' +
+            '<dt>Link</dt><dd><a href="class?p=' + esc(pcid) + '" target="_blank" class="adm-mono">open public class</a></dd>' +
+          '</dl>' +
+          '<div class="adm-dsec"><h3>Who saved it (' + num((savers || []).length) + ')</h3>' +
+          ((savers && savers.length) ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>User</th><th>Saved</th></tr></thead><tbody>' +
+            savers.map(function (s) { return '<tr><td>' + esc(s.name || s.email || '—') + '<br><span class="muted adm-mono">' + esc(s.email || '') + '</span></td><td class="muted">' + A.fmtDate(s.saved_at) + '</td></tr>'; }).join('') + '</tbody></table></div>'
+            : '<span class="muted">No saves yet.</span>') + '</div>';
+      } catch (e) { dbody.innerHTML = stateError(e && e.message); }
+    }
+    async function exportPublic() {
+      try {
+        var res = await A.rpc('admin_public_content', { p_sort: pubState.sort, p_search: pubState.search || null, p_limit: 100000, p_offset: 0 });
+        A.exportCSV('public-content', res.rows || [], [
+          { label: 'Title', key: 'title' }, { label: 'Type', key: 'class_type' }, { label: 'Creator', key: 'creator_name' },
+          { label: 'Creator email', key: 'creator_email' }, { label: 'Creator ID', key: 'owner_id' },
+          { label: 'Published', value: function (r) { return r.published ? 'yes' : 'no'; } },
+          { label: 'Published at', key: 'published_at' }, { label: 'Updated at', key: 'updated_at' },
+          { label: 'Saves', key: 'saves' }, { label: 'Unique savers', key: 'unique_savers' }, { label: 'Last save', key: 'last_save' },
+        ]);
+      } catch (e) { toast('Export failed: ' + (e && e.message)); }
+    }
+
+    // ── SAVED CONTENT ──
+    async function renderSaved() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var s = await A.rpc('admin_saved_content');
+        var byType = (s.by_type || []).map(function (t) { return '<tr><td>' + esc(t.type) + '</td><td class="num">' + num(t.items) + '</td><td class="num">' + num(t.users) + '</td></tr>'; }).join('');
+        var savers = (s.top_savers || []).map(function (t) { return '<tr><td>' + esc(t.name || t.email || '—') + '<br><span class="muted adm-mono">' + esc(t.email || '') + '</span></td><td class="num">' + num(t.items) + '</td></tr>'; }).join('');
+        var recent = (s.recent_public_saves || []).map(function (r) { return '<tr><td class="muted adm-mono">' + esc(r.user_email || '') + '</td><td>' + esc(r.class_title) + (r.active ? '' : ' <span class="adm-pill off">gone</span>') + '</td><td class="muted">' + A.fmtDate(r.saved_at) + '</td><td class="muted">reference</td></tr>'; }).join('');
+        b.innerHTML =
+          '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Saved items · all</div><div class="val">' + num(s.total_items) + '</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Unique savers</div><div class="val">' + num(s.unique_savers) + '</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Public-content saves</div><div class="val">' + num(s.public_saves) + '</div></div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Saved items by type</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Type</th><th class="num">Items</th><th class="num">Users</th></tr></thead><tbody>' + (byType || '') + '</tbody></table></div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Most active savers</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>User</th><th class="num">Items</th></tr></thead><tbody>' + (savers || '') + '</tbody></table></div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Recent public-content saves</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>User</th><th>Class</th><th>Saved</th><th>Kind</th></tr></thead><tbody>' + (recent || '') + '</tbody></table></div></div>';
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── ACTIVITY ──
+    async function renderActivity() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var feed = await A.rpc('admin_recent_activity', { p_limit: 60 });
+        var audit = await A.rpc('admin_audit', { p_limit: 60 }).catch(function () { return []; });
+        var feedHtml = (feed && feed.length)
+          ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>User</th><th>Action</th><th>Tool</th><th>When</th></tr></thead><tbody>' +
+            feed.map(function (f) { return '<tr><td class="muted adm-mono">' + esc(f.email || 'anon') + '</td><td>' + esc(f.event) + '</td><td class="muted">' + esc(f.tool || '—') + '</td><td class="muted">' + A.ago(f.at) + '</td></tr>'; }).join('') + '</tbody></table></div>'
+          : stateEmpty('No meaningful activity recorded yet — tracking begins at launch.');
+        var auditHtml = (audit && audit.length)
+          ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th></tr></thead><tbody>' +
+            audit.map(function (a) { return '<tr><td class="muted">' + A.fmtDateTime(a.created_at) + '</td><td class="muted adm-mono">' + esc(a.actor_email || '') + '</td><td>' + esc(a.action) + '</td><td class="muted adm-mono">' + esc(a.target_email || '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
+          : stateEmpty('No admin actions logged yet.');
+        b.innerHTML =
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Recent product activity</h2></div>' + feedHtml + '</div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Admin audit log</h2><button class="btn-secondary" id="a-export">Export CSV</button></div>' + auditHtml + '</div>';
+        var ae = document.getElementById('a-export');
+        if (ae) ae.addEventListener('click', function () { A.exportCSV('admin-audit', audit, [{ label: 'When', key: 'created_at' }, { label: 'Admin', key: 'actor_email' }, { label: 'Action', key: 'action' }, { label: 'Target', key: 'target_email' }]); });
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── FEEDBACK ──
+    async function renderFeedback() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var sum = await A.rpc('admin_feedback_summary');
+        var rows = await A.rpc('admin_feedback', { p_limit: 200 });
+        var kindCards = (sum.by_kind || []).map(function (k) {
+          return '<div class="adm-metric"><div class="lbl">' + esc(k.kind) + '</div><div class="val">' + num(k.count) + '</div></div>';
+        }).join('');
+        var table = (rows && rows.length)
+          ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>When</th><th>User</th><th>Kind</th><th>Message</th><th>Page</th><th></th></tr></thead><tbody>' +
+            rows.map(function (f) { return '<tr><td class="muted">' + A.fmtDate(f.created_at) + '</td><td class="muted adm-mono">' + esc(f.email || '') + '</td><td>' + esc(f.kind) + '</td><td class="wrap">' + esc(f.message) + '</td><td class="muted adm-mono">' + esc(f.page || '') + '</td>' +
+              '<td class="adm-actcell">' + (f.id != null ? '<button class="btn-icon adm-del" data-id="' + esc(String(f.id)) + '" data-tooltip="Delete" aria-label="Delete feedback"><span class="material-symbols-sharp">delete</span></button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
+          : stateEmpty('No feedback yet.');
+        b.innerHTML =
+          '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Total feedback</div><div class="val">' + num(sum.total) + '</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Last 7 days</div><div class="val">' + num(sum.last_7d) + '</div></div>' + kindCards + '</div>' +
+          '<div class="adm-panel-head" style="margin-top:16px"><h2>Recent feedback</h2><button class="btn-secondary" id="fb-export">Export CSV</button></div>' + table;
+        var ex = document.getElementById('fb-export');
+        if (ex) ex.addEventListener('click', function () { A.exportCSV('feedback', rows, [{ label: 'When', key: 'created_at' }, { label: 'User', key: 'email' }, { label: 'Kind', key: 'kind' }, { label: 'Message', key: 'message' }, { label: 'Page', key: 'page' }]); });
+        b.querySelectorAll('.adm-del').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            if (btn.dataset.armed === '1') { doDeleteFeedback(btn.dataset.id, btn); return; }
+            btn.dataset.armed = '1'; btn.classList.add('armed'); btn.setAttribute('data-tooltip', 'Click again to delete');
+            clearTimeout(btn._disarm);
+            btn._disarm = setTimeout(function () { btn.dataset.armed = '0'; btn.classList.remove('armed'); btn.setAttribute('data-tooltip', 'Delete'); }, 3000);
+          });
+        });
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+    async function doDeleteFeedback(id, btn) {
+      if (btn) btn.disabled = true;
+      try {
+        await A.rpc('admin_delete_feedback', { p_id: String(id) });
+        toast('Feedback deleted.');
+        renderFeedback();
+      } catch (e) {
+        toast(e && e.message ? e.message : 'Delete failed');
+        if (btn) { btn.disabled = false; btn.dataset.armed = '0'; btn.classList.remove('armed'); btn.setAttribute('data-tooltip', 'Delete'); }
+      }
+    }
+
+    // ── ADMINS (roster + remove) ──
+    async function renderAdmins() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var rows = await A.rpc('admin_admins') || [];
+        var body = rows.map(function (a) {
+          return '<tr><td>' + esc(a.name || '—') + '<br><span class="muted adm-mono">' + esc(a.email || '') + '</span></td>' +
+            '<td class="muted">' + A.fmtDate(a.granted_at) + '</td>' +
+            '<td class="muted">' + esc(a.granted_by || '—') + '</td>' +
+            '<td class="adm-actcell">' + (a.is_self
+              ? '<span class="adm-pill admin">You</span>'
+              : '<button class="btn-secondary adm-rmadmin" data-id="' + esc(a.user_id) + '">Remove</button>') + '</td></tr>';
+        }).join('');
+        b.innerHTML =
+          '<div class="adm-note">Admins can see this dashboard and manage every account. To <strong>grant</strong> admin, open a user from the Users tab and use Account controls. You can remove access here.</div>' +
+          '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Admins</div><div class="val">' + num(rows.length) + '</div></div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Admin roster</h2></div>' +
+          '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Admin</th><th>Granted</th><th>Granted by</th><th></th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+        b.querySelectorAll('.adm-rmadmin').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            if (btn.dataset.armed === '1') { doRemoveAdmin(btn.dataset.id, btn); return; }
+            btn.dataset.armed = '1'; btn.classList.add('armed'); btn.textContent = 'Confirm remove';
+            clearTimeout(btn._disarm);
+            btn._disarm = setTimeout(function () { btn.dataset.armed = '0'; btn.classList.remove('armed'); btn.textContent = 'Remove'; }, 3000);
+          });
+        });
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+    async function doRemoveAdmin(uid, btn) {
+      if (btn) btn.disabled = true;
+      try {
+        await A.action({ action: 'remove_admin', target_user_id: uid });
+        toast('Admin access removed.');
+        renderAdmins();
+      } catch (e) {
+        toast(e && e.message ? e.message : 'Couldn’t remove admin');
+        if (btn) { btn.disabled = false; btn.dataset.armed = '0'; btn.classList.remove('armed'); btn.textContent = 'Remove'; }
+      }
+    }
+
+    // ── HEALTH (client errors) ──
+    async function renderHealth() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var sum = await A.rpc('admin_errors_summary', { p_days: 7 });
+        var rows = await A.rpc('admin_errors', { p_limit: 200 });
+        var top = (sum.top || []).map(function (t) { return '<tr><td class="wrap">' + esc(t.message) + '</td><td class="num">' + num(t.count) + '</td><td class="muted">' + A.ago(t.last) + '</td></tr>'; }).join('');
+        var table = (rows && rows.length)
+          ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>When</th><th>Message</th><th>Page</th><th>User</th><th>Version</th></tr></thead><tbody>' +
+            rows.map(function (e2) { return '<tr><td class="muted">' + A.fmtDateTime(e2.created_at) + '</td><td class="wrap">' + esc(e2.message) + '</td><td class="muted adm-mono">' + esc(e2.page || '') + '</td><td class="muted adm-mono">' + esc(e2.email || '') + '</td><td class="muted adm-mono">' + esc(e2.version || '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
+          : stateEmpty('No errors logged — clean bill of health.');
+        b.innerHTML =
+          '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Errors · 24h</div><div class="val">' + num(sum.today) + '</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Errors · 7 days</div><div class="val">' + num(sum.window) + '</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Users affected · 7d</div><div class="val">' + num(sum.affected_users) + '</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Total logged</div><div class="val">' + num(sum.total) + '</div></div></div>' +
+          (top ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Most frequent · 7 days</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Message</th><th class="num">Count</th><th>Last</th></tr></thead><tbody>' + top + '</tbody></table></div></div>' : '') +
+          '<div class="adm-panel-head" style="margin-top:16px"><h2>Recent errors</h2><button class="btn-secondary" id="err-export">Export CSV</button></div>' + table;
+        var ex = document.getElementById('err-export');
+        if (ex) ex.addEventListener('click', function () { A.exportCSV('client-errors', rows, [{ label: 'When', key: 'created_at' }, { label: 'Message', key: 'message' }, { label: 'Source', key: 'source' }, { label: 'Page', key: 'page' }, { label: 'User', key: 'email' }, { label: 'Version', key: 'version' }]); });
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── EXPORTS ──
+    async function renderExports() {
+      var b = bodyEl();
+      var items = [
+        ['Users', 'Every registered user with counts and status', exportUsers],
+        ['Public content', 'Public classes with save engagement', exportPublic],
+        ['Movement experiments', 'Save counts per experiment', function () { renderExperiments().then(function () {}); A.rpc('admin_experiment_saves').then(function (rows) { A.exportCSV('movement-experiments', rows, [{ label: 'Experiment ID', key: 'experiment_id' }, { label: 'Title', key: 'title' }, { label: 'Saves', key: 'saves' }, { label: 'Unique savers', key: 'unique_savers' }]); }); }],
+        ['Tool usage', 'Opens and actions per tool', function () { A.rpc('admin_top_tools', { p_days: 3650 }).then(function (t) { A.exportCSV('tool-usage', t, [{ label: 'Tool', key: 'tool' }, { label: 'Opens', key: 'opens' }, { label: 'Actions', key: 'actions' }, { label: 'Unique users', key: 'unique_users' }]); }); }],
+        ['Admin audit log', 'Every administrative action', function () { A.rpc('admin_audit', { p_limit: 100000 }).then(function (a) { A.exportCSV('admin-audit', a, [{ label: 'When', key: 'created_at' }, { label: 'Admin', key: 'actor_email' }, { label: 'Action', key: 'action' }, { label: 'Target', key: 'target_email' }]); }); }],
+      ];
+      b.innerHTML = '<div class="adm-note">Exports are CSV (UTF-8) — open directly in Excel or import to Google Sheets. Cells are sanitized against formula injection. Filenames include today’s date.</div>' +
+        '<div class="adm-metrics" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">' +
+        items.map(function (it, i) { return '<div class="adm-metric"><div class="val" style="font-size:16px">' + esc(it[0]) + '</div><div class="sub">' + esc(it[1]) + '</div><button class="btn-secondary" data-x="' + i + '" style="margin-top:12px">Export CSV</button></div>'; }).join('') + '</div>';
+      b.querySelectorAll('[data-x]').forEach(function (btn) { btn.addEventListener('click', function () { toast('Preparing export…'); items[+btn.dataset.x][2](); }); });
+    }
+
+    // ── router ──
+    function route() {
+      var id = (location.hash || '#overview').slice(1);
+      var sec = SECTIONS.filter(function (s) { return s.id === id; })[0] || SECTIONS[0];
+      shell(sec.id);
+      sec.render();
+    }
+    window.addEventListener('hashchange', route);
+
+    // ── boot: gate on admin (server truth) ──
+    (async function boot() {
+      // sync.js already redirected to /login if there was no session.
+      try { if (window.fsSync && window.fsSync.ready) await window.fsSync.ready; } catch (_) {}
+      var ok = await A.isAdmin();
+      if (!ok) {
+        root.innerHTML = '<div class="adm-denied"><span class="material-symbols-sharp">visibility_lock</span>' +
+          '<h1>Not authorized</h1><p>This area is for Flow School administrators. If you believe you should have access, ask an existing admin to add you.</p>' +
+          '<p style="margin-top:16px"><a class="btn-secondary" href="dashboard">Back to dashboard</a></p></div>';
+        return;
+      }
+      route();
+    })();
+  })();
+  </script>
+</body>
+</html>

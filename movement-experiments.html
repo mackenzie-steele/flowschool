@@ -318,6 +318,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
   <script src="lib/motion.js"></script>
   <script src="lib/confirm-delete.js"></script>
   <div class="toast" id="toast"></div>
@@ -1385,6 +1386,7 @@
       const exp = candidates[Math.floor(Math.random() * candidates.length)];
       lastId = exp.id;
       renderExperiment(exp);
+      if (window.fsTrack) fsTrack('item_generated', { resourceType: 'experiment' });
     }
 
     // ─── ACTIONS ─────────────────────────────────────────────────────────────────

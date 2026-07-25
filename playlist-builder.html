@@ -533,6 +533,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
   <script src="lib/motion.js"></script>
 
   <main>
@@ -1321,6 +1322,7 @@
         setTimeout(() => {
           res.classList.remove('fs-release');
           renderResults(generate());
+          if (window.fsTrack) fsTrack('item_generated', { resourceType: 'playlist' });
         }, 110);
       });
     }
@@ -1668,6 +1670,7 @@
       setTimeout(() => {
         res.classList.remove('fs-release');
         renderResults(generate());
+        if (window.fsTrack) fsTrack('item_generated', { resourceType: 'playlist' });
         built = true;
         fsWorking(btn, false);
         document.getElementById('gen-btn').closest('.cta-bar').classList.add('away');

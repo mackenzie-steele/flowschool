@@ -3227,9 +3227,9 @@ body.has-sidebar {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: .08em;
-  color: var(--text-2);
+  color: var(--accent);
   background: none;
-  border: 1px solid rgba(var(--ink-rgb), .18);
+  border: 1px solid var(--accent-border);
   border-radius: var(--rf);
   padding: 3px 8px;
   white-space: nowrap;

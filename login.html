@@ -196,6 +196,11 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
         }
       }
     } catch (_) {}
+    // record the sign-in (analytics — auth event, not product usage)
+    try {
+      const { data: { user: su } } = await db.auth.getUser();
+      if (su) db.from('analytics_events').insert({ user_id: su.id, event_name: 'user_signed_in', event_category: 'auth', metadata: {} }).then(function () {}, function () {});
+    } catch (_) {}
     window.location.href = 'dashboard';
   }
 });

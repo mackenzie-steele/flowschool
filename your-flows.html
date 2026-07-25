@@ -672,9 +672,9 @@
       gap: 16px;
       width: 100%;
       padding: 16px 20px;
-      background: rgba(var(--ink-rgb), .02);
-      border: 1px solid rgba(var(--ink-rgb), .12);
-      border-top-color: rgba(var(--ink-rgb), .22);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-top-color: rgba(var(--accent-rgb), .45);
       border-radius: var(--r);
       font-family: var(--font);
       text-align: left;
@@ -685,7 +685,7 @@
     /* open, the head and panel read as one module — the head keeps the
        top corners, the panel keeps the bottom ones */
     .ef-head[aria-expanded="true"] { border-radius: var(--r) var(--r) 0 0; }
-    .ef-head:hover { border-color: rgba(var(--ink-rgb), .30); }
+    .ef-head:hover { border-color: rgba(var(--accent-rgb), .5); }
     .ef-title {
       font-family: var(--font-mono);
       font-size: 10px;
@@ -699,17 +699,17 @@
       margin-left: auto;
       font-family: var(--font-mono);
       font-size: var(--fs-label-2);
-      color: var(--text-3);
+      color: var(--accent);
       font-variant-numeric: tabular-nums;
       line-height: 1;
     }
-    .ef-progress.done { color: var(--accent); }
+    .ef-progress.done { color: var(--accent); font-weight: var(--weight-bold); }
     .ef-chev { color: var(--text-3); transition: transform var(--transition-base); }
     .ef-head[aria-expanded="true"] .ef-chev { transform: rotate(180deg); }
 
     .ef-body {
       border-radius: 0 0 var(--r) var(--r);
-      border: 1px solid rgba(var(--ink-rgb), .12);
+      border: 1px solid var(--accent-border);
       border-top: none;
       padding: 0 20px 16px;
     }
@@ -905,6 +905,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
   <script src="lib/publish.js"></script>
   <script src="lib/motion.js"></script>
   <script src="data/shorthand.js"></script>
@@ -1901,11 +1902,11 @@
 
     // ─── PILLARS OF A WARM UP (Warm Up Flows only) ──────────────────────────────
     // Same optional-checklist pattern as Elements of Flow. The foundation
-    // is pick-one — checking one releases the others — and all four
-    // pillars want a check: one foundation + four pillars = 5.
+    // needs at least one — you may pick several, but one is enough — and all
+    // four pillars want a check: one (or more) foundation + four pillars = 5.
 
     var PW_SECTIONS = [
-      { key: 'foundation', label: 'Foundation', hint: 'pick one', pickOne: true, items: [
+      { key: 'foundation', label: 'Foundation', hint: 'pick one or more', needOne: true, items: [
         { id: 'seated',   label: 'Seated' },
         { id: 'kneeling', label: 'Kneeling' },
         { id: 'back',     label: 'Back' },
@@ -1942,8 +1943,8 @@
     function pwRender() {
       var n = pwCount();
       document.getElementById('pw-body').innerHTML = PW_SECTIONS.map(function (s) {
-        var right = s.pickOne
-          ? (pwState[s.key].size ? '1 of 1' : s.hint)
+        var right = s.needOne
+          ? (pwState[s.key].size ? pwState[s.key].size + ' selected' : s.hint)
           : pwState[s.key].size + ' of ' + s.items.length;
         return '<div class="ef-sec">' +
           '<div class="ef-sec-hdr">' +
@@ -1965,6 +1966,7 @@
       '</div>';
       var progress = document.getElementById('pw-progress');
       progress.textContent = n + '/' + PW_TOTAL;
+      progress.classList.toggle('done', n === PW_TOTAL);
     }
 
     function pwUpdateVisibility() {
@@ -1992,13 +1994,10 @@
       }
       var row = e.target.closest('.ef-item');
       if (!row) return;
-      var sec = PW_SECTIONS.find(function (s) { return s.key === row.dataset.sec; });
       var set = pwState[row.dataset.sec];
+      // foundation is multi-select now: toggle freely, one is enough to complete
       if (set.has(row.dataset.id)) set.delete(row.dataset.id);
-      else {
-        if (sec && sec.pickOne) set.clear();
-        set.add(row.dataset.id);
-      }
+      else set.add(row.dataset.id);
       pwRender();
       markDirty();
     });

@@ -215,6 +215,7 @@
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
   <script src="lib/motion.js"></script>
   <div class="toast" id="toast"></div>
 
@@ -472,6 +473,7 @@
       rules.sort((a, b) => (a.cat === 'start' ? -1 : b.cat === 'start' ? 1 : 0));
       currentRuleIds = rules.map(r => r.id);
       renderCard(rules);
+      if (window.fsTrack) fsTrack('item_generated', { resourceType: 'arbitrary_rule' });
     }
 
     // ─── RENDER CARD ─────────────────────────────────────────────────────────────
