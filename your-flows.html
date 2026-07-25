@@ -1079,9 +1079,15 @@
           <textarea class="fl-area" id="fl-area" rows="3" placeholder="SEATED TWIST / BOAT / PIGEON / SL DD"></textarea>
         </div>
 
-        <div class="fl-section">
-          <div class="fl-head"><span class="label-1">Video</span></div>
-          <input type="url" class="fl-video-input" id="fl-video-url" placeholder="Link to your flow video" maxlength="500" aria-label="Flow video link">
+        <!-- video link — opt-in, mirroring "Attach cues": the button seats
+             the input only when the teacher wants to add one -->
+        <div class="fl-section" id="fl-video">
+          <input type="url" class="fl-video-input" id="fl-video-url" placeholder="Link to your flow video" maxlength="500" aria-label="Flow video link" hidden>
+          <button type="button" class="fd-cues-head fd-cues-empty" id="fl-video-attach">
+            <span class="fd-cues-name fd-cues-empty-name">Link to video</span>
+            <span class="fd-cues-title">Video</span>
+            <span class="material-symbols-sharp fd-cues-chev i-md">add</span>
+          </button>
         </div>
 
         <!-- the cue sheet rides along in the editor too — same drawer
@@ -1639,6 +1645,16 @@
     function renderFdVideo(f) {
       document.getElementById('fd-flow-video').innerHTML = flowVideoBtn(f && f.videoUrl);
     }
+    // the editor's video field is opt-in: the "Link to video" button seats the
+    // input, and an existing link opens straight to the input
+    function showVideoField(show) {
+      document.getElementById('fl-video-url').hidden = !show;
+      document.getElementById('fl-video-attach').hidden = show;
+    }
+    document.getElementById('fl-video-attach').addEventListener('click', function () {
+      showVideoField(true);
+      document.getElementById('fl-video-url').focus();
+    });
 
     // one delegated ear per stack: heads unfold, the x detaches
     ['fd', 'fl'].forEach(function (p) {
@@ -1836,7 +1852,9 @@
           fsBackLabel(f ? (f.name || 'Untitled Flow') : 'Your Flows');
 
         document.getElementById('fl-title').value = f ? (f.name || '') : '';
-        document.getElementById('fl-video-url').value = f ? (f.videoUrl || '') : '';
+        var vurl = f ? (f.videoUrl || '') : '';
+        document.getElementById('fl-video-url').value = vurl;
+        showVideoField(!!vurl);
         var area = document.getElementById('fl-area');
         area.value = f ? (f.text || '') : '';
         renderTypes();
