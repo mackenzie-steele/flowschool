@@ -58,6 +58,19 @@
       .cd-body * { color: #151515 !important; }
 
       .cd-title { font-size: 24pt; margin-bottom: 6pt; }
+      /* the kind of sheet — a quiet kicker above the title, opposite
+         the logo, so a printed page names itself */
+      .cd-title::before {
+        content: "CUE SHEET";
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 9pt;
+        font-weight: var(--weight-regular);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: #555;
+        margin-bottom: 7pt;
+      }
       .cd-title::after {
         content: var(--print-byline, '');
         display: block;

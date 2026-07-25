@@ -851,6 +851,19 @@
       .fd * { color: #151515 !important; }
 
       .fd-title { font-size: 24pt; margin-bottom: 0; }
+      /* the kind of sheet — a quiet kicker above the title, opposite
+         the logo, so a printed page names itself */
+      .fd-title::before {
+        content: "FLOW";
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 9pt;
+        font-weight: var(--weight-regular);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: #555;
+        margin-bottom: 7pt;
+      }
       .fd-title::after {
         content: var(--print-byline, '');
         display: block;

@@ -307,6 +307,19 @@
          inside the title), so the title's margin moves to the meta —
          same measured gaps: title →2pt→ byline →2pt→ meta */
       .pc-title { font-size: 24pt; margin-bottom: 0; }
+      /* the kind of sheet — a quiet kicker above the title, opposite
+         the logo, so a printed page names itself */
+      .pc-title::before {
+        content: "CLASS";
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 9pt;
+        font-weight: var(--weight-regular);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: #555;
+        margin-bottom: 7pt;
+      }
       .pc-byline {
         font-size: 10pt;
         font-weight: var(--weight-regular);
@@ -340,6 +353,17 @@
       body.print-cue #cue-print { display: block !important; color: #151515 !important; }
       #cue-print * { color: #151515 !important; }
       .cp-title { font-size: 24pt; margin-bottom: 0; }
+      .cp-title::before {
+        content: "CUE SHEET";
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 9pt;
+        font-weight: var(--weight-regular);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: #555 !important;
+        margin-bottom: 7pt;
+      }
       .cp-byline { font-size: 10pt; font-weight: var(--weight-regular); margin: 2pt 0 0; }
       .cp-meta {
         font-family: var(--font-mono);

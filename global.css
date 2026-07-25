@@ -615,7 +615,11 @@ li {
    the text stays invisible inside its 1em box. !important: every
    contextual icon color (.nav-item, .btn-icon, …) outranks this rule
    in the cascade, and an unswapped span must never show its text. */
-.material-symbols-sharp:not(:has(svg)) { color: transparent !important; }
+/* transparent until icons.js swaps in the stroke SVG (which stamps
+   data-fs-glyph). An attribute selector, not :has(svg): :has() forces a
+   broad style-recalc on every DOM mutation, and the icon swaps during
+   load churn made the first second or two of hovering feel dead. */
+.material-symbols-sharp:not([data-fs-glyph]) { color: transparent !important; }
 
 .material-symbols-sharp svg {
   width: 1em;

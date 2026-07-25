@@ -458,6 +458,19 @@
       .post-spec-starter { color: #555 !important; }
 
       .post-title { font-size: 24pt; margin-bottom: 0; }
+      /* the kind of sheet — a quiet kicker above the title, opposite
+         the logo, so a printed page names itself */
+      .post-title::before {
+        content: "STORY";
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 9pt;
+        font-weight: var(--weight-regular);
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: #555;
+        margin-bottom: 7pt;
+      }
       .post-title::after {
         content: var(--print-byline, '');
         display: block;
