@@ -2807,7 +2807,6 @@ body.has-sidebar {
   color: var(--text-3);
   margin: -28px 0 40px;
   line-height: 1.6;
-  max-width: 34ch;
 }
 
 .auth-form {

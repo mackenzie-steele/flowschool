@@ -1112,6 +1112,9 @@
   <script src="lib/vendor/supabase-js-v2.110.7.min.js"></script>
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
+  <!-- for now, first-time visitors landing here logged-out go to signup, not
+       login — we don't have users yet, so most arrivals are brand new -->
+  <script>window.fsAuthDest = 'signup';</script>
   <script src="lib/sync.js"></script>
   <script src="lib/analytics.js"></script>
   <script src="lib/library.js"></script>
