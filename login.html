@@ -100,11 +100,47 @@ const confirmType = authHash.get('type');
   document.body.style.opacity = '1';
   if (authLinkError) {
     history.replaceState(null, '', 'login');
-    const errEl = document.getElementById('auth-error');
-    errEl.textContent = 'That link is invalid or has expired. Sign in — or request a fresh one.';
-    errEl.classList.add('show');
+    // the confirmation link expired / was already used — keep the copy, but
+    // make "request a fresh one" a working resend instead of a dead phrase
+    showConfirmError('That link is invalid or has expired. Sign in — or <a href="#" id="resend-confirm">request a fresh one</a>.');
   }
 })();
+
+// An unused/expired confirmation link leaves people locked out with no way
+// back. These let them send themselves a fresh one (Supabase resend,
+// type 'signup') — wired into the "email not confirmed" + "link expired" cases.
+function showConfirmError(html) {
+  const errEl = document.getElementById('auth-error');
+  document.getElementById('auth-success').classList.remove('show');
+  errEl.innerHTML = html;
+  errEl.classList.add('show');
+  const link = document.getElementById('resend-confirm');
+  if (link) link.addEventListener('click', function (e) { e.preventDefault(); resendConfirmation(link); });
+}
+
+async function resendConfirmation(link) {
+  const errEl = document.getElementById('auth-error');
+  const sucEl = document.getElementById('auth-success');
+  const email = (document.getElementById('email').value || '').trim();
+  if (!email) {
+    errEl.textContent = 'Enter your email above, then resend the confirmation.';
+    errEl.classList.add('show');
+    document.getElementById('email').focus();
+    return;
+  }
+  const label = link.textContent;
+  link.textContent = 'Sending…';
+  const { error } = await db.auth.resend({ type: 'signup', email });
+  link.textContent = label;
+  if (error) {
+    errEl.textContent = error.message || 'Couldn’t resend just now. Try again in a moment.';
+    errEl.classList.add('show');
+  } else {
+    errEl.classList.remove('show');
+    sucEl.textContent = 'A fresh confirmation link is on its way to ' + email + '. It expires soon — use it when it arrives.';
+    sucEl.classList.add('show');
+  }
+}
 
 // Password toggle
 document.getElementById('pw-toggle').addEventListener('click', () => {
@@ -167,14 +203,15 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
     const msg = error.message || '';
     if (error.code === 'user_banned' || /banned/i.test(msg)) {
       errEl.innerHTML = 'Your account has been deactivated, to reactivate, <a href="https://flowschool.uscreen.io/" target="_blank" rel="noopener noreferrer">select a plan</a>.';
+      errEl.classList.add('show');
+    } else if (msg.includes('Email not confirmed')) {
+      showConfirmError('Please confirm your email before signing in. <a href="#" id="resend-confirm">Resend confirmation email</a>.');
     } else {
       errEl.textContent = msg.includes('Invalid login') || msg.includes('invalid_credentials')
         ? 'Email or password is incorrect.'
-        : msg.includes('Email not confirmed')
-          ? 'Please confirm your email before signing in.'
-          : msg || 'Something went wrong. Please try again.';
+        : msg || 'Something went wrong. Please try again.';
+      errEl.classList.add('show');
     }
-    errEl.classList.add('show');
     fsWorking(btn, false, 'Sign in');
   } else {
     // Warm the account cache so the app renders your work immediately.
@@ -210,6 +247,6 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
 });
 
 </script>
-  <footer class="site-footer">Flow School &#183; Creative Studio for Yoga Teachers</footer>
+  <footer class="site-footer"><span class="footer-main">Flow School &#183; Creative Studio for Yoga Teachers</span><span class="footer-support">Looking for support? Email us at <a href="mailto:support@flowschool.io">support@flowschool.io</a></span></footer>
 </body>
 </html>

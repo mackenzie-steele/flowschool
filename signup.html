@@ -145,13 +145,13 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
     fsWorking(btn, false, 'Create account');
   } else {
     // Email confirmation on
-    sucEl.textContent = 'Check your email to confirm your account, then sign in. Already have an account? Sign in instead.';
+    sucEl.innerHTML = 'Check your email to confirm your account, then sign in. Already have an account? <a href="login">Sign in instead</a>.';
     sucEl.classList.add('show');
     fsWorking(btn, false, 'Create account');
   }
 });
 
 </script>
-  <footer class="site-footer">Flow School &#183; Creative Studio for Yoga Teachers</footer>
+  <footer class="site-footer"><span class="footer-main">Flow School &#183; Creative Studio for Yoga Teachers</span><span class="footer-support">Looking for support? Email us at <a href="mailto:support@flowschool.io">support@flowschool.io</a></span></footer>
 </body>
 </html>

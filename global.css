@@ -3957,6 +3957,23 @@ body.has-sidebar {
   user-select: none;
 }
 
+.footer-main { display: block; }
+
+.footer-support {
+  display: block;
+  margin-top: 6px;
+  user-select: text;   /* let people copy the support address */
+}
+
+.footer-support a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition-base);
+}
+
+.footer-support a:hover { color: var(--text-2); }
+
 /* stay clear of pages with a fixed CTA bar */
 body:has(.cta-bar) .site-footer {
   padding-bottom: 120px;
