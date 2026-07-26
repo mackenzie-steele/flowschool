@@ -158,33 +158,40 @@
       margin-bottom: 12px;
     }
 
-    /* ── the starter — the drawn card, above the title (the classes
-          margin's material, worn as a banner) ── */
+    /* ── the guidance unit — the starter and its teaching guide in one
+          accent module (Flow School guidance wears the accent) ── */
     .post-spec {
-      box-shadow: var(--crest);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-top-color: rgba(var(--accent-rgb), .45);
       border-radius: var(--r);
-      border: 1px solid rgba(var(--ink-rgb), .12);
-      border-top-color: rgba(var(--ink-rgb), .22);
-      background: var(--raised), rgba(var(--ink-rgb), .02);
-      padding: 16px 20px;
       margin-bottom: 28px;
+      overflow: hidden;
     }
-
     .post-spec[hidden] { display: none; }
 
-    .post-spec .label-1 { display: block; margin-bottom: 10px; }
-
-    .post-spec-starter {
-      font-size: var(--text-small);
-      line-height: 1.6;
+    /* the starter — always visible, the hero of the box */
+    .post-spec-main { padding: 16px 20px; }
+    .post-spec-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: var(--weight-bold);
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
       color: var(--text-2);
+      margin-bottom: 10px;
+      line-height: 1;
+    }
+    .post-spec-starter {
+      font-size: var(--text-body-sm);
+      line-height: 1.6;
+      color: var(--text-1);   /* highlighted — the prompt leads */
       overflow-wrap: break-word;
     }
 
-    /* ── the teaching guide — styled to match Elements of Flow (accent) ── */
-    .post-howto {
-      margin: -14px 0 28px;   /* sits close under the starter box */
-    }
+    /* the teaching guide — a collapsible section inside the same box */
+    .post-howto { border-top: 1px solid var(--accent-border); }
     .post-howto[hidden] { display: none; }
     .post-howto > summary {
       list-style: none;
@@ -192,19 +199,13 @@
       display: flex;
       align-items: center;
       gap: 16px;
-      padding: 16px 20px;
-      background: var(--accent-dim);
-      border: 1px solid var(--accent-border);
-      border-top-color: rgba(var(--accent-rgb), .45);
-      border-radius: var(--r);
+      padding: 13px 20px;
       user-select: none;
-      transition: border-color var(--transition-base);
+      transition: background var(--transition-base);
     }
     .post-howto > summary::-webkit-details-marker { display: none; }
-    .post-howto > summary:hover { border-color: rgba(var(--accent-rgb), .5); }
+    .post-howto > summary:hover { background: rgba(var(--accent-rgb), .07); }
     .post-howto > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-    /* open, head and panel read as one module — head keeps the top corners */
-    .post-howto[open] > summary { border-radius: var(--r) var(--r) 0 0; }
     .post-howto-title {
       font-family: var(--font-mono);
       font-size: 10px;
@@ -221,10 +222,7 @@
     }
     .post-howto[open] .post-howto-chev { transform: rotate(180deg); }
     .post-howto-body {
-      border: 1px solid var(--accent-border);
-      border-top: none;
-      border-radius: 0 0 var(--r) var(--r);
-      padding: 6px 20px 18px;
+      padding: 14px 20px 18px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -484,7 +482,7 @@
       /* the sheet is the story and nothing else */
       .app-sidebar, .sidebar-toggle, .sidebar-overlay, .nav-sheet, .mobile-brand, nav,
       .post-bar, .post-format-bar, footer, .post-actions, .post-edit-actions,
-      .toast, .st-menu, .skip-link, #post-edit, #list-view { display: none !important; }
+      .toast, .st-menu, .skip-link, #post-edit, #list-view, #post-howto { display: none !important; }
 
       #detail-view[hidden] { display: none !important; }
 
@@ -685,21 +683,21 @@
 
         <img class="print-logo" src="img/flow-school-logo_black.png" alt="">
 
-        <!-- where the story began — the drawn starter, above the title -->
+        <!-- the guidance unit — the starter (always shown) and Bonnie's
+             teaching guide (collapsible), together in one accent box -->
         <div class="post-spec" id="post-margin" hidden>
-          <span class="label-1">Starter</span>
-          <p class="post-spec-starter" id="post-margin-starter"></p>
+          <div class="post-spec-main">
+            <span class="post-spec-label">Starter</span>
+            <p class="post-spec-starter" id="post-margin-starter"></p>
+          </div>
+          <details class="post-howto" id="post-howto" hidden>
+            <summary>
+              <span class="post-howto-title">How to teach this</span>
+              <span class="post-howto-chev material-symbols-sharp i-md" aria-hidden="true">expand_more</span>
+            </summary>
+            <div class="post-howto-body" id="post-howto-body"></div>
+          </details>
         </div>
-
-        <!-- Bonnie's teaching guide for this starter — collapsed by default,
-             only shown while composing from a starter that carries one -->
-        <details class="post-howto" id="post-howto" hidden>
-          <summary>
-            <span class="post-howto-title">How to teach this</span>
-            <span class="post-howto-chev material-symbols-sharp i-md" aria-hidden="true">expand_more</span>
-          </summary>
-          <div class="post-howto-body" id="post-howto-body"></div>
-        </details>
 
         <div class="post-head">
           <div class="post-head-main">
