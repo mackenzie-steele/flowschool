@@ -1,7 +1,7 @@
 // ─── YOGA STRONG — BONNIE'S PODCAST (last 100 episodes) ─────────────────────
 //
 // Snapshot of the Buzzsprout feed (rss.buzzsprout.com/619780.rss),
-// episodes 198–299, refreshed July 22, 2026. Episode links point to Apple
+// episodes 198–300, refreshed July 25, 2026. Episode links point to Apple
 // Podcasts (show id 1481932845, matched via the iTunes API) — the
 // audience is Apple-Podcasts-primary. The dashboard surfaces the three
 // newest from this pool, skipping ones marked as listened.
@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 var YOGA_STRONG_EPISODES = [
+  { num: 300, title: 'Action Creates Confidence', blurb: 'Today we explore how taking action fuels confidence, the importance of creative constraints, and strategies for embracing your authentic self to step into your voice and power.', dur: '45 min', date: 'Jul 23, 2026', url: 'https://podcasts.apple.com/us/podcast/300-action-creates-confidence/id1481932845?i=1000778103305' },
   { num: 299, title: 'Finding Freedom to Choose with Jen Brewer', blurb: 'The second episode in a series with Flow School alumni: Jen Brewer, a multifaceted yoga teacher and retreat guide who loves supporting humans through transitions. We explore how yoga empowers us to make conscious choices and become more true to ourselves, embracing messiness in both teaching and life, finding grounded grace, and the power of community.', dur: '1 hr 18 min', date: 'Jul 18, 2026', url: 'https://podcasts.apple.com/us/podcast/299-finding-freedom-to-choose-with-jen-brewer/id1481932845?i=1000777396614' },
   { num: 298, title: 'Flow School and Finding Your Voice w/Lizzie Fischer', blurb: 'The first in a series with Flow School alumni. Lizzie Fischer shares her journey into yoga, working with women in healing disordered eating, and her experience in Flow School — plus the nuances and craft of teaching, the importance of authenticity, and building a sustainable yoga practice and business that light you up.', dur: '1 hr 6 min', date: 'Jul 12, 2026', url: 'https://podcasts.apple.com/us/podcast/298-flow-school-and-finding-your-voice-w-lizzie-fischer/id1481932845?i=1000776518888' },
   { num: 297, title: 'How Do We Find Authenticity?', blurb: 'What does authenticity mean, and how does it influence our leadership, teaching, and personal growth? This is a juicy conversation about self-discovery and living true to oneself, as an ever-evolving process.', dur: '1 hr 1 min', date: 'Jun 5, 2026', url: 'https://podcasts.apple.com/us/podcast/297-how-do-we-find-authenticity/id1481932845?i=1000771379137' },

@@ -3,3 +3,6 @@
 # fetchable at flowschool.io/supabase/... or /docs/...
 supabase/
 docs/
+
+# raw audio/video sources — only the extracted .m4a ships
+*.mov

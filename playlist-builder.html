@@ -1391,8 +1391,10 @@
 
     function handleSave() {
       if (S.saved) {
-        // unsave — the lit bookmark is a toggle. The entry leaves the library;
-        // the playlist stays on screen, just unsaved, so it can be re-saved.
+        // unsave — the lit bookmark is a toggle. The entry leaves the library
+        // but the playlist stays exactly as shown: we do NOT drop back into
+        // the builder controls (that jump was jarring). A refresh brings them
+        // back, since the saved playlist is gone from storage.
         if (savedId != null) {
           try {
             const saved = JSON.parse(localStorage.getItem('flowschool_playlists') || '[]')
@@ -1401,7 +1403,15 @@
           } catch (_) {}
         }
         const title = savedTitle;
-        forgetSaved();
+        S.saved = false;
+        savedId = null;
+        // the name on the page reverts to the default, matching what the save
+        // modal would offer if they re-save
+        savedTitle = defaultTitle();
+        document.getElementById('pl-saved-title').textContent = savedTitle;
+        const sb = document.getElementById('save-btn');
+        if (sb) { sb.classList.remove('saved'); sb.title = 'Save playlist'; sb.setAttribute('data-tooltip', 'Save'); }
+        if (location.search) { try { history.replaceState(null, '', location.pathname); } catch (_) {} }
         toast(title ? `"${title}" removed from your library.` : 'Removed from your library.');
         return;
       }

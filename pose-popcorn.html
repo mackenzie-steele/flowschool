@@ -1000,7 +1000,7 @@
         destPose  = pickPose(startPose);
         pushToChain();
         renderDeck();
-        document.getElementById('save-btn').classList.remove('saved');
+        setSavedState(false);
         if (chainName) {
           chainName    = null;
           chainSavedAt = null;
@@ -1019,6 +1019,26 @@
 
     function closeSaveModal() {
       document.getElementById('pc-modal').setAttribute('hidden', '');
+    }
+
+    // the save button is a toggle: filled when the chain is saved, and
+    // clicking it again removes the chain from the saved list
+    function setSavedState(saved) {
+      var btn = document.getElementById('save-btn');
+      btn.classList.toggle('saved', !!saved);
+      btn.setAttribute('data-tooltip', saved ? 'Unsave chain' : 'Save chain');
+    }
+
+    function unsaveChain() {
+      if (!chainSavedAt) return;
+      var LS_SAVED = 'fs-pose-connector-saved';
+      try {
+        var saved = JSON.parse(localStorage.getItem(LS_SAVED) || '[]');
+        saved = saved.filter(function(c) { return String(c.savedAt) !== String(chainSavedAt); });
+        localStorage.setItem(LS_SAVED, JSON.stringify(saved));
+      } catch(e) {}
+      chainSavedAt = null;
+      setSavedState(false);
     }
 
     function confirmSaveChain() {
@@ -1044,7 +1064,7 @@
       chainName    = name;
       chainSavedAt = savedAt;
       setChainTitle(name);
-      document.getElementById('save-btn').classList.add('saved');
+      setSavedState(true);
     }
 
     // ─── TRANSITION ANIMATION ────────────────────────────────────
@@ -1157,7 +1177,7 @@
       chainSavedAt = null;
       isViewingSaved = false;
       setChainTitle('Chain');
-      document.getElementById('save-btn').classList.remove('saved');
+      setSavedState(false);
       startPose = null;
       destPose  = null;
       saveToStorage();
@@ -1279,7 +1299,7 @@
       renderDeck();
       renderChain();
       setChainTitle(chainName || 'Chain');
-      document.getElementById('save-btn').classList.add('saved');
+      setSavedState(true);
       updateLockState();
       updateDeckButtons();
       document.querySelector('.chain-section').hidden = false;
@@ -1458,7 +1478,10 @@
       nextPose();
     });
     document.getElementById('chain-title-edit-btn').addEventListener('click', startChainRename);
-    document.getElementById('save-btn').addEventListener('click', openSaveModal);
+    document.getElementById('save-btn').addEventListener('click', function () {
+      if (chainSavedAt) unsaveChain();
+      else openSaveModal();
+    });
     document.getElementById('load-btn').addEventListener('click', openLoadModal);
     document.getElementById('pc-load-modal-cancel').addEventListener('click', closeLoadModal);
     document.getElementById('pc-load-modal').addEventListener('click', function(e) {

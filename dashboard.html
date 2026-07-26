@@ -202,6 +202,9 @@
       display: grid;
       gap: 12px;
     }
+    /* let the fr columns hold their ratio instead of a wide child (Recently
+       Saved) stretching past 50% and squishing its neighbour */
+    .db-row > * { min-width: 0; }
 
     .db-row-2   { grid-template-columns: 1fr 1fr; }
 
@@ -637,20 +640,14 @@
     /* ── Skill Map ───────────────────────────────────────── */
     /* the shape draws itself in on first paint — the dashboard's one
        set-piece; everything else holds still */
+    /* the stroke-draw + fill fade are driven from JS (renderPracticeShape)
+       off the polygon's real length — pathLength on <polygon> is unsupported
+       in Safari, which left the accent shape looking broken. The dots' fade
+       stays here since it only touches opacity. */
     @media (prefers-reduced-motion: no-preference) {
-      .db-shape-draw {
-        stroke-dasharray: 1;
-        animation: dbShapeDraw .9s ease-out both;
-      }
       .db-shape-draw + circle, .db-shape-draw ~ circle {
         animation: dbShapeDots .3s ease-out .75s both;
       }
-    }
-
-    @keyframes dbShapeDraw {
-      from { stroke-dashoffset: 1; fill-opacity: 0; }
-      60%  { fill-opacity: 0; }
-      to   { stroke-dashoffset: 0; fill-opacity: 1; }
     }
 
     @keyframes dbShapeDots {
@@ -920,14 +917,14 @@
       font-weight: var(--weight-medium);
       color: var(--text-1);
       line-height: 1.5;
-      flex: 1;
     }
 
     .db-starter-link {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      margin-top: 16px;
+      margin-top: auto;   /* the write link stays pinned to the card's floor */
+      padding-top: 16px;
       text-decoration: none;
       font-size: var(--text-small);
       font-weight: var(--weight-medium);
@@ -936,6 +933,76 @@
     }
 
     .db-starter-link:hover { color: var(--text-1); }
+
+    /* ── Bonnie's voice note — a frosted-glass mini player ──
+       a translucent accent pane over the card, with a soft now-playing bloom,
+       a light glass edge + top sheen, and a low, wide lift shadow */
+    /* a special-but-native surface: the app's own subtle-accent tokens
+       (same wash + frame used for pills/tags) — the waveform keeps it distinct */
+    .db-voice {
+      margin-top: 18px;
+      padding: 15px 17px;
+      border-radius: var(--r);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+    }
+    .db-voice[hidden] { display: none; }
+    .db-voice-note { display: flex; align-items: center; gap: 14px; }
+    .db-voice-play {
+      flex: none;
+      width: 42px; height: 42px;
+      border: none;
+      border-radius: 50%;
+      background: var(--ink-solid);          /* black in light, white in dark */
+      color: var(--paper-solid);
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, .16);
+      transition: transform var(--transition-base), box-shadow var(--transition-base);
+    }
+    .db-voice-play:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 0, 0, .24); }
+    .db-voice-play:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(0, 0, 0, .16); }
+    .db-voice-play .material-symbols-sharp { font-size: 24px; }
+    .db-voice-play .material-symbols-sharp svg { fill: currentColor; }   /* filled play/pause */
+    /* the waveform is two identical bar layers stacked: a muted base and an
+       accent fill clipped to the playhead. Driving the clip each frame gives
+       a continuous, sub-pixel-smooth reveal instead of bars snapping on. */
+    .db-voice-wave {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      height: 34px;
+      cursor: pointer;
+    }
+    .db-voice-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      pointer-events: none;
+    }
+    .db-voice-fill {
+      clip-path: inset(0 calc(100% - var(--played, 0%)) 0 0);
+      will-change: clip-path;
+    }
+    .db-voice-bar {
+      flex: 1 1 0;
+      min-width: 0;
+      border-radius: 2px;
+    }
+    .db-voice-base .db-voice-bar { background: rgba(var(--ink-rgb), .17); }
+    .db-voice-fill .db-voice-bar { background: var(--accent); }
+    .db-voice-time {
+      flex: none;
+      min-width: 32px;
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      opacity: .85;
+    }
 
     /* ── New Drop module ─────────────────────────────────── */
     .db-new-drop {
@@ -1004,6 +1071,14 @@
       .db-row-2,
       .db-row-3-2,
       .db-row-2-3 { grid-template-columns: 1fr; }
+    }
+
+    /* the Upcoming column is at its narrowest between the stacking point and
+       the roomy widths — drop each event's action button onto its own line,
+       lined up under the title, so nothing gets squeezed */
+    @media (min-width: 901px) and (max-width: 1235px) {
+      .db-event { flex-wrap: wrap; row-gap: 6px; }
+      .db-event-signup { flex: 1 1 100%; margin-left: 56px; }
     }
 
     @media (max-width: 768px) {
@@ -1083,6 +1158,20 @@
             <div class="db-card" id="db-starter-card">
               <span class="db-eyebrow">Weekly Story Starter</span>
               <p class="db-starter-text" id="db-starter-text"></p>
+              <!-- a voice note from Bonnie, shown only when this week's starter carries a `voice` audio url -->
+              <div class="db-voice" id="db-voice" hidden>
+                <div class="db-voice-note">
+                  <button class="db-voice-play" id="db-voice-play" type="button" aria-label="Play Bonnie’s note">
+                    <span class="material-symbols-sharp" id="db-voice-icon" aria-hidden="true">play_arrow</span>
+                  </button>
+                  <div class="db-voice-wave" id="db-voice-wave" role="slider" aria-label="Seek voice note" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+                    <div class="db-voice-layer db-voice-base" id="db-voice-base" aria-hidden="true"></div>
+                    <div class="db-voice-layer db-voice-fill" id="db-voice-fill" aria-hidden="true"></div>
+                  </div>
+                  <span class="db-voice-time" id="db-voice-time">0:00</span>
+                </div>
+                <audio id="db-voice-audio" preload="none"></audio>
+              </div>
               <a class="db-starter-link" id="db-starter-link" href="stories">Write the Story <span class="material-symbols-sharp i-sm" style="vertical-align:-2px">arrow_forward</span></a>
             </div>
 
@@ -1151,12 +1240,6 @@
 
         </div>
 
-        <!-- 7. This Month — content from data/dashboard-content.js -->
-        <div class="db-card" id="db-month-card">
-          <span class="db-eyebrow">This Month</span>
-          <div id="db-month-body"></div>
-        </div>
-
         <!-- 8. Yoga Strong — Bonnie's podcast: the newest three, drawn
              from the last 100 episodes; listened ones never resurface -->
         <div class="db-card">
@@ -1171,7 +1254,7 @@
   <script>
     // ── Scroll reveals — deliberately only here ──────────────────────────
     // The dashboard is the platform's one "browse" page: its below-the-fold
-    // modules (This Month, the podcast grid) wait for their first entry
+    // modules (the podcast grid) wait for their first entry
     // into view, then settle. Once per visit; nothing else anywhere
     // animates on scroll — work surfaces don't perform.
     (function () {
@@ -1180,7 +1263,6 @@
 
       var podGrid = document.getElementById('db-pod-grid');
       var mods = [
-        document.getElementById('db-month-card'),
         podGrid && podGrid.closest('.db-card'),
       ].filter(function (el) {
         // only modules genuinely below the fold at arrival — anything
@@ -1608,9 +1690,10 @@
 
       var empty = axes.every(function (a) { return a.allTime === 0; });
 
+      var firstDraw = !shapeHasDrawn;
       var drawCls = shapeHasDrawn ? '' : ' class="db-shape-draw"';
       var allPoly = empty ? '' :
-        '<polygon' + drawCls + ' pathLength="1" points="' + axes.map(function (a, i) { return pt(a.allTime, i).join(','); }).join(' ') + '"' +
+        '<polygon' + drawCls + ' points="' + axes.map(function (a, i) { return pt(a.allTime, i).join(','); }).join(' ') + '"' +
         ' fill="rgba(var(--accent-rgb),.08)" stroke="var(--accent)" stroke-width="1.5"/>' +
         axes.map(function (a, i) {
           if (!a.allTime) return '';
@@ -1654,6 +1737,25 @@
         receiptsHTML;
 
       shapeHasDrawn = true;
+
+      // draw the accent polygon's outline in, then fade its fill — driven off
+      // the real perimeter so it works everywhere (not just where pathLength
+      // on <polygon> is honored)
+      if (firstDraw && !empty && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+        var poly = card.querySelector('.db-shape-draw');
+        if (poly && poly.getTotalLength && poly.animate) {
+          var L = poly.getTotalLength();
+          poly.style.strokeDasharray = L;
+          poly.style.strokeDashoffset = L;
+          poly.style.fillOpacity = '0';
+          var anim = poly.animate([
+            { strokeDashoffset: L, fillOpacity: 0 },
+            { strokeDashoffset: L, fillOpacity: 0, offset: 0.6 },
+            { strokeDashoffset: 0, fillOpacity: 1 }
+          ], { duration: 900, easing: 'ease-out' });
+          anim.onfinish = function () { poly.style.strokeDashoffset = '0'; poly.style.fillOpacity = ''; };
+        }
+      }
 
       card.querySelectorAll('.db-shape-label').forEach(function (el) {
         el.addEventListener('click', function () {
@@ -1802,30 +1904,197 @@
       var starter = bank[Math.floor(Date.now() / 604800000) % bank.length];
       document.getElementById('db-starter-text').textContent = starter.text;
       document.getElementById('db-starter-link').href = 'stories?new=' + starter.id;
+      setupVoiceNote(starter.voice, starter.voicePeaks, starter.voiceDuration);
     }
 
-    function renderMonth() {
-      var card = document.getElementById('db-month-card');
-      var entries = window.THIS_MONTH || {};
-      var now = new Date();
-      var key = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-      // current month, else the most recent earlier entry — never blank
-      var pick = entries[key];
-      if (!pick) {
-        var keys = Object.keys(entries).filter(function (k) { return k <= key; }).sort();
-        if (!keys.length) keys = Object.keys(entries).sort();
-        pick = keys.length ? entries[keys[keys.length - 1]] : null;
-      }
-      if (!pick) { card.hidden = true; return; }
-      card.hidden = false;
-      document.getElementById('db-month-body').innerHTML =
-        '<h4 class="db-bonnie-title">' + escHTML(pick.title) + '</h4>' +
-        '<p class="db-bonnie-body">' + escHTML(pick.body) + '</p>' +
-        '<a href="' + escHTML(pick.ctaHref) + '" class="btn-primary" style="margin-top:20px;display:inline-flex;align-items:center;gap:8px;border-radius:var(--r-cta)">' +
-          escHTML(pick.ctaLabel) +
-          '<span class="material-symbols-sharp i-sm">arrow_forward</span>' +
-        '</a>';
+    // ── Bonnie's voice note — a small, iPhone-memo-simple player ──
+    var voiceWired = false;
+    var voicePeaks = null;      // high-res peaks from decode (null → placeholder)
+    var voiceBarCount = 0;      // bars currently rendered per layer
+    var voiceWaveCache = {};    // url → peaks
+    var voiceRAF = 0;
+    var voiceDuration = 0;      // seconds, supplied for long notes so we needn't load audio to show it
+
+    // the note's length: from the loaded audio once it's playing, else the
+    // value stored alongside the note (so nothing downloads on dashboard load)
+    function voiceDur() {
+      var a = document.getElementById('db-voice-audio');
+      return (a && a.duration && isFinite(a.duration)) ? a.duration : (voiceDuration || 0);
     }
+
+    // `peaks` is an optional pre-computed waveform (an array of amplitudes) — the
+    // right call for longer notes, so the dashboard never downloads the whole
+    // file just to draw the wave. Without it, we fall back to decoding the audio
+    // client-side (fine for short clips).
+    function setupVoiceNote(url, peaks, duration) {
+      var wrap = document.getElementById('db-voice');
+      var audio = document.getElementById('db-voice-audio');
+      if (!wrap || !audio) return;
+      if (!url) { wrap.hidden = true; try { audio.pause(); } catch (_) {} audio.removeAttribute('src'); return; }
+      wrap.hidden = false;
+      voiceDuration = Number(duration) || 0;
+      if (peaks && peaks.length) { voicePeaks = peaks; voiceWaveCache[url] = peaks; }
+      else voicePeaks = voiceWaveCache[url] || null;
+      wireVoiceOnce();
+      layoutVoiceWave();
+      if (audio.getAttribute('src') !== url) audio.src = url;
+      resetVoiceUI();
+      if (!voicePeaks) decodeVoiceWaveform(url);   // only decode when no peaks were supplied
+    }
+
+    // heights (as % strings) for a given bar count — resampled from the real
+    // peaks, or an organic placeholder until (or unless) the audio decodes. A
+    // floor keeps a silent stretch showing a sliver, the way Apple's memos do.
+    function voiceHeights(n) {
+      var vals = new Array(n), src = voicePeaks, i;
+      for (i = 0; i < n; i++) {
+        if (src && src.length) {
+          var a = Math.floor(i / n * src.length), b = Math.max(a + 1, Math.floor((i + 1) / n * src.length)), pk = 0;
+          for (var j = a; j < b && j < src.length; j++) if (src[j] > pk) pk = src[j];
+          vals[i] = pk;
+        } else {
+          var v = Math.abs(Math.sin(i * 0.6) * 0.55 + Math.sin(i * 1.7 + 0.6) * 0.30 + Math.sin(i * 0.29) * 0.15);
+          vals[i] = 0.24 + Math.min(1, v) * 0.76;
+        }
+      }
+      var max = Math.max.apply(null, vals.concat([0.00001])), out = new Array(n);
+      for (i = 0; i < n; i++) out[i] = Math.round((0.12 + Math.min(1, vals[i] / max) * 0.88) * 100);
+      return out;
+    }
+
+    function buildLayer(el, heights) {
+      el.innerHTML = heights.map(function (h) { return '<span class="db-voice-bar" style="height:' + h + '%"></span>'; }).join('');
+    }
+
+    // pick a bar count from the container's width so bars keep a consistent
+    // thickness AND always fill it exactly — no overflow, no dead space
+    function layoutVoiceWave() {
+      var wave = document.getElementById('db-voice-wave');
+      if (!wave) return;
+      var w = wave.clientWidth;
+      if (!w) return;
+      var count = Math.max(16, Math.round((w + 2) / 5));   // ~3px bar + ~2px gap
+      if (count === voiceBarCount && wave.childElementCount) return;
+      voiceBarCount = count;
+      var heights = voiceHeights(count);
+      buildLayer(document.getElementById('db-voice-base'), heights);
+      buildLayer(document.getElementById('db-voice-fill'), heights);
+      paintVoiceProgress();
+    }
+
+    // once the real peaks arrive, just restyle the existing bars (same count)
+    function repaintVoiceHeights() {
+      if (!voiceBarCount) { layoutVoiceWave(); return; }
+      var heights = voiceHeights(voiceBarCount);
+      ['db-voice-base', 'db-voice-fill'].forEach(function (id) {
+        var bars = document.getElementById(id).children;
+        for (var i = 0; i < bars.length; i++) bars[i].style.height = heights[i] + '%';
+      });
+    }
+
+    // decode the note into a high-res peak array; on any failure (e.g. a
+    // cross-origin file the browser won't let us read) the placeholder stays
+    function decodeVoiceWaveform(url) {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx || !window.fetch) return;
+      fetch(url)
+        .then(function (r) { return r.arrayBuffer(); })
+        .then(function (buf) {
+          var ctx = new Ctx();
+          return ctx.decodeAudioData(buf).then(function (ab) { if (ctx.close) ctx.close(); return ab; });
+        })
+        .then(function (ab) {
+          var data = ab.getChannelData(0), RES = 400, block = Math.floor(data.length / RES) || 1, peaks = [];
+          for (var i = 0; i < RES; i++) {
+            var s = i * block, e = Math.min(data.length, s + block), pk = 0;
+            for (var j = s; j < e; j++) { var x = data[j] < 0 ? -data[j] : data[j]; if (x > pk) pk = x; }
+            peaks.push(pk);
+          }
+          voiceWaveCache[url] = peaks;
+          voicePeaks = peaks;
+          repaintVoiceHeights();
+        })
+        .catch(function () { /* keep the placeholder bars */ });
+    }
+
+    function fmtVoiceTime(s) {
+      s = Math.max(0, Math.floor(s || 0));
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    // the fill layer is clipped to --played (a %), so the accent reveals
+    // continuously; driving it per frame (below) makes the fill glide
+    function setVoicePlayed(frac) {
+      var wave = document.getElementById('db-voice-wave');
+      if (wave) {
+        wave.style.setProperty('--played', (Math.max(0, Math.min(1, frac)) * 100).toFixed(3) + '%');
+        wave.setAttribute('aria-valuenow', Math.round(frac * 100));
+      }
+    }
+
+    function paintVoiceProgress() {
+      var audio = document.getElementById('db-voice-audio');
+      var d = voiceDur();
+      setVoicePlayed(d ? audio.currentTime / d : 0);
+      var t = document.getElementById('db-voice-time');
+      if (t) t.textContent = (audio.currentTime > 0.2 && !audio.ended) ? fmtVoiceTime(audio.currentTime) : fmtVoiceTime(d);
+    }
+
+    // smooth playhead: update the clip every frame while playing rather than
+    // on the browser's coarse (~4/s) timeupdate, which made the fill snap
+    function voiceLoop() {
+      var audio = document.getElementById('db-voice-audio');
+      var d = voiceDur();
+      if (d) setVoicePlayed(audio.currentTime / d);
+      var t = document.getElementById('db-voice-time');
+      if (t && audio.currentTime > 0.2) t.textContent = fmtVoiceTime(audio.currentTime);
+      if (!audio.paused && !audio.ended) voiceRAF = requestAnimationFrame(voiceLoop);
+    }
+
+    function resetVoiceUI() {
+      document.getElementById('db-voice-icon').textContent = 'play_arrow';
+      setVoicePlayed(0);
+      var t = document.getElementById('db-voice-time');
+      if (t) t.textContent = fmtVoiceTime(voiceDur());
+    }
+
+    function wireVoiceOnce() {
+      if (voiceWired) return;
+      voiceWired = true;
+      var audio = document.getElementById('db-voice-audio');
+      var play = document.getElementById('db-voice-play');
+      var icon = document.getElementById('db-voice-icon');
+      var wave = document.getElementById('db-voice-wave');
+
+      play.addEventListener('click', function () {
+        if (audio.paused) audio.play().catch(function () {}); else audio.pause();
+      });
+      audio.addEventListener('play', function () { icon.textContent = 'pause'; cancelAnimationFrame(voiceRAF); voiceRAF = requestAnimationFrame(voiceLoop); });
+      audio.addEventListener('pause', function () { icon.textContent = 'play_arrow'; cancelAnimationFrame(voiceRAF); paintVoiceProgress(); });
+      audio.addEventListener('loadedmetadata', paintVoiceProgress);
+      audio.addEventListener('ended', function () { cancelAnimationFrame(voiceRAF); audio.currentTime = 0; resetVoiceUI(); });
+
+      function seekTo(clientX) {
+        var rect = wave.getBoundingClientRect();
+        var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+        var d = voiceDur();
+        if (d) { audio.currentTime = frac * d; paintVoiceProgress(); }
+      }
+      wave.addEventListener('click', function (e) { seekTo(e.clientX); });
+      wave.addEventListener('keydown', function (e) {
+        var d = voiceDur();
+        if (!d) return;
+        if (e.key === 'ArrowRight') { audio.currentTime = Math.min(d, audio.currentTime + 5); paintVoiceProgress(); e.preventDefault(); }
+        else if (e.key === 'ArrowLeft') { audio.currentTime = Math.max(0, audio.currentTime - 5); paintVoiceProgress(); e.preventDefault(); }
+        else if (e.key === ' ' || e.key === 'Enter') { if (audio.paused) audio.play().catch(function () {}); else audio.pause(); e.preventDefault(); }
+      });
+
+      // re-flow the bars whenever the card resizes, so the waveform always
+      // fits its box exactly at any width
+      if (window.ResizeObserver) { new ResizeObserver(function () { layoutVoiceWave(); }).observe(wave); }
+      else { window.addEventListener('resize', layoutVoiceWave); }
+    }
+
 
     // ── Init ────────────────────────────────────────────────────────
     function init() {
@@ -1841,7 +2110,6 @@
       renderEvents();
       renderDrop();
       renderStarter();
-      renderMonth();
       renderMoon();
     }
 

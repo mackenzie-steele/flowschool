@@ -181,6 +181,62 @@
       overflow-wrap: break-word;
     }
 
+    /* ── the teaching guide — styled to match Elements of Flow (accent) ── */
+    .post-howto {
+      margin: -14px 0 28px;   /* sits close under the starter box */
+    }
+    .post-howto[hidden] { display: none; }
+    .post-howto > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-top-color: rgba(var(--accent-rgb), .45);
+      border-radius: var(--r);
+      user-select: none;
+      transition: border-color var(--transition-base);
+    }
+    .post-howto > summary::-webkit-details-marker { display: none; }
+    .post-howto > summary:hover { border-color: rgba(var(--accent-rgb), .5); }
+    .post-howto > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    /* open, head and panel read as one module — head keeps the top corners */
+    .post-howto[open] > summary { border-radius: var(--r) var(--r) 0 0; }
+    .post-howto-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: var(--weight-bold);
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
+      color: var(--text-2);
+      line-height: 1;
+    }
+    .post-howto-chev {
+      margin-left: auto;
+      color: var(--text-3);
+      transition: transform var(--transition-base);
+    }
+    .post-howto[open] .post-howto-chev { transform: rotate(180deg); }
+    .post-howto-body {
+      border: 1px solid var(--accent-border);
+      border-top: none;
+      border-radius: 0 0 var(--r) var(--r);
+      padding: 6px 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .post-howto-step .label-1 { display: block; margin-bottom: 5px; }
+    .post-howto-text {
+      font-size: var(--text-small);
+      line-height: 1.65;
+      color: var(--text-2);
+      overflow-wrap: break-word;
+    }
+
     .post-title-input {
       width: 100%;
       background: transparent;
@@ -635,6 +691,16 @@
           <p class="post-spec-starter" id="post-margin-starter"></p>
         </div>
 
+        <!-- Bonnie's teaching guide for this starter — collapsed by default,
+             only shown while composing from a starter that carries one -->
+        <details class="post-howto" id="post-howto" hidden>
+          <summary>
+            <span class="post-howto-title">How to teach this</span>
+            <span class="post-howto-chev material-symbols-sharp i-md" aria-hidden="true">expand_more</span>
+          </summary>
+          <div class="post-howto-body" id="post-howto-body"></div>
+        </details>
+
         <div class="post-head">
           <div class="post-head-main">
             <h4 class="post-title" id="post-title"></h4>
@@ -704,6 +770,20 @@
     function setMarginStarter(text) {
       document.getElementById('post-margin').hidden = !text;
       document.getElementById('post-margin-starter').textContent = text || '';
+    }
+
+    // Bonnie's teaching guide — only while composing from a starter that has one
+    function setHowTo(steps) {
+      var box = document.getElementById('post-howto');
+      if (!steps || !steps.length) { box.hidden = true; box.open = false; return; }
+      document.getElementById('post-howto-body').innerHTML = steps.map(function (s) {
+        return '<div class="post-howto-step">' +
+                 '<span class="label-1">' + esc(s.label) + '</span>' +
+                 '<p class="post-howto-text">' + esc(s.text) + '</p>' +
+               '</div>';
+      }).join('');
+      box.hidden = false;
+      box.open = false;
     }
 
     function firstLine(text) {
@@ -796,6 +876,7 @@
       document.getElementById('save-edit-btn').textContent = 'Save Changes';
       renderTitleWithFav(s);
       setMarginStarter(s.starter);
+      setHowTo(s.howTo);   // the guide stays attached to the saved story
       document.getElementById('post-body').innerHTML = fsStoryHtml(s);
       renderPostMeta(s);
       setEditing(false);
@@ -867,6 +948,7 @@
       fsSwapView(storyViews(), document.getElementById('detail-view'), function () {
         document.getElementById('post-title').hidden = true;
         setMarginStarter(st ? st.text : '');
+        setHowTo(st ? st.howTo : null);
         document.getElementById('post-body').innerHTML = '';
         document.getElementById('post-meta').hidden = true;
         document.getElementById('save-edit-btn').textContent = 'Save';
@@ -1128,6 +1210,7 @@
           id: Date.now(),
           starterId: composeStarter ? composeStarter.id : null,
           starter: composeStarter ? composeStarter.text : '',
+          howTo: composeStarter ? (composeStarter.howTo || null) : null,
           title: document.getElementById('post-title-input').value.trim(),
           text: text,
           html: html,
@@ -1186,8 +1269,9 @@
         } else if (act === 'dup') {
           // opens unsaved — nothing exists until they save the retelling
           showCompose(null, true, function () {
-            composeStarter = src.starter ? { id: src.starterId || null, text: src.starter } : null;
+            composeStarter = src.starter ? { id: src.starterId || null, text: src.starter, howTo: src.howTo || null } : null;
             setMarginStarter(src.starter || '');
+            setHowTo(src.howTo || null);
             var dti = document.getElementById('post-title-input');
             dti.value = (src.title || 'Untitled Story') + ' \u2014 copy';
             fsAutoGrow(dti);

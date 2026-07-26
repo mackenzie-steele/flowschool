@@ -5,3 +5,6 @@ node_modules/
 
 # marketing landing page — local exploration only, not for deploy (2026-07)
 welcome.html
+
+# audio source files — extract to .m4a; never commit/deploy the raw video
+*.mov
