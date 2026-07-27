@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
-  <style>html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F7F6F4;color-scheme:light}</style>
+  <style>html{background:#0F1116;color-scheme:dark}html[data-theme="light"]{background:#F7F6F4;color-scheme:light}</style>
   <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Classes — Flow School</title>
@@ -48,80 +48,8 @@
       gap: 12px;
     }
 
-    .class-card {
-      box-shadow: var(--crest);
-      border-radius: var(--r);
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid rgba(var(--ink-rgb), .13);
-      padding: 16px 20px 16px;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      background: var(--raised), rgba(var(--ink-rgb), .022);
-      transition: border-color var(--transition-base), background .15s;
-    }
-
-    /* the heart floats in the corner — no layout space taken */
-    .cc-fav {
-      position: absolute;
-      top: 19px;
-      right: 20px;
-      margin: 0;
-    }
-
-    /* the shared globe keeps the left mark slot always — favorited or not —
-       so it never scoots when the heart appears; the corner stays the
-       heart's seat (empty or filled) */
-    .cc-shared {
-      position: absolute;
-      top: 19px;
-      right: 46px;
-      font-size: var(--icon-sm);
-      color: var(--text-3);
-    }
-
-    .class-card:hover {
-      border-color: rgba(var(--ink-rgb), .22);
-      background: var(--raised), rgba(var(--ink-rgb), .038);
-    }
-
-    .cc-top {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-      min-height: 20px; /* the tag's height — empty zones hold the line */
-    }
-
-    .cc-title {
-      font-size: var(--fs-h5);
-      font-weight: var(--weight-medium);
-      letter-spacing: -.01em;
-      line-height: var(--lh-heading);
-      color: var(--text-1);
-      margin-bottom: 16px;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    /* the peak flow speaks for the class — two mono lines, the flows
-       card's preview anatomy */
-    .cc-preview {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      letter-spacing: .03em;
-      line-height: 1.7;
-      color: var(--text-2);
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      margin: -6px 0 16px;
-      flex: 1;
-    }
+    /* .class-card / .cc-* now live in global.css (shared component); the
+       grid + list-view layout below stays page-specific */
 
     /* ── list view — the same cards, worn as scannable rows ── */
     .class-index.list-view { grid-template-columns: 1fr; gap: 0; }
@@ -182,15 +110,6 @@
       .class-index.list-view .cc-meta { flex-basis: 100%; white-space: normal; }
     }
 
-    .cc-meta {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      letter-spacing: .04em;
-      color: var(--text-3);
-      border-top: 1px solid var(--border-light);
-      padding-top: 12px;
-      margin-top: auto; /* the meta line seats at the card's floor */
-    }
 
     /* ── Top bar — component from global.css ── */
 

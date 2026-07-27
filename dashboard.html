@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
-  <style>html{background:#14161B;color-scheme:dark}html[data-theme="light"]{background:#F7F6F4;color-scheme:light}</style>
+  <style>html{background:#0F1116;color-scheme:dark}html[data-theme="light"]{background:#F7F6F4;color-scheme:light}</style>
   <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flow School</title>
@@ -269,49 +269,11 @@
       line-height: 1;
     }
 
-    /* ── Your Favorite Classes — pinned, one tap from teaching ── */
-    .db-deck-card {
-      box-shadow: var(--crest);
-      border-radius: var(--r);
-      flex-shrink: 0;
-      width: 224px;
-      border: 1px solid var(--border);
-      padding: 16px;
-      text-decoration: none;
-      color: inherit;
-      background: var(--raised), rgba(var(--ink-rgb),.022);
-      transition: border-color var(--transition-base), background .15s;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .db-deck-card:hover {
-      border-color: rgba(var(--ink-rgb),.22);
-      background: var(--raised), rgba(var(--ink-rgb),.038);
-    }
-
-    .db-deck-title {
-      font-size: var(--fs-h6);
-      font-weight: var(--weight-medium);
-      line-height: 1.3;
-      color: var(--text-1);
-      flex: 1;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-
-    .db-deck-meta {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      letter-spacing: .04em;
-      color: var(--text-3);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    /* ── Your Favorite Classes — the shared .class-card component (styles in
+          global.css), sized as fixed-width cards for the horizontal deck ── */
+    /* min-width:0 lets a long (nowrap) title truncate within the fixed width
+       instead of forcing the card wider than its 300px basis */
+    #db-deck-scroll .class-card { flex: 0 0 300px; min-width: 0; }
 
     /* ── Milestones — evidence of creative output ────────── */
     .db-milestones {
@@ -1457,6 +1419,13 @@
     })();
 
     // ── Your Favorite Classes — pinned for quick access ──
+    // circles = sections with content, minus warm-up & cooldown — mirrors
+    // class-editor's circleCount so the count matches Your Classes exactly
+    function circleCount(c) {
+      var s = c.sections || {}, n = 0;
+      for (var k in s) { if (k !== 'begin' && k !== 'cooldown' && (s[k] || '').trim()) n++; }
+      return n;
+    }
     function renderOnDeck() {
       var wrap = document.getElementById('db-deck-wrap');
       var pinned = [];
@@ -1467,13 +1436,15 @@
       } catch (_) {}
       wrap.hidden = !pinned.length;
       if (!pinned.length) return;
+      // the exact Your Classes grid card — flow type + heart, name, and a
+      // duration · circles meta line. No flow preview, no created date.
       document.getElementById('db-deck-scroll').innerHTML = pinned.map(function (c) {
-        var meta = [(c.length || 60) + ' min'];
-        if (c.playlist) meta.push('\u266A ' + c.playlist);
-        return '<a class="db-deck-card" href="your-classes?id=' + c.id + '">' +
-          '<span class="db-deck-title">' + escHTML(c.title || 'Untitled Class') + '</span>' +
-          '<span class="db-deck-meta">' + escHTML(meta.join(' · ')) + '</span>' +
-        '</a>';
+        var n = circleCount(c);
+        return fsClassCard({
+          href: 'your-classes?id=' + c.id,
+          pinned: c.pinned, shared: c.shared, classType: c.classType, title: c.title,
+          meta: [(c.length || 60) + ' min', n + (n === 1 ? ' circle' : ' circles')]
+        });
       }).join('');
     }
 

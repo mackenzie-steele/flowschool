@@ -323,7 +323,7 @@
      building. Every step of the ramp carries a trace of the accent's
      blue — temperature is what separates a designed dark mode from an
      inverted one. Lightness matches the old neutral ramp. */
-  --bg:            #14161B;
+  --bg:            #0F1116;
   --ink-rgb:       235, 238, 245;
   --ink-solid:     #EBEEF5;
   --paper-solid:   #14161B;
@@ -3247,6 +3247,62 @@ body.has-sidebar {
   user-select: none;
 }
 
+/* ── Class card — one grid card, shared by Your Classes (own + saved) and the
+      dashboard's Your Favorite Classes deck. Markup: fsClassCard in
+      lib/library.js. Page-specific layout — the grid, list-view rows, and the
+      dashboard deck's fixed-width sizing — stays per page. ── */
+.class-card {
+  box-shadow: var(--crest);
+  border-radius: var(--r);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(var(--ink-rgb), .13);
+  padding: 16px 20px 16px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  background: var(--raised), rgba(var(--ink-rgb), .022);
+  transition: border-color var(--transition-base), background .15s;
+}
+.class-card:hover { border-color: rgba(var(--ink-rgb), .22); background: var(--raised), rgba(var(--ink-rgb), .038); }
+.cc-fav { position: absolute; top: 19px; right: 20px; margin: 0; }
+.cc-shared { position: absolute; top: 19px; right: 46px; font-size: var(--icon-sm); color: var(--text-3); }
+.cc-top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; min-height: 20px; }
+.cc-title {
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  letter-spacing: -.01em;
+  line-height: var(--lh-heading);
+  color: var(--text-1);
+  margin-bottom: 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cc-preview {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .03em;
+  line-height: 1.7;
+  color: var(--text-2);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin: -6px 0 16px;
+  flex: 1;
+}
+.cc-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  color: var(--text-3);
+  border-top: 1px solid var(--border-light);
+  padding-top: 12px;
+  margin-top: auto;
+}
+
 /* ── Mono tag — the small uppercase artifact label. The per-page
       names (flow-tag, cc-tag, …) are one component, like the menus ── */
 .flow-tag,
@@ -3617,13 +3673,16 @@ body.has-sidebar {
   transition: opacity .11s ease;
 }
 
-/* one segmented instrument switch, not three floating pills */
+/* a modern segmented control — a recessed track with a raised pill for the
+   chosen kind: the choice lifts forward in accent, the rest recede */
 .fb-chips {
   display: flex;
-  border: 1px solid var(--border);
+  gap: 4px;
+  padding: 4px;
+  background: var(--well-bg);
+  box-shadow: var(--well);
   border-radius: var(--rb);
-  overflow: hidden;
-  margin: 8px 0 14px;
+  margin: 10px 0 16px;
 }
 
 .fb-chip {
@@ -3635,30 +3694,30 @@ body.has-sidebar {
   padding: 9px 8px;
   background: none;
   border: none;
-  border-left: 1px solid var(--border-light);
+  border-radius: calc(var(--rb) - 3px);
   font-family: var(--font);
   font-size: 13px;
   color: var(--text-2);
   cursor: pointer;
-  /* S2 — the unchosen kinds recede; the choice comes forward (the poles-
-     recede move the Style sliders use), no new colour */
-  opacity: .5;
-  transition: color var(--transition-base), background var(--transition-base), opacity var(--transition-base);
+  opacity: .66;
+  transition: color var(--transition-base), background var(--transition-base), box-shadow var(--transition-base), opacity var(--transition-base);
 }
-.fb-chip:first-child { border-left: none; }
-.fb-chip:hover { color: var(--text-1); opacity: .82; }
+.fb-chip:hover { color: var(--text-1); opacity: 1; }
 .fb-chip.on {
-  color: var(--text-1);
-  background: rgba(var(--ink-rgb), .05);
+  color: var(--accent);
+  background: var(--raised-2), var(--paper-solid);
+  /* a tight, dark lift — small enough to stay inside the track's padding
+     (no spill past the container) and correct on both light and dark */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .16);
   opacity: 1;
 }
 .fb-chip-dot {
   width: 5px; height: 5px;
   border-radius: 50%;
   background: rgba(var(--ink-rgb), .18);
-  transition: background var(--transition-base);
+  transition: background var(--transition-base), transform var(--transition-base);
 }
-.fb-chip.on .fb-chip-dot { background: var(--accent); }
+.fb-chip.on .fb-chip-dot { background: var(--accent); transform: scale(1.2); }
 
 
 .fb-text {
@@ -3679,8 +3738,8 @@ body.has-sidebar {
 }
 .fb-text::placeholder { color: var(--text-3); }
 .fb-text:focus {
-  background: rgba(var(--ink-rgb), .06);
-  box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .30);
+  background: rgba(var(--accent-rgb), .04);
+  box-shadow: var(--well), inset 0 0 0 1.5px rgba(var(--accent-rgb), .5);
 }
 
 .fb-fine {
