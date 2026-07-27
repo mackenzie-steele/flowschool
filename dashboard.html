@@ -1213,32 +1213,17 @@
           <div id="db-drop-body"></div>
         </div>
 
-        <!-- 5. Suggested Next Step + Skill Map -->
+        <!-- 5. The Shape of Your Practice + Teaching Notes -->
         <div class="db-row db-row-2">
 
           <div class="db-card" id="db-score-card">
             <span class="db-eyebrow">The Shape of Your Practice</span>
           </div>
 
-          <div class="db-card db-next-step" id="db-next-card">
-            <span class="db-eyebrow">Suggested Next Step</span>
-          </div>
-
-        </div>
-
-        <!-- 6. Teaching Notes + Recently Saved -->
-        <div class="db-row db-row-2">
-
           <div class="db-card db-card-pin">
             <span class="db-eyebrow">Teaching Notes</span>
             <div id="db-log-list"></div>
             <a href="teaching-notes" class="db-view-all">View your notes <span class="material-symbols-sharp i-sm" style="vertical-align:-2px">arrow_forward</span></a>
-          </div>
-
-          <div class="db-card db-card-pin">
-            <span class="db-eyebrow">Recently Saved</span>
-            <div id="db-saved-list"></div>
-            <a href="saved" class="db-view-all">View all saved <span class="material-symbols-sharp i-sm" style="vertical-align:-2px">arrow_forward</span></a>
           </div>
 
         </div>
@@ -1529,7 +1514,7 @@
         });
       } catch (_) {}
       entries.sort(function (a, b) { return b.ts - a.ts; });
-      entries = entries.slice(0, 4);
+      entries = entries.slice(0, 3);
       if (!entries.length) {
         el.innerHTML = '<p class="db-saved-empty">Notes you take after teaching a class will land here.</p>';
         return;
@@ -1626,40 +1611,6 @@
       sound:    { title: 'Score one class',            desc: 'Sound is your quietest edge. Build a playlist for a class you already teach.', href: 'playlist-builder', label: 'Build a Playlist' },
       reflect:  { title: 'Close the loop',             desc: 'Reflect is the missing beat. One honest note after your next class is all it takes.', href: 'teaching-notes', label: 'Add a Note' },
     };
-
-    function renderNextStep() {
-      var step = null;
-
-      // the shape speaks first — but only when an axis is honestly
-      // far behind the rest (never nags an even or early practice)
-      var axes = fsPracticeShape();
-      if (!axes.every(function (a) { return a.allTime === 0; })) {
-        var low = axes.reduce(function (a, b) { return b.allTime < a.allTime ? b : a; });
-        var others = axes.filter(function (a) { return a.key !== low.key; });
-        var avg = others.reduce(function (t, a) { return t + a.allTime; }, 0) / others.length;
-        if (low.allTime + 15 <= avg) step = AXIS_STEPS[low.key];
-      }
-
-      if (!step) {
-        var recent = [];
-        try { recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch (_) {}
-        var lastPage = recent.length ? recent[0].href : 'default';
-        for (var i = 0; i < NEXT_STEPS.length; i++) {
-          if (NEXT_STEPS[i].trigger === lastPage) { step = NEXT_STEPS[i]; break; }
-        }
-      }
-      if (!step) {
-        for (var j = 0; j < NEXT_STEPS.length; j++) {
-          if (NEXT_STEPS[j].trigger === 'default') { step = NEXT_STEPS[j]; break; }
-        }
-      }
-      var card = document.getElementById('db-next-card');
-      card.innerHTML =
-        '<span class="db-eyebrow">Next Step</span>' +
-        '<h3 class="db-next-title">' + step.title + '</h3>' +
-        '<p class="db-next-desc">' + step.desc + '</p>' +
-        '<a href="' + step.href + '" class="btn-primary" style="align-self:flex-start;display:inline-flex;align-items:center;gap:8px">' + step.label + '<span class="material-symbols-sharp i-sm">arrow_forward</span></a>';
-    }
 
     // ── The Shape of Your Practice — a portrait from real artifacts ──
     // Two polygons: all-time in quiet ink, the last 30 days in accent.
@@ -1766,81 +1717,6 @@
           renderPracticeShape();
         });
       });
-    }
-
-    function renderSaved() {
-      var container = document.getElementById('db-saved-list');
-      var items = [];
-      try {
-        var playlists = JSON.parse(localStorage.getItem('flowschool_playlists') || '[]');
-        playlists.forEach(function (p) {
-          items.push({ icon: 'queue_music', name: p.title || 'Untitled Playlist', sub: 'Playlist Builder', href: 'playlist-builder?id=' + p.id, time: p.savedAt ? new Date(p.savedAt).getTime() : 0 });
-        });
-      } catch (_) {}
-      try {
-        var rules = JSON.parse(localStorage.getItem('flowschool_arules') || '[]');
-        rules.forEach(function (r) {
-          var name = r.title || 'Saved Challenge';
-          if (name.length > 60) name = name.slice(0, 57) + '…';
-          items.push({ icon: 'casino', name: name, sub: 'Arbitrary Rules', href: 'arbitrary-rules?challenge=' + r.id, time: r.id || 0 });
-        });
-      } catch (_) {}
-      try {
-        var favs = JSON.parse(localStorage.getItem('flowschool_favs') || '[]');
-        favs.forEach(function (f) {
-          var id = typeof f === 'object' ? f.id : f;
-          var title = typeof f === 'object' ? (f.title || 'Movement Experiment') : 'Movement Experiment';
-          var time = typeof f === 'object' ? (f.savedAt || 0) : 0;
-          items.push({ icon: 'gesture', name: title, sub: 'Movement Experiments', href: 'movement-experiments?exp=' + id, time: time });
-        });
-      } catch (_) {}
-      try {
-        var raw = JSON.parse(localStorage.getItem('fs-cue-flows') || '[]');
-        var cueList = Array.isArray(raw) ? raw : Object.values(raw || {});
-        cueList.filter(Boolean).forEach(function (fl, ci) {
-          var cueId = fl.id != null ? fl.id : (Date.parse(fl.savedAt) || 0) + ci;
-          var time = fl.savedAt ? new Date(fl.savedAt).getTime() : 0;
-          items.push({ icon: 'edit_note', name: fl.name || 'Untitled', sub: 'Your Cues', href: 'your-cues?id=' + cueId, time: time });
-        });
-      } catch (_) {}
-      try {
-        var classesSaved = JSON.parse(localStorage.getItem('flowschool_classes') || '[]');
-        classesSaved.forEach(function (c) {
-          items.push({ icon: 'edit_document', name: c.title || 'Untitled Class', sub: 'Your Classes', href: 'your-classes?id=' + c.id, time: c.editedAt || c.id || 0 });
-        });
-      } catch (_) {}
-      try {
-        var stories = JSON.parse(localStorage.getItem('flowschool_stories') || '[]');
-        stories.forEach(function (s) {
-          var name = s.text || 'Saved Story';
-          if (name.length > 60) name = name.slice(0, 57) + '…';
-          items.push({ icon: 'auto_stories', name: name, sub: 'Story Starters', href: 'stories?id=' + s.id, time: s.id || 0 });
-        });
-      } catch (_) {}
-      try {
-        var poseChains = JSON.parse(localStorage.getItem('fs-pose-connector-saved') || '[]');
-        poseChains.forEach(function (c) {
-          items.push({ icon: 'conversion_path', name: c.name || 'Untitled Chain', sub: 'Pose Popcorn', href: 'pose-popcorn?chain=' + (c.savedAt || ''), time: c.savedAt || 0 });
-        });
-      } catch (_) {}
-
-
-      items.sort(function (a, b) { return b.time - a.time; });
-      items = items.slice(0, 8);
-
-      if (!items.length) {
-        container.innerHTML = '<p class="db-saved-empty">Nothing saved yet. Bookmark items as you practice&#8212;they&#8217;ll appear here.</p>';
-        return;
-      }
-      container.innerHTML = items.map(function (item) {
-        return '<a href="' + item.href + '" class="db-saved-item">' +
-          '<div class="db-saved-icon"><span class="material-symbols-sharp">' + item.icon + '</span></div>' +
-          '<div class="db-saved-info">' +
-            '<span class="db-saved-name">' + item.name + '</span>' +
-            '<span class="db-saved-sub">' + item.sub + '</span>' +
-          '</div>' +
-        '</a>';
-      }).join('');
     }
 
     function renderEvents() {
@@ -2107,9 +1983,7 @@
       renderTeachingLog();
       renderStarters();
       renderContinue();
-      renderNextStep();
       renderPracticeShape();
-      renderSaved();
       renderEvents();
       renderDrop();
       renderStarter();

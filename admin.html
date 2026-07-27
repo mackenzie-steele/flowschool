@@ -14,6 +14,31 @@
     .adm-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); }
     .adm-head h1 { font-size: var(--fs-h4); font-weight: var(--weight-medium); letter-spacing: -.015em; }
     .adm-updated { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+    /* storage & capacity bars (Health tab) */
+    .adm-caps { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    @media (max-width: 640px) { .adm-caps { grid-template-columns: 1fr; } }
+    .adm-cap-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+    .adm-cap-label { font-weight: var(--weight-medium); color: var(--text-1); }
+    .adm-cap-num { font-family: var(--font-mono); font-size: 12px; color: var(--text-1); white-space: nowrap; }
+    .adm-cap-track { height: 8px; border-radius: 999px; background: rgba(var(--ink-rgb), .09); overflow: hidden; }
+    .adm-cap-fill { height: 100%; border-radius: 999px; background: var(--accent); transition: width .5s ease; }
+    .adm-cap-fill.warn { background: #cf9a3a; }
+    .adm-cap-fill.crit { background: #c65b49; }
+    .adm-cap-pct { margin-top: 6px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; color: var(--text-3); }
+    .adm-cap-buckets { margin-top: 16px; font-size: 12px; }
+    /* activation funnel */
+    .adm-funnel { display: flex; flex-direction: column; gap: 10px; }
+    .adm-fn-row { display: grid; grid-template-columns: 158px 1fr 56px 62px; align-items: center; gap: 12px; }
+    .adm-fn-label { font-size: 13px; color: var(--text-1); }
+    .adm-fn-bar { height: 26px; border-radius: 6px; background: rgba(var(--ink-rgb), .06); overflow: hidden; }
+    .adm-fn-fill { height: 100%; background: var(--accent); border-radius: 6px; transition: width .5s ease; }
+    .adm-fn-count { font-family: var(--font-mono); font-size: 13px; text-align: right; color: var(--text-1); }
+    .adm-fn-conv { font-family: var(--font-mono); font-size: 11px; text-align: right; color: var(--text-3); }
+    @media (max-width: 640px) { .adm-fn-row { grid-template-columns: 104px 1fr 44px 48px; gap: 8px; } .adm-fn-label { font-size: 12px; } }
+    /* retention grid — cohort heatmap */
+    .adm-grid td.adm-hm { text-align: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-1); padding: 8px 6px; border-radius: 3px; }
+    .adm-grid th { white-space: nowrap; }
+    .adm-resend-btn { padding: 4px 12px; font-size: 12px; white-space: nowrap; }
     .adm-headright { display: flex; align-items: center; gap: 10px; }
 
     /* section nav — two tiers: group pills (primary) + section sub-tabs */
@@ -40,32 +65,27 @@
     .adm-info { position: absolute; top: 12px; right: 12px; color: var(--text-3); cursor: help; line-height: 0; }
     .adm-info .material-symbols-sharp { font-size: 15px; }
     .adm-info:hover { color: var(--text-1); }
-    .adm-info[data-tip]:hover::after {
-      content: attr(data-tip);
-      position: absolute; top: calc(100% + 8px); right: 0;
-      width: max-content; max-width: min(240px, 78vw); white-space: normal; text-align: left;
-      background: var(--ink-solid); color: var(--paper-solid);
-      font-family: var(--font); font-size: 11.5px; line-height: 1.45; font-weight: var(--weight-regular);
-      letter-spacing: 0; text-transform: none;
-      padding: 9px 11px; border-radius: var(--rb); box-shadow: var(--shadow-float);
-      z-index: 400; pointer-events: none;
-    }
 
-    /* inline info affordance for table-column headers (tooltip opens
-       downward into the table so the horizontal-scroll wrapper can't clip it) */
+    /* inline info affordance for table-column headers */
     .adm-thinfo { position: relative; display: inline-block; margin-left: 3px; color: var(--text-3); cursor: help; vertical-align: middle; line-height: 0; }
     .adm-thinfo .material-symbols-sharp { font-size: 13px; }
     .adm-thinfo:hover { color: var(--text-1); }
-    .adm-thinfo[data-tip]:hover::after {
-      content: attr(data-tip);
-      position: absolute; top: calc(100% + 7px); right: 0;
-      width: max-content; max-width: min(230px, 78vw); white-space: normal; text-align: left;
+    /* the ONE tooltip — every hover in the admin (cards' ⓘ, column-header ⓘ, and
+       chart bars) routes through this animated pill; JS-positioned on <body> so
+       scroll containers can't clip it. Short content stays one line; long
+       explanations wrap within max-width. */
+    .adm-tt {
+      position: fixed; left: 0; top: 0; z-index: 500;
       background: var(--ink-solid); color: var(--paper-solid);
-      font-family: var(--font); font-size: 11px; line-height: 1.45; font-weight: var(--weight-regular);
-      letter-spacing: 0; text-transform: none;
-      padding: 8px 10px; border-radius: var(--rb); box-shadow: var(--shadow-float);
-      z-index: 400; pointer-events: none;
+      font-family: var(--font); font-size: 11.5px; line-height: 1.4; font-weight: var(--weight-regular);
+      letter-spacing: 0; white-space: normal; max-width: min(280px, 78vw); text-align: left;
+      padding: 8px 11px; border-radius: var(--rb); box-shadow: var(--shadow-float);
+      pointer-events: none; opacity: 0; transform: translateY(4px) scale(.97);
+      transition: opacity 130ms ease, transform 130ms ease;
     }
+    .adm-tt.below { transform: translateY(-4px) scale(.97); }
+    .adm-tt.on { opacity: 1; transform: translateY(0) scale(1); }
+    @media (prefers-reduced-motion: reduce) { .adm-tt { transition: opacity 90ms ease; transform: none; } .adm-tt.below { transform: none; } .adm-tt.on { transform: none; } }
     .adm-metric--link { cursor: pointer; transition: border-color var(--transition-base), box-shadow var(--transition-base); }
     .adm-metric--link:hover { border-color: var(--accent-border); box-shadow: var(--shadow-float); }
     .adm-metric--link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -73,6 +93,7 @@
     .adm-metric--link:hover::after { opacity: 1; }
     .adm-metric .val { font-size: 28px; font-weight: var(--weight-medium); letter-spacing: -.02em; margin-top: 6px; color: var(--text-1); }
     .adm-metric .sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+    .adm-metric .val.adm-val-sm { font-size: 16px; line-height: 1.3; letter-spacing: -.01em; }
     .adm-delta { font-size: 11px; margin-top: 5px; font-variant-numeric: tabular-nums; }
     .adm-delta.up   { color: var(--accent); }
     .adm-delta.down { color: var(--danger); }
@@ -117,7 +138,6 @@
     .adm-retfill.mid  { background: color-mix(in srgb, var(--accent) 55%, var(--text-3)); }
     .adm-retfill.low  { background: var(--danger); opacity: .8; }
     /* time-series midline gridline */
-    .suc-grid { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--border-light); opacity: .6; pointer-events: none; }
     /* impact: growth curve + love wall */
     .adm-growth-svg { width: 100%; height: 140px; display: block; }
     .adm-growth-svg .area { fill: var(--accent); opacity: .12; }
@@ -127,6 +147,20 @@
     .adm-love-card { margin: 0; border-left: 3px solid var(--accent); background: var(--well-bg); border-radius: var(--rs); padding: 14px 16px; }
     .adm-love-card blockquote { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: var(--text-1); }
     .adm-love-card figcaption { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em; color: var(--text-3); text-transform: uppercase; }
+    /* ── ONE vertical rhythm ──────────────────────────────────────────────
+       Every tab sets #adm-body's innerHTML to a run of sibling blocks, so the
+       body owns the spacing between them — no render function needs an inline
+       margin. Nested blocks inside panels keep their own margins (this only
+       targets direct children). 20px between blocks; a section header
+       (group label or a bare panel header) sits further from what's above and
+       hugs the content it introduces. */
+    #adm-body > * { margin: 0; }
+    #adm-body > * + * { margin-top: 20px; }
+    #adm-body > * + .adm-group-label,
+    #adm-body > * + .adm-panel-head { margin-top: 28px; }
+    #adm-body > .adm-group-label + *,
+    #adm-body > .adm-panel-head + * { margin-top: 10px; }
+
     /* activation funnel */
     .adm-funnel { display: flex; flex-direction: column; gap: 16px; }
     .adm-funnel-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
@@ -227,10 +261,12 @@
     .suc-ymax { position: absolute; top: 0; left: 0; font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
     .suc-plot { position: relative; display: flex; align-items: flex-end; gap: 3px; height: 150px;
       border-top: 1px dashed var(--border-light); border-bottom: 1px solid var(--border); padding-top: 6px; }
-    .suc-col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
-    .suc-bar { width: 100%; max-width: 26px; margin: 0 auto; background: var(--accent); opacity: .8;
-      border-radius: 2px 2px 0 0; transition: opacity var(--transition-base); }
-    .suc-col:hover .suc-bar { opacity: 1; }
+    /* gridlines sit behind the bars (z-index 0) so they read on the chart, not across the data */
+    .suc-grid { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--border-light); opacity: .6; pointer-events: none; z-index: 0; }
+    .suc-col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; position: relative; z-index: 1; }
+    .suc-bar { width: 100%; max-width: 26px; margin: 0 auto; background: var(--accent); opacity: 1;
+      border-radius: 2px 2px 0 0; transition: filter var(--transition-base); }
+    .suc-col:hover .suc-bar { filter: brightness(1.08); }
     .suc-axis { display: flex; justify-content: space-between; margin-top: 8px; font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
     .suc-total { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); margin-top: 12px; }
 
@@ -289,9 +325,12 @@
     var SECTIONS = [
       { id: 'overview',    label: 'Overview',            render: renderOverview },
       { id: 'impact',      label: 'Impact',              render: renderImpact },
+      { id: 'activation',  label: 'Activation',          render: renderActivation },
       { id: 'users',       label: 'Users',               render: renderUsers },
       { id: 'retention',   label: 'Retention',           render: renderRetention },
+      { id: 'engagement',  label: 'Engagement',          render: renderEngagement },
       { id: 'tools',       label: 'Tool Analytics',      render: renderTools },
+      { id: 'creation',    label: 'Creation',            render: renderCreation },
       { id: 'experiments', label: 'Movement Experiments',render: renderExperiments },
       { id: 'public',      label: 'Shared Classes',      render: renderPublic },
       { id: 'saved',       label: 'Saved Content',       render: renderSaved },
@@ -306,9 +345,9 @@
     var GROUPS = [
       { label: 'Overview', sections: ['overview'] },
       { label: 'Impact',   sections: ['impact'] },
-      { label: 'People',   sections: ['users', 'retention', 'activity'] },
-      { label: 'Content',  sections: ['public', 'saved', 'experiments'] },
-      { label: 'Product',  sections: ['tools'] },
+      { label: 'People',   sections: ['users', 'activation', 'retention', 'activity'] },
+      { label: 'Content',  sections: ['creation', 'public', 'saved', 'experiments'] },
+      { label: 'Product',  sections: ['engagement', 'tools'] },
       { label: 'System',   sections: ['feedback', 'health', 'admins', 'exports'] },
     ];
     function groupOf(id) { return GROUPS.filter(function (g) { return g.sections.indexOf(id) !== -1; })[0] || GROUPS[0]; }
@@ -348,6 +387,44 @@
     function stateError(msg) { return '<div class="adm-state err"><span class="adm-state-ico"><span class="material-symbols-sharp">error</span></span><div class="adm-state-msg">' + esc(msg || 'Something went wrong loading this.') + '</div></div>'; }
 
     function num(n) { return A.fmtNum(n); }
+    // bytes → human units, for the storage/capacity panel
+    function fmtBytes(n) {
+      n = Number(n || 0);
+      if (n < 1024) return n + ' B';
+      var u = ['KB', 'MB', 'GB', 'TB'], i = -1;
+      do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+      return (n >= 10 ? Math.round(n) : n.toFixed(1)) + ' ' + u[i];
+    }
+    // a metric tile matching the overview cards (label · big value · optional sub)
+    // the one metric card. label + value, plus optional: on-face live stat (sub),
+    // info-hover explanation (tip — everything explanatory lives here, never on the
+    // face), up/down delta, and a doorway (navKey → NAV). val may be a number
+    // (formatted via num()) or a pre-formatted string.
+    function card(lbl, val, sub, tip, delta, navKey) {
+      var attrs = navKey ? ' adm-metric--link" data-nav="' + navKey + '" role="button" tabindex="0' : '';
+      return '<div class="adm-metric' + attrs + '">' +
+        (tip ? '<span class="adm-info" data-tip="' + esc(tip) + '"><span class="material-symbols-sharp">info</span></span>' : '') +
+        '<div class="lbl">' + esc(lbl) + '</div><div class="val">' + (typeof val === 'string' ? val : num(val)) + '</div>' +
+        (delta || '') +
+        (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</div>';
+    }
+    function mtile(label, val, tip, sub) { return card(label, val, sub, tip); }
+    // fallback panel when a newer admin RPC isn't in the database yet
+    function runSqlNote(title) {
+      return '<div class="adm-panel"><div class="adm-panel-head"><h2>' + esc(title) + '</h2></div>' +
+        '<div class="adm-intro" style="margin:0">This needs the latest <code>admin-analytics.sql</code> run in Supabase, then it’ll show here.</div></div>';
+    }
+    // a used/limit capacity bar — amber past 75%, red past 90%
+    function capBar(used, limit, label) {
+      var pct = limit ? Math.min(100, used / limit * 100) : 0;
+      var cls = pct >= 90 ? ' crit' : pct >= 75 ? ' warn' : '';
+      return '<div class="adm-cap">' +
+        '<div class="adm-cap-head"><span class="adm-cap-label">' + esc(label) + '</span>' +
+        '<span class="adm-cap-num">' + fmtBytes(used) + ' <span class="muted">of ' + fmtBytes(limit) + '</span></span></div>' +
+        '<div class="adm-cap-track"><div class="adm-cap-fill' + cls + '" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+        '<div class="adm-cap-pct">' + (pct < 10 ? pct.toFixed(1) : Math.round(pct)) + '% used</div>' +
+        '</div>';
+    }
     function thInfo(tip) { return '<span class="adm-thinfo" data-tip="' + esc(tip) + '"><span class="material-symbols-sharp">info</span></span>'; }
     // small +/- indicator comparing a period to the one before it
     function deltaHtml(cur, prev, label) {
@@ -366,7 +443,7 @@
       var bars = daily.map(function (x) {
         var c = Number(x.count || 0);
         var h = c > 0 ? Math.max(8, Math.round(c / max * 100)) : 0;
-        return '<div class="adm-spk-col" title="' + esc(A.fmtDate(x.day) + ' · ' + c + (c === 1 ? ' action' : ' actions')) + '">' + (h ? '<div class="adm-spk-bar" style="height:' + h + '%"></div>' : '') + '</div>';
+        return '<div class="adm-spk-col"' + (c > 0 ? ' data-tip="' + esc(A.fmtDate(x.day) + ' · ' + c + (c === 1 ? ' action' : ' actions')) + '"' : '') + '>' + (h ? '<div class="adm-spk-bar" style="height:' + h + '%"></div>' : '') + '</div>';
       }).join('');
       return '<div class="adm-spk">' + bars + '</div><div class="adm-spk-cap">' + num(total) + (total === 1 ? ' action' : ' actions') + ' · last 14 days</div>';
     }
@@ -380,14 +457,7 @@
         var funnel = await A.rpc('admin_funnel').catch(function (e) { console.warn('[admin] funnel fetch failed:', e && e.message); return null; });
         document.getElementById('adm-updated').textContent = 'Updated ' + A.fmtDateTime(o.generated_at);
         var since = o.events_tracked_since ? A.fmtDate(o.events_tracked_since) : 'launch';
-        var metric = function (lbl, val, sub, tip, delta, navKey) {
-          var attrs = navKey ? ' adm-metric--link" data-nav="' + navKey + '" role="button" tabindex="0' : '';
-          return '<div class="adm-metric' + attrs + '">' +
-                 (tip ? '<span class="adm-info" data-tip="' + esc(tip) + '"><span class="material-symbols-sharp">info</span></span>' : '') +
-                 '<div class="lbl">' + esc(lbl) + '</div><div class="val">' + num(val) + '</div>' +
-                 (delta || '') +
-                 (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</div>';
-        };
+        var metric = card;
         var group = function (label, cards) {
           return '<div class="adm-group-label">' + esc(label) + '</div><div class="adm-metrics">' + cards + '</div>';
         };
@@ -459,9 +529,87 @@
       }).join('') + '</div>';
     }
 
+    // ── ACTIVATION — the first week (funnel · time-to-create · cohorts · unconfirmed) ──
+    async function renderActivation() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var a = await A.rpc('admin_activation').catch(function (e) { console.warn('[admin] activation fetch failed:', e && e.message); return null; });
+        if (!a) {
+          b.innerHTML = '<div class="adm-panel"><div class="adm-panel-head"><h2>Activation</h2></div><div class="adm-intro" style="margin:0">Activation metrics need the latest <code>admin-analytics.sql</code> run in Supabase, then they’ll show here.</div></div>';
+          return;
+        }
+        var unc = await A.rpc('admin_unconfirmed', { p_limit: 100, p_offset: 0 }).catch(function () { return { total: 0, rows: [] }; });
+
+        var mh = a.median_hours_to_create;
+        var ttc = (mh == null) ? '—' : (Number(mh) >= 48 ? Math.round(mh / 24) + ' days' : mh + ' hrs');
+        var metrics =
+          '<div class="adm-metrics">' +
+            '<div class="adm-metric"><span class="adm-info" data-tip="Median time from signup to a teacher’s first meaningful action — generating, saving, or creating something."><span class="material-symbols-sharp">info</span></span><div class="lbl">Median time to first create</div><div class="val">' + ttc + '</div></div>' +
+            '<div class="adm-metric"><div class="lbl">Teachers who created</div><div class="val">' + num(a.creators) + '</div></div>' +
+            '<div class="adm-metric"><div class="lbl">Unconfirmed accounts</div><div class="val">' + num(a.unconfirmed_count) + '</div></div>' +
+          '</div>';
+
+        var funnel = a.funnel || [];
+        var topCount = funnel.length ? (Number(funnel[0].count) || 0) : 0;
+        var fnRows = funnel.map(function (step, i) {
+          var c = Number(step.count) || 0;
+          var w = topCount ? Math.max(2, c / topCount * 100) : 0;
+          var conv = (i === 0) ? '' : (Number(funnel[i - 1].count) ? Math.round(c / Number(funnel[i - 1].count) * 100) + '%' : '');
+          return '<div class="adm-fn-row"><div class="adm-fn-label">' + esc(step.label) + '</div>' +
+            '<div class="adm-fn-bar"><div class="adm-fn-fill" style="width:' + w.toFixed(1) + '%"></div></div>' +
+            '<div class="adm-fn-count">' + num(c) + '</div>' +
+            '<div class="adm-fn-conv">' + conv + '</div></div>';
+        }).join('');
+        var funnelPanel =
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Activation funnel</h2><span class="muted adm-mono" style="font-size:11px">% = kept from the step above</span></div>' +
+          '<div class="adm-funnel">' + fnRows + '</div></div>';
+
+        var cohorts = a.cohorts || [];
+        var cohortRows = cohorts.map(function (c) {
+          return '<tr><td>' + A.fmtDate(c.cohort_week) + '</td><td class="num">' + num(c.signups) + '</td><td class="num">' + num(c.activated) + '</td><td class="num">' + (c.pct == null ? '—' : c.pct + '%') + '</td></tr>';
+        }).join('');
+        var cohortPanel = cohorts.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>First-week activation by cohort</h2></div>' +
+            '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Signup week</th><th class="num">Signups</th><th class="num">Created in wk 1</th><th class="num">Rate</th></tr></thead><tbody>' + cohortRows + '</tbody></table></div></div>'
+          : '';
+
+        var uncRows = (unc.rows || []).map(function (u) {
+          var h = Number(u.hours_waiting) || 0;
+          var waiting = h >= 48 ? Math.round(h / 24) + 'd' : h + 'h';
+          return '<tr><td class="adm-mono">' + esc(u.email || '') + '</td><td class="muted">' + A.fmtDateTime(u.created_at) + '</td><td class="num">' + waiting + '</td>' +
+            '<td class="num"><button type="button" class="btn-secondary adm-resend-btn" data-email="' + esc(u.email || '') + '">Resend</button></td></tr>';
+        }).join('');
+        var uncNote = (unc.total || 0) > (unc.rows || []).length ? '<div class="muted" style="margin-top:8px;font-size:11px">Showing ' + (unc.rows || []).length + ' of ' + num(unc.total) + '.</div>' : '';
+        var uncPanel =
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Unconfirmed accounts</h2><span class="muted adm-mono" style="font-size:11px">' + num(unc.total || 0) + ' total</span></div>' +
+          '<div class="adm-intro" style="margin-top:0">Signed up but never confirmed their email — they can’t sign in. Resend their confirmation, or reach out, before they give up.</div>' +
+          (uncRows
+            ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Email</th><th>Signed up</th><th class="num">Waiting</th><th></th></tr></thead><tbody>' + uncRows + '</tbody></table></div>' + uncNote
+            : stateEmpty('Everyone who signed up has confirmed. Nice.')) +
+          '</div>';
+
+        b.innerHTML =
+          '<div class="adm-intro">Where new teachers land in their first week — from signup to their first real creation. The sooner they make something, the more likely they stay.</div>' +
+          metrics + funnelPanel + cohortPanel + uncPanel;
+
+        // wire the per-row "Resend confirmation" buttons (I1)
+        b.querySelectorAll('.adm-resend-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var email = btn.getAttribute('data-email');
+            var orig = btn.textContent;
+            btn.disabled = true; btn.textContent = 'Sending…';
+            A.resendConfirmation(email).then(function (res) {
+              if (res && res.error) { toast(res.error.message || 'Couldn’t resend just now.'); btn.disabled = false; btn.textContent = orig; }
+              else { toast('Confirmation sent to ' + email + '.'); btn.textContent = 'Sent'; }
+            }, function (e) { toast((e && e.message) || 'Couldn’t resend just now.'); btn.disabled = false; btn.textContent = orig; });
+          });
+        });
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
     // ── IMPACT / by-the-numbers (marketing-facing) ──
     var impactData = null;
-    function mcard(lbl, val, sub) { return '<div class="adm-metric"><div class="lbl">' + esc(lbl) + '</div><div class="val">' + num(val) + '</div>' + (sub ? '<div class="sub">' + esc(sub) + '</div>' : '') + '</div>'; }
+    function mcard(lbl, val, sub) { return card(lbl, val, sub); }
     function nextMilestone(n) { var s = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000]; for (var i = 0; i < s.length; i++) if (n < s[i]) return s[i]; return null; }
     function milestoneSub(n) { var nx = nextMilestone(n); return nx ? num(nx - n) + ' to ' + num(nx) : null; }
     function impactBars(items, labelKey, countKey) {
@@ -520,20 +668,21 @@
           '<div class="adm-intro">The numbers that tell Flow School’s story — what teachers have built, how engaged they are, and who they are. Everything here is aggregate; no individual’s private content is shown. Use “Copy summary” to grab the headline stats for a post or a deck.</div>' +
           '<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn-secondary" id="impact-copy">Copy summary</button></div>' +
           '<div class="adm-group-label">Headline</div><div class="adm-metrics">' +
-            mcard('Teachers', teachers, milestoneSub(teachers)) +
-            mcard('Things built', c.total, 'classes, flows, cue sheets, stories & more') +
-            mcard('Teaching hours designed', hours, 'across all classes') +
-            mcard('Classes shared', m.shared_classes, 'published to the community') +
+            card('# of teachers', teachers, null, 'Every account that has ever signed up.', null, 'users_all') +
+            card('Avg. years teaching', (ex.avg_years == null ? '—' : num(ex.avg_years)), null, (ex.avg_years == null ? 'No teacher has shared their start year yet.' : 'Average years teaching, across the teachers who shared their start year.')) +
+            card('Things built', c.total, null, 'classes, flows, cue sheets, stories & more') +
+            card('Teaching hours designed', hours, null, 'across all classes') +
+            card('Classes shared', m.shared_classes, null, 'published to the community', null, 'public') +
           '</div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Teacher growth</h2></div>' + growthCurve(signups) + '</div>' +
           '<div class="adm-group-label">What teachers have built</div><div class="adm-metrics">' +
             mcard('Classes', c.classes) + mcard('Flows', c.flows) + mcard('Cue sheets', c.cue_sheets) + mcard('Stories', c.stories) +
           '</div>' +
           '<div class="adm-group-label">Community & engagement</div><div class="adm-metrics">' +
-            mcard('Active this month', m.active_30d, overallRet + '% of all teachers') +
-            mcard('Class saves', m.total_saves, 'teachers saving each other’s work') +
-            mcard('Experiment saves', m.experiment_saves) +
-            mcard('Sequences generated', m.generations, 'rules, poses, playlists & more') +
+            card('Active this month', (teachers ? Math.round(m.active_30d / teachers * 100) : 0) + '%', num(m.active_30d) + '/' + num(teachers), 'Distinct teachers active in the last 30 days.', null, 'activity') +
+            card('Class saves', m.total_saves, null, 'teachers saving each other’s work') +
+            card('Experiment saves', m.experiment_saves, null, null, null, 'experiments') +
+            card('Sequences generated', m.generations, null, 'rules, poses, playlists & more') +
             mcard('Avg classes / teacher', avgClasses) +
           '</div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Reach</h2></div>' +
@@ -544,6 +693,7 @@
           '<div class="adm-panel"><div class="adm-panel-head"><h2>What teachers are saying</h2></div>' + loveWall(m.love || []) + '</div>';
         var cp = document.getElementById('impact-copy');
         if (cp) cp.addEventListener('click', copyImpactSummary);
+        wireMetricLinks(b);   // make the doorway cards (# of teachers, Classes shared, …) clickable
       } catch (e) { b.innerHTML = stateError(e && e.message); }
     }
 
@@ -599,7 +749,7 @@
       var n = buckets.length;
       var cols = buckets.map(function (x) {
         var h = x.count > 0 ? Math.max(3, Math.round(x.count / max * 100)) : 0;
-        return '<div class="suc-col" title="' + esc(x.label + ' · ' + x.count + ' ' + unit + (x.count === 1 ? '' : 's')) + '">' +
+        return '<div class="suc-col"' + (x.count > 0 ? ' data-tip="' + esc(x.label + ' · ' + x.count + ' ' + unit + (x.count === 1 ? '' : 's')) + '"' : '') + '>' +
           (h ? '<div class="suc-bar" style="height:' + h + '%"></div>' : '') + '</div>';
       }).join('');
       var axis = '<span>' + esc(buckets[0].short) + '</span>' +
@@ -786,25 +936,65 @@
       var b = bodyEl(); b.innerHTML = stateLoading();
       try {
         var rows = await A.rpc('admin_retention') || [];
-        if (!rows.length) { b.innerHTML = stateEmpty('No cohorts yet.'); return; }
+        var grid = await A.rpc('admin_retention_grid').catch(function () { return null; });
+        var churn = await A.rpc('admin_churn').catch(function () { return null; });
+
         var totalUsers = rows.reduce(function (a, r) { return a + Number(r.signups || 0); }, 0);
         var totalActive = rows.reduce(function (a, r) { return a + Number(r.active_30d || 0); }, 0);
         var overall = totalUsers ? Math.round(totalActive / totalUsers * 100) : 0;
-        var body = rows.map(function (r) {
-          var pct = Number(r.retention_pct || 0);
-          var lvl = pct >= 60 ? 'high' : pct >= 30 ? 'mid' : 'low';
-          return '<tr><td>' + esc(r.cohort) + '</td>' +
-            '<td class="num">' + num(r.signups) + '</td>' +
-            '<td class="num">' + num(r.active_30d) + '</td>' +
-            '<td><div class="adm-retcell"><div class="adm-retbar"><div class="adm-retfill ' + lvl + '" style="width:' + pct + '%"></div></div><span>' + pct + '%</span></div></td></tr>';
-        }).join('');
+        var metrics = '<div class="adm-metrics">' +
+          mtile('Overall retention', overall + '%', 'Share of all teachers active in the last 30 days.', 'active · last 30 days') +
+          mtile('At-risk', churn ? num(churn.at_risk_count) : '—', 'Engaged teachers who’ve gone quiet for 14–90 days.') +
+          mtile('Resurrected', churn ? num(churn.resurrected_count) : '—', 'Teachers who returned in the last 30 days after 3+ weeks away.') +
+          '</div>';
+
+        // D1 — weekly cohort retention grid (the triangle)
+        var gridPanel;
+        if (grid && (grid.cohorts || []).length) {
+          var cohorts = grid.cohorts, maxK = 0;
+          cohorts.forEach(function (c) { (c.cells || []).forEach(function (cell) { if (cell.k > maxK) maxK = cell.k; }); });
+          maxK = Math.min(maxK, 8);
+          var head = '<tr><th>Cohort</th><th class="num">Size</th>';
+          for (var hk = 0; hk <= maxK; hk++) head += '<th class="num">W' + hk + '</th>';
+          head += '</tr>';
+          var gridRows = cohorts.map(function (c) {
+            var byK = {}; (c.cells || []).forEach(function (cell) { byK[cell.k] = cell; });
+            var tds = '';
+            for (var k = 0; k <= maxK; k++) {
+              if (k > c.weeks_elapsed) { tds += '<td></td>'; continue; }
+              var cell = byK[k], pct = cell ? (Number(cell.pct) || 0) : 0, active = cell ? cell.active : 0;
+              var alpha = (pct / 100 * 0.55 + 0.05).toFixed(2);
+              tds += '<td class="adm-hm" style="background:rgba(var(--accent-rgb),' + alpha + ')" data-tip="' + active + ' of ' + c.size + ' active">' + pct + '</td>';
+            }
+            return '<tr><td>' + A.fmtDate(c.cohort_week) + '</td><td class="num">' + num(c.size) + '</td>' + tds + '</tr>';
+          }).join('');
+          gridPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Retention by weekly cohort</h2><span class="muted adm-mono" style="font-size:11px">% of the cohort active each week · W0 = signup week</span></div><div class="adm-scroll"><table class="adm-table adm-grid"><thead>' + head + '</thead><tbody>' + gridRows + '</tbody></table></div></div>';
+        } else {
+          gridPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Retention by weekly cohort</h2></div><div class="adm-intro" style="margin:0">The cohort grid needs the latest <code>admin-analytics.sql</code> run in Supabase.</div></div>';
+        }
+
+        // D2 — at-risk · D3 — resurrected
+        var churnPanels = '';
+        if (churn) {
+          var arRows = (churn.at_risk || []).map(function (u) {
+            return '<tr><td class="adm-mono">' + esc(u.email || '') + '</td><td class="muted">' + A.fmtDate(u.last_seen) + '</td><td class="num">' + num(u.days_quiet) + 'd</td><td class="num muted">' + num(u.actions) + '</td></tr>';
+          }).join('');
+          churnPanels += '<div class="adm-panel"><div class="adm-panel-head"><h2>At-risk — going quiet</h2><span class="muted adm-mono" style="font-size:11px">' + num(churn.at_risk_count) + ' · engaged, quiet 14–90d</span></div>' +
+            '<div class="adm-intro" style="margin-top:0">Teachers who were building things, then stopped. The best re-engagement list you have.</div>' +
+            (arRows ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Email</th><th>Last seen</th><th class="num">Quiet</th><th class="num">Actions</th></tr></thead><tbody>' + arRows + '</tbody></table></div>' : stateEmpty('Nobody engaged has gone quiet. Great sign.')) + '</div>';
+
+          var rsRows = (churn.resurrected || []).map(function (u) {
+            return '<tr><td class="adm-mono">' + esc(u.email || '') + '</td><td class="muted">' + A.fmtDate(u.returned_at) + '</td><td class="num">' + num(u.gap_days) + 'd away</td></tr>';
+          }).join('');
+          if (rsRows) {
+            churnPanels += '<div class="adm-panel"><div class="adm-panel-head"><h2>Resurrected — came back</h2><span class="muted adm-mono" style="font-size:11px">' + num(churn.resurrected_count) + ' · last 30 days</span></div>' +
+              '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Email</th><th>Returned</th><th class="num">Was away</th></tr></thead><tbody>' + rsRows + '</tbody></table></div></div>';
+          }
+        }
+
         b.innerHTML =
-          '<div class="adm-note">Each user is placed in the month they signed up. “Retained” means they took any action — signed in, opened a tool, or saved or edited content — in the last 30 days. Because the library stores only each user’s most recent activity, this shows current retention per cohort, not a week-by-week retention curve.</div>' +
-          '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Overall retention</div><div class="val">' + overall + '%</div><div class="sub">active in last 30 days</div></div>' +
-          '<div class="adm-metric"><div class="lbl">Active · last 30 days</div><div class="val">' + num(totalActive) + '</div><div class="sub">of ' + num(totalUsers) + ' users</div></div>' +
-          '<div class="adm-metric"><div class="lbl">Cohorts</div><div class="val">' + num(rows.length) + '</div><div class="sub">signup months</div></div></div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Retention by signup cohort</h2></div>' +
-          '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Cohort</th><th class="num">Signed up</th><th class="num">Active · 30d</th><th>Retention</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+          '<div class="adm-intro">Do teachers stick? Each cohort is the week they signed up; the grid tracks how many stay active in the weeks after.</div>' +
+          metrics + gridPanel + churnPanels;
       } catch (e) { b.innerHTML = stateError(e && e.message); }
     }
 
@@ -891,6 +1081,50 @@
       } catch (e) { toast(e && e.message ? e.message : 'Delete failed'); if (btn) { btn.disabled = false; btn.textContent = 'Permanently delete'; } }
     }
 
+    // ── ENGAGEMENT DEPTH — stickiness · tool-usage rate · action depth · reach/return ──
+    async function renderEngagement() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var e = await A.rpc('admin_engagement').catch(function (er) { console.warn('[admin] engagement fetch failed:', er && er.message); return null; });
+        if (!e) { b.innerHTML = runSqlNote('Engagement'); return; }
+        var members = Number(e.members) || 0;
+        var pct = function (n, d) { return d ? Math.round(n / d * 100) + '%' : '—'; };
+
+        var metrics = '<div class="adm-metrics">' +
+          mtile('Stickiness (DAU/MAU)', pct(e.dau, e.mau), 'Share of monthly-active teachers who were active today. Higher = more habitual (20%+ is strong).') +
+          card('Daily active', num(e.dau), null, 'Distinct teachers active in the last 24 hours.', deltaHtml(e.dau, e.dau_prev, 'vs prior 24h')) +
+          card('Weekly active', num(e.wau), null, 'Distinct teachers active in the last 7 days.', deltaHtml(e.wau, e.wau_prev, 'vs prior 7 days')) +
+          card('Monthly active', num(e.mau), null, 'Distinct teachers active in the last 30 days.', deltaHtml(e.mau, e.mau_prev, 'vs prior 30 days')) +
+          card('Used a tool · 7d', num(e.tool_users_7d), pct(e.tool_users_7d, e.wau) + ' of weekly-active', 'Teachers who used at least one tool in the last 7 days.', deltaHtml(e.tool_users_7d, e.tool_users_7d_prev, 'vs prior 7 days')) +
+          '</div>';
+
+        var dist = e.distribution || [];
+        var maxD = Math.max.apply(null, dist.map(function (d) { return Number(d.users) || 0; }).concat([1]));
+        var distRows = dist.map(function (d) {
+          var c = Number(d.users) || 0;
+          var w = Math.max(2, c / maxD * 100);
+          return '<div class="adm-fn-row"><div class="adm-fn-label">' + esc(d.label) + '</div>' +
+            '<div class="adm-fn-bar"><div class="adm-fn-fill" style="width:' + w.toFixed(1) + '%"></div></div>' +
+            '<div class="adm-fn-count">' + num(c) + '</div>' +
+            '<div class="adm-fn-conv">' + pct(c, members) + '</div></div>';
+        }).join('');
+        var distPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>How deeply teachers engage</h2><span class="muted adm-mono" style="font-size:11px">meaningful actions per teacher · all-time</span></div><div class="adm-funnel">' + distRows + '</div></div>';
+
+        var tools = e.tools || [];
+        var toolRows = tools.map(function (t) {
+          var users = Number(t.users) || 0, ret = Number(t.returned) || 0;
+          return '<tr><td>' + esc(t.tool) + '</td><td class="num">' + num(users) + '</td><td class="num muted">' + pct(users, members) + '</td><td class="num">' + num(ret) + '</td><td class="num">' + pct(ret, users) + '</td></tr>';
+        }).join('');
+        var toolPanel = tools.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Tool reach &amp; return</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Reach</th><th class="num">% members</th><th class="num">Returned</th><th class="num">Return rate</th></tr></thead><tbody>' + toolRows + '</tbody></table></div></div>'
+          : stateEmpty('No tool usage recorded yet.');
+
+        b.innerHTML =
+          '<div class="adm-intro">How habitual the product is, and which tools teachers actually come back to. Reach = ever used it; Return = used it on two or more days.</div>' +
+          metrics + distPanel + toolPanel;
+      } catch (er) { b.innerHTML = stateError(er && er.message); }
+    }
+
     // ── TOOLS ──
     var toolsRange = 90;
     var toolsRows = [];
@@ -906,7 +1140,7 @@
         var op = total ? (opens / total * 100) : 0, ap = total ? (actions / total * 100) : 0;
         return '<div class="adm-tbar-row">' +
           '<span class="adm-tbar-label" title="' + esc(t.tool) + '">' + esc(t.tool) + '</span>' +
-          '<div class="adm-tbar-track"><div class="adm-tbar-fill" style="width:' + w + '%" title="' + esc(t.tool + ' · ' + opens + ' opens · ' + actions + ' actions') + '">' +
+          '<div class="adm-tbar-track"><div class="adm-tbar-fill" style="width:' + w + '%" data-tip="' + esc(t.tool + ' · ' + opens + ' opens · ' + actions + ' actions') + '">' +
             '<span class="seg open" style="width:' + op.toFixed(1) + '%"></span><span class="seg act" style="width:' + ap.toFixed(1) + '%"></span></div></div>' +
           '<span class="adm-tbar-num">' + num(total) + '</span></div>';
       }).join('');
@@ -940,6 +1174,60 @@
       } catch (e) { t.innerHTML = stateError(e && e.message); }
     }
 
+    // ── CREATION OUTPUT — over-time · library composition · class depth ──
+    async function renderCreation() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var c = await A.rpc('admin_creation', { p_days: admRange }).catch(function (er) { console.warn('[admin] creation fetch failed:', er && er.message); return null; });
+        if (!c) { b.innerHTML = runSqlNote('Creation'); return; }
+        var series = await A.rpc('admin_series', { p_kind: 'created', p_days: admRange }).catch(function () { return []; });
+        var rangeLbl = admRangeLabel(admRange).toLowerCase();
+        var TYPE_LABEL = { class: 'Classes', flow: 'Flows', story: 'Stories', playlist: 'Playlists', arbitrary_rule: 'Arbitrary Rules', experiment: 'Experiments', pose: 'Poses', story_starter: 'Story Starters', public_class: 'Shared Classes', cue_sheet: 'Cue Sheets', other: 'Other' };
+
+        var library = c.library || [];
+        var totalItems = library.reduce(function (s, l) { return s + (Number(l.items) || 0); }, 0);
+        var classesRow = library.filter(function (l) { return l.label === 'Classes'; })[0];
+        var classesBuilt = classesRow ? (Number(classesRow.items) || 0) : 0;
+
+        var metrics = '<div class="adm-metrics">' +
+          mtile('Items created', num(totalItems), 'Every class, flow, story, playlist, and rule teachers have built and kept.') +
+          mtile('Classes built', num(classesBuilt)) +
+          mtile('Teachers creating', num(c.creators)) +
+          '</div>';
+
+        var trendPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Created over time</h2><span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div>' +
+          seriesChart(series || [], admRange, 'creation') + '</div>';
+
+        var byType = c.by_type || [];
+        var typeRows = byType.map(function (t) {
+          return '<tr><td>' + esc(TYPE_LABEL[t.type] || t.type) + '</td><td class="num">' + num(t.created) + '</td></tr>';
+        }).join('');
+        var typePanel = byType.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>By type</h2><span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Type</th><th class="num">Created</th></tr></thead><tbody>' + typeRows + '</tbody></table></div></div>'
+          : '';
+
+        var libRows = library.map(function (l) {
+          return '<tr><td>' + esc(l.label) + '</td><td class="num">' + num(l.items) + '</td><td class="num">' + num(l.teachers) + '</td><td class="num muted">' + (l.avg_each == null ? '—' : l.avg_each) + '</td></tr>';
+        }).join('');
+        var libPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Library composition</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Type</th><th class="num">Items</th><th class="num">Teachers</th><th class="num">Avg each</th></tr></thead><tbody>' + libRows + '</tbody></table></div></div>';
+
+        var cd = c.class_depth || {};
+        var subPct = cd.total ? Math.round((Number(cd.substantial) || 0) / cd.total * 100) : 0;
+        var depthPanel = cd.total
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Class depth</h2><span class="muted adm-mono" style="font-size:11px">are classes real, or stubs?</span></div>' +
+            '<div class="adm-metrics">' +
+              mtile('Avg blocks / class', (cd.avg_blocks == null ? '—' : cd.avg_blocks)) +
+              mtile('Avg length', (cd.avg_length == null ? '—' : cd.avg_length + ' min')) +
+              mtile('Substantial (3+ blocks)', subPct + '%', 'Share of classes with at least 3 blocks — a real class vs an empty stub.', num(cd.substantial) + ' of ' + num(cd.total)) +
+            '</div></div>'
+          : '';
+
+        b.innerHTML =
+          '<div class="adm-intro">What teachers actually build — the truest sign the product is working. Library counts are the persisted truth; the weekly trend and by-type come from creation events.</div>' +
+          metrics + trendPanel + typePanel + libPanel + depthPanel;
+      } catch (er) { b.innerHTML = stateError(er && er.message); }
+    }
+
     // ── MOVEMENT EXPERIMENTS ──
     async function renderExperiments() {
       var b = bodyEl(); b.innerHTML = stateLoading();
@@ -950,9 +1238,10 @@
         b.innerHTML =
           '<div class="adm-intro">How Movement Experiments are landing — total saves, how many of the 28 are being saved at all, and the save trend over time.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Experiments saved · total</div><div class="val">' + num(total) + '</div></div>' +
-          '<div class="adm-metric"><div class="lbl">Distinct experiments saved</div><div class="val">' + num(rows.length) + '</div><div class="sub">of 28</div></div></div>' +
+          '<div class="adm-metric"><div class="lbl">Distinct experiments saved</div><div class="val">' + num(rows.length) + '</div><div class="sub">of 28</div></div>' +
+          '<div class="adm-metric"><div class="lbl">Most saved</div><div class="val adm-val-sm">' + esc(rows[0].title || '—') + '</div><div class="sub">' + num(rows[0].saves) + (Number(rows[0].saves) === 1 ? ' save' : ' saves') + '</div></div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Experiment saves over time</h2></div><div id="expsave-chart">' + stateLoading() + '</div></div>' +
-          '<div class="adm-panel-head" style="margin-top:16px"><h2>Which experiments were saved</h2><button class="btn-secondary" id="e-export">Export CSV</button></div>' +
+          '<div class="adm-panel-head"><h2>Which experiments were saved</h2><button class="btn-secondary" id="e-export">Export CSV</button></div>' +
           '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>#</th><th>Experiment</th><th class="num">Saves</th><th class="num">Unique savers</th><th>Last save</th></tr></thead><tbody>' +
           rows.map(function (r) { return '<tr><td class="muted adm-mono">' + esc(r.experiment_id) + '</td><td class="name">' + esc(r.title || '—') + '</td><td class="num">' + num(r.saves) + '</td><td class="num">' + num(r.unique_savers) + '</td><td class="muted">' + (r.last_save ? A.fmtDate(new Date(Number(r.last_save))) : '—') + '</td></tr>'; }).join('') +
           '</tbody></table></div>';
@@ -1108,7 +1397,7 @@
           '<div class="adm-intro">Everything teachers have sent through the in-app feedback door — bugs, ideas, and love.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Total feedback</div><div class="val">' + num(sum.total) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Last 7 days</div><div class="val">' + num(sum.last_7d) + '</div></div>' + kindCards + '</div>' +
-          '<div class="adm-panel-head" style="margin-top:16px"><h2>Recent feedback</h2><button class="btn-secondary" id="fb-export">Export CSV</button></div>' + table;
+          '<div class="adm-panel-head"><h2>Recent feedback</h2><button class="btn-secondary" id="fb-export">Export CSV</button></div>' + table;
         var ex = document.getElementById('fb-export');
         if (ex) ex.addEventListener('click', function () { A.exportCSV('feedback', rows, [{ label: 'When', key: 'created_at' }, { label: 'User', key: 'email' }, { label: 'Kind', key: 'kind' }, { label: 'Message', key: 'message' }, { label: 'Page', key: 'page' }]); });
         b.querySelectorAll('.adm-del').forEach(function (btn) {
@@ -1179,19 +1468,42 @@
       try {
         var sum = await A.rpc('admin_errors_summary', { p_days: 7 });
         var rows = await A.rpc('admin_errors', { p_limit: 200 });
+        var st = await A.rpc('admin_storage').catch(function (e) { console.warn('[admin] storage fetch failed:', e && e.message); return null; });
+        var capacity;
+        if (st) {
+          var tblRows = (st.tables || []).filter(function (t) { return Number(t.total_bytes) > 0; }).map(function (t) {
+            return '<tr><td class="adm-mono">' + esc(t.name) + '</td><td class="num">' + fmtBytes(t.total_bytes) + '</td><td class="num muted">' + (t.row_estimate == null ? '—' : '~' + num(t.row_estimate)) + '</td></tr>';
+          }).join('');
+          var buckets = st.storage || [];
+          var bucketNote = buckets.length
+            ? buckets.map(function (bk) { return esc(bk.bucket) + ' — ' + fmtBytes(bk.bytes) + ' · ' + num(bk.files) + (Number(bk.files) === 1 ? ' file' : ' files'); }).join('   ·   ')
+            : 'No files stored yet.';
+          capacity =
+            '<div class="adm-panel"><div class="adm-panel-head"><h2>Storage &amp; Capacity</h2><span class="muted adm-mono" style="font-size:11px">Supabase Free plan</span></div>' +
+            '<div class="adm-caps">' +
+              capBar(st.database_bytes, st.database_limit_bytes, 'Database') +
+              capBar(st.storage_total_bytes, st.storage_limit_bytes, 'File storage') +
+            '</div>' +
+            '<div class="adm-cap-buckets muted">' + bucketNote + '</div>' +
+            (tblRows ? '<div class="adm-scroll" style="margin-top:14px"><table class="adm-table"><thead><tr><th>Table</th><th class="num">Size</th><th class="num">Rows (est.)</th></tr></thead><tbody>' + tblRows + '</tbody></table></div>' : '') +
+            '</div>';
+        } else {
+          capacity = '<div class="adm-panel"><div class="adm-panel-head"><h2>Storage &amp; Capacity</h2></div><div class="adm-intro" style="margin:0">Storage metrics need the latest <code>admin-analytics.sql</code> run in Supabase, then they\'ll show here.</div></div>';
+        }
         var top = (sum.top || []).map(function (t) { return '<tr><td class="wrap">' + esc(t.message) + '</td><td class="num">' + num(t.count) + '</td><td class="muted">' + A.ago(t.last) + '</td></tr>'; }).join('');
         var table = (rows && rows.length)
           ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>When</th><th>Message</th><th>Page</th><th>User</th><th>Version</th></tr></thead><tbody>' +
             rows.map(function (e2) { return '<tr><td class="muted">' + A.fmtDateTime(e2.created_at) + '</td><td class="wrap">' + esc(e2.message) + '</td><td class="muted adm-mono">' + esc(e2.page || '') + '</td><td class="muted adm-mono">' + esc(e2.email || '') + '</td><td class="muted adm-mono">' + esc(e2.version || '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
           : stateEmpty('No errors logged — clean bill of health.');
         b.innerHTML =
+          capacity +
           '<div class="adm-intro">Client-side errors teachers have hit, so problems surface here before they reach you.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Errors · 24h</div><div class="val">' + num(sum.today) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Errors · 7 days</div><div class="val">' + num(sum.window) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Users affected · 7d</div><div class="val">' + num(sum.affected_users) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Total logged</div><div class="val">' + num(sum.total) + '</div></div></div>' +
           (top ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Most frequent · 7 days</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Message</th><th class="num">Count</th><th>Last</th></tr></thead><tbody>' + top + '</tbody></table></div></div>' : '') +
-          '<div class="adm-panel-head" style="margin-top:16px"><h2>Recent errors</h2><button class="btn-secondary" id="err-export">Export CSV</button></div>' + table;
+          '<div class="adm-panel-head"><h2>Recent errors</h2><button class="btn-secondary" id="err-export">Export CSV</button></div>' + table;
         var ex = document.getElementById('err-export');
         if (ex) ex.addEventListener('click', function () { A.exportCSV('client-errors', rows, [{ label: 'When', key: 'created_at' }, { label: 'Message', key: 'message' }, { label: 'Source', key: 'source' }, { label: 'Page', key: 'page' }, { label: 'User', key: 'email' }, { label: 'Version', key: 'version' }]); });
       } catch (e) { b.innerHTML = stateError(e && e.message); }
@@ -1219,9 +1531,48 @@
       var sec = SECTIONS.filter(function (s) { return s.id === id; })[0] || SECTIONS[0];
       groupLast[groupOf(sec.id).label] = sec.id;
       shell(sec.id);
-      sec.render();
+      // every tab carries the "Updated …" stamp. Overview fills it from the
+      // server snapshot time (generated_at) inside its own render; for the
+      // rest, stamp the load time here once their data has come in.
+      Promise.resolve(sec.render()).then(function () {
+        var u = document.getElementById('adm-updated');
+        if (u && !u.textContent) u.textContent = 'Updated ' + A.fmtDateTime(new Date());
+      });
     }
     window.addEventListener('hashchange', route);
+
+    // ── shared chart tooltip — styled pill, animated, positioned above the bar ──
+    (function () {
+      var tt = document.createElement('div');
+      tt.className = 'adm-tt';
+      tt.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(tt);
+      var SEL = '.suc-col[data-tip], .adm-spk-col[data-tip], .adm-hm[data-tip], .adm-tbar-fill[data-tip], .adm-info[data-tip], .adm-thinfo[data-tip]';
+      function show(el) {
+        var tip = el.getAttribute('data-tip');
+        if (!tip) return;
+        tt.textContent = tip;
+        var r = el.getBoundingClientRect();
+        var tw = tt.offsetWidth, th = tt.offsetHeight;   // measured while hidden (still laid out)
+        var left = Math.max(8, Math.min(r.left + r.width / 2 - tw / 2, window.innerWidth - tw - 8));
+        var above = r.top - th - 8;
+        var below = above < 8;
+        tt.style.left = left + 'px';
+        tt.style.top = (below ? r.bottom + 8 : above) + 'px';
+        tt.classList.toggle('below', below);
+        tt.classList.add('on');
+      }
+      function hide() { tt.classList.remove('on'); }
+      document.addEventListener('pointerover', function (e) {
+        var el = e.target && e.target.closest ? e.target.closest(SEL) : null;
+        if (el) show(el);
+      });
+      document.addEventListener('pointerout', function (e) {
+        var el = e.target && e.target.closest ? e.target.closest(SEL) : null;
+        if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) hide();
+      });
+      window.addEventListener('scroll', hide, true);
+    })();
 
     // ── boot: gate on admin (server truth) ──
     (async function boot() {

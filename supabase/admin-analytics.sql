@@ -136,7 +136,7 @@ begin
   if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
   select jsonb_build_object(
     'generated_at', now(),
-    'total_users',   (select count(*) from auth.users),
+    'total_users',   (select count(*) from auth.users where banned_until is null or banned_until <= now()),
     'new_users_7d',  (select count(*) from auth.users where created_at >= now() - interval '7 days'),
     'new_users_30d', (select count(*) from auth.users where created_at >= now() - interval '30 days'),
     -- "active today" = used the platform in the last 24h by ANY signal.
@@ -159,7 +159,8 @@ begin
     'total_saved_items',      (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data),
     'admin_count',            (select count(*) from admin_users),
     'inactive_users', (select count(*) from auth.users u
-        where not exists (select 1 from user_data d where d.user_id = u.id and jsonb_arr_len(d.payload) > 0)),
+        where (u.banned_until is null or u.banned_until <= now())
+          and not exists (select 1 from user_data d where d.user_id = u.id and jsonb_arr_len(d.payload) > 0)),
     'events_tracked_since',   (select min(created_at) from analytics_events),
     -- prior-period counts, so the UI can show trend deltas
     'new_users_prev_7d',  (select count(*) from auth.users where created_at >= now() - interval '14 days' and created_at < now() - interval '7 days'),
@@ -210,10 +211,10 @@ declare r jsonb;
 begin
   if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
   select jsonb_build_object(
-    'signed_up',       (select count(*) from auth.users),
+    'signed_up',       (select count(*) from auth.users where banned_until is null or banned_until <= now()),
     'created_content', (select count(*) from auth.users u
                           where exists (select 1 from user_data d where d.user_id = u.id and jsonb_arr_len(d.payload) > 0)),
-    'shared_class',    (select count(distinct owner_id) from public_classes)
+    'shared_class',    (select count(distinct owner_id) from public_classes where published)
   ) into r;
   return r;
 end $$;
@@ -225,7 +226,7 @@ declare r jsonb; cy int := extract(year from now())::int;
 begin
   if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
   select jsonb_build_object(
-    'teachers', (select count(*) from auth.users),
+    'teachers', (select count(*) from auth.users where banned_until is null or banned_until <= now()),
     'content', jsonb_build_object(
       'classes',    (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data where collection='flowschool_classes'),
       'flows',      (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data where collection='flowschool_flows'),
@@ -241,9 +242,10 @@ begin
     'experiment_saves', (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data where collection='flowschool_favs'),
     'generations', (select count(*) from analytics_events where event_name='item_generated'),
     'active_30d', (select count(*) from auth.users u where
-        u.last_sign_in_at >= now() - interval '30 days'
-        or exists (select 1 from user_data d where d.user_id=u.id and d.updated_at >= now()-interval '30 days')
-        or exists (select 1 from analytics_events ae where ae.user_id=u.id and ae.created_at >= now()-interval '30 days' and admin_is_meaningful(ae.event_name))),
+        (u.banned_until is null or u.banned_until <= now())   -- deactivated accounts never count
+        and (u.last_sign_in_at >= now() - interval '30 days'
+          or exists (select 1 from user_data d where d.user_id=u.id and d.updated_at >= now()-interval '30 days')
+          or exists (select 1 from analytics_events ae where ae.user_id=u.id and ae.created_at >= now()-interval '30 days' and admin_is_meaningful(ae.event_name)))),
     'reach', jsonb_build_object(
       'located_teachers',   (select count(*) from profiles where nullif(trim(location),'') is not null),
       'distinct_locations', (select count(distinct lower(trim(location))) from profiles where nullif(trim(location),'') is not null),
@@ -253,12 +255,16 @@ begin
     ),
     'experience', jsonb_build_object(
       'shared',        (select count(*) from profiles where teaching_since ~ '^(19|20)[0-9]{2}$'),
+      'avg_years',     (select round(avg(cy - teaching_since::int), 1) from profiles where teaching_since ~ '^(19|20)[0-9]{2}$'),
       'newest_years',  (select cy - max(teaching_since::int) from profiles where teaching_since ~ '^(19|20)[0-9]{2}$'),
       'veteran_years', (select cy - min(teaching_since::int) from profiles where teaching_since ~ '^(19|20)[0-9]{2}$'),
-      'buckets', (select coalesce(jsonb_agg(jsonb_build_object('bucket', b, 'count', c) order by ord), '[]'::jsonb) from (
-          select case when yr <= 2 then '0–2 yrs' when yr <= 5 then '3–5 yrs' when yr <= 10 then '6–10 yrs' when yr <= 20 then '11–20 yrs' else '20+ yrs' end b,
-                 case when yr <= 2 then 1 when yr <= 5 then 2 when yr <= 10 then 3 when yr <= 20 then 4 else 5 end ord, count(*) c
-          from (select cy - teaching_since::int yr from profiles where teaching_since ~ '^(19|20)[0-9]{2}$') x group by 1, 2) z)
+      'buckets', (select coalesce(jsonb_agg(jsonb_build_object('bucket', b.label, 'count', coalesce(z.c, 0)) order by b.ord), '[]'::jsonb)
+          -- fixed set of ranges, left-joined to counts, so every range shows even at 0
+          from (values (1,'0–2 yrs'),(2,'3–5 yrs'),(3,'6–10 yrs'),(4,'11–15 yrs'),(5,'16–20 yrs'),(6,'20+ yrs')) as b(ord, label)
+          left join (
+            select case when yr <= 2 then 1 when yr <= 5 then 2 when yr <= 10 then 3 when yr <= 15 then 4 when yr <= 20 then 5 else 6 end ord, count(*) c
+            from (select cy - teaching_since::int yr from profiles where teaching_since ~ '^(19|20)[0-9]{2}$') x group by 1
+          ) z on z.ord = b.ord)
     ),
     'love', (select coalesce(jsonb_agg(jsonb_build_object(
         'message', f.message, 'email', f.email, 'at', f.created_at,
@@ -376,7 +382,7 @@ begin
     'published_classes', (select coalesce(jsonb_agg(jsonb_build_object(
         'id', pc.id, 'title', pc.title, 'published', pc.published, 'updated_at', pc.updated_at,
         'saves', (select count(*) from class_saves cs where cs.public_class_id = pc.id)) order by pc.updated_at desc), '[]'::jsonb)
-        from public_classes pc where pc.owner_id = p_uid),
+        from public_classes pc where pc.owner_id = p_uid and pc.published),
     'saved_public_classes', (select coalesce(jsonb_agg(jsonb_build_object(
         'id', pc.id, 'title', pc.title, 'saved_at', cs.created_at, 'active', pc.published) order by cs.created_at desc), '[]'::jsonb)
         from class_saves cs join public_classes pc on pc.id = cs.public_class_id where cs.user_id = p_uid),
@@ -438,9 +444,10 @@ begin
   select count(*) into total from public_classes pc
     left join profiles p on p.id = pc.owner_id
     left join auth.users u on u.id = pc.owner_id
-    where p_search is null or p_search = ''
-       or pc.title ilike '%'||p_search||'%'
-       or coalesce(p.full_name, p.display_name, u.email) ilike '%'||p_search||'%';
+    where pc.published    -- unpublished classes aren't public: never listed or counted
+      and (p_search is null or p_search = ''
+        or pc.title ilike '%'||p_search||'%'
+        or coalesce(p.full_name, p.display_name, u.email) ilike '%'||p_search||'%');
   select coalesce(jsonb_agg(to_jsonb(t)), '[]'::jsonb) into rows from (
     select pc.id, pc.title, pc.class_type, pc.length_minutes, pc.published,
       pc.created_at as published_at, pc.updated_at, pc.owner_id,
@@ -452,9 +459,10 @@ begin
     left join profiles p on p.id = pc.owner_id
     left join handles h on h.user_id = pc.owner_id
     left join auth.users u on u.id = pc.owner_id
-    where p_search is null or p_search = ''
-       or pc.title ilike '%'||p_search||'%'
-       or coalesce(p.full_name, p.display_name, u.email) ilike '%'||p_search||'%'
+    where pc.published    -- unpublished classes aren't public: never listed or counted
+      and (p_search is null or p_search = ''
+        or pc.title ilike '%'||p_search||'%'
+        or coalesce(p.full_name, p.display_name, u.email) ilike '%'||p_search||'%')
     group by pc.id, p.full_name, p.display_name, u.email, h.handle
     order by
       case when p_sort='most_saved'      then count(cs.*)     end desc nulls last,
@@ -519,6 +527,8 @@ begin
       when 'public_saves'     then (select count(*) from class_saves cs where cs.created_at::date = days.d)
       when 'active'           then (select count(distinct ae.user_id) from analytics_events ae
                                       where ae.created_at::date = days.d and admin_is_meaningful(ae.event_name))
+      when 'created'          then (select count(*) from analytics_events ae
+                                      where ae.created_at::date = days.d and ae.event_name in ('item_created','item_saved'))
       when 'experiment_saves' then (select count(*) from user_data d2, jsonb_array_elements(d2.payload) e
                                       where d2.collection='flowschool_favs' and jsonb_typeof(d2.payload)='array'
                                         and (e->>'savedAt') is not null
@@ -682,6 +692,355 @@ begin
     'email', u.email) order by e.created_at desc), '[]'::jsonb) into r
   from (select * from client_errors order by created_at desc limit p_limit) e
   left join auth.users u on u.id = e.user_id;
+  return r;
+end $$;
+
+-- ── storage & capacity — database size, per-table breakdown, file storage ──
+-- Plan limits are baked in so the admin UI can show "used of available".
+-- FREE PLAN: 500 MB database, 1 GB file storage. If the Supabase plan
+-- changes, update database_limit_bytes / storage_limit_bytes below.
+create or replace function public.admin_storage()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  r jsonb;
+  storage_by_bucket jsonb := '[]'::jsonb;
+  storage_total bigint := 0;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+
+  -- file storage lives in the storage schema; guard it so a permissions hiccup
+  -- there never blocks the database numbers below
+  begin
+    select coalesce(jsonb_agg(to_jsonb(s) order by s.bytes desc), '[]'::jsonb),
+           coalesce(sum(s.bytes), 0)
+      into storage_by_bucket, storage_total
+    from (
+      select o.bucket_id as bucket,
+             count(*)::bigint as files,
+             coalesce(sum((o.metadata->>'size')::bigint), 0) as bytes
+      from storage.objects o
+      group by o.bucket_id
+    ) s;
+  exception when others then
+    storage_by_bucket := '[]'::jsonb;
+    storage_total := 0;
+  end;
+
+  select jsonb_build_object(
+    'generated_at',         now(),
+    'database_bytes',       pg_database_size(current_database()),
+    'database_limit_bytes', 524288000,       -- Free plan: 500 MB
+    'storage_total_bytes',  storage_total,
+    'storage_limit_bytes',  1073741824,      -- Free plan: 1 GB
+    'storage',              storage_by_bucket,
+    'tables', (
+      select coalesce(jsonb_agg(to_jsonb(t) order by t.total_bytes desc), '[]'::jsonb)
+      from (
+        select c.relname as name,
+               pg_total_relation_size(c.oid) as total_bytes,
+               nullif(c.reltuples, -1)::bigint as row_estimate
+        from pg_class c
+        join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = 'public' and c.relkind = 'r'
+        order by pg_total_relation_size(c.oid) desc
+        limit 20
+      ) t
+    )
+  ) into r;
+
+  return r;
+end $$;
+
+-- ── activation — the first week: funnel, time-to-first-create, cohorts ──────
+-- "created / meaningful action" = a non-passive analytics event (see
+-- admin_is_meaningful). Timestamps come from analytics_events (append-only),
+-- since user_data is upserted and its updated_at moves with every edit.
+create or replace function public.admin_activation()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+  with u as (
+    select usr.id,
+           usr.created_at as signed_up_at,
+           (select min(ae.created_at) from analytics_events ae
+              where ae.user_id = usr.id and admin_is_meaningful(ae.event_name)) as first_action_at
+    from auth.users usr
+  )
+  select jsonb_build_object(
+    'generated_at', now(),
+    'funnel', jsonb_build_array(
+      jsonb_build_object('step','signed_up',   'label','Signed up',
+        'count', (select count(*) from auth.users where banned_until is null or banned_until <= now())),
+      jsonb_build_object('step','confirmed',   'label','Confirmed email',
+        'count', (select count(*) from auth.users where email_confirmed_at is not null and (banned_until is null or banned_until <= now()))),
+      jsonb_build_object('step','signed_in',   'label','Signed in',
+        'count', (select count(*) from auth.users where last_sign_in_at is not null and (banned_until is null or banned_until <= now()))),
+      jsonb_build_object('step','opened_tool', 'label','Opened a tool',
+        'count', (select count(distinct user_id) from analytics_events where event_name = 'tool_opened')),
+      jsonb_build_object('step','created',     'label','Created something',
+        'count', (select count(distinct user_id) from analytics_events where admin_is_meaningful(event_name)))
+    ),
+    'creators',               (select count(*) from u where first_action_at is not null),
+    'median_hours_to_create', (select round((percentile_cont(0.5) within group (
+                                 order by extract(epoch from (first_action_at - signed_up_at)) / 3600.0))::numeric, 1)
+                               from u where first_action_at is not null),
+    'unconfirmed_count',      (select count(*) from auth.users where email_confirmed_at is null),
+    'cohorts', (
+      select coalesce(jsonb_agg(to_jsonb(c) order by c.cohort_week desc), '[]'::jsonb) from (
+        select date_trunc('week', signed_up_at)::date as cohort_week,
+               count(*)::int as signups,
+               count(*) filter (where first_action_at is not null
+                                  and first_action_at <= signed_up_at + interval '7 days')::int as activated,
+               round(100.0 * count(*) filter (where first_action_at is not null
+                                  and first_action_at <= signed_up_at + interval '7 days')
+                     / nullif(count(*), 0))::int as pct
+        from u
+        group by date_trunc('week', signed_up_at)::date
+        order by cohort_week desc
+        limit 12
+      ) c
+    )
+  ) into r;
+  return r;
+end $$;
+
+-- teachers who signed up but never confirmed their email — they can't sign in.
+-- The confirmation dead-end made visible so they can be helped before churning.
+create or replace function public.admin_unconfirmed(p_limit int default 100, p_offset int default 0)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+  select jsonb_build_object(
+    'total', (select count(*) from auth.users where email_confirmed_at is null),
+    'rows', (
+      select coalesce(jsonb_agg(to_jsonb(x) order by x.created_at desc), '[]'::jsonb) from (
+        select usr.id, usr.email, usr.created_at,
+               round(extract(epoch from (now() - usr.created_at)) / 3600.0)::int as hours_waiting
+        from auth.users usr
+        where usr.email_confirmed_at is null
+        order by usr.created_at desc
+        limit p_limit offset p_offset
+      ) x
+    )
+  ) into r;
+  return r;
+end $$;
+
+-- ── engagement depth — stickiness, tool-usage rate, action distribution, ─────
+-- and per-tool reach + return. "Return" = used a tool on 2+ distinct days.
+create or replace function public.admin_engagement()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb; v_members bigint; v_wau bigint;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+  select count(*) into v_members from auth.users where banned_until is null or banned_until <= now();
+  select count(distinct user_id) into v_wau from analytics_events where created_at >= now() - interval '7 days';
+
+  with tu as (
+    select tool, user_id, count(distinct created_at::date) as days
+    from analytics_events
+    where tool is not null
+    group by tool, user_id
+  ),
+  mact as (
+    select u.id, coalesce(m.cnt, 0) as cnt
+    from auth.users u
+    left join (
+      select user_id, count(*) as cnt from analytics_events
+      where admin_is_meaningful(event_name) group by user_id
+    ) m on m.user_id = u.id
+  )
+  select jsonb_build_object(
+    'generated_at', now(),
+    'members', v_members,
+    'dau', (select count(distinct user_id) from analytics_events where created_at >= now() - interval '1 day'),
+    'dau_prev', (select count(distinct user_id) from analytics_events where created_at >= now() - interval '2 days' and created_at < now() - interval '1 day'),
+    'wau', v_wau,
+    'wau_prev', (select count(distinct user_id) from analytics_events where created_at >= now() - interval '14 days' and created_at < now() - interval '7 days'),
+    'mau', (select count(distinct user_id) from analytics_events where created_at >= now() - interval '30 days'),
+    'mau_prev', (select count(distinct user_id) from analytics_events where created_at >= now() - interval '60 days' and created_at < now() - interval '30 days'),
+    'tool_users_7d', (select count(distinct user_id) from analytics_events
+                        where tool is not null and created_at >= now() - interval '7 days'),
+    'tool_users_7d_prev', (select count(distinct user_id) from analytics_events
+                        where tool is not null and created_at >= now() - interval '14 days' and created_at < now() - interval '7 days'),
+    'distribution', (
+      select coalesce(jsonb_agg(to_jsonb(d) order by d.ord), '[]'::jsonb) from (
+        select b.ord, b.label, count(*)::int as users from (
+          select case when cnt = 0 then 0 when cnt between 1 and 4 then 1
+                      when cnt between 5 and 19 then 2 when cnt between 20 and 49 then 3
+                      else 4 end as ord,
+                 case when cnt = 0 then 'None yet' when cnt between 1 and 4 then '1–4'
+                      when cnt between 5 and 19 then '5–19' when cnt between 20 and 49 then '20–49'
+                      else '50+' end as label
+          from mact
+        ) b
+        group by b.ord, b.label
+      ) d
+    ),
+    'tools', (
+      select coalesce(jsonb_agg(to_jsonb(t) order by t.users desc), '[]'::jsonb) from (
+        select tool, count(*)::int as users, count(*) filter (where days >= 2)::int as returned
+        from tu group by tool
+      ) t
+    )
+  ) into r;
+  return r;
+end $$;
+
+-- ── creation output — what teachers build: over-time, library, class depth ──
+-- C1 (weekly + by-type) reads creation EVENTS (item_created/item_saved); C2
+-- (library) reads the persisted truth in user_data; C3 (class depth) parses
+-- the class payload's blockCount. Content collections are whitelisted below.
+create or replace function public.admin_creation(p_days int default 90)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+  with content(coll, label) as (values
+    ('flowschool_classes','Classes'), ('flowschool_flows','Flows'),
+    ('flowschool_stories','Stories'), ('flowschool_playlists','Playlists'),
+    ('flowschool_arules','Arbitrary Rules')
+  ),
+  cls as (
+    select c from user_data d, jsonb_array_elements(d.payload) c
+    where d.collection = 'flowschool_classes' and jsonb_typeof(d.payload) = 'array'
+  )
+  select jsonb_build_object(
+    'generated_at', now(),
+    'creators', (select count(distinct d.user_id) from user_data d
+                   where d.collection in (select coll from content) and jsonb_arr_len(d.payload) > 0),
+    'by_type', (
+      select coalesce(jsonb_agg(to_jsonb(t) order by t.created desc), '[]'::jsonb) from (
+        select coalesce(resource_type, 'other') as type, count(*)::int as created
+        from analytics_events
+        where event_name in ('item_created','item_saved') and created_at >= now() - (p_days || ' days')::interval
+        group by coalesce(resource_type, 'other')
+      ) t
+    ),
+    'library', (
+      select coalesce(jsonb_agg(to_jsonb(l) order by l.items desc), '[]'::jsonb) from (
+        select content.label as label,
+               coalesce(sum(jsonb_arr_len(d.payload)), 0)::int as items,
+               count(distinct d.user_id) filter (where jsonb_arr_len(d.payload) > 0)::int as teachers,
+               round(coalesce(sum(jsonb_arr_len(d.payload)), 0)::numeric
+                     / nullif(count(distinct d.user_id) filter (where jsonb_arr_len(d.payload) > 0), 0), 1) as avg_each
+        from content
+        left join user_data d on d.collection = content.coll
+        group by content.label
+      ) l
+    ),
+    'class_depth', jsonb_build_object(
+      'total',       (select count(*) from cls),
+      'avg_blocks',  (select round(avg(nullif(c->>'blockCount','')::numeric), 1) from cls),
+      'avg_length',  (select round(avg(nullif(regexp_replace(c->>'length','[^0-9]','','g'),'')::numeric), 0)
+                        from cls where nullif(regexp_replace(c->>'length','[^0-9]','','g'),'') is not null),
+      'substantial', (select count(*) from cls where coalesce(nullif(c->>'blockCount','')::int, 0) >= 3),
+      'stubs',       (select count(*) from cls where coalesce(nullif(c->>'blockCount','')::int, 0) < 3)
+    )
+  ) into r;
+  return r;
+end $$;
+
+-- ── retention grid — weekly signup cohorts × weeks-since (the triangle) ─────
+-- Unlike admin_retention (current-30d snapshot), this reads per-week activity
+-- from analytics_events, so it's a real week-by-week retention curve per cohort.
+create or replace function public.admin_retention_grid()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+  with u as (
+    select id, date_trunc('week', created_at) as cohort_week from auth.users
+  ),
+  sizes as (
+    select cohort_week, count(*)::int as size from u group by cohort_week
+  ),
+  cellagg as (
+    select u.cohort_week,
+           floor(extract(epoch from (date_trunc('week', ae.created_at) - u.cohort_week)) / 604800)::int as k,
+           count(distinct ae.user_id)::int as active
+    from analytics_events ae
+    join u on u.id = ae.user_id
+    where admin_is_meaningful(ae.event_name)
+    group by u.cohort_week,
+             floor(extract(epoch from (date_trunc('week', ae.created_at) - u.cohort_week)) / 604800)::int
+  )
+  select jsonb_build_object(
+    'generated_at', now(),
+    'cohorts', (
+      select coalesce(jsonb_agg(to_jsonb(c) order by c.cohort_week desc), '[]'::jsonb) from (
+        select s.cohort_week, s.size,
+               floor(extract(epoch from (date_trunc('week', now()) - s.cohort_week)) / 604800)::int as weeks_elapsed,
+               (select coalesce(jsonb_agg(jsonb_build_object(
+                         'k', ca.k, 'active', ca.active,
+                         'pct', round(100.0 * ca.active / nullif(s.size, 0))::int) order by ca.k), '[]'::jsonb)
+                from cellagg ca where ca.cohort_week = s.cohort_week and ca.k between 0 and 8) as cells
+        from sizes s
+        order by s.cohort_week desc
+        limit 10
+      ) c
+    )
+  ) into r;
+  return r;
+end $$;
+
+-- ── churn signals — at-risk (went quiet) and resurrected (came back) ────────
+create or replace function public.admin_churn()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+  with act as (
+    select u.id, u.email,
+      greatest(u.last_sign_in_at,
+        (select max(ae.created_at) from analytics_events ae where ae.user_id = u.id and admin_is_meaningful(ae.event_name))
+      ) as last_seen,
+      (select count(*) from analytics_events ae where ae.user_id = u.id and admin_is_meaningful(ae.event_name)) as actions
+    from auth.users u
+  ),
+  ev as (
+    select user_id, created_at,
+           lag(created_at) over (partition by user_id order by created_at) as prev
+    from analytics_events where admin_is_meaningful(event_name)
+  ),
+  gaps as (
+    select user_id, created_at as return_at, created_at - prev as gap
+    from ev where prev is not null and created_at - prev >= interval '21 days'
+  ),
+  resurrected as (
+    select g.user_id, max(g.return_at) as returned_at,
+           max(extract(epoch from g.gap) / 86400)::int as gap_days
+    from gaps g where g.return_at >= now() - interval '30 days'
+    group by g.user_id
+  )
+  select jsonb_build_object(
+    'generated_at', now(),
+    'at_risk_count', (select count(*) from act
+                        where actions >= 3 and last_seen < now() - interval '14 days'
+                          and last_seen >= now() - interval '90 days'),
+    'at_risk', (
+      select coalesce(jsonb_agg(to_jsonb(x) order by x.last_seen desc), '[]'::jsonb) from (
+        select id, email, last_seen, actions,
+               round(extract(epoch from (now() - last_seen)) / 86400)::int as days_quiet
+        from act
+        where actions >= 3 and last_seen < now() - interval '14 days'
+          and last_seen >= now() - interval '90 days'
+        order by last_seen desc
+        limit 100
+      ) x
+    ),
+    'resurrected_count', (select count(*) from resurrected),
+    'resurrected', (
+      select coalesce(jsonb_agg(to_jsonb(y) order by y.returned_at desc), '[]'::jsonb) from (
+        select r.user_id as id, u.email, r.returned_at, r.gap_days
+        from resurrected r join auth.users u on u.id = r.user_id
+        order by r.returned_at desc
+        limit 50
+      ) y
+    )
+  ) into r;
   return r;
 end $$;
 
