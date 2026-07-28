@@ -1046,12 +1046,16 @@
     @media (max-width: 768px) {
       /* on the site grid: 28px gutters until 580, 96px bottom clears the FAB */
       .db-wrap { padding: 24px 28px 96px; }
+      /* moon/date/time sits at top-right on the logo's row. absolute (NOT
+         fixed) so it scrolls away with the page instead of pinning; the
+         nav-injected brand mark is at top-left, this balances it on the right.
+         No positioned ancestor on this page, so it anchors to the page top. */
       .db-moon {
-        position: fixed;
-        top: 14px;
-        right: 14px;
-        z-index: 40;
+        position: absolute;
+        top: 18px;
+        right: 20px;
         align-items: flex-end;
+        z-index: 5;
       }
     }
 
