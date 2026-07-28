@@ -268,6 +268,18 @@
       color: var(--text-2);
       line-height: 1;
     }
+    /* the time reads as text but is a toggle (24h ⇄ 12h) — brighten on hover */
+    .db-clock {
+      font: inherit;
+      letter-spacing: inherit;
+      color: inherit;
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      transition: color var(--transition-base);
+    }
+    .db-clock:hover { color: var(--text-1); }
 
     /* ── Your Favorite Classes — the shared .class-card component (styles in
           global.css), sized as fixed-width cards for the horizontal deck ── */
@@ -2010,17 +2022,34 @@
 
     function renderMoon() {
       var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      // clock format is a remembered per-device preference (24h default)
+      var CLOCK_KEY = 'fs-clock-12h';
+      function clock12() { return localStorage.getItem(CLOCK_KEY) === '1'; }
+      function fmtClock(now) {
+        var m = now.getMinutes().toString().padStart(2, '0');
+        if (clock12()) {
+          var hr = now.getHours() % 12 || 12;
+          return hr + ':' + m + ' ' + (now.getHours() < 12 ? 'AM' : 'PM');
+        }
+        return now.getHours().toString().padStart(2, '0') + ':' + m;
+      }
       function tick() {
         var now = new Date();
         var phase = getMoonPhase(now);
         var phaseIdx = Math.round(phase * 8) % 8;
-        var h = now.getHours().toString().padStart(2, '0');
-        var m = now.getMinutes().toString().padStart(2, '0');
         var dateStr = MONTHS[now.getMonth()].toUpperCase() + ' ' + now.getDate();
         document.getElementById('db-moon-svg').innerHTML = moonSVG(phase);
         document.getElementById('db-moon-phase').textContent = MOON_PHASES[phaseIdx];
-        document.getElementById('db-moon-datetime').textContent = dateStr + ' · ' + h + ':' + m;
+        // the time is a toggle: click it to flip 24h ⇄ 12h; the choice sticks
+        document.getElementById('db-moon-datetime').innerHTML =
+          dateStr + ' · <button type="button" class="db-clock" id="db-clock" aria-label="Toggle 12 or 24 hour time">' + fmtClock(now) + '</button>';
       }
+      // one delegated handler survives the per-minute innerHTML re-render
+      document.getElementById('db-moon-datetime').addEventListener('click', function (e) {
+        if (!e.target.closest('#db-clock')) return;
+        localStorage.setItem(CLOCK_KEY, clock12() ? '0' : '1');
+        tick();
+      });
       tick();
       setInterval(tick, 60000);
     }
