@@ -121,7 +121,7 @@ create index if not exists class_saves_created_idx on public.class_saves (create
 -- what counts as a real product action (not a page/tool open or a sign-in)
 create or replace function public.admin_is_meaningful(event_name text)
 returns boolean language sql immutable as $$
-  select event_name not in ('tool_opened','user_signed_in','public_item_viewed','profile_viewed');
+  select event_name not in ('tool_opened','user_signed_in','user_signed_up','public_item_viewed','profile_viewed','session_start','creation_started');
 $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -779,7 +779,10 @@ begin
       jsonb_build_object('step','opened_tool', 'label','Opened a tool',
         'count', (select count(distinct user_id) from analytics_events where event_name = 'tool_opened')),
       jsonb_build_object('step','created',     'label','Created something',
-        'count', (select count(distinct user_id) from analytics_events where admin_is_meaningful(event_name)))
+        'count', (select count(distinct user_id) from analytics_events where admin_is_meaningful(event_name))),
+      jsonb_build_object('step','returned',    'label','Came back (day 2+)',
+        'count', (select count(distinct ae.user_id) from analytics_events ae join u on u.id = ae.user_id
+                    where admin_is_meaningful(ae.event_name) and ae.created_at::date > u.signed_up_at::date))
     ),
     'creators',               (select count(*) from u where first_action_at is not null),
     'median_hours_to_create', (select round((percentile_cont(0.5) within group (
@@ -800,6 +803,24 @@ begin
         order by cohort_week desc
         limit 12
       ) c
+    ),
+    -- where activated teachers came from: signups by acquisition channel (from
+    -- the user_signed_up event's captured source), with how many activated in
+    -- week one. Pre-tracking signups have no source and read as 'unknown'.
+    'acquisition', (
+      select coalesce(jsonb_agg(to_jsonb(x) order by x.signups desc), '[]'::jsonb) from (
+        select coalesce(a.channel, 'unknown') as channel,
+               count(*)::int as signups,
+               count(*) filter (where uu.first_action_at is not null
+                                 and uu.first_action_at <= uu.signed_up_at + interval '7 days')::int as activated
+        from u uu
+        left join (
+          select distinct on (user_id) user_id, metadata->>'channel' as channel
+          from analytics_events where event_name = 'user_signed_up'
+          order by user_id, created_at asc
+        ) a on a.user_id = uu.id
+        group by coalesce(a.channel, 'unknown')
+      ) x
     )
   ) into r;
   return r;
@@ -899,9 +920,16 @@ end $$;
 -- only present from when tracking shipped, so older rows read as 'unknown'.
 create or replace function public.admin_devices(p_days int default 30)
 returns jsonb language plpgsql security definer set search_path = public as $$
-declare r jsonb; cutoff timestamptz := now() - (p_days || ' days')::interval;
+declare r jsonb; cutoff timestamptz := now() - (p_days || ' days')::interval; started timestamptz;
 begin
   if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+
+  -- device tracking began at the first event that carried a device; everything
+  -- before it is pre-tracking noise that would pile up as 'unknown'. Clamp the
+  -- window to that start so past unknowns drop out, while a genuine post-launch
+  -- unknown (should one ever occur) still counts going forward.
+  select min(created_at) into started from analytics_events where metadata->>'device' is not null;
+  if started is not null and started > cutoff then cutoff := started; end if;
 
   with ev as (
     select coalesce(nullif(metadata->>'device', ''), 'unknown') as device, session_id, tool
@@ -936,6 +964,66 @@ begin
         from ev where tool is not null
         group by tool
       ) t
+    )
+  ) into r;
+  return r;
+end $$;
+
+-- ── friction — where sessions/creations stall. All derived from existing
+-- events: session boundaries (session_id + timestamps), abandonment
+-- (creation_started without a same-session item_created), and empty-state
+-- exits (tool_opened with no engaged follow-on for that tool in the session).
+create or replace function public.admin_friction(p_days int default 30)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb; cutoff timestamptz := now() - (p_days || ' days')::interval;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+
+  with ev as (
+    select session_id, event_name, tool, resource_type, created_at,
+           admin_is_meaningful(event_name) as meaningful
+    from analytics_events
+    where created_at >= cutoff and session_id is not null
+  ),
+  sess as (
+    select session_id,
+           extract(epoch from (max(created_at) - min(created_at))) / 60.0 as mins,
+           count(*) filter (where meaningful) as meaningful_events,
+           count(*) filter (where event_name = 'creation_started') as starts
+    from ev group by session_id
+  )
+  select jsonb_build_object(
+    'generated_at', now(),
+    'days', p_days,
+    'sessions', jsonb_build_object(
+      'total', (select count(*) from sess),
+      'bounce', (select count(*) from sess where meaningful_events = 0 and starts = 0),
+      'bounce_pct', (select round(100.0 * count(*) filter (where meaningful_events = 0 and starts = 0)
+                                  / nullif(count(*), 0), 1) from sess),
+      'median_minutes', (select round(percentile_cont(0.5) within group (order by mins)::numeric, 1)
+                         from sess where meaningful_events > 0 or starts > 0)
+    ),
+    'abandonment', (
+      select coalesce(jsonb_agg(to_jsonb(x) order by x.starts desc), '[]'::jsonb) from (
+        select s.surface,
+               count(*)::int as starts,
+               count(*) filter (where c.session_id is not null)::int as completed
+        from (select distinct session_id, resource_type as surface from ev where event_name = 'creation_started' and resource_type is not null) s
+        left join (select distinct session_id, resource_type as surface from ev where event_name = 'item_created' and resource_type is not null) c
+          on c.session_id = s.session_id and c.surface = s.surface
+        group by s.surface
+      ) x
+    ),
+    'empty_states', (
+      select coalesce(jsonb_agg(to_jsonb(y) order by y.opens desc), '[]'::jsonb) from (
+        select o.tool,
+               count(*)::int as opens,
+               count(*) filter (where e.session_id is null)::int as dead
+        from (select distinct session_id, tool from ev where event_name = 'tool_opened' and tool is not null) o
+        left join (select distinct session_id, tool from ev where tool is not null and (meaningful or event_name = 'creation_started')) e
+          on e.session_id = o.session_id and e.tool = o.tool
+        group by o.tool
+      ) y
     )
   ) into r;
   return r;

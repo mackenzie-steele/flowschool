@@ -330,6 +330,7 @@
       { id: 'retention',   label: 'Retention',           render: renderRetention },
       { id: 'engagement',  label: 'Engagement',          render: renderEngagement },
       { id: 'devices',     label: 'Devices',             render: renderDevices },
+      { id: 'friction',    label: 'Friction',            render: renderFriction },
       { id: 'tools',       label: 'Tool Analytics',      render: renderTools },
       { id: 'creation',    label: 'Creation',            render: renderCreation },
       { id: 'experiments', label: 'Movement Experiments',render: renderExperiments },
@@ -348,7 +349,7 @@
       { label: 'Impact',   sections: ['impact'] },
       { label: 'People',   sections: ['users', 'activation', 'retention', 'activity'] },
       { label: 'Content',  sections: ['creation', 'public', 'saved', 'experiments'] },
-      { label: 'Product',  sections: ['engagement', 'devices', 'tools'] },
+      { label: 'Product',  sections: ['engagement', 'devices', 'friction', 'tools'] },
       { label: 'System',   sections: ['feedback', 'health', 'admins', 'exports'] },
     ];
     function groupOf(id) { return GROUPS.filter(function (g) { return g.sections.indexOf(id) !== -1; })[0] || GROUPS[0]; }
@@ -565,6 +566,31 @@
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Activation funnel</h2><span class="muted adm-mono" style="font-size:11px">% = kept from the step above</span></div>' +
           '<div class="adm-funnel">' + fnRows + '</div></div>';
 
+        // where teachers come from — signups by acquisition channel + how many
+        // activated (created in week one). The payoff of first-touch capture.
+        function acqLabel(ch) {
+          if (ch === 'shared_class') return 'Shared class link';
+          if (ch === 'profile') return 'Profile link';
+          if (ch === 'campaign') return 'Campaign (UTM)';
+          if (ch === 'direct') return 'Direct';
+          if (ch === 'internal') return 'Internal / unattributed';
+          if (ch === 'unknown') return 'Unknown (pre-tracking)';
+          if (ch && ch.indexOf('ref:') === 0) return 'Referral · ' + ch.slice(4);
+          return ch || 'Unknown';
+        }
+        var acq = a.acquisition || [];
+        var acqTotal = acq.reduce(function (s, x) { return s + (Number(x.signups) || 0); }, 0);
+        var acqRows = acq.map(function (x) {
+          var s = Number(x.signups) || 0, act = Number(x.activated) || 0;
+          return '<tr><td>' + esc(acqLabel(x.channel)) + '</td><td class="num">' + num(s) + '</td>' +
+            '<td class="num muted">' + (acqTotal ? Math.round(s / acqTotal * 100) + '%' : '—') + '</td>' +
+            '<td class="num">' + num(act) + '</td><td class="num">' + (s ? Math.round(act / s * 100) + '%' : '—') + '</td></tr>';
+        }).join('');
+        var acqPanel = acq.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Where teachers come from</h2><span class="muted adm-mono" style="font-size:11px">signups by source · activated = created in week 1</span></div>' +
+            '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Source</th><th class="num">Signups</th><th class="num">% of total</th><th class="num">Activated</th><th class="num">Activation rate</th></tr></thead><tbody>' + acqRows + '</tbody></table></div></div>'
+          : '';
+
         var cohorts = a.cohorts || [];
         var cohortRows = cohorts.map(function (c) {
           return '<tr><td>' + A.fmtDate(c.cohort_week) + '</td><td class="num">' + num(c.signups) + '</td><td class="num">' + num(c.activated) + '</td><td class="num">' + (c.pct == null ? '—' : c.pct + '%') + '</td></tr>';
@@ -591,7 +617,7 @@
 
         b.innerHTML =
           '<div class="adm-intro">Where new teachers land in their first week — from signup to their first real creation. The sooner they make something, the more likely they stay.</div>' +
-          metrics + funnelPanel + cohortPanel + uncPanel;
+          metrics + funnelPanel + acqPanel + cohortPanel + uncPanel;
 
         // wire the per-row "Resend confirmation" buttons (I1)
         b.querySelectorAll('.adm-resend-btn').forEach(function (btn) {
@@ -1160,6 +1186,46 @@
         b.innerHTML =
           '<div class="adm-intro">Reach is where teachers show up (share of sessions); depth is how much they do per visit (events per session). The table shows which device each tool leans on — aim feature work accordingly. Device is a best-effort guess from the browser and only counts from when tracking shipped.</div>' +
           (metrics || toolPanel ? metrics + toolPanel : '<div class="adm-panel"><div class="adm-panel-head"><h2>Devices</h2></div><div class="adm-intro" style="margin:0">No sessions in this window yet — check back once teachers have been active.</div></div>');
+      } catch (er) { b.innerHTML = stateError(er && er.message); }
+    }
+
+    // ── FRICTION ──
+    async function renderFriction() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var d = await A.rpc('admin_friction', { p_days: admRange }).catch(function (er) { console.warn('[admin] friction fetch failed:', er && er.message); return null; });
+        if (!d) { b.innerHTML = runSqlNote('Friction'); return; }
+        var win = admRangeLabel(admRange).toLowerCase();
+        var s = d.sessions || {};
+        var metrics = '<div class="adm-metrics">' +
+          card('Median session', (s.median_minutes != null ? s.median_minutes + ' min' : '—'), 'engaged sessions only', 'Half the sessions where a teacher did something run shorter than this, half longer. Bounces are excluded so they don’t drag it to zero.') +
+          card('Bounce rate', (s.bounce_pct != null ? s.bounce_pct + '%' : '—'), num(s.bounce || 0) + ' of ' + num(s.total || 0) + ' sessions', 'Sessions where a teacher landed and left without doing anything — no action, no creation start.') +
+          card('Sessions', num(s.total || 0), win, 'Distinct tab-sessions in this window (counted from session_start).') +
+          '</div>';
+
+        var LABELS = { class: 'Classes', flow: 'Flows', cue_sheet: 'Cue sheets', story: 'Stories', playlist: 'Playlists', arbitrary_rule: 'Arbitrary rules', pose_chain: 'Pose chains' };
+        var ab = d.abandonment || [];
+        var abRows = ab.map(function (x) {
+          var st = Number(x.starts) || 0, cp = Number(x.completed) || 0, lost = st - cp;
+          return '<tr><td>' + esc(LABELS[x.surface] || x.surface) + '</td><td class="num">' + num(st) + '</td><td class="num">' + num(cp) + '</td><td class="num">' + num(lost) + '</td><td class="num">' + (st ? Math.round(lost / st * 100) + '%' : '—') + '</td></tr>';
+        }).join('');
+        var abPanel = ab.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Abandoned creations</h2><span class="muted adm-mono" style="font-size:11px">started but not saved in the same session · ' + esc(win) + '</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Surface</th><th class="num">Started</th><th class="num">Saved</th><th class="num">Abandoned</th><th class="num">Abandon rate</th></tr></thead><tbody>' + abRows + '</tbody></table></div></div>'
+          : '';
+
+        var es = d.empty_states || [];
+        var esRows = es.map(function (x) {
+          var op = Number(x.opens) || 0, de = Number(x.dead) || 0;
+          return '<tr><td>' + esc(x.tool) + '</td><td class="num">' + num(op) + '</td><td class="num">' + num(de) + '</td><td class="num">' + (op ? Math.round(de / op * 100) + '%' : '—') + '</td></tr>';
+        }).join('');
+        var esPanel = es.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Empty-state exits</h2><span class="muted adm-mono" style="font-size:11px">opened, did nothing, left · by session · ' + esc(win) + '</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Opened</th><th class="num">Dead-ends</th><th class="num">Exit rate</th></tr></thead><tbody>' + esRows + '</tbody></table></div></div>'
+          : '';
+
+        b.innerHTML =
+          '<div class="adm-intro">Where attention leaks: how long engaged sessions run, how often teachers bounce, where they start creating but don’t finish, and which tools they open then abandon. High rates point straight at what to fix.</div>' +
+          metrics + abPanel + esPanel +
+          (ab.length || es.length ? '' : '<div class="adm-panel"><div class="adm-panel-head"><h2>Friction</h2></div><div class="adm-intro" style="margin:0">No creation starts or tool opens in this window yet.</div></div>');
       } catch (er) { b.innerHTML = stateError(er && er.message); }
     }
 

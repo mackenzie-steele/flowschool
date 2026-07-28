@@ -1945,6 +1945,8 @@ function newSheet(push) {
   document.getElementById('sheet-back-label').textContent = fsBackLabel('Your Cues');
   document.title = 'New Cue Sheet \u2014 Flow School';
   if (push) fsPushState('your-cues?new=1');
+  // new-creation start (button-driven, not a route restore) \u2014 abandonment input
+  if (push && window.fsTrack) fsTrack('creation_started', { resourceType: 'cue_sheet' });
 }
 
 // leaving the worksheet — a dirty draft gets the discard guard; a

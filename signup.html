@@ -9,6 +9,7 @@
 <title>Create Account — Flow School</title>
 <link rel="stylesheet" href="global.css">
   <script src="lib/icons.js"></script>
+  <script src="lib/acq.js"></script>
   <script>try{var s=JSON.parse(localStorage.getItem('sb-zizuopmcpzicbwngjagp-auth-token'));if(s&&s.user&&(!s.expires_at||s.expires_at>Date.now()/1e3))document.documentElement.classList.add('fs-authed')}catch(e){}</script>
 <style>
 body { display: flex; flex-direction: column; min-height: 100vh; }
@@ -126,6 +127,10 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
     errEl.classList.add('show');
     fsWorking(btn, false, 'Create account');
   } else if (data.session) {
+    // a real signup — mark it so analytics.js fires user_signed_up (with the
+    // captured source) on the first authenticated load. Set for both confirm
+    // paths, never for the error/already-registered decoy branches.
+    try { localStorage.setItem('fs-signup-pending', '1'); } catch (_) {}
     // Email confirmation off — logged straight in. Warm the (empty, for a new
     // account) cache the same way login does, for consistency.
     try {
@@ -144,7 +149,9 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
     errEl.classList.add('show');
     fsWorking(btn, false, 'Create account');
   } else {
-    // Email confirmation on
+    // Email confirmation on — they'll confirm then sign in; the marker persists
+    // so the source still attaches to user_signed_up on that first session.
+    try { localStorage.setItem('fs-signup-pending', '1'); } catch (_) {}
     sucEl.innerHTML = 'Check your email to confirm your account, then sign in. Already have an account? <a href="login">Sign in instead</a>.';
     sucEl.classList.add('show');
     fsWorking(btn, false, 'Create account');

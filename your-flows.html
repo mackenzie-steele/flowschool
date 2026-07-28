@@ -1914,6 +1914,8 @@
       });
 
       if (push) fsPushState(f ? 'your-flows?edit=' + f.id : 'your-flows?new=1');
+      // new-creation start (not edit/route restore) — feeds abandonment analysis
+      if (push && !f && window.fsTrack) fsTrack('creation_started', { resourceType: 'flow' });
     }
 
     // ─── ELEMENTS OF FLOW (Peak Flows only) ──────────────────────────────────────
