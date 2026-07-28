@@ -752,6 +752,9 @@
       if (myId && myId === teacher.id) {
         document.getElementById('tp-edit').hidden = false;
       } else {
+        // internal-only: a non-owner opened this profile (admin analytics; a
+        // refresh counts, self-views are excluded by this branch)
+        if (window.fsTrack) fsTrack('profile_viewed', { resourceType: 'profile', resourceId: teacher.id });
         if (SHOW_CONNECT_CONTROLS) {
           const follows = await fsCommunity.myFollows();
           wireFollow(follows);

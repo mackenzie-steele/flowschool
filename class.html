@@ -717,6 +717,12 @@
         row = res.data;
         saved = saves.has(row.id);
         render();
+        // internal-only: a non-owner opened this shared class (admin analytics;
+        // a refresh counts, self-views excluded). owner in metadata for
+        // per-author rollups without a join.
+        if (window.fsTrack && !(myId && row.owner_id === myId)) {
+          fsTrack('public_item_viewed', { resourceType: 'public_class', resourceId: row.id, metadata: { owner: row.owner_id } });
+        }
       } catch (e) {
         console.warn('Class could not load:', e && e.message);
         document.getElementById('pc-error').hidden = false;

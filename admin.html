@@ -329,6 +329,7 @@
       { id: 'users',       label: 'Users',               render: renderUsers },
       { id: 'retention',   label: 'Retention',           render: renderRetention },
       { id: 'engagement',  label: 'Engagement',          render: renderEngagement },
+      { id: 'devices',     label: 'Devices',             render: renderDevices },
       { id: 'tools',       label: 'Tool Analytics',      render: renderTools },
       { id: 'creation',    label: 'Creation',            render: renderCreation },
       { id: 'experiments', label: 'Movement Experiments',render: renderExperiments },
@@ -347,7 +348,7 @@
       { label: 'Impact',   sections: ['impact'] },
       { label: 'People',   sections: ['users', 'activation', 'retention', 'activity'] },
       { label: 'Content',  sections: ['creation', 'public', 'saved', 'experiments'] },
-      { label: 'Product',  sections: ['engagement', 'tools'] },
+      { label: 'Product',  sections: ['engagement', 'devices', 'tools'] },
       { label: 'System',   sections: ['feedback', 'health', 'admins', 'exports'] },
     ];
     function groupOf(id) { return GROUPS.filter(function (g) { return g.sections.indexOf(id) !== -1; })[0] || GROUPS[0]; }
@@ -1096,6 +1097,7 @@
           card('Weekly active', num(e.wau), null, 'Distinct teachers active in the last 7 days.', deltaHtml(e.wau, e.wau_prev, 'vs prior 7 days')) +
           card('Monthly active', num(e.mau), null, 'Distinct teachers active in the last 30 days.', deltaHtml(e.mau, e.mau_prev, 'vs prior 30 days')) +
           card('Used a tool · 7d', num(e.tool_users_7d), pct(e.tool_users_7d, e.wau) + ' of weekly-active', 'Teachers who used at least one tool in the last 7 days.', deltaHtml(e.tool_users_7d, e.tool_users_7d_prev, 'vs prior 7 days')) +
+          card('Shared class views · 7d', num(e.shared_class_views_7d), null, 'Times a published class was opened by someone other than the author in the last 7 days. Refreshes count; the author viewing their own class does not.', deltaHtml(e.shared_class_views_7d, e.shared_class_views_7d_prev, 'vs prior 7 days')) +
           '</div>';
 
         var dist = e.distribution || [];
@@ -1122,6 +1124,42 @@
         b.innerHTML =
           '<div class="adm-intro">How habitual the product is, and which tools teachers actually come back to. Reach = ever used it; Return = used it on two or more days.</div>' +
           metrics + distPanel + toolPanel;
+      } catch (er) { b.innerHTML = stateError(er && er.message); }
+    }
+
+    // ── DEVICES ──
+    async function renderDevices() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var d = await A.rpc('admin_devices', { p_days: admRange }).catch(function (er) { console.warn('[admin] devices fetch failed:', er && er.message); return null; });
+        if (!d) { b.innerHTML = runSqlNote('Devices'); return; }
+        var win = admRangeLabel(admRange).toLowerCase();
+        var LABELS = { mobile: 'Mobile', tablet: 'Tablet', desktop: 'Desktop', unknown: 'Unknown' };
+        var reach = d.reach || [];
+        var byDev = {}; reach.forEach(function (x) { byDev[x.device] = x; });
+        var cards = ['mobile', 'tablet', 'desktop', 'unknown'].filter(function (k) { return byDev[k]; }).map(function (k) {
+          var x = byDev[k];
+          var sessions = Number(x.sessions) || 0;
+          var share = (x.share != null) ? x.share + '%' : '—';
+          var per = (x.per_session != null) ? x.per_session : '—';
+          return card(LABELS[k] || k, share,
+            num(sessions) + ' sessions · ' + per + ' uses/session',
+            'Reach = share of sessions on ' + (LABELS[k] || k).toLowerCase() + '. Depth = events per session (higher = more done per visit). ' + (k === 'unknown' ? 'Unknown = sessions from before device tracking shipped.' : 'Best-effort from the browser.'));
+        }).join('');
+        var metrics = reach.length ? '<div class="adm-metrics">' + cards + '</div>' : '';
+
+        var tools = d.by_tool || [];
+        var toolRows = tools.map(function (t) {
+          var m = Number(t.mobile) || 0, ta = Number(t.tablet) || 0, de = Number(t.desktop) || 0, tot = Number(t.total) || 0;
+          return '<tr><td>' + esc(t.tool) + '</td><td class="num">' + num(m) + '</td><td class="num">' + num(ta) + '</td><td class="num">' + num(de) + '</td><td class="num">' + num(tot) + '</td></tr>';
+        }).join('');
+        var toolPanel = tools.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Where each tool is used</h2><span class="muted adm-mono" style="font-size:11px">sessions by device · ' + esc(win) + '</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Mobile</th><th class="num">Tablet</th><th class="num">Desktop</th><th class="num">Total</th></tr></thead><tbody>' + toolRows + '</tbody></table></div></div>'
+          : '';
+
+        b.innerHTML =
+          '<div class="adm-intro">Reach is where teachers show up (share of sessions); depth is how much they do per visit (events per session). The table shows which device each tool leans on — aim feature work accordingly. Device is a best-effort guess from the browser and only counts from when tracking shipped.</div>' +
+          (metrics || toolPanel ? metrics + toolPanel : '<div class="adm-panel"><div class="adm-panel-head"><h2>Devices</h2></div><div class="adm-intro" style="margin:0">No sessions in this window yet — check back once teachers have been active.</div></div>');
       } catch (er) { b.innerHTML = stateError(er && er.message); }
     }
 

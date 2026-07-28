@@ -77,7 +77,7 @@ create table if not exists public.analytics_events (
   tool           text,
   resource_type  text,
   resource_id    text,
-  metadata       jsonb not null default '{}'::jsonb,   -- IDs + safe summaries only, never private content
+  metadata       jsonb not null default '{}'::jsonb,   -- IDs + safe summaries only, incl. device class
   created_at     timestamptz not null default now()
 );
 alter table public.analytics_events enable row level security;
@@ -121,7 +121,7 @@ create index if not exists class_saves_created_idx on public.class_saves (create
 -- what counts as a real product action (not a page/tool open or a sign-in)
 create or replace function public.admin_is_meaningful(event_name text)
 returns boolean language sql immutable as $$
-  select event_name not in ('tool_opened','user_signed_in','public_item_viewed');
+  select event_name not in ('tool_opened','user_signed_in','public_item_viewed','profile_viewed');
 $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -865,6 +865,11 @@ begin
                         where tool is not null and created_at >= now() - interval '7 days'),
     'tool_users_7d_prev', (select count(distinct user_id) from analytics_events
                         where tool is not null and created_at >= now() - interval '14 days' and created_at < now() - interval '7 days'),
+    -- total shared-class views (non-owner opens; refreshes count) with a prior-week delta
+    'shared_class_views_7d', (select count(*) from analytics_events
+                        where event_name = 'public_item_viewed' and created_at >= now() - interval '7 days'),
+    'shared_class_views_7d_prev', (select count(*) from analytics_events
+                        where event_name = 'public_item_viewed' and created_at >= now() - interval '14 days' and created_at < now() - interval '7 days'),
     'distribution', (
       select coalesce(jsonb_agg(to_jsonb(d) order by d.ord), '[]'::jsonb) from (
         select b.ord, b.label, count(*)::int as users from (
@@ -883,6 +888,53 @@ begin
       select coalesce(jsonb_agg(to_jsonb(t) order by t.users desc), '[]'::jsonb) from (
         select tool, count(*)::int as users, count(*) filter (where days >= 2)::int as returned
         from tu group by tool
+      ) t
+    )
+  ) into r;
+  return r;
+end $$;
+
+-- ── device mix — reach (sessions by device) + depth (events per session),
+-- and which device each tool leans on. Device is best-effort from the UA and
+-- only present from when tracking shipped, so older rows read as 'unknown'.
+create or replace function public.admin_devices(p_days int default 30)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare r jsonb; cutoff timestamptz := now() - (p_days || ' days')::interval;
+begin
+  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
+
+  with ev as (
+    select coalesce(nullif(metadata->>'device', ''), 'unknown') as device, session_id, tool
+    from analytics_events
+    where created_at >= cutoff and session_id is not null
+  ),
+  per_device as (
+    select device, count(distinct session_id) as sessions, count(*) as events
+    from ev group by device
+  ),
+  tot as (select nullif(sum(sessions), 0) as s from per_device)
+  select jsonb_build_object(
+    'generated_at', now(),
+    'days', p_days,
+    'reach', (
+      select coalesce(jsonb_agg(jsonb_build_object(
+        'device', device,
+        'sessions', sessions,
+        'events', events,
+        'share', round(100.0 * sessions / (select s from tot), 1),
+        'per_session', round(events::numeric / nullif(sessions, 0), 1)
+      ) order by sessions desc), '[]'::jsonb)
+      from per_device
+    ),
+    'by_tool', (
+      select coalesce(jsonb_agg(to_jsonb(t) order by t.total desc), '[]'::jsonb) from (
+        select tool,
+          count(distinct session_id) filter (where device = 'mobile')  as mobile,
+          count(distinct session_id) filter (where device = 'tablet')  as tablet,
+          count(distinct session_id) filter (where device = 'desktop') as desktop,
+          count(distinct session_id) as total
+        from ev where tool is not null
+        group by tool
       ) t
     )
   ) into r;
