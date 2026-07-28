@@ -47,7 +47,16 @@
        prompt is a quiet text link, same register as the advance */
     .pose-card.facedown { cursor: pointer; }
     .pose-card.facedown .pose-name {
-      margin: auto;                 /* centered in the card's free space */
+      position: absolute;           /* centered in the WHOLE card, not just the
+                                       space under the eyebrow */
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin: 0;                    /* override .dest-card's margin-bottom so the
+                                       text sits at the true card center */
+      padding: 40px;
       font-size: var(--text-ui);
       font-weight: var(--weight-semibold);
       color: var(--text-2);
@@ -124,7 +133,23 @@
       cursor: pointer;
     }
 
-    .pose-card.seat-empty .pose-name { min-height: 0; }
+    /* the empty-seat prompt reads the same as the destination card's prompt:
+       centered, small, semibold — one placeholder voice across both cards */
+    .pose-card.seat-empty .pose-name {
+      min-height: 0;
+      position: absolute;           /* centered in the whole card, matching dest */
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px;
+      font-size: var(--text-ui);
+      font-weight: var(--weight-semibold);
+      color: var(--text-2);
+      transition: color var(--transition-base);
+    }
+    .deck-slot:hover .pose-card.seat-empty .pose-name { color: var(--text-1); }
 
     .dest-card {
       border-color: rgba(var(--ink-rgb), .18);
@@ -797,7 +822,7 @@
 
     // ─── RENDER ──────────────────────────────────────────────────
     function renderDeck() {
-      document.getElementById('start-pose-name').textContent = startPose || '';
+      document.getElementById('start-pose-name').textContent = startPose || 'Tap for starting pose';
       document.getElementById('dest-pose-name').textContent  = destPose  || (startPose ? 'Tap for next pose' : 'Tap for starting pose');
       document.getElementById('start-card').classList.toggle('seat-empty', !startPose);
       document.getElementById('start-card').classList.remove('facedown');

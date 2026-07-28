@@ -1503,7 +1503,7 @@
       entries.sort(function (a, b) { return b.ts - a.ts; });
       entries = entries.slice(0, 3);
       if (!entries.length) {
-        el.innerHTML = '<p class="db-saved-empty">Notes you take after teaching a class will land here.</p>';
+        el.innerHTML = '<p class="db-saved-empty">Notes you take will land here.</p>';
         return;
       }
       el.innerHTML = entries.map(function (e) {
