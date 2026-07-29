@@ -35,18 +35,19 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
       <div class="field">
         <label class="field-label" for="email">Email</label>
         <div class="field-input-wrap">
-          <input class="field-input" type="email" id="email" placeholder="you@example.com" autocomplete="email" required>
+          <input class="field-input" type="email" id="email" placeholder="Your email" autocomplete="email" required>
         </div>
       </div>
 
       <div class="field">
         <label class="field-label" for="password">Password</label>
         <div class="field-input-wrap">
-          <input class="field-input" type="password" id="password" placeholder="8+ characters: upper & lowercase, number, symbol" autocomplete="new-password" required>
+          <input class="field-input" type="password" id="password" placeholder="Create a password" autocomplete="new-password" aria-describedby="password-hint" required>
           <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password">
             <span class="material-symbols-sharp" id="eye-icon">visibility</span>
           </button>
         </div>
+        <p class="field-hint" id="password-hint">8+ characters: upper &amp; lowercase, number, symbol</p>
       </div>
 
       <div class="auth-error" id="auth-error"></div>
@@ -159,6 +160,6 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
 });
 
 </script>
-  <footer class="site-footer"><span class="footer-main">Flow School &#183; Creative Studio for Yoga Teachers</span><span class="footer-support">Looking for support? Email us at <a href="mailto:support@flowschool.io">support@flowschool.io</a></span></footer>
+  <footer class="site-footer"><span class="footer-main">Flow School &#183; The Creative Studio for Yoga Teachers</span><span class="footer-support"><a href="mailto:support@flowschool.io">support@flowschool.io</a></span></footer>
 </body>
 </html>

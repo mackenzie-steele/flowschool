@@ -2860,6 +2860,16 @@ body.has-sidebar {
   color: var(--text-3);
 }
 
+.field-hint {
+  font-size: var(--text-small);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.field-input-wrap:has(.pw-toggle) .field-input {
+  padding-right: 48px;
+}
+
 .pw-toggle {
   position: absolute;
   right: 12px;
@@ -4044,7 +4054,7 @@ body.has-sidebar {
 
 .footer-support {
   display: block;
-  margin-top: 6px;
+  margin-top: 10px;
   user-select: text;   /* let people copy the support address */
 }
 
