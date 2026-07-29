@@ -638,11 +638,6 @@
     .flp-action:hover { background: rgba(var(--ink-rgb), .05); color: var(--text-1); }
     .flp-action .material-symbols-sharp { font-size: var(--icon-sm); }
 
-    .flp-empty {
-      padding: 12px;
-      font-size: var(--text-small);
-      color: var(--text-3);
-    }
 
     /* the add rows wear the flows page's empty-drawer anatomy — a
        full-width dashed bar holding the door open */
@@ -1196,14 +1191,6 @@
 
     .story-pick-item.on .story-pick-check { opacity: 1; }
 
-    .story-pick-empty {
-      padding: 24px 16px;
-      text-align: center;
-      font-size: var(--text-body-sm);
-      color: var(--text-3);
-    }
-
-    .story-pick-empty a { color: var(--text-2); }
 
     /* mobile teaching comfort */
     @media (max-width: 580px) {
@@ -1378,7 +1365,7 @@
           <span class="material-symbols-sharp i-sm" style="margin-right:5px">bookmark</span>
           Saved
         </button>
-        <div class="view-toggle" role="group" aria-label="View">
+        <div class="view-toggle" id="view-toggle" role="group" aria-label="View">
           <button type="button" class="vt-btn active" id="vt-grid" data-tooltip="Grid view" aria-label="Grid view"><span class="material-symbols-sharp">grid_view</span></button>
           <button type="button" class="vt-btn" id="vt-list" data-tooltip="List view" aria-label="List view"><span class="material-symbols-sharp">view_list</span></button>
         </div>

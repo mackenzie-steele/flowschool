@@ -348,12 +348,6 @@ html{background:#0F1116;color-scheme:dark}html[data-theme="light"]{background:#F
       opacity: .7;
     }
 
-    .bp-sheet-empty {
-      font-size: var(--text-body-sm);
-      color: var(--text-3);
-      font-style: italic;
-      padding: 8px 0;
-    }
 
     .bp-script-top-btns { display: flex; gap: 8px; flex-shrink: 0; }
 
@@ -1297,7 +1291,7 @@ html{background:#0F1116;color-scheme:dark}html[data-theme="light"]{background:#F
                   : '<span class="bp-sheet-note">No breath marks</span>') +
             '</button>';
           }).join('')
-        : '<p class="bp-sheet-empty">Nothing in Your Cues yet. Write a sheet there first.</p>';
+        : '<p class="empty-note">Nothing in Your Cues yet. Write a sheet there first.</p>';
       list.querySelectorAll('.bp-sheet-row[data-id]').forEach(row => {
         row.addEventListener('click', () => {
           bpLoadSheet(parseInt(row.dataset.id, 10));

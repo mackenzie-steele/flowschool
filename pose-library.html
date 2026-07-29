@@ -173,21 +173,6 @@
     }
 
     /* Empty state */
-    .lib-empty {
-      text-align: center;
-      padding: 52px 28px;
-    }
-
-    .lib-empty p {
-      color: var(--text-3);
-      font-size: var(--text-body-sm);
-    }
-
-    .lib-empty p+p {
-      margin-top: 8px;
-      font-size: var(--text-small);
-    }
-
     /* ── Sequence demo card ── */
     .sh-demo-card {
       margin-top: 40px;
@@ -833,7 +818,7 @@
 
       if (!data.length) {
         const msg = STATE.query ? `No results for "${esc(STATE.query)}".` : 'No entries.';
-        tbody.innerHTML = `<tr><td colspan="4"><div class="lib-empty"><p>${msg}</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-panel">${msg}</div></td></tr>`;
         return;
       }
 

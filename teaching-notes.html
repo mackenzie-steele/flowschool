@@ -372,15 +372,19 @@
 
       if (!entries.length) {
         filterRow.hidden = true;
+        document.getElementById('library-bar').hidden = true;
         stream.innerHTML = '<div class="library-empty">' +
+          '<p class="library-empty-title">The notes start after you teach.</p>' +
+          '<p class="library-empty-sub">Take notes on your classes - and your teaching history starts writing itself.</p>' +
+          '<div class="library-empty-actions"><button class="btn-primary" id="empty-add-note-btn">Add a Note</button></div>' +
           fsGhostRows() +
-          '<p class="library-empty-headline">The notes start after you teach.</p>' +
-          '<p class="library-empty-sub">Add a note from any class &#8212; or right here &#8212; and your teaching history starts writing itself.</p>' +
           '</div>';
+        document.getElementById('empty-add-note-btn').addEventListener('click', openComposer);
         return;
       }
 
       filterRow.hidden = false;
+      document.getElementById('library-bar').hidden = false;
       document.getElementById('result-count').textContent =
         filtered.length + (filtered.length === 1 ? ' note' : ' notes');
 

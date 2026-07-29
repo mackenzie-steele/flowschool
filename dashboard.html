@@ -778,12 +778,6 @@
       color: var(--text-3);
     }
 
-    .db-saved-empty {
-      font-size: var(--text-ui);
-      color: var(--text-3);
-      font-style: italic;
-      margin: 0;
-    }
 
     .db-view-all {
       display: inline-flex;
@@ -1503,7 +1497,7 @@
       entries.sort(function (a, b) { return b.ts - a.ts; });
       entries = entries.slice(0, 3);
       if (!entries.length) {
-        el.innerHTML = '<p class="db-saved-empty">Notes you take will land here.</p>';
+        el.innerHTML = '<p class="empty-note">Notes you take will land here.</p>';
         return;
       }
       el.innerHTML = entries.map(function (e) {
@@ -1718,7 +1712,7 @@
         .sort(function (a, b) { return a.d - b.d; });
 
       if (!upcoming.length) {
-        el.innerHTML = '<p class="db-saved-empty">Nothing on the calendar right now.</p>';
+        el.innerHTML = '<p class="empty-note">Nothing on the calendar right now.</p>';
         return;
       }
 

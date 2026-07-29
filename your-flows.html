@@ -609,10 +609,6 @@
       color: var(--text-3);
     }
 
-    .fl-usedin-empty {
-      font-size: var(--text-body-sm);
-      color: var(--text-3);
-    }
 
     /* type picker — the taxonomy, selectable */
     .fl-types {
@@ -1265,7 +1261,7 @@
         index.innerHTML =
           '<div class="library-empty">' +
           '<h4 class="library-empty-title">Add your first flow.</h4>' +
-          '<p class="library-empty-sub">Write the sequences you&#8217;ll combine to create whole classes.</p>' +
+          '<p class="library-empty-sub">Write the small sequences you&#8217;ll combine to build entire classes.</p>' +
           '<div class="library-empty-actions">' +
           '<button class="btn-primary" id="empty-new-btn">Write a Flow</button>' +
           '</div>' +
@@ -1529,7 +1525,7 @@
               '<span class="fl-class-meta">' + (c.length || 60) + ' min</span>' +
             '</a>';
           }).join('')
-        : '<p class="fl-usedin-empty">Not part of a class yet.</p>';
+        : '<p class="empty-note">Not part of a class yet.</p>';
     }
 
     // ─── THE CUE SHEET UNDER THE POSES ───────────────────────────────────────────

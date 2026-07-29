@@ -118,12 +118,6 @@
     .sv-item:hover .sv-arrow { opacity: 1; }
 
     /* ── Empty state ── */
-    .sv-empty {
-      padding: 16px 0 8px;
-      font-size: var(--text-ui);
-      color: var(--text-3);
-      font-style: italic;
-    }
 
     /* ── Global empty ── */
     .sv-all-empty {
@@ -320,7 +314,7 @@
               + '<span class="material-symbols-sharp sv-arrow i-md">arrow_forward</span>'
               + '</a>';
           }).join('')
-        : '<p class="sv-empty">Nothing saved here yet.</p>';
+        : '<p class="empty-note">Everything you save lands here.</p>';
 
       return '<div class="sv-section">'
         + '<div class="sv-section-hdr">'
@@ -394,10 +388,10 @@
     function boot() {
       if (allItems === 0) {
         root.innerHTML = '<div class="library-empty">'
-          + fsGhostRows()
-          + '<p class="library-empty-headline">Everything you keep, in one place.</p>'
-          + '<p class="library-empty-sub">Save a challenge, a chain, a cue sheet, or a playlist as you practice \u2014 this shelf fills itself.</p>'
+          + '<p class="library-empty-title">Everything you save, in one place.</p>'
+          + '<p class="library-empty-sub">Save a challenge, a playlist, a pose popcorn chain, or a cue sheet. Everything you save will land here.</p>'
           + '<div class="library-empty-actions"><a href="dashboard" class="btn-primary">Back to Dashboard</a></div>'
+          + fsGhostRows()
           + '</div>';
         return;
       }

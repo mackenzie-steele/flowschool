@@ -1071,6 +1071,10 @@ button svg {
 
 /* sort toggle sits on its own quiet row; a result count may ride right */
 .sort-row[hidden] { display: none; }
+/* pages set .library-bar { display: flex }, which would override the [hidden]
+   attribute — honor hidden so empty states can drop the search/add bar */
+.library-bar[hidden] { display: none; }
+.filter-row[hidden] { display: none; }
 
 .sort-row {
   display: flex;
@@ -1923,7 +1927,7 @@ input[type=range].range-slider:disabled {
   from { opacity: 0; }
 }
 
-.library-empty, .flow-filter-empty, .lib-empty, .chain-empty {
+.library-empty, .flow-filter-empty, .empty-panel {
   animation: fsFadeIn .2s ease-out backwards;
 }
 
@@ -3168,6 +3172,26 @@ body.has-sidebar {
   padding: 24px 0;
   border-bottom: 1px solid var(--border-light);
 }
+
+/* ── inline empty states — two tiers below the full-page .library-empty above,
+   consolidating a dozen one-off classes into one voice.
+   .empty-note  — a quiet hint inside a compact module (left, italic, tight).
+   .empty-panel — fills a list / panel / dropdown that has no items yet (centered). */
+.empty-note {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  font-style: italic;
+  line-height: var(--lh-body);
+  color: var(--text-3);
+}
+.empty-panel {
+  padding: 32px 20px;
+  text-align: center;
+  font-size: var(--text-body-sm);
+  line-height: var(--lh-body);
+  color: var(--text-3);
+}
+.empty-panel a { color: var(--text-2); }
 
 .library-empty-ghost-row:nth-child(1) { opacity: .9; }
 .library-empty-ghost-row:nth-child(2) { opacity: .55; }

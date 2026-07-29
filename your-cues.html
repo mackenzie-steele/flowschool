@@ -108,12 +108,6 @@
       max-height: 260px;
       overflow-y: auto;
     }
-    .flow-list-empty {
-      padding: 28px 16px;
-      text-align: center;
-      color: var(--text-3);
-      font-size: var(--fs-body);
-    }
     .flow-list-item {
       display: flex;
       align-items: center;
@@ -883,11 +877,6 @@
       color: var(--text-3);
     }
 
-    .cd-empty {
-      font-size: var(--text-body-sm);
-      color: var(--text-3);
-      font-style: italic;
-    }
 
     .wb-shelf { margin-top: 40px; }
 
@@ -1024,7 +1013,7 @@
   </section>
 
   <div class="wrap">
-    <div class="library-bar">
+    <div class="library-bar" id="library-bar">
       <div class="search-wrap">
         <span class="search-icon"><span class="material-symbols-sharp">search</span></span>
         <input type="text" class="search-input" id="cue-search" placeholder="Search your cues&#8230;" autocomplete="off" aria-label="Search your cues">
@@ -1766,15 +1755,19 @@ function renderList() {
 
   if (!all.length) {
     sortRow.hidden = true;
+    document.getElementById('library-bar').hidden = true;
     index.innerHTML = '<div class="library-empty">' +
-      fsGhostRows() +
       '<h4 class="library-empty-title">Add your first cue sheet.</h4>' +
-      '<p class="library-empty-sub">Everything you write lives here.</p>' +
+      '<p class="library-empty-sub">When you&#8217;re moved, you move others.</p>' +
+      '<div class="library-empty-actions"><button class="btn-primary" id="empty-new-cue-btn">Create a Cue Sheet</button></div>' +
+      fsGhostRows() +
       '</div>';
+    document.getElementById('empty-new-cue-btn').addEventListener('click', function () { newSheet(true); });
     return;
   }
 
   sortRow.hidden = false;
+  document.getElementById('library-bar').hidden = false;
   fsRenderSortLabel(fsSortMode(SORT_KEY));
 
   const flowNameOf = id => {
@@ -1882,7 +1875,7 @@ function renderDetail(e) {
           (pose ? '<span class="cd-cue-pose">' + esc(pose) + '</span>' : '') +
         '</div>';
       }).join('')
-    : '<p class="cd-empty">Nothing written on this sheet yet.</p>';
+    : '<p class="empty-note">Nothing written on this sheet yet.</p>';
 
   // Practice at Breath Pace runs the breath teleprompter — it needs cues
   // and at least one inhale/exhale. When it can't run, hide it entirely
@@ -2066,7 +2059,7 @@ function openImportModal() {
           </div>
         </div>`;
       }).join('')
-    : '<div class="flow-list-empty">No flows in your library yet. Write one in Your Flows first.</div>';
+    : '<div class="empty-panel">No flows in your library yet. Write one in Your Flows first.</div>';
   list.querySelectorAll('.flow-list-item:not(.taken)').forEach(el => {
     el.addEventListener('click', () => {
       // seats, not appends — the sheet holds one flow
