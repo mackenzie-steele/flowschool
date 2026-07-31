@@ -21,6 +21,20 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
    auth form's clothes. They stack on the narrow pivot like everything else. */
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 580px) { .field-row { grid-template-columns: 1fr; gap: 20px; } }
+
+/* .btn-primary carries display:inline-flex, which outranks the UA sheet's
+   [hidden] rule — without this the submit button can't retire itself once
+   the account exists */
+.auth-submit[hidden] { display: none; }
+
+/* the echoed address: medium, not <strong>'s 700 — the system reserves bold
+   for labels and badges. `anywhere` so a long address wraps instead of
+   pushing the card wide on a phone. */
+.auth-success-email {
+  font-weight: var(--weight-medium);
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
 </style>
 </head>
 <body>
@@ -108,6 +122,13 @@ document.getElementById('pw-toggle').addEventListener('click', () => {
   document.getElementById('eye-icon').textContent = isText ? 'visibility_off' : 'visibility';
 });
 
+// The signed-up address is echoed back into the success message, so it has to
+// be escaped on the way into innerHTML — it's whatever they typed.
+function escAttr(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 // Password rule — mirrors the Supabase Auth requirement (8+ chars,
 // lower + upper + digit + symbol). Returns the first problem, or null.
 function passwordProblem(pw) {
@@ -141,7 +162,7 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
   // first name is the one the product actually needs — it greets people by
   // it from the first screen. A last name is welcome, never required.
   if (!firstName) {
-    errEl.textContent = 'What should we call you? A first name is enough.';
+    errEl.textContent = 'A first name is required to sign up.';
     errEl.classList.add('show');
     document.getElementById('first-name').focus();
     return;
@@ -196,9 +217,20 @@ document.getElementById('auth-form').addEventListener('submit', async e => {
     // Email confirmation on — they'll confirm then sign in; the marker persists
     // so the source still attaches to user_signed_up on that first session.
     try { localStorage.setItem('fs-signup-pending', '1'); } catch (_) {}
-    sucEl.innerHTML = 'Check your email to confirm your account, then sign in. Already have an account? <a href="login">Sign in instead</a>.';
+    // name the address, so a typo is findable — "check your email" is no help
+    // to someone whose confirmation went to an inbox they can't open. The
+    // address is user input landing in innerHTML, so it's escaped.
+    sucEl.innerHTML = 'Check <strong class="auth-success-email">' + escAttr(email) +
+      '</strong> to confirm your account, then sign in. Already have an account? <a href="login">Sign in instead</a>.';
     sucEl.classList.add('show');
+    // The account exists now — the form has done its job. Clear the working
+    // state, then retire the button and empty the fields so the page settles
+    // into one message and one instruction. A second press here would only
+    // earn "an account with this email already exists", which reads as a
+    // failure to someone who just succeeded. Refreshing brings the form back.
     fsWorking(btn, false, 'Create account');
+    btn.hidden = true;
+    document.getElementById('auth-form').reset();
   }
 });
 
