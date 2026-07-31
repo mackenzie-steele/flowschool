@@ -514,11 +514,18 @@
       color: var(--text-2);
     }
 
+    /* the names are the teacher's own now, not fixed tool labels — a long
+       class title clamps at two lines instead of stretching the card */
     .db-cc-name {
       font-size: var(--text-ui);
       font-weight: var(--weight-medium);
       color: var(--text-1);
       line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      overflow-wrap: anywhere;
     }
 
     .db-cc-time {
@@ -535,51 +542,76 @@
       margin: 0;
     }
 
-    /* ── Start Here (first run) ──────────────────────────── */
-    .db-start {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
+    /* ── Start Here — the first turn through the method ────
+       Evidence-driven: it reads what she has MADE, never what she
+       has visited, and it changes its offer instead of ticking a
+       box. No score, no percentage, no skip. It retires the moment
+       a class exists, and leaves without ceremony. The card is
+       built in JS and inserted only when it's live, so the wrap's
+       nth-child entrance waves are untouched for everyone else. */
+
+    /* the doors. --doors is set per act (3, then 2) so the row always
+       fills its width instead of leaving a gap where a door retired */
+    .db-doors {
+      display: grid;
+      grid-template-columns: repeat(var(--doors, 3), 1fr);
+      gap: 12px;
     }
 
-    .db-start-step {
-      display: flex;
-      align-items: baseline;
-      gap: 16px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border-light);
+    /* the Continue card's anatomy, standing still instead of scrolling —
+       one hover language across the dashboard's link cards */
+    .db-door {
+      box-shadow: var(--crest);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px;
       text-decoration: none;
       color: inherit;
-      transition: opacity var(--transition-base);
+      background: var(--raised), rgba(var(--ink-rgb), .022);
+      transition: border-color var(--transition-base), background .15s;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
     }
 
-    .db-start-step:last-child { border-bottom: none; }
-    .db-start-step:hover { opacity: .7; }
+    .db-door:hover {
+      border-color: rgba(var(--ink-rgb), .22);
+      background: var(--raised), rgba(var(--ink-rgb), .038);
+    }
 
-    .db-start-n { flex-shrink: 0; min-width: 22px; }
+    .db-door-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--rs);
+      background: rgba(var(--ink-rgb), .07);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition-base);
+    }
+    .db-door-icon .material-symbols-sharp { font-size: var(--icon-md); color: var(--text-2); }
+    .db-door:hover .db-door-icon { background: rgba(var(--ink-rgb), .11); }
 
-    .db-start-main { flex: 1; min-width: 0; }
-
-    .db-start-title {
-      display: block;
+    .db-door-name {
       font-size: var(--text-ui);
       font-weight: var(--weight-medium);
       color: var(--text-1);
-      margin-bottom: 2px;
+      line-height: 1.3;
     }
 
-    .db-start-desc {
-      display: block;
+    /* sits directly under its headline. NOT margin-top:auto — that's the
+       Continue card's trick for pinning a meta line to the floor, and on a
+       description it strands short copy at the bottom of a stretched cell
+       while its neighbour's longer copy starts right under the title. */
+    .db-door-desc {
       font-size: var(--text-small);
       color: var(--text-3);
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
-    .db-start-arrow {
-      flex-shrink: 0;
-      align-self: center;
-      font-size: var(--icon-sm);
-      color: var(--text-3);
+    @media (max-width: 900px) {
+      .db-doors { grid-template-columns: 1fr; }
     }
 
     /* ── Next Step ───────────────────────────────────────── */
@@ -1089,6 +1121,9 @@
   <script>window.fsAuthDest = 'signup';</script>
   <script src="lib/sync.js"></script>
   <script src="lib/analytics.js"></script>
+  <!-- fsSwapCard: Start Here changes its face in place when an act lands
+       from another device (the change gesture, global.css §15) -->
+  <script src="lib/motion.js"></script>
   <script src="lib/library.js"></script>
 
   <main>
@@ -1258,13 +1293,13 @@
   <script>
   (function () {
 
-    // ── State ───────────────────────────────────────────────────────
-    var RECENT_KEY = 'flowschool_recent';
-
     // One-time cleanup: earlier beta builds seeded demo streak/stat data.
+    // flowschool_recent joined them when Continue stopped tracking page
+    // visits and started reading the work itself (v5.4.0).
     try {
       localStorage.removeItem('flowschool_stats');
       localStorage.removeItem('flowschool_seeded');
+      localStorage.removeItem('flowschool_recent');
     } catch (_) {}
 
     function dayOfYear() {
@@ -1532,65 +1567,231 @@
       '</a>';
     }
 
-    function renderContinue() {
-      var el = document.getElementById('db-continue-scroll');
-      var recent = [];
-      try { recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch (_) {}
-      var GONE = ['story-structure.html', 'movement-planes-lab.html', 'elements-of-flow-lab.html'];
-      recent = recent.filter(function (r) { return GONE.indexOf(r.href) === -1; });
-      // renamed pages keep their history
-      recent.forEach(function (r) {
-        if (r.href === 'shorthand-library.html') { r.href = 'pose-library'; r.name = 'Pose Library'; }
-      });
-      if (!recent.length) {
-        document.getElementById('db-continue-eyebrow').textContent = 'Start Here';
-        el.innerHTML =
-          '<div class="db-start">' +
-            '<a class="db-start-step" href="movement-experiments">' +
-              '<span class="db-start-n label-2">01</span>' +
-              '<span class="db-start-main">' +
-                '<span class="db-start-title">Play before you plan</span>' +
-                '<span class="db-start-desc">Draw a movement experiment and get on your mat.</span>' +
-              '</span>' +
-              '<span class="material-symbols-sharp db-start-arrow">arrow_forward</span>' +
-            '</a>' +
-            '<a class="db-start-step" href="arbitrary-rules">' +
-              '<span class="db-start-n label-2">02</span>' +
-              '<span class="db-start-main">' +
-                '<span class="db-start-title">Add a constraint</span>' +
-                '<span class="db-start-desc">Generate an arbitrary rule and see what it unlocks.</span>' +
-              '</span>' +
-              '<span class="material-symbols-sharp db-start-arrow">arrow_forward</span>' +
-            '</a>' +
-            '<a class="db-start-step" href="your-classes">' +
-              '<span class="db-start-n label-2">03</span>' +
-              '<span class="db-start-main">' +
-                '<span class="db-start-title">Write your first class</span>' +
-                '<span class="db-start-desc">Peak flow first &#8212; then build back from it.</span>' +
-              '</span>' +
-              '<span class="material-symbols-sharp db-start-arrow">arrow_forward</span>' +
-            '</a>' +
-          '</div>';
+    // ── Start Here — the first turn through the method ──────────────
+    // One ordered walk through the app, three steps on screen at a time. It
+    // reads artifacts, never page visits, so browsing a tool and leaving
+    // can't retire the guidance. No score, no checklist — the offer changes,
+    // and the change IS the feedback.
+
+    var FIRST_SEEN_KEY = 'fs-first-seen';
+    var START_DONE_KEY = 'fs-start-done';
+    var START_HERE_DAYS = 30;   // the ceiling: it can't follow you around forever
+
+    function countOf(key) {
+      try {
+        var v = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(v) ? v.length : Object.keys(v || {}).length;
+      } catch (_) { return 0; }
+    }
+
+    // Your Favorite Classes appears the moment a class is pinned (see
+    // renderOnDeck) — and it takes this same slot under the welcome. One
+    // module hands over to the other; they never both hold the top.
+    function hasPinnedClass() {
+      try {
+        var list = JSON.parse(localStorage.getItem('flowschool_classes') || '[]');
+        return Array.isArray(list) && list.some(function (c) { return c && c.pinned; });
+      } catch (_) { return false; }
+    }
+
+    function door(href, icon, name, desc) {
+      return '<a class="db-door" href="' + href + '">' +
+        '<span class="db-door-icon"><span class="material-symbols-sharp">' + icon + '</span></span>' +
+        '<span class="db-door-name">' + name + '</span>' +
+        '<span class="db-door-desc">' + desc + '</span>' +
+      '</a>';
+    }
+
+    // THE QUEUE. One ordered walk through the app — play, then plan, then the
+    // class itself. Three are on screen at a time; a step leaves the moment it
+    // has evidence behind it, the rest slide left, and the next one takes the
+    // empty seat. Doing one thing never costs you the other two.
+    //
+    // `key` is the library that proves the step happened — the same
+    // localStorage collections the Shape of Your Practice reads. Order is the
+    // method, and it matches the sidebar: Play top to bottom, then Plan.
+
+    var START_STEPS = [
+      { key: 'flowschool_favs',         href: 'movement-experiments', icon: 'timer',
+        name: 'Play on your mat',
+        desc: 'Movement experiments bend usual patterns and encourage you to rethink your approach to flow' },
+
+      { key: 'flowschool_arules',       href: 'arbitrary-rules',      icon: 'casino',
+        name: 'Create a constraint',
+        desc: 'Draw one, two, or three rules and build a flow that honors them' },
+
+      { key: 'fs-pose-connector-saved', href: 'pose-popcorn',         icon: 'conversion_path',
+        name: 'Find the path',
+        desc: 'Draw a starting and destination pose and figure out the path between them' },
+
+      { key: 'flowschool_playlists',    href: 'playlist-builder',     icon: 'queue_music',
+        name: 'Shape the energy',
+        desc: 'Build a playlist that rises and lands with your class' },
+
+      { key: 'flowschool_flows',        href: 'your-flows?new=1',     icon: 'airline_stops',
+        name: 'Write a flow',
+        desc: 'These are the small sequences you&#8217;ll reuse to build classes out of' },
+
+      { key: 'fs-cue-flows',            href: 'your-cues',            icon: 'edit_note',
+        name: 'Verb, your body part, direction',
+        desc: 'Practice your cues before you&#8217;re in front of a class' },
+
+      { key: 'flowschool_stories',      href: 'stories',              icon: 'library_books',
+        name: 'Tell a story',
+        desc: 'A story gets better, and more yours, the more times you tell it' },
+
+      { key: 'flowschool_classes',      href: 'your-classes?new=1',   icon: 'edit_document',
+        name: 'Build a class',
+        desc: 'Add your flows, attach a story, link your playlist, and walk into the room prepared' },
+    ];
+
+    var START_VISIBLE = 3;
+
+    // the steps still open, capped at what fits — or null when the module is
+    // finished with. THREE WAYS IT ENDS, and all three are final: the marker
+    // is written once and read first, so an emptied library, an unpinned
+    // class, or a fresh look months later can never bring it back.
+    function startHereQueue() {
+      if (localStorage.getItem(START_DONE_KEY) === '1') return null;
+
+      function retire() {
+        try { localStorage.setItem(START_DONE_KEY, '1'); } catch (_) {}
+        return null;
+      }
+
+      // 1. She built a class and pinned it. Your Favorite Classes now holds
+      //    this slot, so Start Here steps aside — even mid-queue.
+      if (countOf('flowschool_classes') && hasPinnedClass()) return retire();
+
+      // 2. Thirty days. Someone who never worked through it shouldn't still
+      //    be told where to start a month in.
+      var seen = parseInt(localStorage.getItem(FIRST_SEEN_KEY) || '0', 10);
+      if (!seen) { try { localStorage.setItem(FIRST_SEEN_KEY, String(Date.now())); } catch (_) {} }
+      else if (Date.now() - seen > START_HERE_DAYS * 86400000) return retire();
+
+      // 3. Every step has evidence behind it. The walk is done.
+      var open = START_STEPS.filter(function (s) { return !countOf(s.key); });
+      if (!open.length) return retire();
+
+      return open.slice(0, START_VISIBLE);
+    }
+
+    var startHereCard = null;
+
+    function renderStartHere() {
+      var steps = startHereQueue();
+
+      if (!steps) {                     // retired — no ceremony, just gone
+        if (startHereCard && startHereCard.parentElement) startHereCard.remove();
+        startHereCard = null;
         return;
       }
-      document.getElementById('db-continue-eyebrow').textContent = 'Continue Where You Left Off';
-      el.innerHTML = recent.map(function (r) {
-        return '<a href="' + String(r.href).replace(/\.html$/, '') + '" class="db-continue-card">' +
-          '<div class="db-cc-icon"><span class="material-symbols-sharp">' + r.icon + '</span></div>' +
-          '<div class="db-cc-name">' + r.name + '</div>' +
-          '<div class="db-cc-time">' + timeAgo(r.time) + '</div>' +
+
+      // no headline, no intro — the eyebrow, then the offer. The eyebrow's own
+      // bottom margin is the only gap needed. --doors follows the count so the
+      // last one or two still fill the row instead of hugging the left edge.
+      var inner =
+        '<span class="db-eyebrow">Start Here</span>' +
+        '<div class="db-doors" style="--doors:' + steps.length + '">' +
+          steps.map(function (s) { return door(s.href, s.icon, s.name, s.desc); }).join('') +
+        '</div>';
+
+      if (startHereCard) {
+        // the queue moved under her (a flow saved on the phone, synced back):
+        // the card changes its face in place rather than blinking
+        if (window.fsSwapCard) fsSwapCard(startHereCard, function () { startHereCard.innerHTML = inner; });
+        else startHereCard.innerHTML = inner;
+        return;
+      }
+
+      startHereCard = document.createElement('div');
+      startHereCard.className = 'db-card';
+      startHereCard.id = 'db-start-card';
+      startHereCard.innerHTML = inner;
+      // straight under the welcome — the first thing after hello, and only
+      // ever in the DOM while it's live
+      var w = document.querySelector('.db-welcome');
+      if (w) w.insertAdjacentElement('afterend', startHereCard);
+    }
+
+    // ── Continue Where You Left Off ─────────────────────────────────
+    // The WORK you last touched, not the pages you last opened. It used to
+    // list recently-visited tools, which meant it linked to an index and
+    // couldn't resume anything — the one thing its name promises. Now every
+    // card is an artifact and opens the artifact itself.
+    //
+    // Reads the same libraries the Shape of Your Practice reads; the stamp
+    // rules match its `stamp()` exactly (editedAt, then savedAt as a date or
+    // a number, then the id — which is Date.now() at creation).
+
+    var CONTINUE_MAX = 6;
+
+    function readList(key) {
+      try {
+        var v = JSON.parse(localStorage.getItem(key) || '[]');
+        // fs-cue-flows has been both an array and a keyed object — every
+        // other reader normalizes it this way, so this one does too
+        return Array.isArray(v) ? v : Object.keys(v || {}).map(function (k) { return v[k]; });
+      } catch (_) { return []; }
+    }
+
+    function stampOf(x) {
+      if (!x) return 0;
+      return x.editedAt ||
+        (typeof x.savedAt === 'string' ? Date.parse(x.savedAt) : x.savedAt) ||
+        x.ts || x.id || 0;
+    }
+
+    function renderContinue() {
+      var el = document.getElementById('db-continue-scroll');
+      var card = el.closest('.db-card');
+
+      var items = []
+        .concat(readList('flowschool_classes').map(function (c) {
+          return { id: c.id, kind: 'Class', icon: 'edit_document', href: 'your-classes?id=' + c.id,
+                   name: c.title || 'Untitled Class', ts: stampOf(c) };
+        }))
+        .concat(readList('flowschool_flows').map(function (f) {
+          return { id: f.id, kind: 'Flow', icon: 'airline_stops', href: 'your-flows?id=' + f.id,
+                   name: f.name || 'Untitled Flow', ts: stampOf(f) };
+        }))
+        .concat(readList('flowschool_stories').map(function (s) {
+          return { id: s.id, kind: 'Story', icon: 'library_books', href: 'stories?id=' + s.id,
+                   name: s.title || s.starter || 'Untitled Story', ts: stampOf(s) };
+        }))
+        .concat(readList('fs-cue-flows').map(function (e, i) {
+          // a sheet saved before ids were stored derives one the same way
+          // its own page does, so the deep link still lands
+          var id = e.id != null ? e.id : (Date.parse(e.savedAt) || 0) + i;
+          return { id: id, kind: 'Cues', icon: 'edit_note', href: 'your-cues?id=' + id,
+                   name: e.name || 'Untitled Sheet', ts: stampOf(e) };
+        }))
+        .filter(function (x) { return x.id != null && x.ts; })
+        .sort(function (a, b) { return b.ts - a.ts; })
+        .slice(0, CONTINUE_MAX);
+
+      // nothing made yet means nothing to continue — the card steps out
+      // rather than standing there empty. Start Here is carrying that moment.
+      if (card) card.hidden = !items.length;
+      if (!items.length) return;
+
+      el.innerHTML = items.map(function (it) {
+        return '<a href="' + it.href + '" class="db-continue-card">' +
+          '<div class="db-cc-icon"><span class="material-symbols-sharp">' + it.icon + '</span></div>' +
+          '<div class="db-cc-name">' + escHTML(it.name) + '</div>' +
+          '<div class="db-cc-time">' + it.kind + ' &#183; ' + timeAgo(it.ts) + '</div>' +
         '</a>';
       }).join('');
     }
 
     // one gentle suggestion per axis, in Bonnie's register
     var AXIS_STEPS = {
-      play:     { title: 'Deal yourself a rule',      desc: 'Play is your quietest edge. One arbitrary constraint is the fastest way back into curiosity.', href: 'arbitrary-rules', label: 'Draw a Rule' },
-      sequence: { title: 'Name one small flow',        desc: 'Sequence has room to grow. Take a chain you already love and give it a name in Your Flows.', href: 'your-flows?new=1', label: 'Build a Flow' },
-      cue:      { title: 'Find the words',             desc: 'Cue is your quietest edge. Ten minutes in Your Cues sharpens everything you say.', href: 'your-cues', label: 'Write Cues' },
-      story:    { title: 'Tell one story',             desc: 'Story is waiting. Take this week\u2019s starter and tell it the way you\u2019d tell it in class.', href: 'stories', label: 'Write a Story' },
-      sound:    { title: 'Score one class',            desc: 'Music is your quietest edge. Build a playlist for a class you already teach.', href: 'playlist-builder', label: 'Build a Playlist' },
-      reflect:  { title: 'Close the loop',             desc: 'Reflect is the missing beat. One honest note after your next class is all it takes.', href: 'teaching-notes', label: 'Add a Note' },
+      play:     { title: 'Deal yourself a rule',      desc: 'Play is your quietest edge. One arbitrary constraint is the fastest way back into curiosity', href: 'arbitrary-rules', label: 'Draw a Rule' },
+      sequence: { title: 'Name one small flow',        desc: 'Sequence has room to grow. Take a chain you already love and give it a name in Your Flows', href: 'your-flows?new=1', label: 'Build a Flow' },
+      cue:      { title: 'Find the words',             desc: 'Cue is your quietest edge. Ten minutes in Your Cues sharpens everything you say', href: 'your-cues', label: 'Write Cues' },
+      story:    { title: 'Tell one story',             desc: 'Story is waiting. Take this week\u2019s starter and tell it the way you\u2019d tell it in class', href: 'stories', label: 'Write a Story' },
+      sound:    { title: 'Score one class',            desc: 'Music is your quietest edge. Build a playlist for a class you already teach', href: 'playlist-builder', label: 'Build a Playlist' },
+      reflect:  { title: 'Close the loop',             desc: 'Reflect is the missing beat. One honest note after your next class is all it takes', href: 'teaching-notes', label: 'Add a Note' },
     };
 
     // ── The Shape of Your Practice — a portrait from real artifacts ──
@@ -1959,6 +2160,7 @@
     // ── Init ────────────────────────────────────────────────────────
     function init() {
       renderWelcome();
+      renderStartHere();
       renderOnDeck();
       renderMilestones();
       renderTeachingLog();
@@ -1970,6 +2172,13 @@
       renderStarter();
       renderMoon();
     }
+
+    // a flow saved on the phone lands here on the next pull — the module
+    // catches up instead of waiting for a reload, and the shape with it
+    window.addEventListener('fs-sync-refreshed', function () {
+      renderStartHere();
+      renderPracticeShape();
+    });
 
     // ── Moon Phase Widget ─────────────────────────────────────────────────────
 

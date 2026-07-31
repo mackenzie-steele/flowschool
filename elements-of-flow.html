@@ -519,17 +519,6 @@
         });
       });
 
-      // ── Recent tools ──────────────────────────────────────────────────
-
-      try {
-        var RECENT_KEY = 'flowschool_recent';
-        var recent = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
-        recent = recent.filter(function (r) { return r.href !== 'elements-of-flow.html'; });
-        recent.unshift({ name: 'Elements of Flow', icon: 'checklist', href: 'elements-of-flow', time: Date.now() });
-        if (recent.length > 8) recent = recent.slice(0, 8);
-        localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
-      } catch (_) {}
-
     })();
   </script>
 
