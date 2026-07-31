@@ -1584,16 +1584,6 @@
       } catch (_) { return 0; }
     }
 
-    // Your Favorite Classes appears the moment a class is pinned (see
-    // renderOnDeck) — and it takes this same slot under the welcome. One
-    // module hands over to the other; they never both hold the top.
-    function hasPinnedClass() {
-      try {
-        var list = JSON.parse(localStorage.getItem('flowschool_classes') || '[]');
-        return Array.isArray(list) && list.some(function (c) { return c && c.pinned; });
-      } catch (_) { return false; }
-    }
-
     function door(href, icon, name, desc) {
       return '<a class="db-door" href="' + href + '">' +
         '<span class="db-door-icon"><span class="material-symbols-sharp">' + icon + '</span></span>' +
@@ -1659,9 +1649,12 @@
         return null;
       }
 
-      // 1. She built a class and pinned it. Your Favorite Classes now holds
-      //    this slot, so Start Here steps aside — even mid-queue.
-      if (countOf('flowschool_classes') && hasPinnedClass()) return retire();
+      // 1. A class exists. Writing one is the whole promise of the product,
+      //    so anyone who has done it — today or long before this module
+      //    shipped — is past being told where to start. This is also what
+      //    grandfathers the beta cohort: no migration needed, the rule reads
+      //    their existing library and stands down on its own.
+      if (countOf('flowschool_classes')) return retire();
 
       // 2. Thirty days. Someone who never worked through it shouldn't still
       //    be told where to start a month in.
