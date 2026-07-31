@@ -562,6 +562,8 @@
   <script src="data/story-starters.js"></script>
   <script src="lib/toast.js"></script>
   <script src="lib/confirm-delete.js"></script>
+  <!-- fsFavPop: the heart springs in when a story is favorited -->
+  <script src="lib/motion.js"></script>
   <script src="lib/library.js"></script>
   <div class="toast" id="toast"></div>
 
@@ -1263,6 +1265,7 @@
           src.pinned = !src.pinned;
           persist(stories);
           renderTitleWithFav(src);
+          if (src.pinned && window.fsFavPop) fsFavPop(document.getElementById('post-title'));
           toast(src.pinned ? 'Added to your favorites.' : 'Removed from favorites.');
         } else if (act === 'dup') {
           // opens unsaved — nothing exists until they save the retelling

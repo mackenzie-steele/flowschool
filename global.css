@@ -1099,6 +1099,50 @@ button svg {
   vertical-align: 3px;
 }
 
+/* ── the heart arrives ────────────────────────────────────────
+   Added by fsFavPop() at the moment of favoriting, never on render —
+   a mark that pops every time you open a favorited class would make a
+   settled state feel like it kept re-happening.
+
+   Two beats from parts the system already owns: the glyph springs in on
+   the toast's curve (the one sanctioned overshoot, and this is the same
+   class of object — small, transient, confirming), and one accent ring
+   blooms out behind it and is gone. EMISSION, not elevation: the ring is
+   light leaving the mark, the same permission --glow-dot has.
+
+   The ring is a pseudo-element on a span whose box is a 1em glyph, so it
+   is centred by inset and scaled from the middle. pointer-events stay off
+   — this is never in the way of the title underneath. */
+.fav-mark.fav-pop {
+  animation: favPop .34s cubic-bezier(.34, 1.56, .64, 1) backwards;
+  position: relative;
+}
+
+.fav-mark.fav-pop::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  pointer-events: none;
+  animation: favRing .42s ease-out forwards;
+}
+
+@keyframes favPop {
+  from { opacity: 0; transform: scale(.4); }
+}
+
+@keyframes favRing {
+  from { opacity: .55; transform: scale(.7); }
+  to   { opacity: 0;   transform: scale(2.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fav-mark.fav-pop,
+  .fav-mark.fav-pop::after { animation: none; }
+  .fav-mark.fav-pop::after { display: none; }
+}
+
 /* favorites-only filter toggle */
 .fav-filter.on { color: var(--text-1); }
 .fav-filter.on .material-symbols-sharp {
@@ -4121,6 +4165,15 @@ body.fs-fullscreen .site-footer { display: none; }
      footer is the part that overflows. Both are dressed — the outer
      one only scrolls at very short viewport heights. */
   html, .app-sidebar, .sidebar-nav { scrollbar-width: thin; }
+
+  /* HOLD THE GUTTER. Filtering a list shortens the page; when it gets short
+     enough to stop scrolling, the scrollbar disappears, the viewport gets
+     ~15px wider, and every centred .wrap on the page jumps sideways. Typing
+     in a search box is the worst version of it — the layout twitches on each
+     keystroke as results come and go. Reserving the space costs a sliver of
+     width and buys stillness on every filtering surface: The Circle, the
+     libraries, the admin tables. */
+  html { scrollbar-gutter: stable; }
 
   html { scrollbar-color: transparent transparent; }
   /* zero specificity — blocks the cascade without outranking anything */

@@ -189,6 +189,21 @@
     .adm-table th { text-align: left; font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
       color: var(--text-3); font-weight: var(--weight-regular); padding: 8px 12px; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
     .adm-table th.num, .adm-table td.num { text-align: right; }
+    /* the sort control inherits the header entirely — it must read as a column
+       heading that happens to respond, never as a button parked in a table */
+    .adm-table th .adm-th-sort {
+      background: none; border: none; padding: 0; margin: 0; font: inherit;
+      letter-spacing: inherit; text-transform: inherit; color: inherit;
+      display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+      transition: color var(--transition-base);
+    }
+    .adm-table th .adm-th-sort:hover { color: var(--text-1); }
+    .adm-table th .adm-th-sort:focus-visible { outline: 2px solid rgba(var(--accent-rgb), .65); outline-offset: 2px; }
+    /* the caret marks the ONE sorted column; inactive headers only hint on hover */
+    .adm-table th .adm-th-caret { font-size: 9px; line-height: 1; opacity: 0; }
+    .adm-table th .adm-th-sort:hover .adm-th-caret { opacity: .45; }
+    .adm-table th[aria-sort] .adm-th-sort { color: var(--text-1); }
+    .adm-table th[aria-sort] .adm-th-caret { opacity: 1; }
     .adm-table td { padding: 11px 12px; border-bottom: 1px solid var(--border-light); color: var(--text-1); white-space: nowrap; }
     .adm-table td.wrap { white-space: normal; max-width: 420px; }
     .adm-table tbody tr { cursor: default; transition: background var(--transition-base); }
@@ -248,6 +263,11 @@
     .adm-kv dd { color: var(--text-1); }
     .adm-dsec { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-light); }
     .adm-dsec h3 { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; }
+    /* the activity fold — mono like the rows it opens, quiet until hovered */
+    .adm-acts-more { display: inline-block; margin-top: 8px; padding: 0; background: none; border: none;
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; color: var(--text-3);
+      cursor: pointer; transition: color var(--transition-base); }
+    .adm-acts-more:hover { color: var(--text-1); }
     .adm-chiplist { display: flex; flex-wrap: wrap; gap: 6px; }
     .adm-chip { font-size: 12px; padding: 4px 10px; border: 1px solid var(--border-light); border-radius: var(--rf); color: var(--text-2); }
     .adm-danger-zone { margin-top: 24px; padding: 16px; border: 1px solid rgba(var(--danger-rgb), .3); border-radius: var(--r); }
@@ -428,6 +448,99 @@
         '</div>';
     }
     function thInfo(tip) { return '<span class="adm-thinfo" data-tip="' + esc(tip) + '"><span class="material-symbols-sharp">info</span></span>'; }
+
+    // ── SORTABLE COLUMNS ─────────────────────────────────────────────────────
+    // Every .adm-table gets clickable headers. Client-side, on rows already in
+    // the DOM: these tables are tens of rows and already fetched, so sorting
+    // costs nothing and needs no round trip.
+    //
+    // The Users table opts out with `data-nosort` — it's paginated server-side,
+    // so reordering the visible page would sort 50 rows out of 400 and quietly
+    // answer a different question than the one asked. Its own select drives
+    // p_sort instead.
+    //
+    // Upgrading is idempotent (data-sortready), which is what lets the observer
+    // below re-scan freely without looping on its own DOM edits.
+
+    function admCellValue(row, i) {
+      var c = row.cells[i];
+      return c ? (c.textContent || '').trim() : '';
+    }
+
+    // numeric if the header says so — .num already marks every number column,
+    // so nothing new has to be added at the ~28 call sites
+    function admParseNum(t) {
+      var n = parseFloat(String(t).replace(/[,%\s]/g, '').replace(/[^0-9.eE+-]/g, ''));
+      return isNaN(n) ? null : n;
+    }
+
+    function admSortTable(tbl, i, dir, numeric) {
+      var body = tbl.tBodies[0];
+      var rows = [].slice.call(body.rows);
+      // decorate with the original index so equal values keep their order —
+      // a stable sort means repeated sorts compose instead of shuffling
+      rows.forEach(function (r, n) { r._i = n; });
+      rows.sort(function (a, b) {
+        var av = admCellValue(a, i), bv = admCellValue(b, i), d;
+        if (numeric) {
+          var an = admParseNum(av), bn = admParseNum(bv);
+          // blanks and em-dashes sort to the bottom whichever way you're going
+          if (an === null && bn === null) d = 0;
+          else if (an === null) return 1;
+          else if (bn === null) return -1;
+          else d = an - bn;
+        } else {
+          d = av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' });
+        }
+        return (d ? (dir === 'asc' ? d : -d) : a._i - b._i);
+      });
+      rows.forEach(function (r) { body.appendChild(r); });
+    }
+
+    function admSortable(root) {
+      var scope = root || document;
+      [].forEach.call(scope.querySelectorAll('table.adm-table:not([data-nosort])'), function (tbl) {
+        if (tbl.dataset.sortready) return;
+        var head = tbl.tHead && tbl.tHead.rows[0];
+        var body = tbl.tBodies && tbl.tBodies[0];
+        if (!head || !body || body.rows.length < 2) return;   // nothing worth sorting
+        tbl.dataset.sortready = '1';
+
+        [].forEach.call(head.cells, function (th, i) {
+          // checkbox and row-action columns aren't data
+          if (th.classList.contains('adm-checkcell') || th.classList.contains('adm-actcell')) return;
+          var numeric = th.classList.contains('num');
+          var info = th.querySelector('.adm-thinfo');
+          // lift the label out without swallowing the info tooltip — it stays a
+          // sibling, so clicking "what does this mean?" never sorts the table
+          var clone = th.cloneNode(true);
+          var ci = clone.querySelector('.adm-thinfo');
+          if (ci) ci.parentNode.removeChild(ci);
+          var label = clone.innerHTML.trim();
+          if (!label) return;
+
+          th.innerHTML = '<button type="button" class="adm-th-sort">' + label +
+            '<span class="adm-th-caret" aria-hidden="true"></span></button>' +
+            (info ? info.outerHTML : '');
+
+          th.querySelector('.adm-th-sort').addEventListener('click', function () {
+            var active = tbl.dataset.sortcol === String(i);
+            // numbers open descending — nobody clicking "Saves" wants the least
+            var dir = active ? (tbl.dataset.sortdir === 'asc' ? 'desc' : 'asc')
+                             : (numeric ? 'desc' : 'asc');
+            tbl.dataset.sortcol = String(i);
+            tbl.dataset.sortdir = dir;
+            [].forEach.call(head.cells, function (o) { o.removeAttribute('aria-sort'); });
+            th.setAttribute('aria-sort', dir === 'asc' ? 'ascending' : 'descending');
+            th.querySelector('.adm-th-caret').textContent = dir === 'asc' ? '↑' : '↓';
+            [].forEach.call(head.cells, function (o) {
+              if (o !== th) { var c = o.querySelector('.adm-th-caret'); if (c) c.textContent = ''; }
+            });
+            admSortTable(tbl, i, dir, numeric);
+          });
+        });
+      });
+    }
     // small +/- indicator comparing a period to the one before it
     function deltaHtml(cur, prev, label) {
       cur = Number(cur || 0); prev = Number(prev || 0);
@@ -454,7 +567,7 @@
     async function renderOverview() {
       var b = bodyEl(); b.innerHTML = stateLoading();
       try {
-        var o = await A.rpc('admin_overview');
+        var o = await A.rpc('admin_overview', { p_days: admRange });
         var pub = await A.rpc('admin_public_content', { p_sort: 'most_saved', p_limit: 6, p_offset: 0 }).catch(function (e) { console.warn('[admin] overview public-classes fetch failed:', e && e.message); return { rows: [] }; });
         var funnel = await A.rpc('admin_funnel').catch(function (e) { console.warn('[admin] funnel fetch failed:', e && e.message); return null; });
         document.getElementById('adm-updated').textContent = 'Updated ' + A.fmtDateTime(o.generated_at);
@@ -463,29 +576,39 @@
         var group = function (label, cards) {
           return '<div class="adm-group-label">' + esc(label) + '</div><div class="adm-metrics">' + cards + '</div>';
         };
+        // ONE ranged tile instead of the frozen 7/30 pair. Falls back to the
+        // old keys so this renders correctly whether or not
+        // supabase/admin-overview-range.sql has been run yet.
+        var rangeLbl = admRangeLabel(admRange).toLowerCase();
+        var newN = (o.new_users != null) ? o.new_users : o.new_users_30d;
+        var newPrev = (o.new_users_prev != null) ? o.new_users_prev : o.new_users_prev_30d;
         var growth =
-          metric('Total users', o.total_users, null, 'Every account that has ever signed up — active or deactivated.', null, 'users_all') +
-          metric('New · 7 days', o.new_users_7d, null, 'Accounts created in the last 7 days.', deltaHtml(o.new_users_7d, o.new_users_prev_7d, 'vs prior 7 days'), 'users_new7') +
-          metric('New · 30 days', o.new_users_30d, null, 'Accounts created in the last 30 days.', deltaHtml(o.new_users_30d, o.new_users_prev_30d, 'vs prior 30 days'), 'users_new30') +
-          metric('Never used', o.inactive_users, 'signed up, no content', 'Accounts that signed up but have never created or saved any content.', null, 'users_inactive');
+          metric('Total users', o.total_users, 'all time', 'Every account that has ever signed up — active or deactivated. Not affected by the date range.', null, 'users_all') +
+          metric('New · ' + rangeLbl, newN, null, 'Accounts created in the selected date range.', deltaHtml(newN, newPrev, 'vs prior ' + rangeLbl), 'users_new') +
+          metric('Never used', o.inactive_users, 'signed up, no content', 'Accounts that signed up but have never created or saved any content. A current state, not a window — not affected by the date range.', null, 'users_inactive');
+        // These windows ARE the definitions — a DAU that followed the header
+        // wouldn't be a DAU. Each says its own window so a fixed number never
+        // reads as a broken one.
         var engagement =
-          metric('Active today', o.active_today, null, 'Distinct users who used the platform in the last 24 hours — signed in, opened a tool, or saved or edited content. Just staying logged in with no activity does not count. Broader than DAU, which counts only meaningful actions.', deltaHtml(o.active_today, o.active_yesterday, 'vs prior 24h'), 'activity') +
-          metric('DAU', o.dau, 'since ' + since, 'Daily active users: distinct people who took a meaningful action (created, saved, edited, published, printed, or generated) in the last 24 hours. Counts only actions recorded since tracking began.', null, 'activity') +
-          metric('WAU', o.wau, 'since ' + since, 'Weekly active users: distinct people who took a meaningful action in the last 7 days. Since tracking began.', null, 'activity') +
-          metric('MAU', o.mau, 'since ' + since, 'Monthly active users: distinct people who took a meaningful action in the last 30 days. Since tracking began.', null, 'activity');
+          metric('Active today', o.active_today, 'last 24h', 'Distinct users who used the platform in the last 24 hours — signed in, opened a tool, or saved or edited content. Just staying logged in with no activity does not count. Broader than DAU, which counts only meaningful actions. Fixed at 24h — not affected by the date range.', deltaHtml(o.active_today, o.active_yesterday, 'vs prior 24h'), 'activity') +
+          metric('DAU', o.dau, 'last 24h · since ' + since, 'Daily active users: distinct people who took a meaningful action (created, saved, edited, published, printed, or generated) in the last 24 hours. The window is the definition — not affected by the date range.', null, 'activity') +
+          metric('WAU', o.wau, 'last 7 days · since ' + since, 'Weekly active users: distinct people who took a meaningful action in the last 7 days. The window is the definition — not affected by the date range.', null, 'activity') +
+          metric('MAU', o.mau, 'last 30 days · since ' + since, 'Monthly active users: distinct people who took a meaningful action in the last 30 days. The window is the definition — not affected by the date range.', null, 'activity');
+        // Counted from library blobs, which carry no per-item timestamp —
+        // there is no date to filter these on, so they're honestly all-time.
         var contentCards =
-          metric('Public classes', o.total_public_classes, null, 'Classes currently shared publicly by teachers.', null, 'public') +
-          metric('Public saves', o.total_public_saves, null, 'Total times a public class has been saved by another user. Saves are live references, not copies.', null, 'public') +
-          metric('Experiment saves', o.total_experiment_saves, null, 'Total Movement Experiments saved across all users (a saved experiment is a favorite).', null, 'experiments') +
-          metric('Saved items · all', o.total_saved_items, null, 'Every item in every user’s library — classes, flows, cue sheets, stories, playlists, rules, and more.', null, 'saved');
+          metric('Public classes', o.total_public_classes, 'all time', 'Classes currently shared publicly by teachers. A current state — not affected by the date range.', null, 'public') +
+          metric('Public saves', o.total_public_saves, 'all time', 'Total times a public class has been saved by another user. Saves are live references, not copies. Not affected by the date range.', null, 'public') +
+          metric('Experiment saves', o.total_experiment_saves, 'all time', 'Total Movement Experiments saved across all users (a saved experiment is a favorite). Counted from library contents, which carry no per-item date — so this can’t follow the date range.', null, 'experiments') +
+          metric('Saved items · all', o.total_saved_items, 'all time', 'Every item in every user’s library — classes, flows, cue sheets, stories, playlists, rules, and more. Counted from library contents, which carry no per-item date — so this can’t follow the date range.', null, 'saved');
 
         b.innerHTML =
-          '<div class="adm-intro">A live snapshot of who’s here and what they’re making. Active-user metrics (DAU/WAU/MAU) and tool usage count meaningful actions recorded since tracking began (' + esc(since) + '); signups, public saves, and experiment saves are complete historically.</div>' +
+          '<div class="adm-intro">A live snapshot of who’s here and what they’re making. The range above drives <strong>New · ' + esc(rangeLbl) + '</strong> and the two charts below; everything marked <em>all time</em> or with its own window is fixed by definition. Active-user metrics (DAU/WAU/MAU) and tool usage count meaningful actions recorded since tracking began (' + esc(since) + '); signups, public saves, and experiment saves are complete historically.</div>' +
           group('Growth', growth) + group('Engagement', engagement) + group('Content', contentCards) +
           (funnel ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Activation funnel</h2></div>' + funnelHtml(funnel) + '</div>' : '') +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>New users over time</h2></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>New users over time · ' + esc(rangeLbl) + '</h2></div>' +
             '<div id="su-chart">' + stateLoading() + '</div></div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Most-used tools</h2></div><div id="tools-mini">' + stateLoading() + '</div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Most-used tools · ' + esc(rangeLbl) + '</h2></div><div id="tools-mini">' + stateLoading() + '</div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Most-saved public classes</h2></div>' + pubMini(pub.rows) + '</div>';
         wireMetricLinks(b);
         loadSignups();
@@ -496,8 +619,8 @@
     function resetUsers() { usersState.search = ''; usersState.status = ''; usersState.signupDays = 0; usersState.sort = 'recent_activity'; usersState.page = 0; }
     var NAV = {
       users_all:      function () { resetUsers(); location.hash = '#users'; },
-      users_new7:     function () { resetUsers(); usersState.signupDays = 7; location.hash = '#users'; },
-      users_new30:    function () { resetUsers(); usersState.signupDays = 30; location.hash = '#users'; },
+      // carries the header's range through, so the list matches the tile
+      users_new:      function () { resetUsers(); usersState.signupDays = admRange; location.hash = '#users'; },
       users_inactive: function () { resetUsers(); usersState.status = 'inactive'; location.hash = '#users'; },
       activity:       function () { location.hash = '#activity'; },
       public:         function () { location.hash = '#public'; },
@@ -713,7 +836,16 @@
             mcard('Avg classes / teacher', avgClasses) +
           '</div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Reach</h2></div>' +
-            '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Cities &amp; towns</div><div class="val">' + num(reach.distinct_locations || 0) + '</div><div class="sub">' + num(reach.located_teachers || 0) + ' teachers shared a location</div></div></div>' +
+            // NOT a count of cities. location is free text, so distinct
+            // strings overstate places and always will — "Portland, OR" and
+            // "Portland, Oregon" are two rows and no query can honestly merge
+            // them. Coverage is the claim this data CAN support, and it asks
+            // the better question anyway: why do so few fill it in?
+            '<div class="adm-metrics">' +
+              card('Shared their location', num(reach.located_teachers || 0) + ' of ' + num(teachers),
+                   'teachers told us where they teach',
+                   'Location is a free-text field, so we deliberately don’t report a count of cities — distinct spellings (“Portland, OR” vs “Portland, Oregon”) would overstate it. The list below groups spellings that differ only by capitalisation.') +
+            '</div>' +
             impactBars(reach.top || [], 'location', 'count') + '</div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Teaching experience</h2></div>' +
             (Number(ex.shared || 0) ? '<div class="adm-intro" style="margin-bottom:12px">From teachers in their first year to ' + num(ex.veteran_years || 0) + '-year veterans — ' + num(ex.shared) + ' shared how long they’ve taught.</div>' + impactBars(ex.buckets || [], 'bucket', 'count') : '<span class="muted">No teaching-experience data yet.</span>') + '</div>' +
@@ -733,16 +865,6 @@
     function admRangeLabel(d) { var m = ADM_RANGES.filter(function (r) { return r.d === d; })[0]; return m ? m.label : d + ' days'; }
 
     // ── New users over time: filterable, bucketed bar chart ──
-    var suRange = 30;
-    var SU_RANGES = [
-      { d: 7, label: 'Past week' }, { d: 30, label: 'Last 30 days' }, { d: 90, label: 'Last 90 days' },
-      { d: 180, label: 'Last 6 months' }, { d: 365, label: 'Last year' },
-    ];
-    function suRangeSelect() {
-      return '<select class="adm-select" id="su-range">' + SU_RANGES.map(function (r) {
-        return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>';
-    }
-    function suGranularity(days) { return days <= 30 ? 'daily' : days <= 180 ? 'weekly' : 'monthly'; }
     function suShort(iso) { try { return new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch (_) { return iso; } }
     function suBucket(daily, days) {
       // daily rows → adaptive buckets so a long range stays readable
@@ -790,10 +912,6 @@
           (days <= 30 ? 'day' : days <= 180 ? 'week' : 'month') + ' · hover a bar for the exact count</div>' +
       '</div>';
     }
-    function rangeSelect(id) {
-      return '<select class="adm-select" id="' + id + '">' + SU_RANGES.map(function (r) {
-        return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>';
-    }
     async function loadSignups() {
       var el = document.getElementById('su-chart'); if (!el) return;
       el.innerHTML = stateLoading();
@@ -803,14 +921,12 @@
       } catch (e) { el.innerHTML = stateError(e && e.message); }
     }
     // ── public-saves-over-time + experiment-saves-over-time (data is historical) ──
-    var pubSaveRange = 30;
     async function loadPubSaveChart() {
       var el = document.getElementById('pubsave-chart'); if (!el) return;
       el.innerHTML = stateLoading();
       try { var d = await A.rpc('admin_series', { p_kind: 'public_saves', p_days: admRange }); el.innerHTML = seriesChart(d || [], admRange, 'save'); }
       catch (e) { el.innerHTML = stateError(e && e.message); }
     }
-    var expSaveRange = 90;
     async function loadExpSaveChart() {
       var el = document.getElementById('expsave-chart'); if (!el) return;
       el.innerHTML = stateLoading();
@@ -819,15 +935,6 @@
     }
 
     // ── Most-used tools: filterable by range ──
-    var toolRange = 30;
-    var TOOL_RANGES = [
-      { d: 1, label: 'Today' }, { d: 7, label: 'This week' }, { d: 30, label: 'Last 30 days' },
-      { d: 90, label: 'Last 90 days' }, { d: 180, label: 'Last 6 months' }, { d: 365, label: 'Last year' },
-    ];
-    function toolRangeSelect() {
-      return '<select class="adm-select" id="tool-range">' + TOOL_RANGES.map(function (r) {
-        return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>';
-    }
     async function loadTools() {
       var el = document.getElementById('tools-mini'); if (!el) return;
       el.innerHTML = stateLoading();
@@ -848,7 +955,20 @@
     }
 
     // ── USERS ──
-    var usersState = { search: '', sort: 'recent_activity', status: '', signupDays: 0, page: 0, limit: 50, total: 0, rows: [] };
+    var usersState = { search: '', sort: 'recent_activity', dir: 'desc', status: '', signupDays: 0, page: 0, limit: 50, total: 0, rows: [] };
+    // column index → server sort key, and the direction each opens on.
+    // Index 0 is the select-all checkbox. Counts open descending — nobody
+    // clicking "Saves" wants the least. Names and status open ascending.
+    var USER_COLS = {
+      1: { key: 'name',            dir: 'asc'  },
+      2: { key: 'status',          dir: 'asc'  },
+      3: { key: 'signup',          dir: 'desc' },
+      4: { key: 'recent_activity', dir: 'desc' },
+      5: { key: 'saved_items',     dir: 'desc' },
+      6: { key: 'published',       dir: 'desc' },
+      7: { key: 'saves',           dir: 'desc' },
+      8: { key: 'events',          dir: 'desc' },
+    };
     async function renderUsers() {
       var b = bodyEl();
       b.innerHTML =
@@ -871,7 +991,7 @@
       });
       document.getElementById('u-status').addEventListener('change', function (e) { usersState.status = e.target.value; usersState.page = 0; loadUsers(); });
       document.getElementById('u-signup').addEventListener('change', function (e) { usersState.signupDays = parseInt(e.target.value, 10) || 0; usersState.page = 0; loadUsers(); });
-      document.getElementById('u-sort').addEventListener('change', function (e) { usersState.sort = e.target.value; usersState.page = 0; loadUsers(); });
+      document.getElementById('u-sort').addEventListener('change', function (e) { usersState.sort = e.target.value; usersState.dir = (e.target.value === 'name' ? 'asc' : 'desc'); usersState.page = 0; loadUsers(); });
       document.getElementById('u-export').addEventListener('click', exportUsers);
       document.getElementById('u-export-sel').addEventListener('click', exportSelectedUsers);
       loadUsers();
@@ -882,11 +1002,59 @@
       var btn = document.getElementById('u-export-sel');
       if (btn) { btn.disabled = n === 0; btn.textContent = n ? 'Export selected (' + n + ')' : 'Export selected'; }
     }
+    // ── Users: headers drive the SERVER sort ─────────────────────────────────
+    // This table is paginated, so it can't use admSortable — reordering the
+    // fifty rows on screen would sort a page out of four hundred and look like
+    // an answer. Clicking a header sets p_sort/p_dir and refetches from page 1.
+    //
+    // The `u-sort` select stays and stays in sync: on narrow screens
+    // .adm-cardable hides thead entirely and the table becomes cards, so the
+    // select is the ONLY sort control there. Removing it would leave mobile
+    // with none.
+    function wireUserSort(scope) {
+      var head = scope.querySelector('thead tr');
+      if (!head) return;
+      Object.keys(USER_COLS).forEach(function (idx) {
+        var i = parseInt(idx, 10);
+        var th = head.cells[i];
+        var col = USER_COLS[idx];
+        if (!th) return;
+
+        var info = th.querySelector('.adm-thinfo');
+        var clone = th.cloneNode(true);
+        var ci = clone.querySelector('.adm-thinfo');
+        if (ci) ci.parentNode.removeChild(ci);
+        var label = clone.innerHTML.trim();
+
+        var on = usersState.sort === col.key;
+        var caret = on ? (usersState.dir === 'asc' ? '↑' : '↓') : '';
+        th.innerHTML = '<button type="button" class="adm-th-sort">' + label +
+          '<span class="adm-th-caret" aria-hidden="true">' + caret + '</span></button>' +
+          (info ? info.outerHTML : '');
+        if (on) th.setAttribute('aria-sort', usersState.dir === 'asc' ? 'ascending' : 'descending');
+        else th.removeAttribute('aria-sort');
+
+        th.querySelector('.adm-th-sort').addEventListener('click', function () {
+          usersState.dir = (usersState.sort === col.key)
+            ? (usersState.dir === 'asc' ? 'desc' : 'asc')   // same column → reverse
+            : col.dir;                                      // new column → its natural start
+          usersState.sort = col.key;
+          usersState.page = 0;        // a new order means page 1, or you're reading
+          var sel = document.getElementById('u-sort');       // the middle of a list
+          if (sel) sel.value = USER_SELECT_KEYS.indexOf(col.key) === -1 ? '' : col.key;
+          loadUsers();
+        });
+      });
+    }
+    // the keys the select can actually represent — status/published/saves are
+    // header-only, so the select shows blank rather than lying about the order
+    var USER_SELECT_KEYS = ['recent_activity', 'signup', 'saved_items', 'events', 'name'];
+
     async function loadUsers() {
       var t = document.getElementById('u-table'); t.innerHTML = stateLoading();
       uSelected = {}; syncSelExport();
       try {
-        var res = await A.rpc('admin_list_users', { p_search: usersState.search || null, p_sort: usersState.sort, p_status: usersState.status || null, p_signup_days: usersState.signupDays || null, p_limit: usersState.limit, p_offset: usersState.page * usersState.limit });
+        var res = await A.rpc('admin_list_users', { p_search: usersState.search || null, p_sort: usersState.sort, p_dir: usersState.dir, p_status: usersState.status || null, p_signup_days: usersState.signupDays || null, p_limit: usersState.limit, p_offset: usersState.page * usersState.limit });
         usersState.total = res.total; usersState.rows = res.rows || [];
         if (!usersState.rows.length) { t.innerHTML = stateEmpty((usersState.search || usersState.status || usersState.signupDays) ? 'No users match those filters.' : 'No users yet.'); return; }
         var body = usersState.rows.map(function (u) {
@@ -905,7 +1073,7 @@
         }).join('');
         var pages = Math.ceil(usersState.total / usersState.limit) || 1;
         t.innerHTML =
-          '<div class="adm-scroll"><table class="adm-table adm-cardable"><thead><tr><th class="adm-checkcell"><input type="checkbox" id="u-checkall" aria-label="Select all on this page"></th><th>User</th><th>Status</th><th>Signed up</th><th>Last activity</th>' +
+          '<div class="adm-scroll"><table class="adm-table adm-cardable" data-nosort><thead><tr><th class="adm-checkcell"><input type="checkbox" id="u-checkall" aria-label="Select all on this page"></th><th>User</th><th>Status</th><th>Signed up</th><th>Last activity</th>' +
           '<th class="num">Items ' + thInfo('Total items in this user’s library — classes, flows, cue sheets, stories, playlists, rules, and saved experiments.') + '</th>' +
           '<th class="num">Published ' + thInfo('Classes this user has shared publicly.') + '</th>' +
           '<th class="num">Saves ' + thInfo('Public classes this user has saved from other teachers.') + '</th>' +
@@ -914,7 +1082,8 @@
           '<div class="adm-pager"><span>' + num(usersState.total) + ' users · page ' + (usersState.page + 1) + ' of ' + pages + '</span>' +
           '<button class="btn-ghost sm" id="u-prev"' + (usersState.page === 0 ? ' disabled' : '') + '>Prev</button>' +
           '<button class="btn-ghost sm" id="u-next"' + (usersState.page + 1 >= pages ? ' disabled' : '') + '>Next</button></div>';
-        t.querySelectorAll('tr.clickable').forEach(function (tr) { tr.addEventListener('click', function () { openUser(tr.dataset.uid); }); });
+        wireUserSort(t);
+          t.querySelectorAll('tr.clickable').forEach(function (tr) { tr.addEventListener('click', function () { openUser(tr.dataset.uid); }); });
         t.querySelectorAll('.u-check').forEach(function (cb) {
           cb.addEventListener('click', function (e) { e.stopPropagation(); });
           cb.addEventListener('change', function () {
@@ -948,7 +1117,7 @@
     async function exportUsers() {
       try {
         toast('Preparing export…');
-        var res = await A.rpc('admin_list_users', { p_search: usersState.search || null, p_sort: usersState.sort, p_status: usersState.status || null, p_signup_days: usersState.signupDays || null, p_limit: 100000, p_offset: 0 });
+        var res = await A.rpc('admin_list_users', { p_search: usersState.search || null, p_sort: usersState.sort, p_dir: usersState.dir, p_status: usersState.status || null, p_signup_days: usersState.signupDays || null, p_limit: 100000, p_offset: 0 });
         A.exportCSV('users', res.rows || [], USER_CSV_COLS);
       } catch (e) { toast('Export failed: ' + (e && e.message)); }
     }
@@ -1046,7 +1215,30 @@
           ? tsplit.map(function (t) { var c = Number(t.count || 0); return '<div class="adm-tsrow"><span class="adm-tslabel">' + esc(t.tool) + '</span><div class="adm-tsbar"><div class="adm-tsfill" style="width:' + Math.round(c / tsMax * 100) + '%"></div></div><span class="adm-tsnum">' + num(c) + '</span></div>'; }).join('')
           : (d.tools_used || []).map(function (t) { return '<span class="adm-chip">' + esc(t) + '</span>'; }).join('');
         var spark = miniSpark(d.activity_daily);
-        var acts = (d.recent_activity || []).slice(0, 12).map(function (a) { return '<div class="adm-mono muted" style="padding:3px 0">' + esc(a.event) + (a.resource_type ? ' · ' + esc(a.resource_type) : '') + ' · ' + A.ago(a.at) + '</div>'; }).join('') || '<span class="muted">No recorded actions yet.</span>';
+        // the tool has always been on the row and always been dropped here —
+        // without it twelve different pages all read as a bare "tool_opened".
+        // `subject` is resolved server-side (admin-activity-subject.sql): the
+        // teacher whose profile was viewed, the class that was opened, or the
+        // page that was. It replaces resource_type when present — "profile ·
+        // Sarah Chen" says the same thing twice.
+        // The RPC hands back more rows than the drawer opens with. The first 12
+        // stand; the rest render folded, so expanding is a class toggle rather
+        // than another round trip.
+        var actRows = d.recent_activity || [];
+        function actLine(a) {
+          return '<div class="adm-mono muted" style="padding:3px 0">' + esc(a.event) +
+            (a.tool ? ' · ' + esc(a.tool) : '') +
+            (a.subject ? ' · ' + esc(a.subject)
+                       : (a.resource_type ? ' · ' + esc(a.resource_type) : '')) +
+            ' · ' + A.ago(a.at) + '</div>';
+        }
+        var acts = actRows.length
+          ? actRows.slice(0, 12).map(actLine).join('') +
+            (actRows.length > 12
+              ? '<div id="acts-rest" hidden>' + actRows.slice(12).map(actLine).join('') + '</div>' +
+                '<button type="button" class="adm-acts-more" id="acts-more">Show all ' + actRows.length + '</button>'
+              : '')
+          : '<span class="muted">No recorded actions yet.</span>';
         dbody.innerHTML =
           '<h2>' + esc(u.name || 'Unnamed') + '</h2><div class="dsub">' + esc(u.email) + (u.handle ? ' · @' + esc(u.handle) : '') + '</div>' +
           '<dl class="adm-kv">' +
@@ -1067,8 +1259,20 @@
           '<div class="adm-dsec"><h3>Recent activity</h3>' + acts + '</div>' +
           renderDanger(u);
         wireDanger(u);
+        wireActsToggle(actRows.length);
       } catch (e) { dbody.innerHTML = stateError(e && e.message); }
     }
+    // the fold, both ways — a drawer you can't re-collapse only ever grows
+    function wireActsToggle(total) {
+      var btn = document.getElementById('acts-more');
+      var rest = document.getElementById('acts-rest');
+      if (!btn || !rest) return;
+      btn.addEventListener('click', function () {
+        rest.hidden = !rest.hidden;
+        btn.textContent = rest.hidden ? 'Show all ' + total : 'Show fewer';
+      });
+    }
+
     function renderDanger(u) {
       return '<div class="adm-danger-zone"><h3>Account controls</h3>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
@@ -1230,9 +1434,7 @@
     }
 
     // ── TOOLS ──
-    var toolsRange = 90;
     var toolsRows = [];
-    function toolsRangeLabel(d) { var m = TOOL_RANGES.filter(function (r) { return r.d === d; })[0]; return m ? m.label.toLowerCase() : d + ' days'; }
     // horizontal opens-vs-actions bars, ranked, above the detail table
     function toolsBars(rows) {
       if (!rows || !rows.length) return '';
@@ -1644,6 +1846,27 @@
       });
     }
     window.addEventListener('hashchange', route);
+
+    // Tables arrive at three different times — with the section render, from a
+    // panel that loads after it (loadTools, loadSignups), and in the user
+    // drawer. Rather than calling admSortable at each of those ~28 sites, watch
+    // and upgrade whatever appears. Idempotent, so the observer re-firing on
+    // admSortable's own edits settles immediately.
+    //
+    // OBSERVE document.body, NOT #adm-body: that element doesn't exist yet when
+    // this runs (shell() builds it), and shell() REPLACES it on every route —
+    // so an observer bound to it would either never attach or go stale on the
+    // first tab change. document.body is the only node that outlives both.
+    (function () {
+      if (!window.MutationObserver) { admSortable(document); return; }
+      var queued = false;
+      new MutationObserver(function () {
+        if (queued) return;              // coalesce a render's burst into one pass
+        queued = true;
+        requestAnimationFrame(function () { queued = false; admSortable(document); });
+      }).observe(document.body, { childList: true, subtree: true });
+      admSortable(document);
+    })();
 
     // ── shared chart tooltip — styled pill, animated, positioned above the bar ──
     (function () {

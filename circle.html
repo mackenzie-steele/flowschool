@@ -23,6 +23,12 @@
     .tc-bar .search-wrap { flex: 1; }
     .tc-count {
       flex-shrink: 0;
+      /* "34 TEACHERS" and "3 OF 34" are different widths, and the search input
+         beside this is flex:1 — so without a reserved box the field resizes on
+         every keystroke. Sized to the resting label, which is the widest, and
+         right-aligned so the number stays put against the edge. */
+      min-width: 12ch;
+      text-align: right;
       font-family: var(--font-mono);
       font-size: var(--fs-label-2);
       letter-spacing: var(--ls-label);
@@ -241,7 +247,7 @@
     <div class="tc-bar">
       <div class="search-wrap">
         <span class="search-icon"><span class="material-symbols-sharp">search</span></span>
-        <input type="search" class="search-input" id="tc-search" placeholder="Search by name, city, or why they teach&#8230;" autocomplete="off" aria-label="Search The Circle">
+        <input type="search" class="search-input" id="tc-search" placeholder="Try a name, a city, a style &#8212; or all three&#8230;" autocomplete="off" aria-label="Search The Circle">
       </div>
       <span class="tc-count" id="tc-count"></span>
     </div>
@@ -319,8 +325,12 @@
       const emptyText = document.getElementById('tc-empty-text');
       const q = document.getElementById('tc-search').value.trim();
 
+      // while searching, the count reports the RESULT — a total that never
+      // moves tells you nothing about whether your search did anything
       document.getElementById('tc-count').textContent =
-        teachers.length + (teachers.length === 1 ? ' teacher' : ' teachers');
+        (list.length === teachers.length)
+          ? teachers.length + (teachers.length === 1 ? ' teacher' : ' teachers')
+          : list.length + ' of ' + teachers.length;
 
       if (!list.length) {
         grid.innerHTML = '';
@@ -347,14 +357,44 @@
       }).join('');
     }
 
+    // ── search: every word has to land, but not in the same place ────────
+    // The old search asked "does ANY ONE field contain this whole string?",
+    // so "jen hilton head" found nobody — no single field holds all three
+    // words. Now each WORD must match somewhere, and they may match
+    // different fields: "jen" hits the name, "hilton head" the location.
+
+    // dropped as standalone words only, so "Ana" and "Athens" are untouched.
+    // Without this, typing the sentence you'd actually say — "jen from
+    // hilton head" — fails on the word "from".
+    const TC_STOP = { from: 1, in: 1, at: 1, on: 1, the: 1, a: 1, an: 1,
+                      of: 1, and: 1, near: 1, who: 1, teaches: 1, teacher: 1 };
+
+    // josé → jose, so an accent isn't a wall between you and a teacher —
+    // the same normalise the handle slug already uses on the profile page
+    function tcNorm(v) {
+      return String(v == null ? '' : v).toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function tcTokens(q) {
+      return tcNorm(q).split(/[^a-z0-9@]+/).filter(function (w) { return w && !TC_STOP[w]; });
+    }
+
+    // one flat string per teacher, built once and cached rather than on every
+    // keystroke. teaching_style is in here too — the old search never looked
+    // at it, so "restorative" matched nobody who taught it.
+    function tcHaystack(t) {
+      return tcNorm([t.display_name, t.location, t.why_i_teach,
+                     t.teaching_style, t.handle].join(' '));
+    }
+
     function filtered() {
-      const q = document.getElementById('tc-search').value.trim().toLowerCase();
-      if (!q) return teachers;
-      return teachers.filter(t =>
-        (t.display_name || '').toLowerCase().includes(q) ||
-        (t.location || '').toLowerCase().includes(q) ||
-        (t.why_i_teach || '').toLowerCase().includes(q) ||
-        (t.handle || '').toLowerCase().includes(q));
+      const words = tcTokens(document.getElementById('tc-search').value);
+      if (!words.length) return teachers;   // empty, or nothing but filler words
+      return teachers.filter(function (t) {
+        const hay = t._hay || (t._hay = tcHaystack(t));
+        return words.every(function (w) { return hay.indexOf(w) !== -1; });
+      });
     }
 
     // ── the preview — one teacher, up close ──
@@ -406,14 +446,21 @@
 
       const { data: { user } } = await db.auth.getUser();
 
-      // newest teachers first — profiles in the order they joined.
-      // If the circle_directory view doesn't expose created_at yet, the
-      // room still loads (recently-edited order) instead of erroring.
+      // Newest teachers first — the order they JOINED, not the order they last
+      // edited. created_at reaches the view via supabase/circle-join-order.sql.
+      // nullsFirst:false so a profile without a join date sinks rather than
+      // leading the room.
       let [res, blocked] = await Promise.all([
-        db.from('circle_directory').select('*').order('created_at', { ascending: false }),
+        db.from('circle_directory').select('*').order('created_at', { ascending: false, nullsFirst: false }),
         fsCommunity.myBlocks(),
       ]);
       if (res.error) {
+        // The room still loads rather than going dark — but this is NOT a
+        // quiet degrade. It sorted by updated_at for months while the
+        // created_at query failed on every load and said nothing, which is
+        // why the order looked arbitrary. If you see this, the migration
+        // hasn't run and The Circle is in edit order.
+        console.warn('[circle] join-order sort failed, falling back to edit order —', res.error.message);
         res = await db.from('circle_directory').select('*').order('updated_at', { ascending: false });
       }
       const { data, error } = res;

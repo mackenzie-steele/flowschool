@@ -973,7 +973,15 @@
       min-width: 0;
       height: 34px;
       cursor: pointer;
+      /* the drag belongs to the waveform, not the page — without this a
+         horizontal swipe on a phone scrolls the dashboard instead of scrubbing */
+      touch-action: none;
     }
+    /* the grab reads as holding the playhead rather than pointing at it */
+    .db-voice-wave.scrubbing { cursor: grabbing; }
+    /* mid-scrub the fill must track the finger exactly: the .1s ease that
+       smooths ordinary playback would lag a drag by a frame and feel loose */
+    .db-voice-wave.scrubbing .db-voice-fill { transition: none; }
     .db-voice-layer {
       position: absolute;
       inset: 0;
@@ -1987,6 +1995,8 @@
     var voiceWaveCache = {};    // url → peaks
     var voiceRAF = 0;
     var voiceDuration = 0;      // seconds, supplied for long notes so we needn't load audio to show it
+    var voiceScrubbing = false; // a finger is on the waveform right now
+    var voiceScrubResume = false; // …and it was playing when that started
 
     // the note's length: from the loaded audio once it's playing, else the
     // value stored alongside the note (so nothing downloads on dashboard load)
@@ -2106,6 +2116,7 @@
     }
 
     function paintVoiceProgress() {
+      if (voiceScrubbing) return;   // the finger owns the fill and the time
       var audio = document.getElementById('db-voice-audio');
       var d = voiceDur();
       setVoicePlayed(d ? audio.currentTime / d : 0);
@@ -2147,13 +2158,46 @@
       audio.addEventListener('loadedmetadata', paintVoiceProgress);
       audio.addEventListener('ended', function () { cancelAnimationFrame(voiceRAF); audio.currentTime = 0; resetVoiceUI(); });
 
-      function seekTo(clientX) {
+      // ── scrubbing: the fill and the readout follow the finger ──────────
+      // Pointer events, so mouse and touch are one path. The audio PAUSES for
+      // the length of the drag — seeking it dozens of times a second while it
+      // plays stutters, and the rAF loop would be fighting the drag for the
+      // same clip-path. It resumes on release only if it was playing.
+      function fracAt(clientX) {
         var rect = wave.getBoundingClientRect();
-        var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-        var d = voiceDur();
-        if (d) { audio.currentTime = frac * d; paintVoiceProgress(); }
+        return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
       }
-      wave.addEventListener('click', function (e) { seekTo(e.clientX); });
+      function scrubTo(clientX) {
+        var d = voiceDur();
+        if (!d) return;
+        var frac = fracAt(clientX);
+        audio.currentTime = frac * d;
+        setVoicePlayed(frac);                            // the accent follows
+        var t = document.getElementById('db-voice-time');
+        if (t) t.textContent = fmtVoiceTime(frac * d);   // and so does the time
+      }
+      function endScrub() {
+        if (!voiceScrubbing) return;
+        voiceScrubbing = false;
+        wave.classList.remove('scrubbing');
+        if (voiceScrubResume) { voiceScrubResume = false; audio.play().catch(function () {}); }
+        else paintVoiceProgress();
+      }
+      wave.addEventListener('pointerdown', function (e) {
+        if (!voiceDur()) return;                 // nothing to scrub through yet
+        voiceScrubbing = true;
+        voiceScrubResume = !audio.paused;
+        if (voiceScrubResume) audio.pause();
+        wave.classList.add('scrubbing');
+        try { wave.setPointerCapture(e.pointerId); } catch (_) {}
+        scrubTo(e.clientX);                      // a plain tap still seeks
+        e.preventDefault();
+      });
+      wave.addEventListener('pointermove', function (e) {
+        if (voiceScrubbing) scrubTo(e.clientX);
+      });
+      wave.addEventListener('pointerup', endScrub);
+      wave.addEventListener('pointercancel', endScrub);
       wave.addEventListener('keydown', function (e) {
         var d = voiceDur();
         if (!d) return;

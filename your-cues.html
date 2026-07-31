@@ -2749,6 +2749,7 @@ function init() {
         e.pinned = !e.pinned;
         setSheets(list);
         renderDetail(e);
+        if (e.pinned && window.fsFavPop) fsFavPop(document.getElementById('cd-title'));
         showToast(e.pinned ? 'Added to your favorites.' : 'Removed from favorites.');
       } else if (act === 'dup') {
         // opens unsaved — nothing exists until they save the variant
