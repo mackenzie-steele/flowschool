@@ -16,6 +16,11 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 /* only a probably-signed-in visitor (about to be redirected) is gated —
    everyone else paints immediately and pageEnter plays as designed */
 .fs-authed body { opacity: 0; transition: opacity .18s; }
+
+/* first + last share a line — the profile page's .pf-name-row, in the
+   auth form's clothes. They stack on the narrow pivot like everything else. */
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 580px) { .field-row { grid-template-columns: 1fr; gap: 20px; } }
 </style>
 </head>
 <body>
@@ -32,6 +37,23 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
     <p class="auth-subtitle">Write classes, keep flows, tell stories, play with new rules, make playlists, practice breath pace, and connect with other teachers. This is your home base.</p>
 
     <form class="auth-form" id="auth-form" novalidate>
+      <!-- the name comes first: the product greets people by name from the
+           first screen, and shared classes carry a real byline -->
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="first-name">First name</label>
+          <div class="field-input-wrap">
+            <input class="field-input" type="text" id="first-name" placeholder="First" autocomplete="given-name" required>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="last-name">Last name</label>
+          <div class="field-input-wrap">
+            <input class="field-input" type="text" id="last-name" placeholder="Last" autocomplete="family-name">
+          </div>
+        </div>
+      </div>
+
       <div class="field">
         <label class="field-label" for="email">Email</label>
         <div class="field-input-wrap">
@@ -101,22 +123,43 @@ function passwordProblem(pw) {
 document.getElementById('auth-form').addEventListener('submit', async e => {
   e.preventDefault();
 
+  const firstName = document.getElementById('first-name').value.trim();
+  const lastName  = document.getElementById('last-name').value.trim();
   const email    = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const errEl    = document.getElementById('auth-error');
   const sucEl    = document.getElementById('auth-success');
   const btn      = document.getElementById('submit-btn');
 
+  // profiles.full_name is one column — join it the same way the profile
+  // page does, so the two halves round-trip through the same shape
+  const fullName = [firstName, lastName].filter(Boolean).join(' ');
+
   errEl.classList.remove('show');
   sucEl.classList.remove('show');
 
+  // first name is the one the product actually needs — it greets people by
+  // it from the first screen. A last name is welcome, never required.
+  if (!firstName) {
+    errEl.textContent = 'What should we call you? A first name is enough.';
+    errEl.classList.add('show');
+    document.getElementById('first-name').focus();
+    return;
+  }
   if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.add('show'); return; }
   const pwProblem = passwordProblem(password);
   if (pwProblem) { errEl.textContent = pwProblem; errEl.classList.add('show'); return; }
 
   fsWorking(btn, true, 'Creating account…');
 
-  const { data, error } = await db.auth.signUp({ email, password });
+  // the name rides in user_metadata, which nav.js, the dashboard greeting,
+  // and the print byline ALREADY read as their fallback — so it lights up
+  // everywhere the moment the session exists, with no profile row needed
+  const { data, error } = await db.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: fullName, first_name: firstName, last_name: lastName } },
+  });
 
   if (error) {
     const msg = error.message || '';

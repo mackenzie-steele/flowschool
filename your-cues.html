@@ -2303,6 +2303,8 @@ function openPOL() {
   renderPOLScript(cues);
   const overlay = document.getElementById('pol-overlay');
   overlay.classList.add('active');
+  // the prompter owns the viewport — global.css §24 sheds the footer
+  document.body.classList.add('fs-fullscreen');
   document.body.style.overflow = 'hidden';
   stopPolScroll();
   updateSliderFill(document.getElementById('pol-speed-slider'), polWPM);
@@ -2318,6 +2320,7 @@ function openPOL() {
 function closePOL() {
   stopPolScroll();
   document.getElementById('pol-overlay').classList.remove('active');
+  document.body.classList.remove('fs-fullscreen');
   document.body.style.overflow = '';
 }
 

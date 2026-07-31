@@ -636,6 +636,20 @@ async function init() {
 
   loadScheds();
 
+  // No profile row yet (nobody has saved this page): carry the name given at
+  // signup across from auth metadata, so the person doesn't arrive to a blank
+  // field where they already told us who they are. originalData matches the
+  // prefill, so an untouched visit is NOT dirty and won't trip the
+  // beforeunload guard — the name commits to profiles on their first save.
+  if (!profile) {
+    const meta = (currentUser && currentUser.user_metadata) || {};
+    const signupName = (meta.full_name || meta.name || '').trim();
+    if (signupName) {
+      setFields({ full_name: signupName });
+      originalData = { full_name: signupName };
+    }
+  }
+
   if (profile) {
     setFields(profile);
     originalData = { ...profile };

@@ -745,7 +745,7 @@ html{background:#0F1116;color-scheme:dark}html[data-theme="light"]{background:#F
     // arriving to practice a sheet: raise the room before first paint so
     // the counter page beneath never flashes
     if (new URLSearchParams(location.search).get('sheet')) {
-      document.body.classList.add('bp-full', 'bp-practice');
+      document.body.classList.add('bp-full', 'bp-practice', 'fs-fullscreen');
     }
   </script>
 
@@ -1351,6 +1351,8 @@ html{background:#0F1116;color-scheme:dark}html[data-theme="light"]{background:#F
     // ── the distraction-free room ──
     function setFull(on) {
       document.body.classList.toggle('bp-full', on);
+      // the room owns the viewport — global.css §24 sheds the footer
+      document.body.classList.toggle('fs-fullscreen', on);
       if (on) {
         setView('cues');
         updateFullProgress();

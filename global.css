@@ -31,6 +31,7 @@
    22. Dark Mode Element Overrides
    23. Tool Page Components (controls-bar, modal, card-actions, search)
    24. Site Footer (injected by lib/nav.js)
+   25. Scrollbars
 
    HOW TO ADD A NEW TOOL PAGE
    1. Copy the page shell from any existing tool (e.g. arbitrary-rule-generator.html)
@@ -4070,6 +4071,94 @@ body.has-sidebar {
 /* stay clear of pages with a fixed CTA bar */
 body:has(.cta-bar) .site-footer {
   padding-bottom: 120px;
+}
+
+/* THE RULE: a full-screen experience owns the viewport, and the footer
+   never rides along. The version plate and support line belong to the
+   app's furniture — inside a teaching room they're a seam in the
+   illusion, and on a phone they surface under the fold mid-practice.
+   Any surface that takes the whole screen sets `fs-fullscreen` on
+   <body> for as long as it holds it: the breath pacer's room and its
+   Practice Out Loud variant, Your Cues' teleprompter. New full-screen
+   surfaces set the same class — don't re-solve this per page. */
+body.fs-fullscreen .site-footer { display: none; }
+
+
+/* ─── 25. SCROLLBARS ─────────────────────────────────────────── */
+/* Ink, like everything else — the rail is drawn from --ink-rgb, so it
+   re-themes with the page and never needs a dark-mode override.
+   At rest the thumb is transparent: a page looks exactly as it did
+   before you styled anything. It surfaces when the pointer is over
+   the scrolling area and recedes when the pointer leaves.
+
+   POINTER: FINE ONLY. Touch surfaces get transient overlay bars from
+   the OS; they shouldn't be given a permanent rail they can't hover.
+
+   The track stays transparent in both states — one moving part, not
+   a groove and a slider. The thumb's 3px transparent border is inset
+   by background-clip, so a 10px hit area reads as a ~4px line: easy
+   to grab, quiet to look at.
+
+   Scrollers that deliberately hide their bars (.filter-row, the
+   dashboard's Continue deck, the breath-pace script, the POL
+   prompter) set `scrollbar-width: none` and `::-webkit-scrollbar
+   { display: none }` on themselves — a class selector, so it outranks
+   everything here and they stay hidden. */
+
+@media (pointer: fine) {
+
+  /* EACH RAIL ANSWERS ITS OWN REGION. Two traps make that harder than
+     it looks, and both bit once:
+       1. `scrollbar-color` INHERITS. Setting the lit value on :root
+          cascades it into the sidebar, so one hover lit every rail.
+       2. In Chrome, `scrollbar-color` OVERRIDES the ::-webkit-scrollbar
+          pseudo-elements — so the webkit block below can't undo it.
+     The fix is to neutralise the inheritance at zero specificity
+     (:where, below) and let each region opt its own rail back in. */
+
+  /* .sidebar-nav is the rail that actually shows: .app-sidebar is a
+     flex column, and the nav list between the logo and the identity
+     footer is the part that overflows. Both are dressed — the outer
+     one only scrolls at very short viewport heights. */
+  html, .app-sidebar, .sidebar-nav { scrollbar-width: thin; }
+
+  html { scrollbar-color: transparent transparent; }
+  /* zero specificity — blocks the cascade without outranking anything */
+  :where(body, body *) { scrollbar-color: transparent transparent; }
+
+  /* the page's rail answers the page, and stands down over the nav */
+  html:hover                     { scrollbar-color: rgba(var(--ink-rgb), .22) transparent; }
+  html:has(.app-sidebar:hover)   { scrollbar-color: transparent transparent; }
+
+  /* the nav's rail answers the nav — reaching anywhere in the rail
+     brings it up, not just the list itself */
+  .app-sidebar:hover,
+  .app-sidebar:hover .sidebar-nav { scrollbar-color: rgba(var(--ink-rgb), .22) transparent; }
+
+  /* WebKit/Blink — the finer treatment (inset thumb, house radius).
+     Live in Safari; in Chrome the properties above take precedence.
+     Scoped to the same two regions, for the same reason. */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner { background: transparent; }
+
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: var(--rb);
+    transition: background var(--transition-base);
+  }
+
+  html:hover::-webkit-scrollbar-thumb,
+  .app-sidebar:hover::-webkit-scrollbar-thumb,
+  .app-sidebar:hover .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(var(--ink-rgb), .22); background-clip: content-box; }
+
+  html:has(.app-sidebar:hover)::-webkit-scrollbar-thumb { background: transparent; }
+
+  /* ONE VALUE, deliberately. The rail has two states — present or not —
+     and no third for being touched. A thumb that brightens under the
+     pointer is the rail asking for attention it doesn't need. */
 }
 
 /* ─── PRINT ──────────────────────────────────────────────────── */
