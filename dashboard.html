@@ -1300,6 +1300,10 @@
       localStorage.removeItem('flowschool_stats');
       localStorage.removeItem('flowschool_seeded');
       localStorage.removeItem('flowschool_recent');
+      // the unsuffixed Start Here markers from v5.4.0–v5.4.1, which belonged
+      // to the device rather than the account — see startHereKey below
+      localStorage.removeItem('fs-first-seen');
+      localStorage.removeItem('fs-start-done');
     } catch (_) {}
 
     function dayOfYear() {
@@ -1573,8 +1577,23 @@
     // can't retire the guidance. No score, no checklist — the offer changes,
     // and the change IS the feedback.
 
-    var FIRST_SEEN_KEY = 'fs-first-seen';
-    var START_DONE_KEY = 'fs-start-done';
+    // Both markers are ACCOUNT facts kept on the DEVICE, so they carry the
+    // user's id. localStorage outlives a sign-out — clearCache() only sweeps
+    // the synced libraries and signOut() only clears the identity cache — so
+    // unsuffixed, one teacher's finished module would hide it from the next
+    // person to sign in on the same browser. That's a shared laptop, and it's
+    // every time we sign into a test account.
+    function startHereKey(base) {
+      var uid = '';
+      try {
+        var t = JSON.parse(localStorage.getItem('sb-zizuopmcpzicbwngjagp-auth-token'));
+        uid = (t && t.user && t.user.id) || '';
+      } catch (_) {}
+      return base + ':' + uid;
+    }
+
+    var FIRST_SEEN_KEY = startHereKey('fs-first-seen');
+    var START_DONE_KEY = startHereKey('fs-start-done');
     var START_HERE_DAYS = 30;   // the ceiling: it can't follow you around forever
 
     function countOf(key) {
