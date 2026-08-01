@@ -1003,7 +1003,12 @@
     .db-voice-fill .db-voice-bar { background: var(--accent); }
     .db-voice-time {
       flex: none;
-      min-width: 32px;
+      /* reserve the widest string this can ever hold, not the common one.
+         fmtVoiceTime writes M:SS, so it jumps to MM:SS at ten minutes — at
+         32px the box grew, and .db-voice-wave (flex:1) paid for it by
+         shrinking mid-scrub. 5ch is exact in a mono face with tabular-nums
+         and covers everything up to 99:59. */
+      min-width: 5ch;
       text-align: right;
       font-family: var(--font-mono);
       font-size: 12px;

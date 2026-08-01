@@ -40,6 +40,11 @@
       shared esc/fmtDate/sort/date-stamp/discard-modal helpers)
    3. Use <main> to wrap hero + content
    4. Use .controls-bar for filter/action row, .ctl-label for control labels
+      SEARCH: markup is <div class="search-wrap"> + .search-icon +
+      .search-input. The clear × is NOT yours to add — nav.js puts the house
+      .search-clear on any wrap without one and dispatches a real `input`
+      event on clear, so your existing handler runs. Never <input
+      type="search"> for the button's sake; the native one is suppressed.
    5. Use .card-actions for the action row inside a tool output card
    6. Use .modal-backdrop / .modal-card for any save/load dialogs
    7. Add page-specific CSS only in a <style> block in the page head
@@ -3582,6 +3587,21 @@ body.has-sidebar {
 }
 
 .search-icon .material-symbols-sharp { font-size: var(--icon-md); }
+
+/* THE CLEAR CONTROL — one × for every search field on the platform.
+   .search-clear is the house control: nav.js puts it on any .search-wrap that
+   doesn't already have one, including fields rendered after load, so a new
+   search bar gets it without being asked. Don't hand-roll another.
+
+   The rule below is what makes that possible. An <input type="search"> comes
+   with the BROWSER's own clear button — unstylable, differently placed, and
+   the reason The Circle's × never matched Your Flows'. Suppressing it here
+   means the input's `type` stops being a visual decision. */
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
 
 .search-clear {
   position: absolute;

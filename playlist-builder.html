@@ -397,7 +397,9 @@
     /* ── Song rows ────────────────────────────────────────────── */
     .song {
       display: grid;
-      grid-template-columns: 1fr auto auto auto auto;
+      /* art · info · meta(duration + energy) · swap · copy — the energy bar
+         lives inside meta so the two always travel together, at every width */
+      grid-template-columns: auto 1fr auto auto auto;
       align-items: center;
       gap: 20px;
       padding: 12px 20px;
@@ -406,6 +408,56 @@
     }
     .song:last-child { border-bottom: none; padding-bottom: 16px; }
     .song:hover { background: rgba(var(--ink-rgb), .03); opacity: 1; }
+
+    /* ── Artwork, doubling as the play control ────────────────────────
+       The row already carries five things; a sixth control would turn it
+       into a toolbar. The art is already a good tap target, so it IS the
+       button. No hover on a phone, so the glyph is always visible — at
+       40px that costs nothing, and it makes the playing row self-evident. */
+    .song-art {
+      position: relative;
+      width: 40px; height: 40px; flex: none;
+      border-radius: var(--rb);
+      overflow: hidden;
+      background: var(--well-bg);
+      box-shadow: var(--well);
+      border: 0; padding: 0;
+      cursor: pointer;
+      display: grid; place-items: center;
+    }
+    .song-art img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+      display: block;
+    }
+    /* the scrim only has to make one small glyph legible, not dim the art */
+    .song-art::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at center,
+        rgba(0,0,0,.55) 0%, rgba(0,0,0,.34) 55%, rgba(0,0,0,.12) 100%);
+      opacity: 0; transition: opacity var(--transition-base);
+    }
+    .song-art.has-art::after { opacity: 1; }
+    .song-art:hover::after { opacity: 1; background: rgba(0,0,0,.5); }
+    .song-art .material-symbols-sharp {
+      position: relative; z-index: 1;
+      font-size: 20px; color: #fff;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+    }
+    /* nothing to play: no glyph, no scrim, just a quiet well */
+    .song-art.no-audio { cursor: default; }
+    .song-art.no-audio::after { opacity: 0; }
+    .song-art.no-audio .material-symbols-sharp { opacity: .3; filter: none; }
+    .song-art:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* the 30 seconds are finite — say so rather than cutting out unannounced */
+    .song-art-prog {
+      position: absolute; left: 0; bottom: 0; height: 2px; z-index: 2;
+      width: 0%; background: var(--accent);
+      transition: width .1s linear;
+    }
+    .song.is-playing { background: var(--accent-dim); }
 
     .song-info { overflow: hidden; }
     .song-title {
@@ -499,20 +551,41 @@
     }
     @media (max-width: 580px) {
       .res-hdr  { flex-direction: column; align-items: flex-start; }
-      /* two-line row: actions sit beside title/artist, meta tucks under */
+      /* two-line row: actions sit beside title/artist, meta tucks under.
+         Artwork keeps the left edge it has on desktop — same side at every
+         width, so the play control never moves. The title wraps in the
+         column beside it rather than pushing anything around, and meta
+         lines up with the text instead of sitting under the art. */
       .song {
-        grid-template-columns: 1fr auto auto;
+        grid-template-columns: auto 1fr auto auto;
         grid-template-areas:
-          "info swap copy"
-          "meta meta meta";
-        gap: 8px 12px;
-        padding: 12px 16px 12px 32px;
+          "art info swap copy"
+          "art meta meta meta";
+        gap: 6px 12px;
+        /* the 32px left indent was making room for nothing; the art fills it */
+        padding: 12px 16px;
+        align-items: start;
       }
+      .song-art  { grid-area: art; align-self: start; }
       .song-info { grid-area: info; }
       .song-meta { grid-area: meta; }
       .song-swap { grid-area: swap; }
       .song-copy { grid-area: copy; margin-left: 0; }
-      .ebar     { display: none; }
+      /* centred in their own cells rather than shoved to the right edge */
+      .song-swap, .song-copy { justify-content: center; }
+      /* tighter than the desktop's 20px — the row is narrower */
+      .song-meta { gap: 12px; }
+      /* title and artist are free to wrap now that they own a real column */
+      /* desktop truncates with an ellipsis; on a narrow row wrapping beats
+         hiding the half of the title that tells you which remix it is */
+      .song-title, .song-artist {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+      }
+      .song-swap, .song-copy { align-self: start; }
+      /* the energy bar used to be hidden here; it rides with the duration now */
       .cta-bar  { padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
     }
 
@@ -646,6 +719,7 @@
   </div>
 
   <script src="data/songs.js"></script>
+  <script src="data/apple-media.js"></script>
   <script>
     // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -668,11 +742,11 @@
     const ARC_SHAPES = {
       // Keypoints are in normalized class time (0–1). Section boundaries for reference:
       // Warm Up ends 0.25 · Build ends 0.50 · Peak ends 0.80 · Cool Down ends 1.0
-      'slow-build':    { name: 'Slow Build',      desc: 'Ease in. Let the energy find you.',             keys: [[0, 8],  [.45, 12], [.65, 85], [.82, 38], [1, 12]] },
-      'bell-curve':    { name: 'Bell Curve',       desc: 'Rise to the middle. Land softly.',              keys: [[0, 12], [.25, 52], [.5, 92], [.75, 52], [1, 12]] },
-      'strong-start':  { name: 'Strong Start',     desc: 'Lead with fire. Land with intention.',          keys: [[0, 88], [.08, 92], [.25, 75], [.50, 52], [.67, 32], [.87, 18], [1, 12]] },
-      'wave':          { name: 'Wave',             desc: 'Multiple crests. Keeps them in their bodies.',  keys: [[0, 18], [.25, 75], [.42, 25], [.60, 82], [.80, 28], [1, 14]] },
-      'gentle-steady': { name: 'Gentle & Steady',  desc: 'Consistent, supportive, sustainable.',         keys: [[0, 35], [.25, 42], [.55, 52], [.75, 50], [.90, 40], [1, 30]] }
+      'slow-build':    { name: 'Slow Build',      desc: 'Ease in. Let the energy find you.',             keys: [[0, 1],  [.45, 1],  [.65, 9],  [.82, 4],  [1, 1]] },
+      'bell-curve':    { name: 'Bell Curve',       desc: 'Rise to the middle. Land softly.',              keys: [[0, 1],  [.25, 5],  [.5, 9],  [.75, 5],  [1, 1]] },
+      'strong-start':  { name: 'Strong Start',     desc: 'Lead with fire. Land with intention.',          keys: [[0, 9],  [.08, 9],  [.25, 8],  [.50, 5],  [.67, 3],  [.87, 2],  [1, 1]] },
+      'wave':          { name: 'Wave',             desc: 'Multiple crests. Keeps them in their bodies.',  keys: [[0, 2],  [.25, 8],  [.42, 3],  [.60, 8],  [.80, 3],  [1, 1]] },
+      'gentle-steady': { name: 'Gentle & Steady',  desc: 'Consistent, supportive, sustainable.',         keys: [[0, 4],  [.25, 4],  [.55, 5],  [.75, 5],  [.90, 4],  [1, 3]] }
     };
 
     // Handles sit ON the 10-minute marks (normalized 0–1); a class that
@@ -694,7 +768,7 @@
       // every preset handle snaps to the 10-step gridlines — the same
       // grid dragging snaps to, so points always sit ON a line, mid-drag
       // included
-      return sampleArc(key, times).map(e => Math.round(e * f / 10) * 10);
+      return sampleArc(key, times).map(e => Math.round(e * f));
     }
 
     function updateIntensity() {
@@ -778,12 +852,11 @@
     }
 
 
-    function eToY(e) { return SVG_H - PAD_B - (e / 100) * (SVG_H - PAD_T - PAD_B); }
-    function yToE(y) { return Math.round(Math.max(0, Math.min(100, (SVG_H - PAD_B - y) / (SVG_H - PAD_T - PAD_B) * 100))); }
-    function snapEnergy(e) {
-      const snapped = Math.round(e / 10) * 10;
-      return Math.abs(e - snapped) <= 5 ? snapped : e;
-    }
+    function eToY(e) { return SVG_H - PAD_B - (e / 10) * (SVG_H - PAD_T - PAD_B); }
+    function yToE(y) { return Math.round(Math.max(0, Math.min(10, (SVG_H - PAD_B - y) / (SVG_H - PAD_T - PAD_B) * 10))); }
+    // every whole number IS a gridline now, so yToE's rounding already lands
+    // on one — this stays as the single place that guarantees it
+    function snapEnergy(e) { return Math.round(e); }
 
     function monotonePath(points) {
       const n = points.length;
@@ -826,19 +899,20 @@
       const pts = S.pts.map((e, i) => ({ x: xs[i], y: eToY(e) }));
 
       // ── Grid — horizontal rules ───────────────────────────────
-      for (let lvl = 0; lvl <= 100; lvl += 10) {
+      for (let lvl = 0; lvl <= 10; lvl += 1) {
         const y = eToY(lvl), l = ns('line');
-        const isMajor = [0, 25, 50, 75, 100].includes(lvl);
+        // quarters don't land on whole levels any more — floor, middle, ceiling do
+        const isMajor = [0, 5, 10].includes(lvl);
         l.setAttribute('x1', 0); l.setAttribute('x2', SVG_W);
         l.setAttribute('y1', y); l.setAttribute('y2', y);
         l.setAttribute('stroke', isMajor ? 'rgba(var(--ink-rgb),.10)' : 'rgba(var(--ink-rgb),.05)');
         l.setAttribute('stroke-width', isMajor ? '1' : '.75');
-        if (lvl === 50) l.setAttribute('stroke-dasharray', '3 5');
+        if (lvl === 5) l.setAttribute('stroke-dasharray', '3 5');
         svg.appendChild(l);
       }
 
       // ── Y axis labels ─────────────────────────────────────────
-      [{ v: 100, lbl: 'HIGH' }, { v: 0, lbl: 'LOW' }].forEach(({ v, lbl }) => {
+      [{ v: 10, lbl: 'HIGH' }, { v: 0, lbl: 'LOW' }].forEach(({ v, lbl }) => {
         const t = ns('text');
         t.setAttribute('x', 5); t.setAttribute('y', eToY(v) + (v === 0 ? -5 : 11));
         t.setAttribute('font-size', '8'); t.setAttribute('fill', 'rgba(var(--ink-rgb),.25)');
@@ -968,7 +1042,7 @@
     function miniCurve(keys, isActive) {
       const W = 120, H = 68, p = 9;
       // Map raw keypoints ([t, e] pairs) directly — no linear pre-sampling
-      const mapped = keys.map(([t, e]) => ({ x: t * W, y: H - p - (e / 100) * (H - p * 2) }));
+      const mapped = keys.map(([t, e]) => ({ x: t * W, y: H - p - (e / 10) * (H - p * 2) }));
       const d = monotonePath(mapped);
       const lp = mapped[mapped.length - 1], fp = mapped[0];
       const fill   = isActive ? 'rgba(var(--ink-rgb),.08)' : 'rgba(var(--ink-rgb),.03)';
@@ -1154,45 +1228,46 @@
 
     function notePick(s) {
       mixState.n++;
-      if ((s.pal || '')[0] === 'v') mixState.vocal++;
-      if ((s.pal || '')[1] === 'e') mixState.electronic++;
+      if (s.vocal) mixState.vocal++;
+      if (s.electronic) mixState.electronic++;
     }
 
     function unPick(s) {
       mixState.n = Math.max(0, mixState.n - 1);
-      if ((s.pal || '')[0] === 'v') mixState.vocal = Math.max(0, mixState.vocal - 1);
-      if ((s.pal || '')[1] === 'e') mixState.electronic = Math.max(0, mixState.electronic - 1);
+      if (s.vocal) mixState.vocal = Math.max(0, mixState.vocal - 1);
+      if (s.electronic) mixState.electronic = Math.max(0, mixState.electronic - 1);
     }
 
     // hard extremes: 0 and 100 are absolute
     function mixEligible(s) {
-      const p = s.pal || '';
-      if (S.mix.vocal === 0 && p[0] === 'v') return false;
-      if (S.mix.vocal === 100 && p[0] === 'i') return false;
-      if (S.mix.electronic === 0 && p[1] === 'e') return false;
-      if (S.mix.electronic === 100 && p[1] === 'a') return false;
+      // the sliders name the pole they're heading toward: 0 = none of it
+      if (S.mix.vocal === 0 && s.vocal) return false;
+      if (S.mix.vocal === 100 && !s.vocal) return false;
+      if (S.mix.electronic === 0 && s.electronic) return false;
+      if (S.mix.electronic === 100 && !s.electronic) return false;
       return true;
     }
 
     // how far the running mix drifts from the sliders if we pick s
     function mixCost(s) {
-      const p = s.pal || '';
       const n = mixState.n + 1;
-      const nv = (mixState.vocal + (p[0] === 'v' ? 1 : 0)) / n;
-      const ne = (mixState.electronic + (p[1] === 'e' ? 1 : 0)) / n;
+      const nv = (mixState.vocal + (s.vocal ? 1 : 0)) / n;
+      const ne = (mixState.electronic + (s.electronic ? 1 : 0)) / n;
       return Math.abs(nv - S.mix.vocal / 100) + Math.abs(ne - S.mix.electronic / 100);
     }
 
-    function pickForTarget(tgt, used, tol = 20) {
-      const clamped = Math.min(100, Math.max(0, tgt));
-      const cost = s => Math.abs(s.energy - clamped) + 55 * mixCost(s);
+    function pickForTarget(tgt, used, tol = 2) {
+      const clamped = Math.min(10, Math.max(0, tgt));
+      // the mix weight is relative to an energy delta — it moved with the scale
+      // (was 55 against 0-100) or mixCost would have swamped energy entirely
+      const cost = s => Math.abs(s.energy - clamped) + 5.5 * mixCost(s);
       const pool = SONGS
         .filter(s => !used.has(s.id) && mixEligible(s) && Math.abs(s.energy - clamped) <= tol)
         .sort((a, b) => cost(a) - cost(b));
       if (pool.length) {
         // near-draws stay a fair draw — variety without drifting
         const best = cost(pool[0]);
-        const near = pool.filter(s => cost(s) <= best + 4);
+        const near = pool.filter(s => cost(s) <= best + 0.4);
         return near[Math.floor(Math.random() * near.length)];
       }
       // widen tolerance, still honoring the hard extremes
@@ -1200,6 +1275,141 @@
         .filter(s => !used.has(s.id) && mixEligible(s))
         .sort((a, b) => cost(a) - cost(b))[0] || null;
     }
+
+    // ── Apple previews ────────────────────────────────────────────────
+    // apple-media.js is generated and may not cover every song — anything
+    // unresolved renders as a quiet well and simply isn't playable. The UI
+    // never waits on it and never shows a broken image.
+    function media(id) {
+      return (typeof APPLE_MEDIA !== 'undefined' && APPLE_MEDIA[id]) || null;
+    }
+
+    function artButton(s) {
+      const m = media(s.id);
+      const art = m && m.art ? m.art.replace(/{px}/g, '80') : null;   // 2x for retina
+      const playable = !!(m && m.prev);
+      const cls = 'song-art' + (art ? ' has-art' : '') + (playable ? '' : ' no-audio');
+      const label = playable
+        ? `Preview ${s.title} by ${s.artist}`
+        : `No preview available for ${s.title}`;
+      return `<button class="${cls}" data-prev="${playable ? m.prev : ''}"`
+        + ` aria-label="${label.replace(/"/g, '&quot;')}"${playable ? '' : ' tabindex="-1" aria-disabled="true"'}>`
+        + (art ? `<img src="${art}" alt="" loading="lazy" onerror="this.remove();this.parentNode.classList.remove('has-art')">` : '')
+        + `<span class="material-symbols-sharp">${playable ? 'play_arrow' : 'music_note'}</span>`
+        + `<span class="song-art-prog"></span></button>`;
+    }
+
+    // ── one preview at a time ─────────────────────────────────────────
+    // ONE <audio>, reused. Creating a fresh element per click leaves the old
+    // one alive long enough to abort its load, and an aborted load surfaces
+    // as an `error` event — asynchronously, after the next song has already
+    // started. Its handler then stopped the song that had just begun, so the
+    // second row only played on a second click. One element, handlers bound
+    // once, and an explicit check for the abort code.
+    var audioEl = null, prevBtn = null, prevRAF = 0;
+
+    function theAudio() {
+      if (audioEl) return audioEl;
+      var a = new Audio();
+      a.preload = 'none';
+      a.addEventListener('ended', stopPreview);
+      a.addEventListener('error', function () {
+        // switching tracks aborts the previous load and lands here. That is
+        // us moving on, not a broken preview — do not blame the button.
+        if (a.error && a.error.code === a.error.MEDIA_ERR_ABORTED) return;
+        if (!prevBtn) return;
+        var btn = prevBtn;
+        btn.classList.add('no-audio');
+        btn.dataset.prev = '';
+        var g = btn.querySelector('.material-symbols-sharp');
+        if (g) g.textContent = 'music_note';
+        stopPreview();
+      });
+      audioEl = a;
+      return a;
+    }
+
+    function stopPreview() {
+      if (prevRAF) { cancelAnimationFrame(prevRAF); prevRAF = 0; }
+      // pause only — clearing src is what caused the abort/error race
+      if (audioEl) audioEl.pause();
+      if (prevBtn) {
+        var g = prevBtn.querySelector('.material-symbols-sharp');
+        if (g && !prevBtn.classList.contains('no-audio')) g.textContent = 'play_arrow';
+        var bar = prevBtn.querySelector('.song-art-prog');
+        if (bar) bar.style.width = '0%';
+        var row = prevBtn.closest('.song');
+        if (row) row.classList.remove('is-playing');
+        prevBtn = null;
+      }
+      if (window.fsIcons) fsIcons();
+    }
+
+    function trackProgress(btn) {
+      var a = theAudio();
+      var bar = btn.querySelector('.song-art-prog');
+      if (prevRAF) { cancelAnimationFrame(prevRAF); prevRAF = 0; }
+      (function tick() {
+        if (prevBtn !== btn) return;      // a later click owns the audio now
+        if (a.duration) bar.style.width = (a.currentTime / a.duration * 100) + '%';
+        prevRAF = requestAnimationFrame(tick);
+      })();
+    }
+
+    // The results list is rebuilt with innerHTML, so the button that was
+    // playing gets thrown away while the audio carries on — a song with no
+    // row to stop it. If the same song is still in the new playlist, adopt
+    // its new button and keep going; if it isn't, stop.
+    function rebindPreviewAfterRender(container) {
+      if (!prevBtn) return;
+      var row = prevBtn.closest('.song');
+      var sid = row && row.dataset.sid;
+      var next = sid && container.querySelector('.song[data-sid="' + sid + '"] .song-art');
+      if (!next || !next.dataset.prev) { stopPreview(); return; }
+      prevBtn = next;
+      var g = next.querySelector('.material-symbols-sharp');
+      if (g) g.textContent = 'pause';
+      var nrow = next.closest('.song');
+      if (nrow) nrow.classList.add('is-playing');
+      trackProgress(next);
+      if (window.fsIcons) fsIcons();
+    }
+
+    function playPreview(btn) {
+      var url = btn.dataset.prev;
+      if (!url) return;
+      var wasSame = (prevBtn === btn);
+      stopPreview();
+      if (wasSame) return;               // tapping the playing one stops it
+
+      var a = theAudio();
+      prevBtn = btn;
+      if (a.src !== url) { a.src = url; }
+      else { a.currentTime = 0; }        // same song again: start it over
+
+      var g = btn.querySelector('.material-symbols-sharp');
+      if (g) g.textContent = 'pause';
+      var row = btn.closest('.song');
+      if (row) row.classList.add('is-playing');
+      if (window.fsIcons) fsIcons();
+
+      trackProgress(btn);
+
+      a.play().catch(function () {
+        // autoplay policy, offline, a dead URL — fail quietly, not stuck
+        if (prevBtn === btn) stopPreview();
+      });
+    }
+
+    // delegated so it survives every re-render of the list
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest && e.target.closest('.song-art');
+      if (btn && btn.dataset.prev) { e.preventDefault(); playPreview(btn); }
+    });
+    // a preview outliving the playlist that produced it would be a ghost
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stopPreview();
+    });
 
     function generate() {
       const used = new Set();
@@ -1236,8 +1446,8 @@
         if (d.songs.length < 2) return;
         const eStart = getCurveEnergy(d.secStart / totalTarget);
         const eEnd   = getCurveEnergy(Math.min(1, d.secEnd / totalTarget));
-        if (eEnd > eStart + 5)      d.songs.sort((a, b) => a.energy - b.energy);
-        else if (eStart > eEnd + 5) d.songs.sort((a, b) => b.energy - a.energy);
+        if (eEnd > eStart + 0.5)      d.songs.sort((a, b) => a.energy - b.energy);
+        else if (eStart > eEnd + 0.5) d.songs.sort((a, b) => b.energy - a.energy);
       }
       result.forEach(sortAlongCurve);
 
@@ -1248,8 +1458,8 @@
         const d = result.slice().sort((a, b) => (b.target - b.actual) - (a.target - a.actual))[0];
         const i = result.indexOf(d);
         const secMid = (secDurs.slice(0, i).reduce((a, b) => a + b, 0) + secDurs[i] * 0.75) / totalTarget;
-        const addTgt = Math.min(100, Math.round(getCurveEnergy(secMid) * mult));
-        const upCost = s => Math.abs(s.energy - addTgt) + 55 * mixCost(s);
+        const addTgt = Math.min(10, Math.round(getCurveEnergy(secMid) * mult));
+        const upCost = s => Math.abs(s.energy - addTgt) + 5.5 * mixCost(s);
         const closer = SONGS.filter(s => !used.has(s.id) && mixEligible(s) && s.dur >= remaining && total + s.dur <= totalMax)
           .sort((a, b) => upCost(a) - upCost(b))[0];
         const filler = SONGS.filter(s => !used.has(s.id) && mixEligible(s) && s.dur < remaining && total + s.dur <= totalMax)
@@ -1292,14 +1502,15 @@
     <div class="pl-section${fu}">
       ${data.flatMap((d, idx) => d.songs.map(s => `
           <div class="song" data-sec="${idx}" data-sid="${s.id}">
+            ${artButton(s)}
             <div class="song-info">
               <span class="song-title">${s.title}</span>
               <span class="song-artist">${s.artist}</span>
             </div>
             <div class="song-meta">
               <span class="song-dur">${fmt(s.dur)}</span>
+              <div class="ebar">${[1,2,3,4,5,6,7,8].map(i => `<div class="ebar-seg${i <= Math.round(s.energy * 8 / 10) ? ' on' : ''}"></div>`).join('')}</div>
             </div>
-            <div class="ebar">${[1,2,3,4,5,6,7,8].map(i => `<div class="ebar-seg${i <= Math.round(s.energy * 8 / 100) ? ' on' : ''}"></div>`).join('')}</div>
             <div class="song-swap">
               <button class="song-swap-btn" aria-label='Swap ${s.title} for another song' data-tooltip="Swap">
                 <span class="material-symbols-sharp">swap_horiz</span>
@@ -1313,6 +1524,8 @@
           </div>
         `)).join('')}
     </div>`;
+
+      rebindPreviewAfterRender(container);
 
       document.getElementById('save-btn').addEventListener('click', handleSave);
       document.getElementById('regen-btn').addEventListener('click', () => {

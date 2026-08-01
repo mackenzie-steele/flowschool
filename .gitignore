@@ -8,3 +8,12 @@ welcome.html
 
 # audio source files — extract to .m4a; never commit/deploy the raw video
 *.mov
+
+# pose detail concept — exploration only, not for deploy (2026-08)
+pose-chair.html
+
+# generated / working files for the song scripts
+scripts/.apple-cache.json
+scripts/new-songs-draft.txt
+scripts/new-songs-draft.txt.media.json
+*.bak
