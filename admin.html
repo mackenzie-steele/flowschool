@@ -371,6 +371,7 @@
 
 
     /* ── The catalogue browser ─────────────────────────────────────── */
+    .cat-more { display: flex; align-items: center; gap: 12px; padding: 14px 20px 4px; }
     .cat-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
     .cat-controls .modal-input { flex: 1; min-width: 220px; margin: 0; }
     .cat-controls select, .cat-e {
@@ -1830,7 +1831,7 @@
       url: 'https://music.apple.com/us/playlist/flow-school-master-library/pl.u-yZyVVEXTDJ2NjW',
     };
 
-    var MUS = { pending: [], linked: {}, removed: {}, edits: {}, q: '', lvl: 'all' };
+    var MUS = { pending: [], linked: {}, removed: {}, edits: {}, q: '', lvl: 'all', shown: 20 };
 
     // Three axes, both poles shown. A single highlighted "vocal" chip never
     // said what the alternative was — a song that isn't vocal is
@@ -1911,7 +1912,10 @@
     // 838 songs is far past what a table should render at once, and past what
     // anyone reads. So: search first, show what matches, cap the list. You
     // come here looking for a song, not to scroll a library.
-    var MUS_PAGE = 60;
+    // Twenty at a time, appended. This list is for working THROUGH the
+    // catalogue, not glancing at it — the old cap of 60 with "narrow the
+    // search to see the rest" made the other 778 unreachable by scrolling.
+    var MUS_PAGE = 20;
 
     function musLive() {
       if (typeof SONGS === 'undefined') return [];
@@ -1973,15 +1977,27 @@
 
     function musCatalogueCount() {
       var all = musLive(), hits = musMatches();
-      return (hits.length === all.length ? num(all.length) + ' songs' : num(hits.length) + ' of ' + num(all.length))
-        + (hits.length > MUS_PAGE ? ' \u00b7 showing the first ' + MUS_PAGE + ', narrow the search to see the rest' : '');
+      var n = Math.min(MUS.shown, hits.length);
+      if (hits.length === all.length) {
+        return n >= all.length ? num(all.length) + ' songs' : 'showing ' + num(n) + ' of ' + num(all.length);
+      }
+      return n >= hits.length
+        ? num(hits.length) + ' of ' + num(all.length)
+        : 'showing ' + num(n) + ' of ' + num(hits.length) + ' matches';
     }
 
     function musCatalogueList() {
-      var shown = musMatches().slice(0, MUS_PAGE);
+      var hits = musMatches();
+      var shown = hits.slice(0, MUS.shown);
       if (!shown.length) return stateEmpty('Nothing matches that.');
+      var rest = hits.length - shown.length;
       return '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Energy</th><th>Character</th><th></th></tr></thead><tbody>' +
-        shown.map(musCatalogueRow).join('') + '</tbody></table></div>';
+        shown.map(musCatalogueRow).join('') + '</tbody></table></div>' +
+        (rest > 0
+          ? '<div class="cat-more"><button class="btn-secondary" id="cat-more">Show ' +
+            Math.min(MUS_PAGE, rest) + ' more</button> <span class="muted adm-mono">' +
+            num(rest) + ' still to go</span></div>'
+          : '');
     }
 
     // Redraws ONLY the list. Searching used to call renderMusic(), which
@@ -1992,6 +2008,29 @@
       var host = document.getElementById('cat-list');
       var count = document.getElementById('cat-count');
       if (host) host.innerHTML = musCatalogueList();
+      if (count) count.textContent = musCatalogueCount();
+    }
+
+    // Appends the next page rather than redrawing the list. Rebuilding it
+    // would throw away every row you had already worked through, and put you
+    // back at the top of a list you were halfway down.
+    function musShowMore() {
+      var hits = musMatches();
+      var next = hits.slice(MUS.shown, MUS.shown + MUS_PAGE);
+      MUS.shown += MUS_PAGE;
+      var tbody = document.querySelector('#cat-list tbody');
+      if (tbody) tbody.insertAdjacentHTML('beforeend', next.map(musCatalogueRow).join(''));
+      var more = document.querySelector('.cat-more');
+      if (more) {
+        var rest = hits.length - MUS.shown;
+        if (rest > 0) {
+          more.querySelector('#cat-more').textContent = 'Show ' + Math.min(MUS_PAGE, rest) + ' more';
+          more.querySelector('.muted').textContent = num(rest) + ' still to go';
+        } else {
+          more.remove();
+        }
+      }
+      var count = document.getElementById('cat-count');
       if (count) count.textContent = musCatalogueCount();
     }
 
@@ -2241,11 +2280,11 @@
         q.addEventListener('input', function () {
           clearTimeout(qt);
           // re-rendering on every keystroke would rebuild 60 rows per letter
-          qt = setTimeout(function () { MUS.q = q.value; musRedrawList(); }, 200);
+          qt = setTimeout(function () { MUS.q = q.value; MUS.shown = MUS_PAGE; musRedrawList(); }, 200);
         });
       }
       var lvl = document.getElementById('cat-lvl');
-      if (lvl) lvl.addEventListener('change', function () { MUS.lvl = lvl.value; musRedrawList(); });
+      if (lvl) lvl.addEventListener('change', function () { MUS.lvl = lvl.value; MUS.shown = MUS_PAGE; musRedrawList(); });
 
       var pull = document.getElementById('mus-pull');
       if (pull) pull.addEventListener('click', musPull);
@@ -2281,6 +2320,8 @@
         // is pressed. Selecting a pole is idempotent — pressing the one
         // already chosen does nothing rather than un-choosing it, because
         // "neither" is not an answer the database will accept.
+        if (t.id === 'cat-more' || (t.closest && t.closest('#cat-more'))) { musShowMore(); return; }
+
         var opt = t.closest && t.closest('.ch-opt');
         if (opt) {
           if (opt.classList.contains('on')) return;
