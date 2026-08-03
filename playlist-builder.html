@@ -1305,7 +1305,10 @@
       const label = playable
         ? `Preview ${s.title} by ${s.artist}`
         : `No preview available for ${s.title}`;
-      return `<button class="${cls}" data-prev="${playable ? m.prev : ''}"`
+      // omit data-prev entirely when there's nothing to play — an empty
+      // attribute still matches [data-prev], which invites selectors that
+      // pick up buttons that do nothing
+      return `<button class="${cls}"${playable ? ` data-prev="${m.prev}"` : ''}`
         + ` aria-label="${label.replace(/"/g, '&quot;')}"${playable ? '' : ' tabindex="-1" aria-disabled="true"'}>`
         + (art ? `<img src="${art}" alt="" loading="lazy" onerror="this.remove();this.parentNode.classList.remove('has-art')">` : '')
         + `<span class="material-symbols-sharp">${playable ? 'play_arrow' : 'music_note'}</span>`
@@ -1355,7 +1358,6 @@
         if (row) row.classList.remove('is-playing');
         prevBtn = null;
       }
-      if (window.fsIcons) fsIcons();
     }
 
     function trackProgress(btn) {
@@ -1385,7 +1387,6 @@
       var nrow = next.closest('.song');
       if (nrow) nrow.classList.add('is-playing');
       trackProgress(next);
-      if (window.fsIcons) fsIcons();
     }
 
     function playPreview(btn) {
@@ -1404,7 +1405,6 @@
       if (g) g.textContent = 'pause';
       var row = btn.closest('.song');
       if (row) row.classList.add('is-playing');
-      if (window.fsIcons) fsIcons();
 
       trackProgress(btn);
 

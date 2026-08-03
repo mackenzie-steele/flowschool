@@ -305,6 +305,72 @@
       .adm-cardable td.adm-checkcell::before { content: 'Select'; margin-right: auto; }
       .adm-cardable td .name { font-weight: var(--weight-medium); }
     }
+
+    /* ── Music library ─────────────────────────────────────────────────
+       The only place in this admin that writes. Energy is a row of eleven
+       buttons rather than a slider or a number field: the value maps to a
+       gridline on the Playlist Builder's curve, and eleven things you can
+       hit is faster and less error-prone than typing into a box. */
+    .mus-art {
+      width: 40px; height: 40px; border-radius: var(--rb);
+      object-fit: cover; display: block;
+    }
+    .mus-art-none { background: var(--well-bg); box-shadow: var(--well); }
+    .mus-table td { vertical-align: middle; }
+
+    .mus-energy { display: flex; gap: 2px; }
+    .mus-e {
+      width: 26px; height: 28px; padding: 0;
+      font-family: var(--font-mono); font-size: var(--fs-label-2);
+      color: var(--text-3); background: transparent;
+      border: 1px solid var(--border); border-radius: var(--rb);
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    .mus-e:hover { border-color: var(--accent-border); color: var(--accent); }
+    .mus-e.on {
+      background: var(--accent); border-color: var(--accent);
+      color: var(--paper-solid);
+    }
+
+    .mus-flags { display: flex; gap: 4px; flex-wrap: wrap; }
+    .mus-f {
+      font-family: var(--font-mono); font-size: var(--fs-label-2);
+      padding: 5px 9px; border-radius: var(--rb);
+      color: var(--text-3); background: transparent;
+      border: 1px solid var(--border);
+      cursor: pointer; transition: all var(--transition-base);
+    }
+    /* off is a real answer here, not an absence — instrumental, acoustic and
+       moody are half the catalogue, so the unset state must not read as
+       "not yet decided". The label says which way it currently points. */
+    .mus-f.on { border-color: var(--accent-border); color: var(--accent); background: var(--accent-dim); }
+
+    .mus-actions { white-space: nowrap; }
+    .mus-actions .btn-primary { padding: 6px 12px; font-size: var(--fs-label-2); }
+    .mus-actions .btn-ghost { padding: 6px 10px; font-size: var(--fs-label-2); }
+    .mus-cand-row td { padding: 0 0 14px; }
+    .mus-cand-host { display: flex; flex-direction: column; gap: 6px; }
+    .mus-cand {
+      display: grid;
+      grid-template-columns: 40px 1fr auto auto auto;
+      align-items: center; gap: 12px;
+      padding: 8px 10px; border-radius: var(--r);
+      background: var(--well-bg); box-shadow: var(--well);
+    }
+    .mus-cand-txt { min-width: 0; }
+    /* the duration gap is the cheapest tell that a result is a live cut or a
+       remix, so it is coloured rather than left as another number to read */
+    .mus-gap {
+      font-family: var(--font-mono); font-size: var(--fs-label-2);
+      white-space: nowrap; padding: 3px 8px; border-radius: var(--rb);
+    }
+    .mus-gap.good { color: var(--accent); background: var(--accent-dim); }
+    .mus-gap.near { color: var(--text-2); }
+    .mus-gap.off  { color: var(--text-3); }
+    .mus-pick { padding: 6px 12px; font-size: var(--fs-label-2); }
+    .mus-find { white-space: nowrap; }
+    .mus-master { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+    .adm-panel-body { padding: 0 20px 20px; }
   </style>
 </head>
 <body class="has-sidebar">
@@ -316,6 +382,9 @@
   <script src="lib/sync.js"></script>
   <script src="lib/analytics.js"></script>
   <script src="lib/admin.js"></script>
+  <script src="data/songs.js"></script>
+  <script src="data/apple-media.js"></script>
+  <script src="lib/musickit.js"></script>
   <script src="lib/toast.js"></script>
   <div class="toast" id="toast"></div>
 
@@ -356,6 +425,7 @@
       { id: 'experiments', label: 'Movement Experiments',render: renderExperiments },
       { id: 'public',      label: 'Shared Classes',      render: renderPublic },
       { id: 'saved',       label: 'Saved Content',       render: renderSaved },
+      { id: 'music',       label: 'Music Library',      render: renderMusic },
       { id: 'activity',    label: 'Activity',            render: renderActivity },
       { id: 'feedback',    label: 'Feedback',            render: renderFeedback },
       { id: 'health',      label: 'Health',              render: renderHealth },
@@ -368,7 +438,7 @@
       { label: 'Overview', sections: ['overview'] },
       { label: 'Impact',   sections: ['impact'] },
       { label: 'People',   sections: ['users', 'activation', 'retention', 'activity'] },
-      { label: 'Content',  sections: ['creation', 'public', 'saved', 'experiments'] },
+      { label: 'Content',  sections: ['creation', 'public', 'saved', 'experiments', 'music'] },
       { label: 'Product',  sections: ['engagement', 'devices', 'friction', 'tools'] },
       { label: 'System',   sections: ['feedback', 'health', 'admins', 'exports'] },
     ];
@@ -1660,6 +1730,298 @@
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Most active savers</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>User</th><th class="num">Items</th></tr></thead><tbody>' + (savers || '') + '</tbody></table></div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Recent public-content saves</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>User</th><th>Class</th><th>Saved</th><th>Kind</th></tr></thead><tbody>' + (recent || '') + '</tbody></table></div></div>';
       } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
+    // ── MUSIC LIBRARY ──
+    // The first WRITE surface in this admin. Everything else here reports;
+    // this one changes what teachers get, so every approval is gated on a
+    // human having set an energy — see approve_song() in the SQL.
+    var MUS = { pending: [], linked: {} };
+
+    function musDur(d) { return Math.floor(d / 60) + ':' + String(d % 60).padStart(2, '0'); }
+
+    function musRow(r) {
+      var art = r.art ? r.art.replace(/{px}/g, '80') : null;
+      return '<tr data-sid="' + r.song_id + '">' +
+        '<td>' + (art ? '<img class="mus-art" src="' + esc(art) + '" alt="">' : '<span class="mus-art mus-art-none"></span>') + '</td>' +
+        '<td><strong>' + esc(r.title) + '</strong><br><span class="muted">' + esc(r.artist) + '</span>' +
+          (r.genre ? '<br><span class="muted adm-mono">' + esc(r.genre) + '</span>' : '') + '</td>' +
+        '<td class="muted adm-mono">' + musDur(r.dur) + '</td>' +
+        '<td>' + (r.preview
+          ? '<button class="btn-icon mus-play" data-prev="' + esc(r.preview) + '" aria-label="Preview ' + esc(r.title) + '"><span class="material-symbols-sharp">play_arrow</span></button>'
+          : '<span class="muted">\u2014</span>') + '</td>' +
+        '<td><div class="mus-energy">' +
+          [0,1,2,3,4,5,6,7,8,9,10].map(function (n) { return '<button class="mus-e" data-e="' + n + '">' + n + '</button>'; }).join('') +
+        '</div></td>' +
+        '<td><div class="mus-flags">' +
+          ['vocal','electronic','bright'].map(function (f) { return '<button class="mus-f" data-f="' + f + '">' + f + '</button>'; }).join('') +
+        '</div></td>' +
+        '<td class="mus-actions"><button class="btn-primary mus-ok" disabled>Approve</button>' +
+        '<button class="btn-ghost mus-no">Pass</button></td></tr>';
+    }
+
+    // Songs with no artwork and no preview. The resolver refused to guess when
+    // title, artist or duration disagreed — the right call, since a wrong match
+    // puts the wrong thirty seconds against a song and nobody notices until it
+    // plays. Refusing leaves a gap only a person can close, so: search Apple,
+    // listen, pick. The duration difference is shown against every candidate
+    // because it is the cheapest tell that a result is a live cut or a remix.
+    function musUnmatched() {
+      if (typeof SONGS === 'undefined') return [];
+      return SONGS.filter(function (sg) {
+        var hasMedia = (typeof APPLE_MEDIA !== 'undefined') && APPLE_MEDIA[sg.id];
+        return !hasMedia && !MUS.linked[sg.id];
+      });
+    }
+
+    function musUnmatchedPanel() {
+      var miss = musUnmatched();
+      if (!miss.length) return '';
+      return '<div class="adm-panel"><div class="adm-panel-head"><h2>No artwork or preview</h2>' +
+        '<span class="muted adm-mono">' + num(miss.length) + '</span></div>' +
+        '<div class="adm-panel-body"><p class="muted">The resolver wouldn\u2019t guess on these \u2014 usually a live version, a remaster, or a song of the same name. Search Apple, listen, and pick the right recording.</p></div>' +
+        '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th>Song</th><th>Length</th><th></th></tr></thead><tbody>' +
+        miss.map(function (sg) {
+          return '<tr data-mid="' + sg.id + '" data-q="' + esc(sg.artist + ' ' + sg.title) + '" data-dur="' + sg.dur + '">' +
+            '<td><strong>' + esc(sg.title) + '</strong><br><span class="muted">' + esc(sg.artist) + '</span></td>' +
+            '<td class="muted adm-mono">' + musDur(sg.dur) + '</td>' +
+            '<td><button class="btn-secondary mus-find">Find on Apple Music</button></td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    }
+
+    // candidates render into a row beneath the song, tagged with the song id so
+    // the pick handler never has to guess which row it belongs to
+    function d3(tr) {
+      var next = tr.nextElementSibling;
+      if (next && next.classList.contains('mus-cand-row')) return next.querySelector('.mus-cand-host');
+      var host = document.createElement('tr');
+      host.className = 'mus-cand-row';
+      host.innerHTML = '<td colspan="3"><div class="mus-cand-host" data-for="' + tr.dataset.mid + '"></div></td>';
+      tr.parentNode.insertBefore(host, tr.nextSibling);
+      return host.querySelector('.mus-cand-host');
+    }
+
+    function musCandidateRow(sg, c, ourDur) {
+      var gap = Math.abs(c.dur - ourDur);
+      var art = c.art ? c.art.replace(/{px}/g, '80') : null;
+      return '<div class="mus-cand" data-apple="' + esc(c.appleId) + '">' +
+        (art ? '<img class="mus-art" src="' + esc(art) + '" alt="">' : '<span class="mus-art mus-art-none"></span>') +
+        '<div class="mus-cand-txt"><strong>' + esc(c.title) + '</strong><br><span class="muted">' + esc(c.artist) +
+          (c.album ? ' \u00b7 ' + esc(c.album) : '') + '</span></div>' +
+        '<span class="mus-gap' + (gap <= 3 ? ' good' : gap <= 10 ? ' near' : ' off') + '">' +
+          musDur(c.dur) + (gap === 0 ? '' : ' \u00b7 ' + (gap <= 3 ? 'matches' : gap + 's off')) + '</span>' +
+        (c.preview ? '<button class="btn-icon mus-play" data-prev="' + esc(c.preview) + '" aria-label="Preview"><span class="material-symbols-sharp">play_arrow</span></button>' : '<span></span>') +
+        '<button class="btn-primary mus-pick">This one</button>' +
+        '<span class="mus-cand-data" hidden>' + esc(JSON.stringify(c)) + '</span></div>';
+    }
+
+    async function renderMusic() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var staged = await db.from('music_staging').select('*').order('added_at', { ascending: false });
+        if (staged.error) throw staged.error;
+        var rows = staged.data || [];
+        var linked = await db.from('music_links').select('song_id');
+        MUS.linked = {};
+        (linked.data || []).forEach(function (l) { MUS.linked[l.song_id] = true; });
+        MUS.pending = rows.filter(function (r) { return r.status === 'pending'; });
+        var approved = rows.filter(function (r) { return r.status === 'approved'; });
+        var rejected = rows.filter(function (r) { return r.status === 'rejected'; });
+
+        var inFile = (typeof SONGS !== 'undefined') ? SONGS.length : 0;
+        var withMedia = (typeof APPLE_MEDIA !== 'undefined') ? Object.keys(APPLE_MEDIA).length : 0;
+
+        b.innerHTML =
+          '<div class="adm-intro">The catalogue behind the Playlist Builder. Songs approved here are live for teachers immediately \u2014 read alongside <span class="adm-mono">songs.js</span> and folded into it on the next deploy.</div>' +
+          '<div class="adm-metrics">' +
+            '<div class="adm-metric"><div class="lbl">Songs in the catalogue</div><div class="val">' + num(inFile) + '</div></div>' +
+            '<div class="adm-metric"><div class="lbl">With artwork &amp; preview</div><div class="val">' + num(withMedia) + '</div></div>' +
+            '<div class="adm-metric"><div class="lbl">Waiting for review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
+            '<div class="adm-metric"><div class="lbl">Approved, not yet in the file</div><div class="val">' + num(approved.length) + '</div></div>' +
+          '</div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>The master playlist</h2></div>' +
+          '<div class="adm-panel-body"><p class="muted">Builds a playlist in your Apple Music holding every song in the catalogue. Add new music to that playlist and it turns up below for review.</p>' +
+          '<div class="mus-master"><button class="btn-primary" id="mus-build">Create it in Apple Music</button> ' +
+          '<span class="muted adm-mono">' + num(withMedia) + ' of ' + num(inFile) + ' can be sent \u2014 the rest aren\u2019t on Apple Music</span></div></div></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Waiting for review</h2><span class="muted adm-mono">' + num(MUS.pending.length) + '</span></div>' +
+            (MUS.pending.length
+              ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Hear</th><th>Energy \u00b7 0\u201310</th><th>Character</th><th></th></tr></thead><tbody>' + MUS.pending.map(musRow).join('') + '</tbody></table></div>'
+              : stateEmpty('Nothing waiting. Add songs to the master playlist in Apple Music, then pull them in.')) +
+          '</div>' +
+          musUnmatchedPanel() +
+          (approved.length
+            ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Approved</h2><span class="muted adm-mono">live for teachers now</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Song</th><th class="num">Energy</th><th>Character</th><th>Approved</th></tr></thead><tbody>' +
+              approved.map(function (r) {
+                return '<tr><td><strong>' + esc(r.title) + '</strong><br><span class="muted">' + esc(r.artist) + '</span></td><td class="num">' + r.energy + '</td><td class="muted adm-mono">' +
+                  [r.vocal ? 'vocal' : 'instrumental', r.electronic ? 'electronic' : 'acoustic', r.bright ? 'bright' : 'moody'].join(' \u00b7 ') +
+                  '</td><td class="muted">' + A.ago(r.reviewed_at) + '</td></tr>';
+              }).join('') + '</tbody></table></div></div>'
+            : '') +
+          (rejected.length
+            ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Passed on</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Song</th><th>Why</th><th>When</th></tr></thead><tbody>' +
+              rejected.map(function (r) { return '<tr><td>' + esc(r.title) + ' <span class="muted">\u2014 ' + esc(r.artist) + '</span></td><td class="muted">' + esc(r.note || '\u2014') + '</td><td class="muted">' + A.ago(r.reviewed_at) + '</td></tr>'; }).join('') +
+              '</tbody></table></div></div>'
+            : '');
+        wireMusic();
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
+    }
+
+    // Energy and the three flags are chosen per row; Approve stays disabled
+    // until an energy is picked, because approve_song() rejects a null and a
+    // guessed number is exactly how the existing catalogue got its wrong ones.
+    function musState(tr) {
+      var e = tr.querySelector('.mus-e.on');
+      return {
+        energy: e ? Number(e.dataset.e) : null,
+        vocal: tr.querySelector('.mus-f[data-f="vocal"]').classList.contains('on'),
+        electronic: tr.querySelector('.mus-f[data-f="electronic"]').classList.contains('on'),
+        bright: tr.querySelector('.mus-f[data-f="bright"]').classList.contains('on'),
+      };
+    }
+
+    var musAudio = null, musBtn = null;
+    function musStop() {
+      if (musAudio) musAudio.pause();
+      if (musBtn) { musBtn.querySelector('.material-symbols-sharp').textContent = 'play_arrow'; musBtn = null; }
+    }
+
+    function wireMusic() {
+      var b = bodyEl();
+
+      b.addEventListener('click', async function (ev) {
+        var t = ev.target;
+
+        var e = t.closest && t.closest('.mus-e');
+        if (e) {
+          var row = e.closest('tr');
+          row.querySelectorAll('.mus-e').forEach(function (x) { x.classList.toggle('on', x === e); });
+          row.querySelector('.mus-ok').disabled = false;
+          return;
+        }
+
+        var f = t.closest && t.closest('.mus-f');
+        if (f) { f.classList.toggle('on'); return; }
+
+        var play = t.closest && t.closest('.mus-play');
+        if (play) {
+          var same = musBtn === play;
+          musStop();
+          if (same) return;
+          if (!musAudio) { musAudio = new Audio(); musAudio.addEventListener('ended', musStop); }
+          musAudio.src = play.dataset.prev;
+          musBtn = play;
+          play.querySelector('.material-symbols-sharp').textContent = 'pause';
+              musAudio.play().catch(musStop);
+          return;
+        }
+
+        var ok = t.closest && t.closest('.mus-ok');
+        if (ok && !ok.disabled) {
+          var tr = ok.closest('tr'), st = musState(tr);
+          if (st.energy === null) return;
+          ok.disabled = true;
+          try {
+            await A.rpc('approve_song', {
+              p_song_id: Number(tr.dataset.sid), p_energy: st.energy,
+              p_vocal: st.vocal, p_electronic: st.electronic, p_bright: st.bright,
+            });
+            musStop();
+            toast('Approved \u2014 teachers can use it now');
+            renderMusic();
+          } catch (err) { ok.disabled = false; toast(err.message || 'Could not approve that'); }
+          return;
+        }
+
+        var find = t.closest && t.closest('.mus-find');
+        if (find) {
+          var ftr = find.closest('tr');
+          find.disabled = true; find.textContent = 'Searching\u2026';
+          try {
+            var cands = await fsMusicKit.search(ftr.dataset.q, 6);
+            var host = d3(ftr);
+            host.innerHTML = cands.length
+              ? cands.map(function (c) { return musCandidateRow(null, c, Number(ftr.dataset.dur)); }).join('')
+              : '<div class="muted" style="padding:12px 0">Nothing came back for that. It may not be on Apple Music.</div>';
+            find.textContent = 'Search again';
+          } catch (err) {
+            toast(fsMusicKit.explain(err));
+            find.textContent = 'Find on Apple Music';
+          }
+          find.disabled = false;
+          return;
+        }
+
+        var pick = t.closest && t.closest('.mus-pick');
+        if (pick) {
+          var cand = pick.closest('.mus-cand');
+          // the host row carries the song id it was opened for — no walking
+          // the table and hoping the sibling order held
+          var sid = Number(cand.closest('.mus-cand-host').dataset.for);
+          var info = JSON.parse(cand.querySelector('.mus-cand-data').textContent);
+          if (!sid) { toast('Lost track of which song that was'); return; }
+          pick.disabled = true;
+          try {
+            await A.rpc('link_song', {
+              p_song_id: sid, p_apple_id: Number(info.appleId),
+              p_art: info.art, p_preview: info.preview,
+              p_genre: info.genre, p_isrc: info.isrc,
+            });
+            musStop();
+            toast('Linked \u2014 ' + info.title);
+            renderMusic();
+          } catch (err) { pick.disabled = false; toast(err.message || 'Could not link that'); }
+          return;
+        }
+
+        var no = t.closest && t.closest('.mus-no');
+        if (no) {
+          var tr2 = no.closest('tr');
+          no.disabled = true;
+          try {
+            await A.rpc('reject_song', { p_song_id: Number(tr2.dataset.sid), p_note: null });
+            musStop();
+            renderMusic();
+          } catch (err) { no.disabled = false; toast(err.message || 'Could not do that'); }
+          return;
+        }
+      });
+
+      var build = document.getElementById('mus-build');
+      if (build) build.addEventListener('click', musBuildMaster);
+    }
+
+    // Sends the whole catalogue to Apple as one playlist. lib/musickit.js
+    // chunks it at 100 tracks a request and appends sequentially, so the
+    // order survives.
+    async function musBuildMaster() {
+      var btn = document.getElementById('mus-build');
+      if (!btn || btn.disabled) return;
+      if (typeof SONGS === 'undefined') { toast('Song data didn\u2019t load'); return; }
+
+      var tracks = SONGS.map(function (sg) {
+        var m = (typeof APPLE_MEDIA !== 'undefined') && APPLE_MEDIA[sg.id];
+        return { id: sg.id, title: sg.title, artist: sg.artist, appleId: m && m.id };
+      });
+
+      // motion.js isn't loaded in admin, so fsWorking is undefined here — the
+      // guard alone would leave the button live and a second press would send
+      // the whole catalogue twice
+      btn.disabled = true;
+      var restore = btn.textContent;
+      btn.textContent = 'Sending\u2026';
+      try {
+        var r = await fsMusicKit.exportPlaylist(
+          'Flow School \u00b7 Master Library',
+          'Every song in the Flow School catalogue. Add music here and it goes to the admin for review.',
+          tracks);
+        toast(r.added + ' songs sent to Apple Music'
+          + (r.missing.length ? ' \u00b7 ' + r.missing.length + ' aren\u2019t on Apple Music' : ''));
+      } catch (err) {
+        toast(fsMusicKit.explain(err));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = restore;
+      }
     }
 
     // ── ACTIVITY ──
