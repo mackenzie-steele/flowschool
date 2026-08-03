@@ -1808,27 +1808,6 @@
       });
     }
 
-    // Removals are reversible until published, and a list of what went is the
-    // only way to notice a mistake. The title and artist come from the row
-    // rather than songs.js — after publishing there is nothing left to join to.
-    function musRemovedPanel() {
-      var rows = MUS.removedRows || [];
-      if (!rows.length) return '';
-      var inFile = {};
-      if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { inFile[sg.id] = true; });
-      return '<div class="adm-panel"><div class="adm-panel-head"><h2>Removed</h2>' +
-        '<span class="muted adm-mono">' + num(rows.length) + '</span></div>' +
-        '<div class="adm-panel-body"><p class="muted">Gone from the Playlist Builder already. They leave <span class="adm-mono">songs.js</span> on the next publish. Their ids stay reserved forever \u2014 saved playlists store song ids, and reusing one would silently repoint somebody\u2019s playlist at a different song.</p></div>' +
-        '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Song</th><th>Still in the file</th><th>Removed</th><th></th></tr></thead><tbody>' +
-        rows.map(function (r) {
-          return '<tr data-rid="' + r.song_id + '"><td><strong>' + esc(r.title || ('song ' + r.song_id)) + '</strong>' +
-            (r.artist ? '<br><span class="muted">' + esc(r.artist) + '</span>' : '') + '</td>' +
-            '<td>' + (inFile[r.song_id] ? '<span class="adm-pill off">yes, until publish</span>' : '<span class="adm-pill on">no</span>') + '</td>' +
-            '<td class="muted">' + A.ago(r.removed_at) + '</td>' +
-            '<td><button class="btn-ghost mus-restore">Put it back</button></td></tr>';
-        }).join('') + '</tbody></table></div></div>';
-    }
-
     function musUnmatchedPanel() {
       var miss = musUnmatched();
       if (!miss.length) return '';
@@ -1929,7 +1908,6 @@
         var shippedIds = {};
         if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { shippedIds[sg.id] = true; });
         var liveExtra = Object.keys(liveIds).filter(function (id) { return !shippedIds[id]; }).length;
-        var goneStillInFile = Object.keys(MUS.removed).filter(function (id) { return shippedIds[id]; }).length;
         var linkedExtra = Object.keys(liveMedia).filter(function (id) {
           return !(typeof APPLE_MEDIA !== 'undefined' && APPLE_MEDIA[id]);
         }).length;
@@ -1938,12 +1916,7 @@
           '<div class="adm-intro">The catalogue behind the Playlist Builder. Songs approved here are live for teachers immediately \u2014 read alongside <span class="adm-mono">songs.js</span> and folded into it on the next deploy.</div>' +
           '<div class="adm-metrics">' +
             '<div class="adm-metric"><div class="lbl">Songs in the catalogue</div><div class="val">' + num(inFile) + '</div>' +
-              ((liveExtra || goneStillInFile)
-                ? '<div class="adm-metric-sub">'
-                  + [liveExtra ? num(liveExtra) + ' approved' : null,
-                     goneStillInFile ? num(goneStillInFile) + ' removed' : null]
-                    .filter(Boolean).join(', ') + ' \u2014 not in the file yet</div>'
-                : '') + '</div>' +
+              (liveExtra ? '<div class="adm-metric-sub">' + num(liveExtra) + ' approved, not in the file yet</div>' : '') + '</div>' +
             '<div class="adm-metric"><div class="lbl">With artwork &amp; preview</div><div class="val">' + num(withMedia) + '</div>' +
               (linkedExtra ? '<div class="adm-metric-sub">' + num(linkedExtra) + ' linked by hand, not yet in the file</div>' : '') + '</div>' +
             '<div class="adm-metric"><div class="lbl">Waiting for review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
@@ -1961,7 +1934,6 @@
               ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Hear</th><th>Energy \u00b7 0\u201310</th><th>Character</th><th></th></tr></thead><tbody>' + MUS.pending.map(musRow).join('') + '</tbody></table></div>'
               : stateEmpty('Nothing waiting. Add songs to the master playlist in Apple Music, then pull them in.')) +
           '</div>' +
-          musRemovedPanel() +
           musUnmatchedPanel() +
           (approved.length
             ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Approved</h2><span class="muted adm-mono">live for teachers now</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Song</th><th class="num">Energy</th><th>Character</th><th>Approved</th></tr></thead><tbody>' +
@@ -2071,17 +2043,6 @@
             toast('Approved \u2014 teachers can use it now');
             renderMusic();
           } catch (err) { ok.disabled = false; toast(err.message || 'Could not approve that'); }
-          return;
-        }
-
-        var back = t.closest && t.closest('.mus-restore');
-        if (back) {
-          var btr = back.closest('tr');
-          back.disabled = true;
-          try {
-            await A.rpc('restore_song', { p_song_id: Number(btr.dataset.rid) });
-            renderMusic();
-          } catch (err) { back.disabled = false; toast(err.message || 'Could not restore that'); }
           return;
         }
 
