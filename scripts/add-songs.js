@@ -55,7 +55,10 @@ function loadSongs() {
 
 // ── a row, formatted exactly like the 840 already in the file ────────────────
 function quote(s) {
-  return s.includes("'") ? `"${s.replace(/"/g, '\\"')}"` : `'${s}'`;
+  // the file escapes apostrophes inside single quotes rather than switching
+  // to double — both parse the same, but a generated row should be
+  // indistinguishable from a hand-written one
+  return "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 }
 function formatRow(s) {
   const bool = (v, name, pad) => `${name}:${v ? 'true' : 'false'},` + ' '.repeat(v ? pad + 1 : pad);

@@ -1289,6 +1289,68 @@
         .sort((a, b) => cost(a) - cost(b))[0] || null;
     }
 
+    // ── The staged catalogue ──────────────────────────────────────────
+    // songs.js ships 839 songs. Anything approved in the admin since the last
+    // deploy lives in Supabase, and this folds it in so a song is usable the
+    // moment it is approved rather than the next time somebody pushes.
+    //
+    // THE FILE ALWAYS WINS. A staged row whose id already exists in SONGS is
+    // skipped — that is the state after publish-approved.js folds a song into
+    // the file but before the row is cleared, and the file is the truth there.
+    //
+    // Failure is deliberately quiet. A teacher who is offline, or whose
+    // session lapsed, should still get a playlist out of the 839 that shipped
+    // — the merge is an addition, never a dependency.
+    var catalogueReady = (function () {
+      if (typeof db === 'undefined') return Promise.resolve(0);
+      var have = {};
+      SONGS.forEach(function (s) { have[s.id] = true; });
+
+      var staged = db.from('music_staging')
+        .select('song_id,apple_id,title,artist,dur,energy,vocal,electronic,bright,art,preview,genre')
+        .in('status', ['approved', 'published'])
+        .then(function (r) {
+          if (r.error || !r.data) return 0;
+          var added = 0;
+          r.data.forEach(function (row) {
+            if (have[row.song_id]) return;               // already in the file
+            if (row.energy == null) return;              // never judged; not usable
+            SONGS.push({
+              id: row.song_id, title: row.title, artist: row.artist,
+              bpm: null, dur: row.dur, energy: row.energy,
+              vocal: !!row.vocal, electronic: !!row.electronic, bright: !!row.bright,
+            });
+            have[row.song_id] = true;
+            if (row.apple_id) {
+              APPLE_MEDIA[row.song_id] = {
+                id: row.apple_id, art: row.art, prev: row.preview, genre: row.genre,
+              };
+            }
+            added++;
+          });
+          return added;
+        }, function () { return 0; });
+
+      // manual matches for songs the resolver refused to guess at — these
+      // attach media to songs ALREADY in the file, so they change no counts
+      var linked = db.from('music_links').select('song_id,apple_id,art,preview,genre')
+        .then(function (r) {
+          if (r.error || !r.data) return 0;
+          var n = 0;
+          r.data.forEach(function (l) {
+            if (APPLE_MEDIA[l.song_id]) return;          // the file already has it
+            APPLE_MEDIA[l.song_id] = { id: l.apple_id, art: l.art, prev: l.preview, genre: l.genre };
+            n++;
+          });
+          return n;
+        }, function () { return 0; });
+
+      return Promise.all([staged, linked]).then(function (out) {
+        if (out[0] || out[1]) console.info('[catalogue] +' + out[0] + ' approved, +' + out[1] + ' linked');
+        return out[0];
+      });
+    })();
+
     // ── Apple previews ────────────────────────────────────────────────
     // apple-media.js is generated and may not cover every song — anything
     // unresolved renders as a quiet well and simply isn't playable. The UI
@@ -1978,7 +2040,10 @@
       // the button answers first; the old results release underneath it
       const res = document.getElementById('results');
       res.classList.add('fs-release');
-      setTimeout(() => {
+      // 550ms is almost always longer than the merge takes, and "almost
+      // always" is how a newly approved song goes missing from the first
+      // playlist built after approving it
+      catalogueReady.then(() => setTimeout(() => {
         res.classList.remove('fs-release');
         renderResults(generate());
         if (window.fsTrack) fsTrack('item_generated', { resourceType: 'playlist' });
@@ -1986,7 +2051,7 @@
         fsWorking(btn, false);
         document.getElementById('gen-btn').closest('.cta-bar').classList.add('away');
         document.querySelector('.results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 550);
+      }, 550));
     });
   </script>
   <script src="lib/toast.js"></script>
