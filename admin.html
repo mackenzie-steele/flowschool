@@ -1882,7 +1882,8 @@
           '<a class="muted adm-mono" href="' + esc(MUSIC_PLAYLIST.url) + '" target="_blank" rel="noopener">open in Apple Music \u2197</a></div>' +
           '<div class="adm-panel-body"><p class="muted">Add music to <strong>' + esc(MUSIC_PLAYLIST.name) + '</strong> in Apple Music, then pull it in here. Push sends back any song matched by hand, so the playlist and the catalogue stay the same set.</p>' +
           '<div class="mus-pull"><button class="btn-secondary" id="mus-pull">Pull new songs</button>' +
-          '<button class="btn-secondary" id="mus-sync">Push missing songs</button></div>' +
+          '<button class="btn-secondary" id="mus-sync">Push missing songs</button>' +
+          '<button class="btn-ghost" id="mus-who">Check Apple sign-in</button></div>' +
           '<p class="muted adm-mono" id="mus-pull-note"></p>' +
           '</div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Waiting for review</h2><span class="muted adm-mono">' + num(MUS.pending.length) + '</span></div>' +
@@ -2035,6 +2036,14 @@
       if (pull) pull.addEventListener('click', musPull);
       var sync = document.getElementById('mus-sync');
       if (sync) sync.addEventListener('click', musSync);
+      var who = document.getElementById('mus-who');
+      if (who) {
+        who.addEventListener('click', musWho);
+        // shift-click to sign out — a full-time button for something needed
+        // once would be clutter, but there has to be a way
+        who.addEventListener('click', function (e) { if (e.shiftKey) musSignOut(); });
+        who.title = 'Shift-click to sign out of Apple Music';
+      }
     }
 
     // Everything Apple already knows about a track comes back with the
@@ -2048,6 +2057,48 @@
     //
     // Reading the playlist needs no sign-in; writing to it does, so this asks
     // once and does the whole batch rather than prompting per song.
+    // Apple gives no way to ask "which Apple ID is this". The library is the
+    // answer: if these are not your playlists, the sign-in is the wrong
+    // account — and MusicKit remembers it, so there has to be a way to undo it.
+    async function musWho() {
+      var btn = document.getElementById('mus-who');
+      var note = document.getElementById('mus-pull-note');
+      btn.disabled = true;
+      var restore = btn.textContent;
+      btn.textContent = 'Checking\u2026';
+      try {
+        var me = await fsMusicKit.whoami();
+        var mine = me.playlists.filter(function (p2) { return p2.canEdit !== false; });
+        var named = me.playlists.filter(function (p2) {
+          return String(p2.name || '').trim().toLowerCase() === MUSIC_PLAYLIST.name.toLowerCase();
+        });
+        console.info('[music] library playlists:', me.playlists);
+        var lines = [
+          me.playlists.length + ' playlists in this library, ' + mine.length + ' of them editable.',
+          named.length
+            ? named.length + ' named \u201c' + MUSIC_PLAYLIST.name + '\u201d \u2014 '
+              + named.map(function (n) { return n.id + (n.canEdit === false ? ' (not editable)' : ' (editable)'); }).join(', ')
+            : 'None named \u201c' + MUSIC_PLAYLIST.name + '\u201d \u2014 wrong Apple ID, or the playlist was renamed.',
+          'Full list in the browser console.',
+        ];
+        note.innerHTML = lines.map(esc).join('<br>');
+      } catch (e) {
+        note.textContent = 'Couldn\u2019t check: ' + ((e && e.message) || 'unknown');
+        console.error('[music] whoami failed', e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = restore;
+      }
+    }
+
+    // Signing in with the wrong Apple ID is sticky — MusicKit keeps it across
+    // sessions, so this is the only way to correct it from the page.
+    async function musSignOut() {
+      await fsMusicKit.disconnect();
+      document.getElementById('mus-pull-note').textContent =
+        'Signed out of Apple Music. The next Push or Check will ask again \u2014 pick the Apple ID that owns the playlist.';
+    }
+
     async function musSync() {
       var btn = document.getElementById('mus-sync');
       var note = document.getElementById('mus-pull-note');
