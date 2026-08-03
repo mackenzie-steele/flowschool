@@ -1851,7 +1851,14 @@
         var approved = rows.filter(function (r) { return r.status === 'approved'; });
         var rejected = rows.filter(function (r) { return r.status === 'rejected'; });
 
-        var inFile = (typeof SONGS !== 'undefined') ? SONGS.length : 0;
+        // SONGS is the SHIPPED file. Approved songs are live for teachers the
+        // moment they are approved — the Builder merges them — so leaving
+        // them out made approving a song look like it had done nothing.
+        var shipped = (typeof SONGS !== 'undefined') ? SONGS.length : 0;
+        var inFileIds = {};
+        if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { inFileIds[sg.id] = true; });
+        var liveExtra = approved.filter(function (r) { return !inFileIds[r.song_id]; }).length;
+        var inFile = shipped + liveExtra;
         // APPLE_MEDIA is the SHIPPED file. Songs linked by hand live in
         // music_links and are not in it until publish-approved.js folds them
         // in — counting only the file made every link you made look like it
@@ -1865,11 +1872,11 @@
         b.innerHTML =
           '<div class="adm-intro">The catalogue behind the Playlist Builder. Songs approved here are live for teachers immediately \u2014 read alongside <span class="adm-mono">songs.js</span> and folded into it on the next deploy.</div>' +
           '<div class="adm-metrics">' +
-            '<div class="adm-metric"><div class="lbl">Songs in the catalogue</div><div class="val">' + num(inFile) + '</div></div>' +
+            '<div class="adm-metric"><div class="lbl">Songs in the catalogue</div><div class="val">' + num(inFile) + '</div>' +
+              (liveExtra ? '<div class="adm-metric-sub">' + num(liveExtra) + ' approved, not yet in the file</div>' : '') + '</div>' +
             '<div class="adm-metric"><div class="lbl">With artwork &amp; preview</div><div class="val">' + num(withMedia) + '</div>' +
               (linkedExtra ? '<div class="adm-metric-sub">' + num(linkedExtra) + ' linked by hand, not yet in the file</div>' : '') + '</div>' +
             '<div class="adm-metric"><div class="lbl">Waiting for review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
-            '<div class="adm-metric"><div class="lbl">Approved, not yet in the file</div><div class="val">' + num(approved.length) + '</div></div>' +
           '</div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>The master playlist</h2>' +
           '<a class="muted adm-mono" href="' + esc(MUSIC_PLAYLIST.url) + '" target="_blank" rel="noopener">open in Apple Music \u2197</a></div>' +
@@ -1898,6 +1905,9 @@
               '</tbody></table></div></div>'
             : '');
         wireMusic();
+        // so the Push button's authorize() is the first async thing its click
+        // does, rather than the fourth
+        if (window.fsMusicKit && fsMusicKit.prewarm) fsMusicKit.prewarm();
       } catch (e) { b.innerHTML = stateError(e && e.message); }
     }
 
@@ -2044,8 +2054,15 @@
 
       btn.disabled = true;
       var restore = btn.textContent;
-      btn.textContent = 'Checking\u2026';
+      btn.textContent = 'Connecting\u2026';
       try {
+        // FIRST, before any await of our own. authorize() opens Apple's
+        // sign-in window and browsers only allow that inside a live user
+        // gesture — reading the playlist first spends it and the window is
+        // silently blocked, which is exactly how this failed the first time.
+        await fsMusicKit.connect();
+        btn.textContent = 'Checking\u2026';
+
         var inPlaylist = {};
         (await fsMusicKit.readPlaylist(MUSIC_PLAYLIST.id)).forEach(function (t) { inPlaylist[String(t.appleId)] = true; });
 
