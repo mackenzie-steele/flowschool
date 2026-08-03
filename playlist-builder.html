@@ -710,6 +710,18 @@
     </div>
   </div>
 
+    <div class="modal-backdrop" id="ap-modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ap-modal-heading">
+        <h3 id="ap-modal-heading">Send to Apple Music</h3>
+        <p class="modal-hint">Name it before it lands in your library.</p>
+        <input type="text" class="modal-input" id="ap-title-input" placeholder="Playlist name" maxlength="80" autocomplete="off" aria-label="Playlist name">
+        <div class="modal-actions">
+          <button class="btn-ghost" id="ap-modal-cancel">Cancel</button>
+          <button class="btn-primary" id="ap-modal-confirm">Send it</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <div class="cta-bar">
@@ -1532,7 +1544,7 @@
       rebindPreviewAfterRender(container);
 
       document.getElementById('save-btn').addEventListener('click', handleSave);
-      document.getElementById('apple-btn').addEventListener('click', handleAppleExport);
+      document.getElementById('apple-btn').addEventListener('click', openAppleModal);
       document.getElementById('regen-btn').addEventListener('click', () => {
         forgetSaved();
         const res = document.getElementById('results');
@@ -1546,13 +1558,35 @@
     }
 
     // ── Send to Apple Music ───────────────────────────────────────────
-    // The whole point of the tool has been to shape an arc; until now the
-    // teacher then retyped it into her music app. This is the last step.
+    // Naming first is what makes this ONE press instead of two. authorize()
+    // opens Apple's sign-in, which browsers only allow inside a user gesture —
+    // and fetching a token plus 600KB of SDK spends it. The seconds she takes
+    // naming the playlist are exactly the seconds we need: the SDK warms while
+    // the modal is open, so "Send it" is a fresh gesture with everything ready.
     var appleBusy = false;
-    function handleAppleExport() {
-      if (appleBusy || !lastData) return;
-      var btn = document.getElementById('apple-btn');
 
+    function openAppleModal() {
+      if (!lastData) return;
+      var m = document.getElementById('ap-modal');
+      var input = document.getElementById('ap-title-input');
+      input.value = savedTitle || defaultTitle();
+      input.classList.remove('error');
+      m.hidden = false;
+      // warm quietly. A failure here isn't worth surfacing — pressing Send
+      // will raise it properly, where there's somewhere to put the message.
+      if (window.fsMusicKit && fsMusicKit.prewarm) fsMusicKit.prewarm();
+      setTimeout(function () { input.focus(); input.select(); }, 30);
+    }
+
+    function closeAppleModal() { document.getElementById('ap-modal').hidden = true; }
+
+    function confirmAppleExport() {
+      if (appleBusy || !lastData) return;
+      var input = document.getElementById('ap-title-input');
+      var name = input.value.trim();
+      if (!name) { input.classList.add('error'); input.focus(); return; }
+
+      var btn = document.getElementById('ap-modal-confirm');
       var tracks = lastData.flatMap(function (d) {
         return d.songs.map(function (sg) {
           var m = media(sg.id);
@@ -1562,17 +1596,12 @@
       if (!tracks.length) return;
 
       appleBusy = true;
-      if (window.fsWorking) fsWorking(btn, true, null);   // null: don't touch the icon
-      else btn.disabled = true;
-
-      // savedTitle is the name she gave it; defaultTitle() only if she hasn't
-      var name = (savedTitle || defaultTitle());
+      if (window.fsWorking) fsWorking(btn, true, 'Sending…');
       var desc = ARC_SHAPES[S.arcKey].name + ' · ' + S.duration + ' min · built in Flow School';
 
       fsMusicKit.exportPlaylist(name, desc, tracks).then(function (r) {
+        closeAppleModal();
         if (r.missing.length) {
-          // name what didn't make it — a playlist that quietly arrives short
-          // is worse than one that tells you which songs Apple doesn't have
           toast(r.added + ' sent to Apple Music · ' + r.missing.length
             + (r.missing.length === 1 ? ' song isn’t' : ' songs aren’t') + ' on Apple Music');
           console.info('[apple] not on Apple Music:',
@@ -1584,9 +1613,7 @@
         toast(fsMusicKit.explain(e));
       }).finally(function () {
         appleBusy = false;
-        if (window.fsWorking) fsWorking(btn, false, null);
-        else btn.disabled = false;
-        if (window.fsIcons) fsIcons();
+        if (window.fsWorking) fsWorking(btn, false, 'Send it');
       });
     }
 
@@ -1682,6 +1709,17 @@
     }
 
     // Modal controls
+    document.getElementById('ap-modal-cancel').addEventListener('click', closeAppleModal);
+    document.getElementById('ap-modal-confirm').addEventListener('click', confirmAppleExport);
+    document.getElementById('ap-title-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') confirmAppleExport();
+      if (e.key === 'Escape') closeAppleModal();
+    });
+    document.getElementById('ap-title-input').addEventListener('input', function () { this.classList.remove('error'); });
+    document.getElementById('ap-modal').addEventListener('click', function (e) {
+      if (e.target === e.currentTarget) closeAppleModal();
+    });
+
     document.getElementById('pl-modal-cancel').addEventListener('click', closeSaveModal);
     document.getElementById('pl-modal-confirm').addEventListener('click', confirmSave);
     document.getElementById('pl-title-input').addEventListener('keydown', e => {
