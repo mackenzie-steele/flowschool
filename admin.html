@@ -369,6 +369,10 @@
     .mus-gap.off  { color: var(--text-3); }
     .mus-pick { padding: 6px 12px; font-size: var(--fs-label-2); }
     .mus-find { white-space: nowrap; }
+    .adm-metric-sub {
+      font-family: var(--font-mono); font-size: var(--fs-label-2);
+      color: var(--text-3); margin-top: 4px; line-height: 1.4;
+    }
     .mus-pull { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
     .mus-pull .modal-input { flex: 1; min-width: 260px; margin: 0; }
     .mus-master { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
@@ -1831,13 +1835,22 @@
         var rejected = rows.filter(function (r) { return r.status === 'rejected'; });
 
         var inFile = (typeof SONGS !== 'undefined') ? SONGS.length : 0;
-        var withMedia = (typeof APPLE_MEDIA !== 'undefined') ? Object.keys(APPLE_MEDIA).length : 0;
+        // APPLE_MEDIA is the SHIPPED file. Songs linked by hand live in
+        // music_links and are not in it until publish-approved.js folds them
+        // in — counting only the file made every link you made look like it
+        // did nothing.
+        var inFileMedia = (typeof APPLE_MEDIA !== 'undefined') ? Object.keys(APPLE_MEDIA).length : 0;
+        var linkedExtra = Object.keys(MUS.linked).filter(function (id) {
+          return !(typeof APPLE_MEDIA !== 'undefined' && APPLE_MEDIA[id]);
+        }).length;
+        var withMedia = inFileMedia + linkedExtra;
 
         b.innerHTML =
           '<div class="adm-intro">The catalogue behind the Playlist Builder. Songs approved here are live for teachers immediately \u2014 read alongside <span class="adm-mono">songs.js</span> and folded into it on the next deploy.</div>' +
           '<div class="adm-metrics">' +
             '<div class="adm-metric"><div class="lbl">Songs in the catalogue</div><div class="val">' + num(inFile) + '</div></div>' +
-            '<div class="adm-metric"><div class="lbl">With artwork &amp; preview</div><div class="val">' + num(withMedia) + '</div></div>' +
+            '<div class="adm-metric"><div class="lbl">With artwork &amp; preview</div><div class="val">' + num(withMedia) + '</div>' +
+              (linkedExtra ? '<div class="adm-metric-sub">' + num(linkedExtra) + ' linked by hand, not yet in the file</div>' : '') + '</div>' +
             '<div class="adm-metric"><div class="lbl">Waiting for review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
             '<div class="adm-metric"><div class="lbl">Approved, not yet in the file</div><div class="val">' + num(approved.length) + '</div></div>' +
           '</div>' +
