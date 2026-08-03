@@ -345,6 +345,41 @@
        "not yet decided". The label says which way it currently points. */
     .mus-f.on { border-color: var(--accent-border); color: var(--accent); background: var(--accent-dim); }
 
+    /* ── The catalogue browser ─────────────────────────────────────── */
+    .cat-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+    .cat-controls .modal-input { flex: 1; min-width: 220px; margin: 0; }
+    .cat-controls select, .cat-e {
+      font-family: var(--font-mono); font-size: var(--fs-label-2);
+      color: var(--text-1); background: var(--well-bg); box-shadow: var(--well);
+      border: 1px solid var(--border); border-radius: var(--rb);
+      padding: 8px 10px; cursor: pointer;
+    }
+    .cat-e { padding: 5px 8px; }
+
+    /* artwork doubles as the play control here too, same as the Builder */
+    .cat-art {
+      position: relative; width: 40px; height: 40px; padding: 0; border: 0;
+      border-radius: var(--rb); overflow: hidden; cursor: pointer;
+      display: grid; place-items: center; background: var(--well-bg);
+    }
+    .cat-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .cat-art::after {
+      content: ''; position: absolute; inset: 0;
+      background: rgba(0,0,0,.4); opacity: 0; transition: opacity var(--transition-base);
+    }
+    .cat-art:hover::after { opacity: 1; }
+    .cat-art .material-symbols-sharp {
+      position: relative; z-index: 1; font-size: 18px; color: #fff;
+      opacity: 0; transition: opacity var(--transition-base);
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+    }
+    .cat-art:hover .material-symbols-sharp { opacity: 1; }
+
+    /* saving is a state worth seeing but not worth a spinner — the row
+       settles for a moment and moves on */
+    .cat-saving { opacity: .55; }
+    .cat-saved { background: var(--accent-dim); transition: background .9s ease-out; }
+
     .mus-actions { white-space: nowrap; }
     /* armed reads as danger without becoming a red button — it is one click
        from gone, and the label already says so */
@@ -1770,7 +1805,7 @@
       url: 'https://music.apple.com/us/playlist/flow-school-master-library/pl.u-yZyVVEXTDJ2NjW',
     };
 
-    var MUS = { pending: [], linked: {}, removed: {} };
+    var MUS = { pending: [], linked: {}, removed: {}, edits: {}, q: '', lvl: 'all' };
 
     function musDur(d) { return Math.floor(d / 60) + ':' + String(d % 60).padStart(2, '0'); }
 
@@ -1806,6 +1841,88 @@
         var hasMedia = (typeof APPLE_MEDIA !== 'undefined') && APPLE_MEDIA[sg.id];
         return !hasMedia && !MUS.linked[sg.id] && !MUS.removed[sg.id];
       });
+    }
+
+    // ── The whole catalogue ───────────────────────────────────────────
+    // 838 songs is far past what a table should render at once, and past what
+    // anyone reads. So: search first, show what matches, cap the list. You
+    // come here looking for a song, not to scroll a library.
+    var MUS_PAGE = 60;
+
+    function musLive() {
+      if (typeof SONGS === 'undefined') return [];
+      return SONGS.filter(function (sg) { return !MUS.removed[sg.id]; })
+        .map(function (sg) {
+          var e = MUS.edits[sg.id];
+          // a correction made in the admin is what this song IS now, whatever
+          // the shipped file still says
+          return e ? {
+            id: sg.id, title: sg.title, artist: sg.artist, dur: sg.dur,
+            energy: e.energy, vocal: e.vocal, electronic: e.electronic,
+            bright: e.bright, edited: true,
+          } : sg;
+        });
+    }
+
+    function musMatches() {
+      var q = (MUS.q || '').trim().toLowerCase();
+      var lvl = MUS.lvl;
+      return musLive().filter(function (sg) {
+        if (lvl !== 'all' && sg.energy !== Number(lvl)) return false;
+        if (!q) return true;
+        return (sg.title + ' ' + sg.artist).toLowerCase().indexOf(q) !== -1;
+      });
+    }
+
+    function musCatalogueRow(sg) {
+      var m = (typeof APPLE_MEDIA !== 'undefined') && APPLE_MEDIA[sg.id];
+      var art = m && m.art ? m.art.replace(/{px}/g, '80') : null;
+      return '<tr data-cid="' + sg.id + '">' +
+        '<td>' + (art
+          ? '<button class="cat-art mus-play" data-prev="' + esc((m && m.prev) || '') + '" aria-label="Preview ' + esc(sg.title) + '">' +
+            '<img src="' + esc(art) + '" alt="">' +
+            '<span class="material-symbols-sharp">play_arrow</span></button>'
+          : '<span class="mus-art mus-art-none"></span>') + '</td>' +
+        '<td><strong>' + esc(sg.title) + '</strong><br><span class="muted">' + esc(sg.artist) + '</span>' +
+          (sg.edited ? ' <span class="adm-pill admin">edited</span>' : '') + '</td>' +
+        '<td class="muted adm-mono">' + musDur(sg.dur) + '</td>' +
+        // a select, not the eleven-button picker: that one is for fast triage
+        // of a few songs; this list is dense and mostly read, not rewritten
+        '<td><select class="cat-e" aria-label="Energy for ' + esc(sg.title) + '">' +
+          [0,1,2,3,4,5,6,7,8,9,10].map(function (n) {
+            return '<option value="' + n + '"' + (n === sg.energy ? ' selected' : '') + '>' + n + '</option>';
+          }).join('') + '</select></td>' +
+        '<td><div class="mus-flags">' +
+          [['vocal', sg.vocal], ['electronic', sg.electronic], ['bright', sg.bright]].map(function (f) {
+            return '<button class="mus-f cat-f' + (f[1] ? ' on' : '') + '" data-f="' + f[0] + '">' + f[0] + '</button>';
+          }).join('') + '</div></td>' +
+        '<td class="mus-actions"><button class="btn-ghost cat-del" data-t="' + esc(sg.title) + '" data-a="' + esc(sg.artist) + '">Remove</button></td>' +
+        '</tr>';
+    }
+
+    function musCataloguePanel() {
+      var all = musLive(), hits = musMatches();
+      var shown = hits.slice(0, MUS_PAGE);
+      return '<div class="adm-panel"><div class="adm-panel-head"><h2>Every song</h2>' +
+        '<span class="muted adm-mono">' + num(all.length) + '</span></div>' +
+        '<div class="adm-panel-body">' +
+          '<div class="cat-controls">' +
+            '<input type="text" class="modal-input" id="cat-q" placeholder="Search title or artist\u2026" value="' + esc(MUS.q) + '" aria-label="Search songs">' +
+            '<select id="cat-lvl" aria-label="Filter by energy"><option value="all">Every energy</option>' +
+              [0,1,2,3,4,5,6,7,8,9,10].map(function (n) {
+                return '<option value="' + n + '"' + (String(MUS.lvl) === String(n) ? ' selected' : '') + '>energy ' + n + '</option>';
+              }).join('') + '</select>' +
+          '</div>' +
+          '<p class="muted adm-mono" id="cat-count">' +
+            (hits.length === all.length ? num(all.length) + ' songs' : num(hits.length) + ' of ' + num(all.length)) +
+            (hits.length > MUS_PAGE ? ' \u00b7 showing the first ' + MUS_PAGE + ', narrow the search to see the rest' : '') +
+          '</p>' +
+        '</div>' +
+        (shown.length
+          ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Energy</th><th>Character</th><th></th></tr></thead><tbody>' +
+            shown.map(musCatalogueRow).join('') + '</tbody></table></div>'
+          : stateEmpty('Nothing matches that.')) +
+        '</div>';
     }
 
     function musUnmatchedPanel() {
@@ -1850,6 +1967,34 @@
         '<span class="mus-cand-data" hidden>' + esc(JSON.stringify(c)) + '</span></div>';
     }
 
+    // Saves whatever the row currently shows. Called on every change rather
+    // than behind a Save button — four fields on one song is not a form.
+    async function musSaveRow(tr) {
+      if (!tr) return;
+      var sel = tr.querySelector('.cat-e');
+      var flag = function (f) { return !!tr.querySelector('.cat-f[data-f="' + f + '"]').classList.contains('on'); };
+      var id = Number(tr.dataset.cid);
+      tr.classList.add('cat-saving');
+      try {
+        await A.rpc('edit_song', {
+          p_song_id: id, p_energy: Number(sel.value),
+          p_vocal: flag('vocal'), p_electronic: flag('electronic'), p_bright: flag('bright'),
+        });
+        // keep the in-memory copy in step so a re-render does not undo what
+        // was just saved
+        MUS.edits[id] = {
+          song_id: id, energy: Number(sel.value), vocal: flag('vocal'),
+          electronic: flag('electronic'), bright: flag('bright'),
+        };
+        tr.classList.remove('cat-saving');
+        tr.classList.add('cat-saved');
+        setTimeout(function () { tr.classList.remove('cat-saved'); }, 900);
+      } catch (err) {
+        tr.classList.remove('cat-saving');
+        toast(err.message || 'Could not save that');
+      }
+    }
+
     async function renderMusic() {
       var b = bodyEl(); b.innerHTML = stateLoading();
       try {
@@ -1860,6 +2005,10 @@
         MUS.removed = {};
         MUS.removedRows = removed.data || [];
         MUS.removedRows.forEach(function (r) { MUS.removed[r.song_id] = true; });
+
+        var edits = await db.from('music_edits').select('*');
+        MUS.edits = {};
+        (edits.data || []).forEach(function (e) { MUS.edits[e.song_id] = e; });
 
         var linked = await db.from('music_links').select('song_id');
         MUS.linked = {};
@@ -1934,6 +2083,7 @@
               ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Hear</th><th>Energy \u00b7 0\u201310</th><th>Character</th><th></th></tr></thead><tbody>' + MUS.pending.map(musRow).join('') + '</tbody></table></div>'
               : stateEmpty('Nothing waiting. Add songs to the master playlist in Apple Music, then pull them in.')) +
           '</div>' +
+          musCataloguePanel() +
           musUnmatchedPanel() +
           (approved.length
             ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Approved</h2><span class="muted adm-mono">live for teachers now</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Song</th><th class="num">Energy</th><th>Character</th><th>Approved</th></tr></thead><tbody>' +
@@ -1985,9 +2135,25 @@
       if (!b.dataset.musWired) {
         b.dataset.musWired = '1';
         b.addEventListener('click', musClick);
+        b.addEventListener('change', function (ev) {
+          var sel = ev.target.closest && ev.target.closest('.cat-e');
+          if (sel) musSaveRow(sel.closest('tr'));
+        });
       }
 
       // these live inside the replaced markup, so they are re-bound each time
+      var q = document.getElementById('cat-q');
+      if (q) {
+        var qt;
+        q.addEventListener('input', function () {
+          clearTimeout(qt);
+          // re-rendering on every keystroke would rebuild 60 rows per letter
+          qt = setTimeout(function () { MUS.q = q.value; renderMusic(); }, 220);
+        });
+      }
+      var lvl = document.getElementById('cat-lvl');
+      if (lvl) lvl.addEventListener('change', function () { MUS.lvl = lvl.value; renderMusic(); });
+
       var pull = document.getElementById('mus-pull');
       if (pull) pull.addEventListener('click', musPull);
       var sync = document.getElementById('mus-sync');
@@ -2013,8 +2179,18 @@
           return;
         }
 
+        // Catalogue toggles carry BOTH classes, so this branch catches them
+        // too — and used to return before the catalogue's own branch could
+        // run, which is why editing character there silently saved nothing.
+        // One branch, no ordering to get wrong.
         var f = t.closest && t.closest('.mus-f');
-        if (f) { f.classList.toggle('on'); return; }
+        if (f) {
+          f.classList.toggle('on');
+          // in the catalogue a toggle IS the edit; in the review queue the
+          // value is only read when Approve is pressed
+          if (f.classList.contains('cat-f')) musSaveRow(f.closest('tr'));
+          return;
+        }
 
         var play = t.closest && t.closest('.mus-play');
         if (play) {
@@ -2091,6 +2267,36 @@
         // in place, on the button itself. A native confirm() dialog for this
         // is heavier than the action deserves, and clicking anywhere else
         // cancels, which a dialog cannot do.
+        var cdel = t.closest && t.closest('.cat-del');
+        if (cdel) {
+          if (cdel.dataset.armed !== '1') {
+            b.querySelectorAll('.cat-del[data-armed="1"], .mus-del[data-armed="1"]').forEach(function (o) {
+              o.dataset.armed = ''; o.textContent = 'Remove'; o.classList.remove('mus-del-armed');
+            });
+            cdel.dataset.armed = '1';
+            cdel.textContent = 'Really remove?';
+            cdel.classList.add('mus-del-armed');
+            return;
+          }
+          var ctr = cdel.closest('tr');
+          cdel.disabled = true;
+          try {
+            await A.rpc('remove_song', {
+              p_song_id: Number(ctr.dataset.cid),
+              p_title: cdel.dataset.t, p_artist: cdel.dataset.a, p_reason: null,
+            });
+            musStop();
+            toast('Removed \u2014 ' + cdel.dataset.t);
+            renderMusic();
+          } catch (err) {
+            cdel.disabled = false;
+            cdel.dataset.armed = ''; cdel.textContent = 'Remove';
+            cdel.classList.remove('mus-del-armed');
+            toast(err.message || 'Could not remove that');
+          }
+          return;
+        }
+
         var del = t.closest && t.closest('.mus-del');
         if (del) {
           if (del.dataset.armed !== '1') {
@@ -2123,7 +2329,7 @@
 
         // clicking anywhere else disarms whatever was armed
         if (!del) {
-          b.querySelectorAll('.mus-del[data-armed="1"]').forEach(function (o) {
+          b.querySelectorAll('.mus-del[data-armed="1"], .cat-del[data-armed="1"]').forEach(function (o) {
             o.dataset.armed = ''; o.textContent = 'Remove'; o.classList.remove('mus-del-armed');
           });
         }

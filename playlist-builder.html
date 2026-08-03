@@ -1361,9 +1361,28 @@
           return n;
         }, function () { return 0; });
 
-      return Promise.all([staged, linked, dropped]).then(function (out) {
-        if (out[0] || out[1] || out[2]) {
-          console.info('[catalogue] +' + out[0] + ' approved, +' + out[1] + ' linked, -' + out[2] + ' removed');
+      // corrections made in the admin. A song's energy decides where it
+      // lands in every arc, so a stale one is not cosmetic.
+      var edited = db.from('music_edits').select('song_id,energy,vocal,electronic,bright')
+        .then(function (r) {
+          if (r.error || !r.data || !r.data.length) return 0;
+          var by = {};
+          r.data.forEach(function (e) { by[e.song_id] = e; });
+          var n = 0;
+          SONGS.forEach(function (sg) {
+            var e = by[sg.id];
+            if (!e) return;
+            sg.energy = e.energy; sg.vocal = !!e.vocal;
+            sg.electronic = !!e.electronic; sg.bright = !!e.bright;
+            n++;
+          });
+          return n;
+        }, function () { return 0; });
+
+      return Promise.all([staged, linked, dropped, edited]).then(function (out) {
+        if (out[0] || out[1] || out[2] || out[3]) {
+          console.info('[catalogue] +' + out[0] + ' approved, +' + out[1] + ' linked, -'
+            + out[2] + ' removed, ~' + out[3] + ' corrected');
         }
         return out[0];
       });

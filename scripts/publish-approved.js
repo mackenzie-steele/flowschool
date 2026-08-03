@@ -79,6 +79,20 @@ async function api(pathname, opts) {
   return r.status === 204 ? null : r.json();
 }
 
+// Tables added by later migrations. A database that hasn't had one applied
+// yet should mean "nothing of that kind to publish", not a crash — the whole
+// point of this script is that it can be run at any time.
+async function apiOptional(pathname) {
+  try { return await api(pathname); }
+  catch (e) {
+    if (/PGRST205|Could not find the table/.test(e.message)) {
+      console.log(`  (skipping ${pathname.split('?')[0]} — that migration hasn't been run)`);
+      return [];
+    }
+    throw e;
+  }
+}
+
 (async () => {
   if (!URL || !KEY) {
     console.error('  SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
@@ -91,8 +105,9 @@ async function api(pathname, opts) {
   const known = new Set(songs.map(s => s.id));
 
   const approved = await api('music_staging?status=eq.approved&select=*');
-  const links = await api('music_links?select=*');
-  const removed = await api('music_removed?select=*');
+  const links = await apiOptional('music_links?select=*');
+  const removed = await apiOptional('music_removed?select=*');
+  const edits = await apiOptional('music_edits?select=*');
 
   // a song already in the file was published on an earlier run; the row just
   // never got marked. Flag it rather than adding a duplicate id.
@@ -110,15 +125,29 @@ async function api(pathname, opts) {
   const newLinks = links.filter(l => !media[l.song_id]);
   console.log(`  manual links to add ${newLinks.length}`);
   const toDrop = removed.filter(r => known.has(r.song_id));
-  console.log(`  songs to remove     ${toDrop.length}\n`);
+  console.log(`  songs to remove     ${toDrop.length}`);
+  // only corrections that actually differ from the file — re-saving a row
+  // without changing it should not show up as work
+  const byId = new Map(songs.map(s2 => [s2.id, s2]));
+  const toEdit = edits.filter(e => {
+    const cur = byId.get(e.song_id);
+    if (!cur) return false;
+    return cur.energy !== e.energy || !!cur.vocal !== !!e.vocal
+      || !!cur.electronic !== !!e.electronic || !!cur.bright !== !!e.bright;
+  });
+  console.log(`  corrections to apply ${toEdit.length}\n`);
 
-  if (!usable.length && !newLinks.length && !already.length && !toDrop.length) {
+  if (!usable.length && !newLinks.length && !already.length && !toDrop.length && !toEdit.length) {
     console.log('  Nothing to do.\n');
     return;
   }
 
   usable.forEach(r => console.log(`    + ${String(r.energy).padStart(2)}  ${r.title.slice(0, 38).padEnd(40)}${r.artist.slice(0, 26)}`));
   toDrop.forEach(r => console.log(`    - ${'  '}  ${String(r.title || r.song_id).slice(0, 38).padEnd(40)}${String(r.artist || '').slice(0, 26)}`));
+  toEdit.forEach(e => {
+    const cur = byId.get(e.song_id);
+    console.log(`    ~ ${String(cur.energy)}→${String(e.energy).padEnd(2)} ${cur.title.slice(0, 38).padEnd(40)}${cur.artist.slice(0, 26)}`);
+  });
 
   if (!WRITE) {
     console.log('\n  Dry run. Re-run with --write to apply.\n');
@@ -129,7 +158,27 @@ async function api(pathname, opts) {
   fs.copyFileSync(SONGS_JS, SONGS_JS + '.bak');
   let lines = fs.readFileSync(SONGS_JS, 'utf8').split('\n');
 
-  // removals first: taking a line out changes the block counts that the
+  // corrections first. An energy change moves a song to a different block, so
+  // it is a delete-and-reinsert, not an edit in place — doing it before the
+  // removals and additions keeps every block count adjusted exactly once.
+  for (const e of toEdit) {
+    const cur = byId.get(e.song_id);
+    const idx = lines.findIndex(l => l.startsWith(`  { id:${e.song_id},`));
+    if (idx === -1) { console.log(`  ? id ${e.song_id} not found in the file`); continue; }
+    let hdr = idx;
+    while (hdr >= 0 && !/^  \/\/ ── \d+ /.test(lines[hdr])) hdr--;
+    lines.splice(idx, 1);
+    if (hdr >= 0) {
+      lines[hdr] = lines[hdr].replace(/(\d+) songs?$/, (_, n) => `${+n - 1} song${+n - 1 === 1 ? '' : 's'}`);
+    }
+    usable.push({
+      song_id: e.song_id, title: cur.title, artist: cur.artist, dur: cur.dur,
+      energy: e.energy, vocal: e.vocal, electronic: e.electronic, bright: e.bright,
+      apple_id: null, _isEdit: true,
+    });
+  }
+
+  // removals next: taking a line out changes the block counts that the
   // insert below then adjusts again, and doing it the other way round would
   // have the second pass correcting a number the first pass had already moved
   for (const r of toDrop) {
@@ -170,9 +219,10 @@ async function api(pathname, opts) {
   let after;
   try { after = load(SONGS_JS, 'SONGS'); }
   catch (e) { fs.copyFileSync(SONGS_JS + '.bak', SONGS_JS); console.error('  ✗ broke the file — reverted. ' + e.message); process.exit(1); }
-  if (after.length !== songs.length + usable.length - toDrop.length) {
+  const netAdds = usable.filter(u => !u._isEdit).length;
+  if (after.length !== songs.length + netAdds - toDrop.length) {
     fs.copyFileSync(SONGS_JS + '.bak', SONGS_JS);
-    console.error(`  ✗ expected ${songs.length + usable.length - toDrop.length} songs, got ${after.length} — reverted`);
+    console.error(`  ✗ expected ${songs.length + netAdds - toDrop.length} songs, got ${after.length} — reverted`);
     process.exit(1);
   }
   const ids = after.map(s => s.id);
@@ -186,7 +236,7 @@ async function api(pathname, opts) {
   const CACHE = path.join(__dirname, '.apple-cache.json');
   const cache = fs.existsSync(CACHE) ? JSON.parse(fs.readFileSync(CACHE, 'utf8')) : {};
   usable.forEach(r => {
-    if (!r.apple_id) return;
+    if (!r.apple_id) return;      // edits carry none; their media is unchanged
     cache[r.song_id] = { status: 'ok', appleId: r.apple_id, art: r.art, preview: r.preview, genre: r.genre };
   });
   newLinks.forEach(l => {
@@ -196,14 +246,14 @@ async function api(pathname, opts) {
   require('child_process').execFileSync('node', [path.join(__dirname, 'resolve-apple.js'), '--emit-only'], { stdio: 'ignore' });
 
   // ── only now mark them published, so a crash above leaves work to redo ───
-  const done = usable.concat(already).map(r => r.song_id);
+  const done = usable.filter(u => !u._isEdit).concat(already).map(r => r.song_id);
   if (done.length) {
     await api('music_staging?song_id=in.(' + done.join(',') + ')', {
       method: 'PATCH', body: JSON.stringify({ status: 'published' }),
     });
   }
 
-  console.log(`\n  ${usable.length} added, ${toDrop.length} removed · ${after.length} in the catalogue`);
+  console.log(`\n  ${netAdds} added, ${toDrop.length} removed, ${toEdit.length} corrected · ${after.length} in the catalogue`);
   console.log(`  ${newLinks.length} manual links folded into apple-media.js`);
   console.log(`  ${done.length} rows marked published`);
   console.log(`  backup at data/songs.js.bak\n`);
