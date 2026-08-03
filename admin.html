@@ -2140,8 +2140,12 @@
 
         step('finding \u201c' + MUSIC_PLAYLIST.name + '\u201d in your library\u2026');
         var lib = await fsMusicKit.findLibraryPlaylist(MUSIC_PLAYLIST.name);
-        if (lib.canEdit === false) throw new Error('NOT_EDITABLE');
-        step('found it (id ' + lib.id + '). Reading what\u2019s already in the playlist\u2026');
+        // Apple says this one isn't editable. Say so and try anyway — the
+        // write is the only thing that can actually settle it, and the
+        // previous 500 came from a request built a different way.
+        step('found it (id ' + lib.id + ')'
+          + (lib.canEdit === false ? ' \u2014 Apple marks it not editable; trying anyway' : '')
+          + '. Reading what\u2019s already in the playlist\u2026');
 
         var inPlaylist = {};
         (await fsMusicKit.readPlaylist(MUSIC_PLAYLIST.id)).forEach(function (t) { inPlaylist[String(t.appleId)] = true; });
