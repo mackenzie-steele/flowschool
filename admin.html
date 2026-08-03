@@ -346,6 +346,13 @@
     .mus-f.on { border-color: var(--accent-border); color: var(--accent); background: var(--accent-dim); }
 
     .mus-actions { white-space: nowrap; }
+    /* armed reads as danger without becoming a red button — it is one click
+       from gone, and the label already says so */
+    .mus-del-armed {
+      color: var(--danger) !important;
+      border-color: rgba(var(--danger-rgb), .4) !important;
+      background: rgba(var(--danger-rgb), .07) !important;
+    }
     .mus-actions .btn-primary { padding: 6px 12px; font-size: var(--fs-label-2); }
     .mus-actions .btn-ghost { padding: 6px 10px; font-size: var(--fs-label-2); }
     .mus-cand-row td { padding: 0 0 14px; }
@@ -1763,7 +1770,7 @@
       url: 'https://music.apple.com/us/playlist/flow-school-master-library/pl.u-yZyVVEXTDJ2NjW',
     };
 
-    var MUS = { pending: [], linked: {} };
+    var MUS = { pending: [], linked: {}, removed: {} };
 
     function musDur(d) { return Math.floor(d / 60) + ':' + String(d % 60).padStart(2, '0'); }
 
@@ -1797,7 +1804,7 @@
       if (typeof SONGS === 'undefined') return [];
       return SONGS.filter(function (sg) {
         var hasMedia = (typeof APPLE_MEDIA !== 'undefined') && APPLE_MEDIA[sg.id];
-        return !hasMedia && !MUS.linked[sg.id];
+        return !hasMedia && !MUS.linked[sg.id] && !MUS.removed[sg.id];
       });
     }
 
@@ -1823,6 +1830,27 @@
         }).join('') + '</tbody></table></div></div>';
     }
 
+    // Removals are reversible until published, and a list of what went is the
+    // only way to notice a mistake. The title and artist come from the row
+    // rather than songs.js — after publishing there is nothing left to join to.
+    function musRemovedPanel() {
+      var rows = MUS.removedRows || [];
+      if (!rows.length) return '';
+      var inFile = {};
+      if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { inFile[sg.id] = true; });
+      return '<div class="adm-panel"><div class="adm-panel-head"><h2>Removed</h2>' +
+        '<span class="muted adm-mono">' + num(rows.length) + '</span></div>' +
+        '<div class="adm-panel-body"><p class="muted">Gone from the Playlist Builder already. They leave <span class="adm-mono">songs.js</span> on the next publish. Their ids stay reserved forever \u2014 saved playlists store song ids, and reusing one would silently repoint somebody\u2019s playlist at a different song.</p></div>' +
+        '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Song</th><th>Still in the file</th><th>Removed</th><th></th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          return '<tr data-rid="' + r.song_id + '"><td><strong>' + esc(r.title || ('song ' + r.song_id)) + '</strong>' +
+            (r.artist ? '<br><span class="muted">' + esc(r.artist) + '</span>' : '') + '</td>' +
+            '<td>' + (inFile[r.song_id] ? '<span class="adm-pill off">yes, until publish</span>' : '<span class="adm-pill on">no</span>') + '</td>' +
+            '<td class="muted">' + A.ago(r.removed_at) + '</td>' +
+            '<td><button class="btn-ghost mus-restore">Put it back</button></td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    }
+
     function musUnmatchedPanel() {
       var miss = musUnmatched();
       if (!miss.length) return '';
@@ -1834,7 +1862,8 @@
           return '<tr data-mid="' + sg.id + '" data-q="' + esc(sg.artist + ' ' + sg.title) + '" data-dur="' + sg.dur + '">' +
             '<td><strong>' + esc(sg.title) + '</strong><br><span class="muted">' + esc(sg.artist) + '</span></td>' +
             '<td class="muted adm-mono">' + musDur(sg.dur) + '</td>' +
-            '<td><button class="btn-secondary mus-find">Find on Apple Music</button></td></tr>';
+            '<td class="mus-actions"><button class="btn-secondary mus-find">Find on Apple Music</button> ' +
+            '<button class="btn-ghost mus-del" data-t="' + esc(sg.title) + '" data-a="' + esc(sg.artist) + '">Remove</button></td></tr>';
         }).join('') + '</tbody></table></div></div>';
     }
 
@@ -1870,6 +1899,11 @@
         var staged = await db.from('music_staging').select('*').order('added_at', { ascending: false });
         if (staged.error) throw staged.error;
         var rows = staged.data || [];
+        var removed = await db.from('music_removed').select('*').order('removed_at', { ascending: false });
+        MUS.removed = {};
+        MUS.removedRows = removed.data || [];
+        MUS.removedRows.forEach(function (r) { MUS.removed[r.song_id] = true; });
+
         var linked = await db.from('music_links').select('*');
         MUS.linked = {};
         MUS.linkedRows = linked.data || [];
@@ -1918,6 +1952,7 @@
               ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Hear</th><th>Energy \u00b7 0\u201310</th><th>Character</th><th></th></tr></thead><tbody>' + MUS.pending.map(musRow).join('') + '</tbody></table></div>'
               : stateEmpty('Nothing waiting. Add songs to the master playlist in Apple Music, then pull them in.')) +
           '</div>' +
+          musRemovedPanel() +
           musLinkedPanel() +
           musUnmatchedPanel() +
           (approved.length
@@ -1962,7 +1997,32 @@
     function wireMusic() {
       var b = bodyEl();
 
-      b.addEventListener('click', async function (ev) {
+      // renderMusic() calls this after EVERY render, and the body element
+      // survives its own innerHTML being replaced — so without this guard the
+      // listeners stack up and one click runs the handler N times. That is
+      // invisible for a toggle and catastrophic for the two-step delete: the
+      // first press armed it and the second run of the same click confirmed.
+      if (!b.dataset.musWired) {
+        b.dataset.musWired = '1';
+        b.addEventListener('click', musClick);
+      }
+
+      // these live inside the replaced markup, so they are re-bound each time
+      var pull = document.getElementById('mus-pull');
+      if (pull) pull.addEventListener('click', musPull);
+      var sync = document.getElementById('mus-sync');
+      if (sync) sync.addEventListener('click', musSync);
+      var who = document.getElementById('mus-who');
+      if (who) {
+        who.addEventListener('click', musWho);
+        who.addEventListener('click', function (e) { if (e.shiftKey) musSignOut(); });
+        who.title = 'Shift-click to sign out of Apple Music';
+      }
+    }
+
+    async function musClick(ev) {
+      {
+        var b = bodyEl();
         var t = ev.target;
 
         var e = t.closest && t.closest('.mus-e');
@@ -2003,6 +2063,17 @@
             toast('Approved \u2014 teachers can use it now');
             renderMusic();
           } catch (err) { ok.disabled = false; toast(err.message || 'Could not approve that'); }
+          return;
+        }
+
+        var back = t.closest && t.closest('.mus-restore');
+        if (back) {
+          var btr = back.closest('tr');
+          back.disabled = true;
+          try {
+            await A.rpc('restore_song', { p_song_id: Number(btr.dataset.rid) });
+            renderMusic();
+          } catch (err) { back.disabled = false; toast(err.message || 'Could not restore that'); }
           return;
         }
 
@@ -2047,6 +2118,47 @@
           return;
         }
 
+        // Removing is destructive and the row vanishes, so it asks once —
+        // in place, on the button itself. A native confirm() dialog for this
+        // is heavier than the action deserves, and clicking anywhere else
+        // cancels, which a dialog cannot do.
+        var del = t.closest && t.closest('.mus-del');
+        if (del) {
+          if (del.dataset.armed !== '1') {
+            b.querySelectorAll('.mus-del[data-armed="1"]').forEach(function (o) {
+              o.dataset.armed = ''; o.textContent = 'Remove'; o.classList.remove('mus-del-armed');
+            });
+            del.dataset.armed = '1';
+            del.textContent = 'Really remove?';
+            del.classList.add('mus-del-armed');
+            return;
+          }
+          var dtr = del.closest('tr');
+          del.disabled = true;
+          try {
+            await A.rpc('remove_song', {
+              p_song_id: Number(dtr.dataset.mid),
+              p_title: del.dataset.t, p_artist: del.dataset.a, p_reason: null,
+            });
+            musStop();
+            toast('Removed \u2014 ' + del.dataset.t);
+            renderMusic();
+          } catch (err) {
+            del.disabled = false;
+            del.dataset.armed = ''; del.textContent = 'Remove';
+            del.classList.remove('mus-del-armed');
+            toast(err.message || 'Could not remove that');
+          }
+          return;
+        }
+
+        // clicking anywhere else disarms whatever was armed
+        if (!del) {
+          b.querySelectorAll('.mus-del[data-armed="1"]').forEach(function (o) {
+            o.dataset.armed = ''; o.textContent = 'Remove'; o.classList.remove('mus-del-armed');
+          });
+        }
+
         var no = t.closest && t.closest('.mus-no');
         if (no) {
           var tr2 = no.closest('tr');
@@ -2058,20 +2170,8 @@
           } catch (err) { no.disabled = false; toast(err.message || 'Could not do that'); }
           return;
         }
-      });
-
-      var pull = document.getElementById('mus-pull');
-      if (pull) pull.addEventListener('click', musPull);
-      var sync = document.getElementById('mus-sync');
-      if (sync) sync.addEventListener('click', musSync);
-      var who = document.getElementById('mus-who');
-      if (who) {
-        who.addEventListener('click', musWho);
-        // shift-click to sign out — a full-time button for something needed
-        // once would be clutter, but there has to be a way
-        who.addEventListener('click', function (e) { if (e.shiftKey) musSignOut(); });
-        who.title = 'Shift-click to sign out of Apple Music';
       }
+
     }
 
     // Everything Apple already knows about a track comes back with the

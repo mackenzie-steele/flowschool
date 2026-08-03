@@ -92,6 +92,7 @@ async function api(pathname, opts) {
 
   const approved = await api('music_staging?status=eq.approved&select=*');
   const links = await api('music_links?select=*');
+  const removed = await api('music_removed?select=*');
 
   // a song already in the file was published on an earlier run; the row just
   // never got marked. Flag it rather than adding a duplicate id.
@@ -107,14 +108,17 @@ async function api(pathname, opts) {
 
   const media = load(path.join(ROOT, 'data', 'apple-media.js'), 'APPLE_MEDIA');
   const newLinks = links.filter(l => !media[l.song_id]);
-  console.log(`  manual links to add ${newLinks.length}\n`);
+  console.log(`  manual links to add ${newLinks.length}`);
+  const toDrop = removed.filter(r => known.has(r.song_id));
+  console.log(`  songs to remove     ${toDrop.length}\n`);
 
-  if (!usable.length && !newLinks.length && !already.length) {
+  if (!usable.length && !newLinks.length && !already.length && !toDrop.length) {
     console.log('  Nothing to do.\n');
     return;
   }
 
   usable.forEach(r => console.log(`    + ${String(r.energy).padStart(2)}  ${r.title.slice(0, 38).padEnd(40)}${r.artist.slice(0, 26)}`));
+  toDrop.forEach(r => console.log(`    - ${'  '}  ${String(r.title || r.song_id).slice(0, 38).padEnd(40)}${String(r.artist || '').slice(0, 26)}`));
 
   if (!WRITE) {
     console.log('\n  Dry run. Re-run with --write to apply.\n');
@@ -124,6 +128,21 @@ async function api(pathname, opts) {
   // ── splice each row into its energy block, alphabetical by artist ────────
   fs.copyFileSync(SONGS_JS, SONGS_JS + '.bak');
   let lines = fs.readFileSync(SONGS_JS, 'utf8').split('\n');
+
+  // removals first: taking a line out changes the block counts that the
+  // insert below then adjusts again, and doing it the other way round would
+  // have the second pass correcting a number the first pass had already moved
+  for (const r of toDrop) {
+    const idx = lines.findIndex(l => l.startsWith(`  { id:${r.song_id},`));
+    if (idx === -1) { console.log(`  ? id ${r.song_id} already gone from the file`); continue; }
+    let hdr = idx;
+    while (hdr >= 0 && !/^  \/\/ ── \d+ /.test(lines[hdr])) hdr--;
+    lines.splice(idx, 1);
+    if (hdr >= 0) {
+      lines[hdr] = lines[hdr].replace(/(\d+) songs?$/, (_, n) =>
+        `${+n - 1} song${+n - 1 === 1 ? '' : 's'}`);
+    }
+  }
 
   for (const r of usable) {
     const row = {
@@ -151,9 +170,9 @@ async function api(pathname, opts) {
   let after;
   try { after = load(SONGS_JS, 'SONGS'); }
   catch (e) { fs.copyFileSync(SONGS_JS + '.bak', SONGS_JS); console.error('  ✗ broke the file — reverted. ' + e.message); process.exit(1); }
-  if (after.length !== songs.length + usable.length) {
+  if (after.length !== songs.length + usable.length - toDrop.length) {
     fs.copyFileSync(SONGS_JS + '.bak', SONGS_JS);
-    console.error(`  ✗ expected ${songs.length + usable.length} songs, got ${after.length} — reverted`);
+    console.error(`  ✗ expected ${songs.length + usable.length - toDrop.length} songs, got ${after.length} — reverted`);
     process.exit(1);
   }
   const ids = after.map(s => s.id);
@@ -184,7 +203,7 @@ async function api(pathname, opts) {
     });
   }
 
-  console.log(`\n  ${usable.length} songs added · ${after.length} in the catalogue`);
+  console.log(`\n  ${usable.length} added, ${toDrop.length} removed · ${after.length} in the catalogue`);
   console.log(`  ${newLinks.length} manual links folded into apple-media.js`);
   console.log(`  ${done.length} rows marked published`);
   console.log(`  backup at data/songs.js.bak\n`);

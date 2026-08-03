@@ -1345,8 +1345,26 @@
           return n;
         }, function () { return 0; });
 
-      return Promise.all([staged, linked]).then(function (out) {
-        if (out[0] || out[1]) console.info('[catalogue] +' + out[0] + ' approved, +' + out[1] + ' linked');
+      // songs pulled out of the catalogue in the admin. They are still in
+      // songs.js until the next publish, so the file cannot be trusted alone
+      // — a removed song left in a playlist is one a teacher was told to play
+      // and then couldn't find.
+      var dropped = db.from('music_removed').select('song_id')
+        .then(function (r) {
+          if (r.error || !r.data || !r.data.length) return 0;
+          var gone = {};
+          r.data.forEach(function (x) { gone[x.song_id] = true; });
+          var n = 0;
+          for (var i = SONGS.length - 1; i >= 0; i--) {
+            if (gone[SONGS[i].id]) { SONGS.splice(i, 1); n++; }
+          }
+          return n;
+        }, function () { return 0; });
+
+      return Promise.all([staged, linked, dropped]).then(function (out) {
+        if (out[0] || out[1] || out[2]) {
+          console.info('[catalogue] +' + out[0] + ' approved, +' + out[1] + ' linked, -' + out[2] + ' removed');
+        }
         return out[0];
       });
     })();
