@@ -1957,6 +1957,44 @@
         '</tr>';
     }
 
+    // The metric tiles are the only other thing a removal changes, so update
+    // them in place rather than redrawing everything that surrounds them.
+    function musRefreshCounts() {
+      var live = musLive().length;
+      var media = musLive().filter(function (sg) {
+        return (typeof APPLE_MEDIA !== 'undefined' && APPLE_MEDIA[sg.id]) || MUS.linked[sg.id];
+      }).length;
+      var tiles = bodyEl().querySelectorAll('.adm-metric');
+      if (tiles[0]) tiles[0].querySelector('.val').textContent = num(live);
+      if (tiles[1]) tiles[1].querySelector('.val').textContent = num(media);
+      var c = document.getElementById('cat-count');
+      if (c) c.textContent = musCatalogueCount();
+    }
+
+    function musCatalogueCount() {
+      var all = musLive(), hits = musMatches();
+      return (hits.length === all.length ? num(all.length) + ' songs' : num(hits.length) + ' of ' + num(all.length))
+        + (hits.length > MUS_PAGE ? ' \u00b7 showing the first ' + MUS_PAGE + ', narrow the search to see the rest' : '');
+    }
+
+    function musCatalogueList() {
+      var shown = musMatches().slice(0, MUS_PAGE);
+      if (!shown.length) return stateEmpty('Nothing matches that.');
+      return '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Energy</th><th>Character</th><th></th></tr></thead><tbody>' +
+        shown.map(musCatalogueRow).join('') + '</tbody></table></div>';
+    }
+
+    // Redraws ONLY the list. Searching used to call renderMusic(), which
+    // rebuilt the whole tab — so the search box you were typing into was
+    // destroyed and recreated mid-word, taking the caret and the scroll
+    // position with it.
+    function musRedrawList() {
+      var host = document.getElementById('cat-list');
+      var count = document.getElementById('cat-count');
+      if (host) host.innerHTML = musCatalogueList();
+      if (count) count.textContent = musCatalogueCount();
+    }
+
     function musCataloguePanel() {
       var all = musLive(), hits = musMatches();
       var shown = hits.slice(0, MUS_PAGE);
@@ -1970,15 +2008,9 @@
                 return '<option value="' + n + '"' + (String(MUS.lvl) === String(n) ? ' selected' : '') + '>energy ' + n + '</option>';
               }).join('') + '</select>' +
           '</div>' +
-          '<p class="muted adm-mono" id="cat-count">' +
-            (hits.length === all.length ? num(all.length) + ' songs' : num(hits.length) + ' of ' + num(all.length)) +
-            (hits.length > MUS_PAGE ? ' \u00b7 showing the first ' + MUS_PAGE + ', narrow the search to see the rest' : '') +
-          '</p>' +
+          '<p class="muted adm-mono" id="cat-count">' + musCatalogueCount() + '</p>' +
         '</div>' +
-        (shown.length
-          ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Energy</th><th>Character</th><th></th></tr></thead><tbody>' +
-            shown.map(musCatalogueRow).join('') + '</tbody></table></div>'
-          : stateEmpty('Nothing matches that.')) +
+        '<div id="cat-list">' + musCatalogueList() + '</div>' +
         '</div>';
     }
 
@@ -2052,7 +2084,11 @@
       }
     }
 
-    async function renderMusic() {
+    // Approving, pulling and pushing change enough that a full redraw is
+    // honest. Losing your place while doing it is not — the panel you were
+    // working in jumps to the top and you have to find it again.
+    async function renderMusic(keepPlace) {
+      var y = keepPlace ? window.scrollY : 0;
       var b = bodyEl(); b.innerHTML = stateLoading();
       try {
         var staged = await db.from('music_staging').select('*').order('added_at', { ascending: false });
@@ -2156,6 +2192,7 @@
               '</tbody></table></div></div>'
             : '');
         wireMusic();
+        if (keepPlace) window.scrollTo(0, y);
         // so the Push button's authorize() is the first async thing its click
         // does, rather than the fourth
         if (window.fsMusicKit && fsMusicKit.prewarm) fsMusicKit.prewarm();
@@ -2204,11 +2241,11 @@
         q.addEventListener('input', function () {
           clearTimeout(qt);
           // re-rendering on every keystroke would rebuild 60 rows per letter
-          qt = setTimeout(function () { MUS.q = q.value; renderMusic(); }, 220);
+          qt = setTimeout(function () { MUS.q = q.value; musRedrawList(); }, 200);
         });
       }
       var lvl = document.getElementById('cat-lvl');
-      if (lvl) lvl.addEventListener('change', function () { MUS.lvl = lvl.value; renderMusic(); });
+      if (lvl) lvl.addEventListener('change', function () { MUS.lvl = lvl.value; musRedrawList(); });
 
       var pull = document.getElementById('mus-pull');
       if (pull) pull.addEventListener('click', musPull);
@@ -2279,7 +2316,7 @@
             });
             musStop();
             toast('Approved \u2014 teachers can use it now');
-            renderMusic();
+            renderMusic(true);
           } catch (err) { ok.disabled = false; toast(err.message || 'Could not approve that'); }
           return;
         }
@@ -2320,7 +2357,7 @@
             });
             musStop();
             toast('Linked \u2014 ' + info.title);
-            renderMusic();
+            renderMusic(true);
           } catch (err) { pick.disabled = false; toast(err.message || 'Could not link that'); }
           return;
         }
@@ -2348,8 +2385,12 @@
               p_title: cdel.dataset.t, p_artist: cdel.dataset.a, p_reason: null,
             });
             musStop();
+            // the row goes, nothing else moves. Rebuilding the tab to delete
+            // one line is how you end up back at the top of the page.
+            MUS.removed[Number(ctr.dataset.cid)] = true;
+            ctr.remove();
+            musRefreshCounts();
             toast('Removed \u2014 ' + cdel.dataset.t);
-            renderMusic();
           } catch (err) {
             cdel.disabled = false;
             cdel.dataset.armed = ''; cdel.textContent = 'Remove';
@@ -2378,8 +2419,13 @@
               p_title: del.dataset.t, p_artist: del.dataset.a, p_reason: null,
             });
             musStop();
+            MUS.removed[Number(dtr.dataset.mid)] = true;
+            dtr.remove();
+            // it may also have been showing in the catalogue above
+            var twin = bodyEl().querySelector('tr[data-cid="' + dtr.dataset.mid + '"]');
+            if (twin) twin.remove();
+            musRefreshCounts();
             toast('Removed \u2014 ' + del.dataset.t);
-            renderMusic();
           } catch (err) {
             del.disabled = false;
             del.dataset.armed = ''; del.textContent = 'Remove';
@@ -2403,7 +2449,7 @@
           try {
             await A.rpc('reject_song', { p_song_id: Number(tr2.dataset.sid), p_note: null });
             musStop();
-            renderMusic();
+            renderMusic(true);
           } catch (err) { no.disabled = false; toast(err.message || 'Could not do that'); }
           return;
         }
@@ -2596,7 +2642,7 @@
           } catch (e) { console.warn('[music] could not stage', t.title, e && e.message); }
         }
         toast(staged + (staged === 1 ? ' song is' : ' songs are') + ' waiting for review');
-        renderMusic();
+        renderMusic(true);
       } catch (err) {
         toast(fsMusicKit.explain(err));
       } finally {
