@@ -1859,7 +1859,8 @@
           '<div class="mus-master"><button class="btn-primary" id="mus-build">Create it in Apple Music</button> ' +
           '<span class="muted adm-mono">' + num(withMedia) + ' of ' + num(inFile) + ' can be sent \u2014 the rest aren\u2019t on Apple Music</span></div>' +
           '<div class="mus-pull"><input type="text" class="modal-input" id="mus-url" placeholder="Paste the playlist\u2019s share link" value="' + esc(musSavedUrl()) + '" aria-label="Apple Music playlist link">' +
-          '<button class="btn-secondary" id="mus-pull">Pull new songs</button></div>' +
+          '<button class="btn-secondary" id="mus-pull">Pull new songs</button>' +
+          '<button class="btn-secondary" id="mus-sync">Push missing songs</button></div>' +
           '<p class="muted adm-mono" id="mus-pull-note">The playlist has to be <strong>shared</strong> \u2014 a private one isn\u2019t visible to us.</p>' +
           '</div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Waiting for review</h2><span class="muted adm-mono">' + num(MUS.pending.length) + '</span></div>' +
@@ -2009,6 +2010,8 @@
       if (build) build.addEventListener('click', musBuildMaster);
       var pull = document.getElementById('mus-pull');
       if (pull) pull.addEventListener('click', musPull);
+      var sync = document.getElementById('mus-sync');
+      if (sync) sync.addEventListener('click', musSync);
       var urlIn = document.getElementById('mus-url');
       if (urlIn) urlIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') musPull(); });
     }
@@ -2025,6 +2028,67 @@
     // playlist read — title, artist, length, artwork, preview, genre, ISRC.
     // Only energy and the three character flags are left blank, because they
     // are the only parts a machine has no business deciding.
+    // The mirror of Pull. Pull brings songs Apple has that we don't; this sends
+    // songs we have that the playlist doesn't — which is every song linked by
+    // hand since the playlist was built, because the build only ever included
+    // songs that already had an Apple id.
+    //
+    // Reading the playlist needs no sign-in; writing to it does, so this asks
+    // once and does the whole batch rather than prompting per song.
+    async function musSync() {
+      var btn = document.getElementById('mus-sync');
+      var input = document.getElementById('mus-url');
+      var note = document.getElementById('mus-pull-note');
+      var url = (input.value || '').trim();
+      if (!fsMusicKit.playlistId(url)) { toast('Paste the playlist\u2019s share link first.'); input.focus(); return; }
+
+      btn.disabled = true;
+      var restore = btn.textContent;
+      btn.textContent = 'Checking\u2026';
+      try {
+        var inPlaylist = {};
+        (await fsMusicKit.readPlaylist(url)).forEach(function (t) { inPlaylist[String(t.appleId)] = true; });
+
+        // every Apple id we know about: the shipped file plus manual links
+        var mine = [];
+        var seen = {};
+        function offer(songId, appleId, title, artist) {
+          if (!appleId || seen[String(appleId)]) return;
+          seen[String(appleId)] = true;
+          if (inPlaylist[String(appleId)]) return;
+          mine.push({ appleId: appleId, title: title, artist: artist });
+        }
+        var byId = {};
+        if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { byId[sg.id] = sg; });
+        if (typeof APPLE_MEDIA !== 'undefined') {
+          Object.keys(APPLE_MEDIA).forEach(function (k) {
+            var sg = byId[k] || {};
+            offer(k, APPLE_MEDIA[k].id, sg.title, sg.artist);
+          });
+        }
+        var links = await db.from('music_links').select('song_id,apple_id');
+        (links.data || []).forEach(function (l) {
+          var sg = byId[l.song_id] || {};
+          offer(l.song_id, l.apple_id, sg.title, sg.artist);
+        });
+
+        if (!mine.length) {
+          note.textContent = 'The playlist already has every song we can send.';
+          return;
+        }
+
+        btn.textContent = 'Adding ' + mine.length + '\u2026';
+        var r = await fsMusicKit.addToPlaylist('Flow School \u00b7 Master Library', mine);
+        toast(r.added + (r.added === 1 ? ' song added' : ' songs added') + ' to the playlist');
+        note.textContent = 'Last push added ' + r.added + '.';
+      } catch (err) {
+        toast(fsMusicKit.explain(err));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = restore;
+      }
+    }
+
     async function musPull() {
       var btn = document.getElementById('mus-pull');
       var input = document.getElementById('mus-url');
