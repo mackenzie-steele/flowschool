@@ -1562,7 +1562,7 @@
       if (!tracks.length) return;
 
       appleBusy = true;
-      if (window.fsWorking) fsWorking(btn, true, '');
+      if (window.fsWorking) fsWorking(btn, true, null);   // null: don't touch the icon
       else btn.disabled = true;
 
       // savedTitle is the name she gave it; defaultTitle() only if she hasn't
@@ -1584,7 +1584,7 @@
         toast(fsMusicKit.explain(e));
       }).finally(function () {
         appleBusy = false;
-        if (window.fsWorking) fsWorking(btn, false, '');
+        if (window.fsWorking) fsWorking(btn, false, null);
         else btn.disabled = false;
         if (window.fsIcons) fsIcons();
       });
