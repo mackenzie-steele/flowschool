@@ -375,7 +375,6 @@
     }
     .mus-pull { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
     .mus-pull .modal-input { flex: 1; min-width: 260px; margin: 0; }
-    .mus-master { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
     .adm-panel-body { padding: 0 20px 20px; }
   </style>
 </head>
@@ -1742,6 +1741,24 @@
     // The first WRITE surface in this admin. Everything else here reports;
     // this one changes what teachers get, so every approval is gated on a
     // human having set an energy — see approve_song() in the SQL.
+    // The one playlist this tool reads from and writes to. Bonnie and
+    // Mackenzie add music to it in Apple Music; Pull brings new songs in for
+    // review, Push sends back anything matched by hand.
+    //
+    // Two identifiers, because Apple needs both. The ID is the catalogue id
+    // from the share link, and is all READING needs. The NAME is how the
+    // library playlist is found when WRITING, since a share link never yields
+    // a library id — so renaming it in Apple Music means changing it here too,
+    // or Push stops finding it.
+    //
+    // If it is ever deleted and recreated the id changes: open it in Apple
+    // Music, Share → Copy Link, and take the pl.… from the end.
+    var MUSIC_PLAYLIST = {
+      id: 'pl.u-yZyVVEXTDJ2NjW',
+      name: 'Flow School \u00b7 Master Library',
+      url: 'https://music.apple.com/us/playlist/flow-school-master-library/pl.u-yZyVVEXTDJ2NjW',
+    };
+
     var MUS = { pending: [], linked: {} };
 
     function musDur(d) { return Math.floor(d / 60) + ':' + String(d % 60).padStart(2, '0'); }
@@ -1854,14 +1871,12 @@
             '<div class="adm-metric"><div class="lbl">Waiting for review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
             '<div class="adm-metric"><div class="lbl">Approved, not yet in the file</div><div class="val">' + num(approved.length) + '</div></div>' +
           '</div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>The master playlist</h2></div>' +
-          '<div class="adm-panel-body"><p class="muted">Builds a playlist in your Apple Music holding every song in the catalogue. Add new music to that playlist and it turns up below for review.</p>' +
-          '<div class="mus-master"><button class="btn-primary" id="mus-build">Create it in Apple Music</button> ' +
-          '<span class="muted adm-mono">' + num(withMedia) + ' of ' + num(inFile) + ' can be sent \u2014 the rest aren\u2019t on Apple Music</span></div>' +
-          '<div class="mus-pull"><input type="text" class="modal-input" id="mus-url" placeholder="Paste the playlist\u2019s share link" value="' + esc(musSavedUrl()) + '" aria-label="Apple Music playlist link">' +
-          '<button class="btn-secondary" id="mus-pull">Pull new songs</button>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>The master playlist</h2>' +
+          '<a class="muted adm-mono" href="' + esc(MUSIC_PLAYLIST.url) + '" target="_blank" rel="noopener">open in Apple Music \u2197</a></div>' +
+          '<div class="adm-panel-body"><p class="muted">Add music to <strong>' + esc(MUSIC_PLAYLIST.name) + '</strong> in Apple Music, then pull it in here. Push sends back any song matched by hand, so the playlist and the catalogue stay the same set.</p>' +
+          '<div class="mus-pull"><button class="btn-secondary" id="mus-pull">Pull new songs</button>' +
           '<button class="btn-secondary" id="mus-sync">Push missing songs</button></div>' +
-          '<p class="muted adm-mono" id="mus-pull-note">The playlist has to be <strong>shared</strong> \u2014 a private one isn\u2019t visible to us.</p>' +
+          '<p class="muted adm-mono" id="mus-pull-note"></p>' +
           '</div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Waiting for review</h2><span class="muted adm-mono">' + num(MUS.pending.length) + '</span></div>' +
             (MUS.pending.length
@@ -2006,23 +2021,11 @@
         }
       });
 
-      var build = document.getElementById('mus-build');
-      if (build) build.addEventListener('click', musBuildMaster);
       var pull = document.getElementById('mus-pull');
       if (pull) pull.addEventListener('click', musPull);
       var sync = document.getElementById('mus-sync');
       if (sync) sync.addEventListener('click', musSync);
-      var urlIn = document.getElementById('mus-url');
-      if (urlIn) urlIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') musPull(); });
     }
-
-    // Sends the whole catalogue to Apple as one playlist. lib/musickit.js
-    // chunks it at 100 tracks a request and appends sequentially, so the
-    // order survives.
-    // The share link is the one piece of state this tool needs to remember,
-    // and it belongs to whoever is using the admin — localStorage is the right
-    // size of storage for it.
-    function musSavedUrl() { try { return localStorage.getItem('fs-adm-music-url') || ''; } catch (e) { return ''; } }
 
     // Everything Apple already knows about a track comes back with the
     // playlist read — title, artist, length, artwork, preview, genre, ISRC.
@@ -2037,17 +2040,14 @@
     // once and does the whole batch rather than prompting per song.
     async function musSync() {
       var btn = document.getElementById('mus-sync');
-      var input = document.getElementById('mus-url');
       var note = document.getElementById('mus-pull-note');
-      var url = (input.value || '').trim();
-      if (!fsMusicKit.playlistId(url)) { toast('Paste the playlist\u2019s share link first.'); input.focus(); return; }
 
       btn.disabled = true;
       var restore = btn.textContent;
       btn.textContent = 'Checking\u2026';
       try {
         var inPlaylist = {};
-        (await fsMusicKit.readPlaylist(url)).forEach(function (t) { inPlaylist[String(t.appleId)] = true; });
+        (await fsMusicKit.readPlaylist(MUSIC_PLAYLIST.id)).forEach(function (t) { inPlaylist[String(t.appleId)] = true; });
 
         // every Apple id we know about: the shipped file plus manual links
         var mine = [];
@@ -2078,7 +2078,7 @@
         }
 
         btn.textContent = 'Adding ' + mine.length + '\u2026';
-        var r = await fsMusicKit.addToPlaylist('Flow School \u00b7 Master Library', mine);
+        var r = await fsMusicKit.addToPlaylist(MUSIC_PLAYLIST.name, mine);
         toast(r.added + (r.added === 1 ? ' song added' : ' songs added') + ' to the playlist');
         note.textContent = 'Last push added ' + r.added + '.';
       } catch (err) {
@@ -2091,17 +2091,13 @@
 
     async function musPull() {
       var btn = document.getElementById('mus-pull');
-      var input = document.getElementById('mus-url');
       var note = document.getElementById('mus-pull-note');
-      var url = (input.value || '').trim();
-      if (!fsMusicKit.playlistId(url)) { toast('That doesn\u2019t look like an Apple Music playlist link.'); input.focus(); return; }
-      try { localStorage.setItem('fs-adm-music-url', url); } catch (e) {}
 
       btn.disabled = true;
       var restore = btn.textContent;
       btn.textContent = 'Reading\u2026';
       try {
-        var tracks = await fsMusicKit.readPlaylist(url);
+        var tracks = await fsMusicKit.readPlaylist(MUSIC_PLAYLIST.id);
 
         // three places a song might already be known: the shipped catalogue,
         // a manual link, and the queue itself
@@ -2146,36 +2142,6 @@
       }
     }
 
-    async function musBuildMaster() {
-      var btn = document.getElementById('mus-build');
-      if (!btn || btn.disabled) return;
-      if (typeof SONGS === 'undefined') { toast('Song data didn\u2019t load'); return; }
-
-      var tracks = SONGS.map(function (sg) {
-        var m = (typeof APPLE_MEDIA !== 'undefined') && APPLE_MEDIA[sg.id];
-        return { id: sg.id, title: sg.title, artist: sg.artist, appleId: m && m.id };
-      });
-
-      // motion.js isn't loaded in admin, so fsWorking is undefined here — the
-      // guard alone would leave the button live and a second press would send
-      // the whole catalogue twice
-      btn.disabled = true;
-      var restore = btn.textContent;
-      btn.textContent = 'Sending\u2026';
-      try {
-        var r = await fsMusicKit.exportPlaylist(
-          'Flow School \u00b7 Master Library',
-          'Every song in the Flow School catalogue. Add music here and it goes to the admin for review.',
-          tracks);
-        toast(r.added + ' songs sent to Apple Music'
-          + (r.missing.length ? ' \u00b7 ' + r.missing.length + ' aren\u2019t on Apple Music' : ''));
-      } catch (err) {
-        toast(fsMusicKit.explain(err));
-      } finally {
-        btn.disabled = false;
-        btn.textContent = restore;
-      }
-    }
 
     // ── ACTIVITY ──
     async function renderActivity() {
