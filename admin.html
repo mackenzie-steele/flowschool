@@ -2052,54 +2052,73 @@
       var btn = document.getElementById('mus-sync');
       var note = document.getElementById('mus-pull-note');
 
+      // Two attempts at this failed with nothing on screen to say why, so it
+      // narrates. Each step names itself before it runs: if it stops, the
+      // last line standing is the step that broke.
+      var step = function (t) { note.textContent = t; console.info('[music] ' + t); };
+      var fail = function (where, e) {
+        var raw = (e && (e.message || e.toString())) || 'no message';
+        var extra = '';
+        try {
+          // MusicKit errors carry more than .message — a 403 for "no
+          // subscription" looks identical to a network blip without this
+          if (e && e.name) extra += ' [' + e.name + ']';
+          if (e && e.status) extra += ' status=' + e.status;
+          if (e && e.errorCode) extra += ' code=' + e.errorCode;
+        } catch (_) {}
+        note.textContent = 'Stopped at: ' + where + ' \u2014 ' + raw + extra;
+        console.error('[music] failed at ' + where, e);
+        toast(fsMusicKit.explain(e));
+      };
+
       btn.disabled = true;
       var restore = btn.textContent;
-      btn.textContent = 'Connecting\u2026';
+      btn.textContent = 'Working\u2026';
+
+      var music;
       try {
-        // FIRST, before any await of our own. authorize() opens Apple's
-        // sign-in window and browsers only allow that inside a live user
-        // gesture — reading the playlist first spends it and the window is
-        // silently blocked, which is exactly how this failed the first time.
-        await fsMusicKit.connect();
-        btn.textContent = 'Checking\u2026';
+        // FIRST, before any await of our own — authorize() opens Apple's
+        // sign-in and browsers only allow that inside a live user gesture.
+        step('signing in to Apple Music\u2026');
+        music = await fsMusicKit.connect();
+      } catch (e) { fail('sign-in', e); btn.disabled = false; btn.textContent = restore; return; }
+
+      try {
+        step('signed in. Checking your subscription\u2026');
+        if (music && music.isAuthorized === false) throw new Error('AUTH_DECLINED');
+
+        step('finding \u201c' + MUSIC_PLAYLIST.name + '\u201d in your library\u2026');
+        var lib = await fsMusicKit.findLibraryPlaylist(MUSIC_PLAYLIST.name);
+        step('found it. Reading what\u2019s already in the playlist\u2026');
 
         var inPlaylist = {};
         (await fsMusicKit.readPlaylist(MUSIC_PLAYLIST.id)).forEach(function (t) { inPlaylist[String(t.appleId)] = true; });
 
-        // every Apple id we know about: the shipped file plus manual links
-        var mine = [];
-        var seen = {};
-        function offer(songId, appleId, title, artist) {
+        var mine = [], seen = {}, byId = {};
+        if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { byId[sg.id] = sg; });
+        function offer(songId, appleId) {
           if (!appleId || seen[String(appleId)]) return;
           seen[String(appleId)] = true;
           if (inPlaylist[String(appleId)]) return;
-          mine.push({ appleId: appleId, title: title, artist: artist });
+          var sg = byId[songId] || {};
+          mine.push({ appleId: appleId, title: sg.title, artist: sg.artist });
         }
-        var byId = {};
-        if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { byId[sg.id] = sg; });
         if (typeof APPLE_MEDIA !== 'undefined') {
-          Object.keys(APPLE_MEDIA).forEach(function (k) {
-            var sg = byId[k] || {};
-            offer(k, APPLE_MEDIA[k].id, sg.title, sg.artist);
-          });
+          Object.keys(APPLE_MEDIA).forEach(function (k) { offer(k, APPLE_MEDIA[k].id); });
         }
         var links = await db.from('music_links').select('song_id,apple_id');
-        (links.data || []).forEach(function (l) {
-          var sg = byId[l.song_id] || {};
-          offer(l.song_id, l.apple_id, sg.title, sg.artist);
+        (links.data || []).forEach(function (l) { offer(l.song_id, l.apple_id); });
+
+        if (!mine.length) { step('The playlist already has every song we can send.'); return; }
+
+        step('adding ' + mine.length + ' song' + (mine.length === 1 ? '' : 's') + '\u2026');
+        var r = await fsMusicKit.addToPlaylistById(lib.id, mine, function (done, total) {
+          step('adding\u2026 ' + done + ' of ' + total);
         });
-
-        if (!mine.length) {
-          note.textContent = 'The playlist already has every song we can send.';
-          return;
-        }
-
-        btn.textContent = 'Adding ' + mine.length + '\u2026';
-        var r = await fsMusicKit.addToPlaylist(MUSIC_PLAYLIST.name, mine);
+        step('Done \u2014 added ' + r.added + '.');
         toast(r.added + (r.added === 1 ? ' song added' : ' songs added') + ' to the playlist');
-        note.textContent = 'Last push added ' + r.added + '.';
-      } catch (err) {
-        toast(fsMusicKit.explain(err));
+      } catch (e) {
+        fail(note.textContent.replace(/\u2026$/, ''), e);
       } finally {
         btn.disabled = false;
         btn.textContent = restore;
