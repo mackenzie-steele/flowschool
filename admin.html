@@ -1801,6 +1801,28 @@
       });
     }
 
+    // Linking a song removes it from the list above, which left no way to see
+    // what had been linked — the work disappeared the moment it was done.
+    function musLinkedPanel() {
+      var rows = MUS.linkedRows || [];
+      if (!rows.length) return '';
+      var byId = {};
+      if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { byId[sg.id] = sg; });
+      return '<div class="adm-panel"><div class="adm-panel-head"><h2>Matched by hand</h2>' +
+        '<span class="muted adm-mono">' + num(rows.length) + '</span></div>' +
+        '<div class="adm-panel-body"><p class="muted">These had no artwork or preview until somebody found the right recording. They work for teachers now; they reach <span class="adm-mono">apple-media.js</span> on the next publish, and the Apple playlist on the next push.</p></div>' +
+        '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Song</th><th>Apple id</th><th>In the file</th><th>Matched</th></tr></thead><tbody>' +
+        rows.map(function (l) {
+          var sg = byId[l.song_id] || {};
+          var inFile = !!(typeof APPLE_MEDIA !== 'undefined' && APPLE_MEDIA[l.song_id]);
+          return '<tr><td><strong>' + esc(sg.title || ('song ' + l.song_id)) + '</strong>' +
+            (sg.artist ? '<br><span class="muted">' + esc(sg.artist) + '</span>' : '') + '</td>' +
+            '<td class="muted adm-mono">' + esc(String(l.apple_id)) + '</td>' +
+            '<td>' + (inFile ? '<span class="adm-pill on">yes</span>' : '<span class="adm-pill off">not yet</span>') + '</td>' +
+            '<td class="muted">' + A.ago(l.linked_at) + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    }
+
     function musUnmatchedPanel() {
       var miss = musUnmatched();
       if (!miss.length) return '';
@@ -1848,9 +1870,10 @@
         var staged = await db.from('music_staging').select('*').order('added_at', { ascending: false });
         if (staged.error) throw staged.error;
         var rows = staged.data || [];
-        var linked = await db.from('music_links').select('song_id');
+        var linked = await db.from('music_links').select('*');
         MUS.linked = {};
-        (linked.data || []).forEach(function (l) { MUS.linked[l.song_id] = true; });
+        MUS.linkedRows = linked.data || [];
+        MUS.linkedRows.forEach(function (l) { MUS.linked[l.song_id] = true; });
         MUS.pending = rows.filter(function (r) { return r.status === 'pending'; });
         var approved = rows.filter(function (r) { return r.status === 'approved'; });
         var rejected = rows.filter(function (r) { return r.status === 'rejected'; });
@@ -1895,6 +1918,7 @@
               ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Hear</th><th>Energy \u00b7 0\u201310</th><th>Character</th><th></th></tr></thead><tbody>' + MUS.pending.map(musRow).join('') + '</tbody></table></div>'
               : stateEmpty('Nothing waiting. Add songs to the master playlist in Apple Music, then pull them in.')) +
           '</div>' +
+          musLinkedPanel() +
           musUnmatchedPanel() +
           (approved.length
             ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Approved</h2><span class="muted adm-mono">live for teachers now</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Song</th><th class="num">Energy</th><th>Character</th><th>Approved</th></tr></thead><tbody>' +
