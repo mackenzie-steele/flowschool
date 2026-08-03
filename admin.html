@@ -1753,6 +1753,10 @@
     //
     // If it is ever deleted and recreated the id changes: open it in Apple
     // Music, Share → Copy Link, and take the pl.… from the end.
+    // NOTE: turning collaboration on or off in Apple Music CHANGES a
+    // playlist's id. If Push fails with "Unable to update tracks", that is
+    // Apple's collaborative-playlist bug — turn collaboration off, re-share,
+    // and put the new pl.… here.
     var MUSIC_PLAYLIST = {
       id: 'pl.u-yZyVVEXTDJ2NjW',
       name: 'Flow School \u00b7 Master Library',
@@ -2073,6 +2077,12 @@
           return String(p2.name || '').trim().toLowerCase() === MUSIC_PLAYLIST.name.toLowerCase();
         });
         console.info('[music] library playlists:', me.playlists);
+        // collaboration is what breaks the write, so name it if we can see it
+        var collab = me.playlists.filter(function (p2) {
+          var a = p2.attributes || {};
+          return a.isCollaborative || a.hasCollaboration || a.collaborative;
+        });
+        if (collab.length) console.warn('[music] collaborative playlists (writes fail on these):', collab);
         var lines = [
           me.playlists.length + ' playlists in this library, ' + mine.length + ' of them editable.',
           named.length
