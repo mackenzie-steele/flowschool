@@ -369,6 +369,8 @@
     .mus-gap.off  { color: var(--text-3); }
     .mus-pick { padding: 6px 12px; font-size: var(--fs-label-2); }
     .mus-find { white-space: nowrap; }
+    .mus-pull { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+    .mus-pull .modal-input { flex: 1; min-width: 260px; margin: 0; }
     .mus-master { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
     .adm-panel-body { padding: 0 20px 20px; }
   </style>
@@ -1842,7 +1844,11 @@
           '<div class="adm-panel"><div class="adm-panel-head"><h2>The master playlist</h2></div>' +
           '<div class="adm-panel-body"><p class="muted">Builds a playlist in your Apple Music holding every song in the catalogue. Add new music to that playlist and it turns up below for review.</p>' +
           '<div class="mus-master"><button class="btn-primary" id="mus-build">Create it in Apple Music</button> ' +
-          '<span class="muted adm-mono">' + num(withMedia) + ' of ' + num(inFile) + ' can be sent \u2014 the rest aren\u2019t on Apple Music</span></div></div></div>' +
+          '<span class="muted adm-mono">' + num(withMedia) + ' of ' + num(inFile) + ' can be sent \u2014 the rest aren\u2019t on Apple Music</span></div>' +
+          '<div class="mus-pull"><input type="text" class="modal-input" id="mus-url" placeholder="Paste the playlist\u2019s share link" value="' + esc(musSavedUrl()) + '" aria-label="Apple Music playlist link">' +
+          '<button class="btn-secondary" id="mus-pull">Pull new songs</button></div>' +
+          '<p class="muted adm-mono" id="mus-pull-note">The playlist has to be <strong>shared</strong> \u2014 a private one isn\u2019t visible to us.</p>' +
+          '</div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Waiting for review</h2><span class="muted adm-mono">' + num(MUS.pending.length) + '</span></div>' +
             (MUS.pending.length
               ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Hear</th><th>Energy \u00b7 0\u201310</th><th>Character</th><th></th></tr></thead><tbody>' + MUS.pending.map(musRow).join('') + '</tbody></table></div>'
@@ -1988,11 +1994,81 @@
 
       var build = document.getElementById('mus-build');
       if (build) build.addEventListener('click', musBuildMaster);
+      var pull = document.getElementById('mus-pull');
+      if (pull) pull.addEventListener('click', musPull);
+      var urlIn = document.getElementById('mus-url');
+      if (urlIn) urlIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') musPull(); });
     }
 
     // Sends the whole catalogue to Apple as one playlist. lib/musickit.js
     // chunks it at 100 tracks a request and appends sequentially, so the
     // order survives.
+    // The share link is the one piece of state this tool needs to remember,
+    // and it belongs to whoever is using the admin — localStorage is the right
+    // size of storage for it.
+    function musSavedUrl() { try { return localStorage.getItem('fs-adm-music-url') || ''; } catch (e) { return ''; } }
+
+    // Everything Apple already knows about a track comes back with the
+    // playlist read — title, artist, length, artwork, preview, genre, ISRC.
+    // Only energy and the three character flags are left blank, because they
+    // are the only parts a machine has no business deciding.
+    async function musPull() {
+      var btn = document.getElementById('mus-pull');
+      var input = document.getElementById('mus-url');
+      var note = document.getElementById('mus-pull-note');
+      var url = (input.value || '').trim();
+      if (!fsMusicKit.playlistId(url)) { toast('That doesn\u2019t look like an Apple Music playlist link.'); input.focus(); return; }
+      try { localStorage.setItem('fs-adm-music-url', url); } catch (e) {}
+
+      btn.disabled = true;
+      var restore = btn.textContent;
+      btn.textContent = 'Reading\u2026';
+      try {
+        var tracks = await fsMusicKit.readPlaylist(url);
+
+        // three places a song might already be known: the shipped catalogue,
+        // a manual link, and the queue itself
+        var known = {};
+        if (typeof APPLE_MEDIA !== 'undefined') {
+          Object.keys(APPLE_MEDIA).forEach(function (k) { known[String(APPLE_MEDIA[k].id)] = true; });
+        }
+        var seen = await db.from('music_staging').select('apple_id');
+        (seen.data || []).forEach(function (r) { known[String(r.apple_id)] = true; });
+        var links = await db.from('music_links').select('apple_id');
+        (links.data || []).forEach(function (r) { known[String(r.apple_id)] = true; });
+
+        var fresh = tracks.filter(function (t) { return !known[String(t.appleId)]; });
+        if (!fresh.length) {
+          note.textContent = 'Read ' + tracks.length + ' songs \u2014 nothing new since last time.';
+          return;
+        }
+
+        var maxId = (typeof SONGS !== 'undefined')
+          ? SONGS.reduce(function (a, s2) { return Math.max(a, s2.id); }, 0) : 0;
+
+        var staged = 0;
+        for (var i = 0; i < fresh.length; i++) {
+          var t = fresh[i];
+          btn.textContent = 'Adding ' + (i + 1) + ' of ' + fresh.length + '\u2026';
+          try {
+            await A.rpc('stage_song', {
+              p_apple_id: Number(t.appleId), p_title: t.title, p_artist: t.artist,
+              p_dur: t.dur, p_genre: t.genre, p_art: t.art,
+              p_preview: t.preview, p_isrc: t.isrc, p_known_max: maxId,
+            });
+            staged++;
+          } catch (e) { console.warn('[music] could not stage', t.title, e && e.message); }
+        }
+        toast(staged + (staged === 1 ? ' song is' : ' songs are') + ' waiting for review');
+        renderMusic();
+      } catch (err) {
+        toast(fsMusicKit.explain(err));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = restore;
+      }
+    }
+
     async function musBuildMaster() {
       var btn = document.getElementById('mus-build');
       if (!btn || btn.disabled) return;
