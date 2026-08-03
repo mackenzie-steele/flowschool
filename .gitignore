@@ -17,3 +17,11 @@ scripts/.apple-cache.json
 scripts/new-songs-draft.txt
 scripts/new-songs-draft.txt.media.json
 *.bak
+
+# signing keys — never committed, never deployed. The MusicKit .p8 lives
+# outside this repo (FLOW-SCHOOL/musickit/) and should stay there; this is a
+# guard in case one is ever dropped in here by mistake. Anything holding it
+# can mint Apple Music tokens as Flow School.
+*.p8
+*.pem
+musickit/

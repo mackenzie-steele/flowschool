@@ -608,6 +608,7 @@
   <script src="lib/sync.js"></script>
   <script src="lib/analytics.js"></script>
   <script src="lib/motion.js"></script>
+  <script src="lib/musickit.js"></script>
 
   <main>
   <section class="hero">
@@ -1494,6 +1495,9 @@
         <button class="btn-icon" id="regen-btn" title="Regenerate playlist" data-tooltip="Regenerate">
           <span class="material-symbols-sharp">refresh</span>
         </button>
+        <button class="btn-icon" id="apple-btn" title="Send to Apple Music" data-tooltip="Apple Music">
+          <span class="material-symbols-sharp">library_books</span>
+        </button>
         <button class="btn-icon${S.saved ? ' saved' : ''}" id="save-btn" title="${S.saved ? 'Remove from library' : 'Save playlist'}" data-tooltip="${S.saved ? 'Unsave' : 'Save'}">
           <span class="material-symbols-sharp save-icon">bookmark</span>
         </button>
@@ -1528,6 +1532,7 @@
       rebindPreviewAfterRender(container);
 
       document.getElementById('save-btn').addEventListener('click', handleSave);
+      document.getElementById('apple-btn').addEventListener('click', handleAppleExport);
       document.getElementById('regen-btn').addEventListener('click', () => {
         forgetSaved();
         const res = document.getElementById('results');
@@ -1537,6 +1542,51 @@
           renderResults(generate());
           if (window.fsTrack) fsTrack('item_generated', { resourceType: 'playlist' });
         }, 110);
+      });
+    }
+
+    // ── Send to Apple Music ───────────────────────────────────────────
+    // The whole point of the tool has been to shape an arc; until now the
+    // teacher then retyped it into her music app. This is the last step.
+    var appleBusy = false;
+    function handleAppleExport() {
+      if (appleBusy || !lastData) return;
+      var btn = document.getElementById('apple-btn');
+
+      var tracks = lastData.flatMap(function (d) {
+        return d.songs.map(function (sg) {
+          var m = media(sg.id);
+          return { id: sg.id, title: sg.title, artist: sg.artist, appleId: m && m.id };
+        });
+      });
+      if (!tracks.length) return;
+
+      appleBusy = true;
+      if (window.fsWorking) fsWorking(btn, true, '');
+      else btn.disabled = true;
+
+      // savedTitle is the name she gave it; defaultTitle() only if she hasn't
+      var name = (savedTitle || defaultTitle());
+      var desc = ARC_SHAPES[S.arcKey].name + ' · ' + S.duration + ' min · built in Flow School';
+
+      fsMusicKit.exportPlaylist(name, desc, tracks).then(function (r) {
+        if (r.missing.length) {
+          // name what didn't make it — a playlist that quietly arrives short
+          // is worse than one that tells you which songs Apple doesn't have
+          toast(r.added + ' sent to Apple Music · ' + r.missing.length
+            + (r.missing.length === 1 ? ' song isn’t' : ' songs aren’t') + ' on Apple Music');
+          console.info('[apple] not on Apple Music:',
+            r.missing.map(function (t) { return t.title + ' — ' + t.artist; }));
+        } else {
+          toast('Sent to Apple Music · ' + r.added + ' songs');
+        }
+      }).catch(function (e) {
+        toast(fsMusicKit.explain(e));
+      }).finally(function () {
+        appleBusy = false;
+        if (window.fsWorking) fsWorking(btn, false, '');
+        else btn.disabled = false;
+        if (window.fsIcons) fsIcons();
       });
     }
 
