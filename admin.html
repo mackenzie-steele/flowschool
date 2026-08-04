@@ -106,6 +106,25 @@
       letter-spacing: var(--ls-micro); text-transform: uppercase; color: var(--text-3);
     }
     .vid-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    /* Radios as rows, not a bare list — the whole row is the target, which
+       matters most on a phone. State is carried by the fill AND the dot, so
+       it is never colour alone. */
+    .vid-radios { display: flex; flex-direction: column; gap: 2px; }
+    .vid-radio {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 12px; border-radius: var(--rb); cursor: pointer;
+      transition: background var(--transition-base);
+    }
+    .vid-radio:hover { background: rgba(var(--ink-rgb), .03); }
+    .vid-radio.on { background: var(--accent-dim); }
+    .vid-radio input { margin-top: 2px; accent-color: var(--accent); flex: none; }
+    .vid-radio input:disabled { opacity: .4; }
+    .vid-radio:has(input:disabled) { opacity: .5; cursor: not-allowed; }
+    .vid-radio-body { display: flex; flex-direction: column; gap: 1px; }
+    .vid-radio-name { font-size: var(--text-ui); color: var(--text-1); }
+    .vid-radio.on .vid-radio-name { color: var(--accent); }
+    .vid-radio .nf-hint { margin: 0; }
+    .vid-when { display: flex; flex-direction: column; padding: 4px 12px 0; }
     .vid-blockers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
     .vid-blockers li {
       display: flex; align-items: flex-start; gap: 8px;
@@ -3216,6 +3235,7 @@
       ready:      ['Ready', ''],
       errored:    ['Failed', 'off'],
       published:  ['Published', 'on'],
+      scheduled:  ['Scheduled', ''],
       archived:   ['Archived', ''],
     };
     function videoPill(s) {
@@ -3392,7 +3412,7 @@
           '</div>' +
           '<div class="vid-head-right">' +
             (isNew ? '' : videoPill(v.status)) +
-            '<button class="btn-primary" id="vid-save-top">' + (isNew ? 'Create draft' : 'Save changes') + '</button>' +
+            '<button class="btn-primary" id="vid-save-top">' + (isNew ? 'Create draft' : 'Save') + '</button>' +
           '</div>' +
         '</div>' +
 
@@ -3517,19 +3537,39 @@
           '</div>' +
 
           '<div class="vid-card">' +
-            '<span class="vid-card-cap">Publishing</span>' +
+            '<span class="vid-card-cap">Visibility</span>' +
+            '<div class="vid-radios" role="radiogroup" aria-label="Visibility">' +
+              [['unpublished', 'Unpublished', 'Only you can see it.'],
+               ['published',   'Published',   'Live in the library now.'],
+               ['scheduled',   'Scheduled',   'Goes live on its own, at a time you pick.']]
+                .map(function (o) {
+                  var on = videoVisibility(v) === o[0];
+                  return '<label class="vid-radio' + (on ? ' on' : '') + '">' +
+                    '<input type="radio" name="vid-vis" value="' + o[0] + '"' + (on ? ' checked' : '') +
+                      (blockers.length && o[0] !== 'unpublished' ? ' disabled' : '') + '>' +
+                    '<span class="vid-radio-body"><span class="vid-radio-name">' + o[1] + '</span>' +
+                    '<span class="nf-hint">' + o[2] + '</span></span></label>';
+                }).join('') +
+            '</div>' +
+            '<div class="vid-when" id="vid-when"' + (videoVisibility(v) === 'scheduled' ? '' : ' hidden') + '>' +
+              '<label class="nf-label" for="vid-when-at">Goes live</label>' +
+              '<input class="modal-input" type="datetime-local" id="vid-when-at" value="' +
+                esc(videoLocalDatetime(v.published_at)) + '">' +
+              '<span class="nf-hint">Your timezone. Nothing runs on a schedule — it simply becomes visible when this moment passes.</span>' +
+            '</div>' +
             (blockers.length
               ? '<ul class="vid-blockers">' + blockers.map(function (x) {
                   return '<li><span class="material-symbols-sharp">info</span>' + esc(x) + '</li>'; }).join('') + '</ul>'
-              : '<p class="vid-ready"><span class="material-symbols-sharp">check</span>Ready to publish.</p>') +
+              : '') +
             '<div class="vid-actions">' +
               '<button class="btn-secondary" id="vid-save">' + (isNew ? 'Create draft' : 'Save') + '</button>' +
-              (!isNew && v.status !== 'published'
-                ? '<button class="btn-primary" id="vid-publish"' + (blockers.length ? ' disabled' : '') + '>Publish</button>' : '') +
-              (v.status === 'published' ? '<button class="btn-ghost" id="vid-unpublish">Unpublish</button>' : '') +
+              (isNew ? '' : '<button class="btn-primary" id="vid-apply-vis"' + (blockers.length ? ' disabled' : '') + '>Apply</button>') +
             '</div>' +
             '<span class="nf-err" id="vid-err"></span>' +
-            (v.published_at ? '<span class="nf-hint">Published ' + esc(A.fmtDate(v.published_at)) + '</span>' : '') +
+            (v.status === 'published' && v.published_at
+              ? '<span class="nf-hint">Published ' + esc(A.fmtDate(v.published_at)) + '</span>' : '') +
+            (v.status === 'scheduled' && v.published_at
+              ? '<span class="nf-hint">Goes live ' + esc(A.fmtDateTime(v.published_at)) + '</span>' : '') +
           '</div>' +
 
           (isNew || v.status === 'archived' ? '' :
@@ -3548,6 +3588,22 @@
             (blurb ? '<p>' + esc(blurb) + '</p>' : '') + '</div>' +
           '<div class="vid-section-body">' + inner + '</div></section>';
       }
+    }
+
+    // Three visible states out of seven internal ones. draft/ready/errored
+    // all mean "not out there yet" to a person writing a video.
+    function videoVisibility(v) {
+      if (v.status === 'published') return 'published';
+      if (v.status === 'scheduled') return 'scheduled';
+      return 'unpublished';
+    }
+    // <input type="datetime-local"> wants local wall-clock with no zone, so
+    // the UTC timestamp has to be shifted before it will display at all.
+    function videoLocalDatetime(iso) {
+      var d = iso ? new Date(iso) : new Date(Date.now() + 86400000);
+      if (isNaN(d)) return '';
+      var off = d.getTimezoneOffset() * 60000;
+      return new Date(d.getTime() - off).toISOString().slice(0, 16);
     }
 
     function vidTag(k) {
@@ -3814,25 +3870,46 @@
           takeThumb(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
         });
       }
-      var pub = $('vid-publish');
-      if (pub) pub.addEventListener('click', async function () {
-        if (VID.busy) return; VID.busy = true; pub.disabled = true; err.textContent = '';
-        try {
-          await saveVideo(null, err, true);            // never publish a stale row
-          var r = await db.rpc('publish_video', { p_id: v.id });
-          if (r.error) throw r.error;
-          toast('Published'); VID.editing = null; await renderVideos();
-        } catch (e) { err.textContent = e.message || 'Could not publish.'; pub.disabled = false; }
-        finally { VID.busy = false; }
+      // the radios only change what the box shows; nothing moves until Apply
+      document.querySelectorAll('input[name="vid-vis"]').forEach(function (r) {
+        r.addEventListener('change', function () {
+          document.querySelectorAll('.vid-radio').forEach(function (l) {
+            l.classList.toggle('on', l.contains(r) && r.checked);
+          });
+          var when = $('vid-when');
+          if (when) when.hidden = r.value !== 'scheduled';
+        });
       });
-      var unpub = $('vid-unpublish');
-      if (unpub) unpub.addEventListener('click', async function () {
+
+      var apply = $('vid-apply-vis');
+      if (apply) apply.addEventListener('click', async function () {
+        if (VID.busy) return;
+        var chosen = (document.querySelector('input[name="vid-vis"]:checked') || {}).value || 'unpublished';
+        VID.busy = true; apply.disabled = true; err.textContent = '';
         try {
-          var r = await db.rpc('unpublish_video', { p_id: v.id });
+          await saveVideo(null, err, true);          // never act on a stale row
+          var r;
+          if (chosen === 'published') {
+            r = await db.rpc('publish_video', { p_id: v.id });
+          } else if (chosen === 'scheduled') {
+            var at = ($('vid-when-at') || {}).value;
+            if (!at) throw new Error('Pick a date and time.');
+            // datetime-local has no zone; new Date() reads it as local, which
+            // is what the admin meant, and toISOString sends UTC
+            r = await db.rpc('schedule_video', { p_id: v.id, p_at: new Date(at).toISOString() });
+          } else {
+            r = await db.rpc('unpublish_video', { p_id: v.id });
+          }
           if (r.error) throw r.error;
-          toast('Unpublished'); VID.editing = null; await renderVideos();
-        } catch (e) { toast(e.message || 'Could not unpublish'); }
+          toast(chosen === 'published' ? 'Published'
+              : chosen === 'scheduled' ? 'Scheduled' : 'Unpublished');
+          VID.editing = null; await renderVideos();
+        } catch (e) {
+          err.textContent = e.message || 'Could not change that.';
+          apply.disabled = false;
+        } finally { VID.busy = false; }
       });
+
       var arch = $('vid-archive');
       if (arch) arch.addEventListener('click', async function () {
         if (arch.dataset.armed !== '1') {
