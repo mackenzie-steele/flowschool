@@ -42,6 +42,136 @@
     .adm-headright { display: flex; align-items: center; gap: 10px; }
 
     /* section nav — two tiers: group pills (primary) + section sub-tabs */
+    /* How the section works, for a page whose source of truth lives in
+       another application. Measured column so it reads as prose, not as a
+       wall — this is the one place in the admin with something to explain. */
+    .adm-explain {
+      max-width: 68ch;
+      margin: 2px 0 24px;
+      font-size: 13px; line-height: 1.6; color: var(--text-2);
+    }
+    /* global.css styles bare `p` at body size, and an element selector beats
+       the 13px this block only INHERITS — so it has to be set here or the
+       paragraphs come out a size larger than every other admin intro. */
+    .adm-explain p { margin: 0 0 10px; font-size: 13px; line-height: 1.6; color: var(--text-2); }
+    .adm-explain strong { color: var(--text-1); font-weight: var(--weight-medium); }
+    .adm-explain-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 6px; text-decoration: none;
+    }
+    .adm-explain-cta .material-symbols-sharp { font-size: var(--icon-sm); }
+
+    /* ── Communications › Notifications ──────────────────────────────
+       The preview is not decoration: publishing puts a badge on every
+       teacher's screen, so the composer shows the real component, styled by
+       the real stylesheet, rather than an approximation of it. */
+    .nf-grid { display: grid; grid-template-columns: minmax(0,1fr) 320px; gap: 24px; }
+    @media (max-width: 900px) { .nf-grid { grid-template-columns: 1fr; } }
+    .nf-fields { display: flex; flex-direction: column; }
+    .nf-label {
+      font-family: var(--font-mono); font-size: var(--text-nano);
+      letter-spacing: var(--ls-micro); text-transform: uppercase;
+      color: var(--text-3); margin: 14px 0 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nf-label:first-child { margin-top: 0; }
+    .nf-req { color: var(--accent); text-transform: none; letter-spacing: 0; }
+    .nf-opt { color: var(--text-3); opacity: .7; text-transform: none; letter-spacing: 0; }
+    .nf-msg { resize: vertical; min-height: 96px; font-family: var(--font); line-height: 1.5; }
+    .nf-hint { font-size: var(--text-micro); color: var(--text-3); margin-top: 6px; }
+    .nf-actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .nf-err { font-size: var(--text-micro); color: var(--serious, #B4332B); }
+    .nf-preview-cap {
+      display: block; font-family: var(--font-mono); font-size: var(--text-nano);
+      letter-spacing: var(--ls-micro); text-transform: uppercase;
+      color: var(--text-3); margin-bottom: 8px;
+    }
+    .nf-preview-box {
+      border: 1px solid var(--border-light); border-radius: var(--r);
+      background: var(--paper-solid); overflow: hidden;
+    }
+    .nf-preview-box .fs-np-item { border-bottom: 0; cursor: default; }
+    .nf-preview-box .fs-np-item:hover { background: none; }
+
+    .nf-pill {
+      font-family: var(--font-mono); font-size: var(--text-nano);
+      letter-spacing: var(--ls-micro); text-transform: uppercase;
+      padding: 3px 8px; border-radius: var(--rs); white-space: nowrap;
+    }
+    .nf-draft     { background: rgba(var(--ink-rgb), .06); color: var(--text-3); }
+    .nf-published { background: var(--accent-dim); color: var(--accent); }
+    .nf-archived  { background: rgba(var(--ink-rgb), .04); color: var(--text-3); opacity: .8; }
+
+    /* ── The landing page ──────────────────────────────────────────────
+       Two doors. Deliberately large and few: this is the one screen where
+       the whole job is choosing, so the choice gets the room. The card
+       borrows the app's existing card language — raised fill, crest shadow,
+       a CTA whose gap opens on hover — rather than introducing a shape that
+       appears nowhere else. */
+    .adm-areas {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+      margin-top: 8px;
+    }
+    .adm-area {
+      display: flex; flex-direction: column;
+      padding: 32px; min-height: 260px;
+      border: 1px solid var(--border-light); border-radius: var(--r);
+      background: var(--raised), rgba(var(--ink-rgb), .02);
+      box-shadow: var(--crest);
+      text-decoration: none; color: inherit;
+      transition: background var(--transition-base), transform var(--transition-base),
+                  box-shadow var(--transition-base);
+    }
+    .adm-area:hover {
+      background: var(--raised), rgba(var(--ink-rgb), .045);
+      transform: translateY(-2px);
+    }
+    .adm-area:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .adm-area-num {
+      font-family: var(--font-mono); font-size: var(--text-nano);
+      letter-spacing: var(--ls-micro); color: var(--text-3);
+      margin-bottom: 28px;
+    }
+    .adm-area-name { font-size: var(--fs-h5); font-weight: var(--weight-medium); margin-bottom: 8px; }
+    .adm-area-blurb {
+      font-size: var(--text-body-sm); color: var(--text-2);
+      line-height: var(--lh-body); max-width: 42ch; margin-bottom: 20px;
+    }
+    /* what is inside, so the card is not a guess */
+    .adm-area-meta {
+      font-family: var(--font-mono); font-size: var(--text-micro);
+      color: var(--text-3); flex: 1;
+    }
+    .adm-area-meta .dot { margin: 0 7px; opacity: .5; }
+    /* the only thing that should pull you in */
+    .adm-area-flag { color: var(--accent); }
+    .adm-area-cta {
+      display: flex; align-items: center; gap: 8px; margin-top: 24px;
+      font-size: var(--text-ui); font-weight: var(--weight-medium); color: var(--text-3);
+      transition: gap var(--transition-base), color var(--transition-base);
+    }
+    .adm-area-cta .material-symbols-sharp { font-size: var(--icon-sm); }
+    .adm-area:hover .adm-area-cta { gap: 12px; color: var(--text-1); }
+    @media (prefers-reduced-motion: reduce) {
+      .adm-area, .adm-area-cta { transition: none; }
+      .adm-area:hover { transform: none; }
+    }
+    @media (max-width: 720px) {
+      .adm-areas { grid-template-columns: 1fr; }
+      .adm-area { min-height: 0; padding: 24px; }
+      .adm-area-num { margin-bottom: 18px; }
+    }
+
+    /* breadcrumb — the way back out, and the only place the area is named */
+    .adm-crumb {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: var(--text-micro);
+      color: var(--text-3); margin-bottom: 6px;
+    }
+    .adm-crumb a { color: var(--text-3); text-decoration: none; transition: color var(--transition-base); }
+    .adm-crumb a:hover { color: var(--text-1); }
+    .adm-crumb-sep { opacity: .5; }
+
     .adm-gtabs { display: flex; gap: 4px; flex-wrap: wrap; margin: 20px 0 0; }
     .adm-gtabs.solo { margin-bottom: 28px; }
     .adm-gtab { border: 1px solid transparent; background: none; cursor: pointer; padding: 8px 16px;
@@ -526,6 +656,8 @@
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
   <script src="lib/analytics.js"></script>
+  <script src="lib/notifications.js"></script>
+  <script src="lib/notification-panel.js"></script>
   <script src="lib/admin.js"></script>
   <script src="data/songs.js"></script>
   <script src="data/apple-media.js"></script>
@@ -557,6 +689,8 @@
 
     // section registry
     var SECTIONS = [
+      { id: 'home',        label: 'Admin Center',        render: renderHome },
+      { id: 'notifs',      label: 'Notifications',       render: renderNotifs },
       { id: 'overview',    label: 'Overview',            render: renderOverview },
       { id: 'impact',      label: 'Impact',              render: renderImpact },
       { id: 'activation',  label: 'Activation',          render: renderActivation },
@@ -579,23 +713,64 @@
     ];
 
     // section groups — top-level nav (a group holds one or more sections)
+    // Two areas, because they are two different jobs. Analytics is READING:
+    // you go to find out how the app is doing. Content is WRITING: you go to
+    // change what teachers get. Mixing them meant the one place with work
+    // waiting for you sat as the fourteenth tab in a row of dashboards.
+    //
+    // "Making" (Creation, Shared Classes, Saved Content, Movement Experiments)
+    // stays in Analytics: those measure what teachers made. They report on
+    // content, they do not manage it.
     var GROUPS = [
-      { label: 'Overview', sections: ['overview'] },
-      { label: 'Impact',   sections: ['impact'] },
-      { label: 'People',   sections: ['users', 'activation', 'retention', 'activity'] },
-      { label: 'Content',  sections: ['creation', 'public', 'saved', 'experiments', 'music'] },
-      { label: 'Product',  sections: ['engagement', 'devices', 'friction', 'tools'] },
-      { label: 'System',   sections: ['feedback', 'health', 'admins', 'exports'] },
+      { label: 'Overview', area: 'analytics', sections: ['overview'] },
+      { label: 'Impact',   area: 'analytics', sections: ['impact'] },
+      { label: 'People',   area: 'analytics', sections: ['users', 'activation', 'retention', 'activity'] },
+      { label: 'Making',   area: 'analytics', sections: ['creation', 'public', 'saved', 'experiments'] },
+      { label: 'Product',  area: 'analytics', sections: ['engagement', 'devices', 'friction', 'tools'] },
+      { label: 'System',   area: 'analytics', sections: ['feedback', 'health', 'admins', 'exports'] },
+      { label: 'Music',    area: 'content',   sections: ['music'] },
+      { label: 'Notifications', area: 'comms', sections: ['notifs'] },
     ];
+
+    // The cards on the landing page. `blurb` says what the area is FOR, in the
+    // second person, because a label alone ("Content") does not tell you
+    // whether the thing you came to do lives behind it.
+    var AREAS = [
+      { id: 'analytics', label: 'Analytics',
+        blurb: 'How the app is actually being used — who arrives, what they make, where they get stuck.',
+        home: 'overview' },
+      { id: 'content',   label: 'Content',
+        blurb: 'The material the app hands to teachers. Edit it here rather than in the code.',
+        home: 'music' },
+      { id: 'comms',     label: 'Communications',
+        blurb: 'What you say to everyone at once. Announcements land in each teacher’s notification panel.',
+        home: 'notifs' },
+    ];
+    function areaOf(id) { return groupOf(id).area || 'analytics'; }
+    function areaById(a) { return AREAS.filter(function (x) { return x.id === a; })[0] || AREAS[0]; }
     function groupOf(id) { return GROUPS.filter(function (g) { return g.sections.indexOf(id) !== -1; })[0] || GROUPS[0]; }
     function sectionById(id) { return SECTIONS.filter(function (s) { return s.id === id; })[0]; }
     var groupLast = {};   // group label → last section viewed in it (so a pill returns you where you were)
 
     // ── shell ──
     function shell(activeId) {
+      // the landing page is chrome-less on purpose: no pills to choose from
+      // when choosing is the whole task, and no time range or refresh when
+      // there is nothing on the page that a time range would change.
+      if (activeId === 'home') {
+        root.innerHTML =
+          '<div class="adm-head"><div><h1>Admin Center</h1></div></div>' +
+          '<div id="adm-body"></div>';
+        return;
+      }
+
       var g = groupOf(activeId);
+      var area = areaById(areaOf(activeId));
+      // pills are scoped to the area — an area with one group shows none,
+      // because a single pill is a label pretending to be a choice
+      var inArea = GROUPS.filter(function (grp) { return grp.area === area.id; });
       var solo = g.sections.length === 1;
-      var pills = GROUPS.map(function (grp) {
+      var pills = inArea.length < 2 ? '' : inArea.map(function (grp) {
         var target = groupLast[grp.label] || grp.sections[0];
         return '<button class="adm-gtab' + (grp === g ? ' active' : '') + '" data-sec="' + target + '">' + esc(grp.label) + '</button>';
       }).join('');
@@ -604,11 +779,25 @@
         return '<button class="adm-subtab' + (id === activeId ? ' active' : '') + '" data-sec="' + id + '">' + esc(s.label) + '</button>';
       }).join('') + '</div>';
       root.innerHTML =
-        '<div class="adm-head"><div><h1>Admin Center</h1></div>' +
-        '<div class="adm-headright"><span class="adm-updated" id="adm-updated"></span>' +
-        '<select class="adm-select" id="adm-range" aria-label="Time range">' + ADM_RANGES.map(function (r) { return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>' +
-        '<button class="btn-icon" id="adm-refresh" data-tooltip="Refresh" aria-label="Refresh"><span class="material-symbols-sharp">refresh</span></button></div></div>' +
-        '<div class="adm-gtabs' + (solo ? ' solo' : '') + '">' + pills + '</div>' + subtabs +
+        '<div class="adm-head"><div>' +
+          '<nav class="adm-crumb" aria-label="Breadcrumb">' +
+            '<a href="#home">Admin Center</a>' +
+            '<span class="adm-crumb-sep" aria-hidden="true">/</span>' +
+            '<span aria-current="page">' + esc(area.label) + '</span>' +
+          '</nav>' +
+          '<h1>' + esc(sectionById(activeId) ? sectionById(activeId).label : area.label) + '</h1>' +
+        '</div>' +
+        // A time range, a refresh and an "Updated…" stamp are analytics
+        // furniture: they answer "how fresh is this reading". Content is not a
+        // reading — it is the thing itself, and it changes when you change it.
+        // Keyed off the area so future CMS sections inherit this.
+        (area.id === 'analytics'
+          ? '<div class="adm-headright"><span class="adm-updated" id="adm-updated"></span>' +
+            '<select class="adm-select" id="adm-range" aria-label="Time range">' + ADM_RANGES.map(function (r) { return '<option value="' + r.d + '">' + esc(r.label) + '</option>'; }).join('') + '</select>' +
+            '<button class="btn-icon" id="adm-refresh" data-tooltip="Refresh" aria-label="Refresh"><span class="material-symbols-sharp">refresh</span></button></div>'
+          : '') +
+        '</div>' +
+        (pills ? '<div class="adm-gtabs' + (solo ? ' solo' : '') + '">' + pills + '</div>' : '') + subtabs +
         '<div id="adm-body"><div class="adm-state"><div class="adm-skel"></div><div class="adm-skel"></div></div></div>';
       root.querySelectorAll('.adm-gtab, .adm-subtab').forEach(function (t) {
         t.addEventListener('click', function () { location.hash = '#' + t.dataset.sec; });
@@ -2061,15 +2250,20 @@
       if (c) c.textContent = musCatalogueCount();
     }
 
+    // "showing X of Y" is a promise that Y is the thing you are looking at.
+    // Filtered-and-fully-shown used to quote the whole catalogue as Y — energy
+    // 7 read "16 of 881", which says 16 of 881 RELEVANT songs. It only looked
+    // like a 7-and-8 problem because those two fit on one page; any level said
+    // it once you loaded the rest. When everything is shown there is no
+    // remainder to describe, so it just counts.
     function musCatalogueCount() {
       var all = musLive(), hits = musMatches();
       var n = Math.min(MUS.shown, hits.length);
-      if (hits.length === all.length) {
-        return n >= all.length ? num(all.length) + ' songs' : 'showing ' + num(n) + ' of ' + num(all.length);
-      }
-      return n >= hits.length
-        ? num(hits.length) + ' of ' + num(all.length)
-        : 'showing ' + num(n) + ' of ' + num(hits.length) + ' matches';
+      var filtered = hits.length !== all.length;
+      if (n >= hits.length) return num(hits.length) + (filtered ? ' matches' : ' songs');
+      return filtered
+        ? 'showing ' + num(n) + ' of ' + num(hits.length) + ' matches'
+        : 'showing ' + num(n) + ' of ' + num(all.length);
     }
 
     function musCatalogueList() {
@@ -2266,26 +2460,24 @@
 
         var inFile = Object.keys(liveIds).length;
 
-        // the sub-line keeps "live" and "published" visibly different things
-        var shippedIds = {};
-        if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { shippedIds[sg.id] = true; });
-        var liveExtra = Object.keys(liveIds).filter(function (id) { return !shippedIds[id]; }).length;
-
         b.innerHTML =
-          '<div class="adm-intro">The catalogue behind the Playlist Builder. Songs approved here are live for teachers immediately \u2014 read alongside <span class="adm-mono">songs.js</span> and folded into it on the next deploy.</div>' +
+          // What this page is and where its music comes from. Written out
+          // because the pipeline is not guessable from the screen: the source
+          // of truth is a playlist in a different application.
+          '<div class="adm-explain">' +
+            '<p>Every song here starts in <strong>' + esc(MUSIC_PLAYLIST.name) + '</strong>, a playlist in Apple Music. That playlist is the source \u2014 add music there, then <strong>Pull new songs</strong> below to bring the new tracks in.</p>' +
+            '<p>Apple supplies the title, artist, length, artwork and a 30-second preview. It cannot supply <strong>energy</strong> or <strong>character</strong>, which are judgement calls about how a song feels to move to, so every track waits in <strong>Needs review</strong> until you make them. Energy is the height a song sits at on the Playlist Builder\u2019s curve, 0 to 8.</p>' +
+            '<p>Approving a song puts it in front of teachers straight away \u2014 the Playlist Builder reads this database on every load. The catalogue file catches up on its own overnight, so nothing here is waiting on a deploy.</p>' +
+            '<a class="btn-secondary adm-explain-cta" href="' + esc(MUSIC_PLAYLIST.url) + '" target="_blank" rel="noopener">' +
+              'Open the playlist in Apple Music<span class="material-symbols-sharp">open_in_new</span></a>' +
+          '</div>' +
           '<div class="adm-metrics">' +
-            // The artwork/preview count retired once the catalogue was fully
-            // matched — it read the same as the total forever, and its
-            // hand-link sub-line went with it. Approved-not-yet-in-the-file
-            // is the one staging state worth surfacing: it is the difference
-            // between what teachers see and what the file says.
-            '<div class="adm-metric"><div class="lbl">Songs in catalogue</div><div class="val">' + num(inFile) + '</div>' +
-              // "not in the file yet" read as a chore — something you had to
-              // go and do. Nothing is waiting on anybody: an approved song is
-              // live for teachers the moment it is approved, and the nightly
-              // job folds it into the file on its own. So this says what is
-              // true and asks for nothing.
-              (liveExtra ? '<div class="adm-metric-sub">' + num(liveExtra) + ' approved · already live</div>' : '') + '</div>' +
+            // Two numbers, both actionable: how much music there is, and how
+            // much is waiting on you. The file-versus-live distinction used to
+            // hang here as a sub-line; the paragraph above explains it once,
+            // properly, and a count that asks for nothing is just noise beside
+            // one that does.
+            '<div class="adm-metric"><div class="lbl">Songs in catalogue</div><div class="val">' + num(inFile) + '</div></div>' +
             '<div class="adm-metric"><div class="lbl">Needs review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
           '</div>' +
           // Pull sits here because this is where its result lands \u2014 songs
@@ -2801,11 +2993,349 @@
       b.querySelectorAll('[data-x]').forEach(function (btn) { btn.addEventListener('click', function () { toast('Preparing export…'); items[+btn.dataset.x][2](); }); });
     }
 
+    // ── Communications › Notifications ──────────────────────────────────────
+    // Publishing is the only irreversible-feeling act in this admin — it puts
+    // a badge on ~900 people's screens — so the composer keeps a live preview
+    // of exactly what they will see, and publish is a two-step.
+    var NOTIF_TYPES = [
+      ['announcement',    'Announcement'],
+      ['new_class',       'New class'],
+      ['new_feature',     'New feature'],
+      ['platform_update', 'Platform update'],
+    ];
+    var NF = { editing: null, rows: [], busy: false };
+
+    function notifTypeLabel(t) {
+      var m = NOTIF_TYPES.filter(function (x) { return x[0] === t; })[0];
+      return m ? m[1] : 'Announcement';
+    }
+    function notifStatusPill(s) {
+      return '<span class="nf-pill nf-' + esc(s) + '">' + esc(s) + '</span>';
+    }
+
+    async function renderNotifs() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var res = await db.from('notifications').select('*').order('created_at', { ascending: false });
+        if (res.error) throw res.error;
+        NF.rows = res.data || [];
+        drawNotifs();
+      } catch (e) {
+        // the one error worth naming precisely: the table not existing yet
+        b.innerHTML = /relation .* does not exist/i.test(e.message || '')
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Notifications</h2></div>' +
+            '<div class="adm-intro" style="margin:0">This needs <code>supabase/notifications.sql</code> run in Supabase, then it’ll show here.</div></div>'
+          : stateError(e && e.message);
+      }
+    }
+
+    function drawNotifs(keepForm) {
+      var b = bodyEl(); if (!b) return;
+      var e = NF.editing;
+      // Archived rows stay in the database — nothing is deleted, and the
+      // reach numbers stay joinable — but they leave this table. Archiving is
+      // how you take something back down, and a list of things you have taken
+      // down is not what you came here to read.
+      var shown = NF.rows.filter(function (r) { return r.status !== 'archived'; });
+      var archivedCount = NF.rows.length - shown.length;
+      b.innerHTML =
+        '<div class="adm-explain">' +
+          '<p>An announcement here appears in every teacher’s notification panel — the bell in their sidebar — the moment you publish it. There is no email and no push; it waits quietly until they look.</p>' +
+          '<p>Drafts are invisible to teachers. Archiving takes a published notification back down and removes it from their unread count.</p>' +
+        '</div>' +
+        (e ? notifForm(e) : '<button class="btn-primary" id="nf-new">Write an announcement</button>') +
+        '<div class="adm-panel" style="margin-top:20px"><div class="adm-panel-head"><h2>Notifications</h2>' +
+          '<span class="muted adm-mono">' + num(shown.length) +
+            // say it plainly rather than letting rows quietly vanish
+            (archivedCount ? ' · ' + num(archivedCount) + ' archived' : '') + '</span></div>' +
+          (shown.length
+            ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Created</th><th>Published</th><th></th></tr></thead><tbody>' +
+              shown.map(notifRow).join('') + '</tbody></table></div>'
+            : stateEmpty('Nothing written yet.')) +
+        '</div>';
+      wireNotifs();
+      if (e && !keepForm) { var t = document.getElementById('nf-title'); if (t) t.focus(); }
+    }
+
+    function notifRow(r) {
+      return '<tr data-nid="' + r.id + '">' +
+        '<td><strong>' + esc(r.title) + '</strong></td>' +
+        '<td class="muted adm-mono">' + esc(notifTypeLabel(r.notification_type)) + '</td>' +
+        '<td>' + notifStatusPill(r.status) + '</td>' +
+        '<td class="muted">' + esc(A.fmtDate(r.created_at)) + '</td>' +
+        '<td class="muted">' + (r.published_at ? esc(A.fmtDate(r.published_at)) : '—') + '</td>' +
+        '<td class="mus-actions">' +
+          '<button class="btn-ghost nf-edit">Edit</button> ' +
+          (r.status === 'draft'
+            ? '<button class="btn-secondary nf-publish">Publish</button> <button class="btn-ghost nf-del">Delete</button>'
+            : r.status === 'published'
+              ? '<button class="btn-ghost nf-archive">Archive</button>'
+              // archived rows are filtered out of this table, so this branch
+              // only fires if that filter is ever relaxed — kept, because
+              // publish_notification() already restores them correctly
+              : '<button class="btn-secondary nf-publish">Restore</button>') +
+        '</td></tr>';
+    }
+
+    function notifForm(e) {
+      return '<div class="adm-panel nf-form">' +
+        '<div class="adm-panel-head"><h2>' + (e.id ? 'Edit' : 'New announcement') + '</h2>' +
+          '<button class="btn-ghost" id="nf-cancel">Cancel</button></div>' +
+        '<div class="nf-grid">' +
+          '<div class="nf-fields">' +
+            '<label class="nf-label" for="nf-title">Title <span class="nf-req">required</span></label>' +
+            '<input class="modal-input" id="nf-title" maxlength="120" value="' + esc(e.title || '') + '" placeholder="Sequencing tool is live">' +
+            '<label class="nf-label" for="nf-msg">Message <span class="nf-req">required</span></label>' +
+            '<textarea class="modal-input nf-msg" id="nf-msg" rows="5" maxlength="2000" placeholder="Line breaks are kept.">' + esc(e.message || '') + '</textarea>' +
+            '<label class="nf-label" for="nf-type">Type</label>' +
+            '<select class="modal-input" id="nf-type">' + NOTIF_TYPES.map(function (t) {
+              return '<option value="' + t[0] + '"' + (e.notification_type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>';
+            }).join('') + '</select>' +
+            '<label class="nf-label" for="nf-url">Link <span class="nf-opt">optional</span></label>' +
+            // an in-app route is just its path — the same string the sidebar
+            // uses — so there is nothing to look up or pick from
+            '<input class="modal-input" id="nf-url" value="' + esc(e.link_url || '') + '" placeholder="your-flows   or   https://…">' +
+            '<span class="nf-hint">An in-app page (<span class="adm-mono">your-flows</span>, <span class="adm-mono">playlist-builder</span>) or a full external URL.</span>' +
+            '<label class="nf-label" for="nf-label-in">Link label</label>' +
+            '<input class="modal-input" id="nf-label-in" maxlength="40" value="' + esc(e.link_label || '') + '" placeholder="Open Your Flows">' +
+            '<div class="nf-actions">' +
+              '<button class="btn-secondary" id="nf-save">Save draft</button>' +
+              '<button class="btn-primary" id="nf-pub">' + (e.status === 'published' ? 'Save changes' : 'Publish now') + '</button>' +
+              '<span class="nf-err" id="nf-err"></span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="nf-preview"><span class="nf-preview-cap">What teachers will see</span>' +
+            '<div class="nf-preview-box" id="nf-preview"></div></div>' +
+        '</div></div>';
+    }
+
+    function notifPreview() {
+      var host = document.getElementById('nf-preview'); if (!host) return;
+      var title = (document.getElementById('nf-title') || {}).value || '';
+      var msg   = (document.getElementById('nf-msg') || {}).value || '';
+      var type  = (document.getElementById('nf-type') || {}).value || 'announcement';
+      var url   = (document.getElementById('nf-url') || {}).value || '';
+      var label = (document.getElementById('nf-label-in') || {}).value || '';
+      var href  = window.fsNotify ? fsNotify.safeHref(url) : null;
+
+      // Rendered by the panel's OWN item renderer, so the preview cannot drift
+      // from the thing it previews. `expanded` because a preview that hid the
+      // message you are typing would be useless.
+      var markup = (window.fsNotifyPanel && fsNotifyPanel.renderItem)
+        ? fsNotifyPanel.renderItem({
+            id: 0,
+            title: title || 'Your title',
+            message: msg || 'Your message.',
+            notification_type: type,
+            link_url: url, link_label: label,
+            published_at: new Date().toISOString(),
+            is_read: false,
+          }).replace('class="fs-np-item unread"', 'class="fs-np-item unread expanded"')
+        : '<p class="muted">Preview unavailable.</p>';
+
+      host.innerHTML = markup +
+        (url && !href ? '<p class="nf-err" style="margin:8px 0 0">That link isn’t a page or a URL we can open.</p>' : '');
+      // the composer is not the panel: nothing here should navigate or toggle
+      host.querySelectorAll('a').forEach(function (a) {
+        a.removeAttribute('href'); a.style.cursor = 'default';
+      });
+      var art = host.querySelector('.fs-np-item');
+      if (art) { art.removeAttribute('tabindex'); art.removeAttribute('role'); }
+    }
+
+    function notifRead() {
+      return {
+        title: (document.getElementById('nf-title').value || '').trim(),
+        message: (document.getElementById('nf-msg').value || '').trim(),
+        notification_type: document.getElementById('nf-type').value,
+        link_url: (document.getElementById('nf-url').value || '').trim() || null,
+        link_label: (document.getElementById('nf-label-in').value || '').trim() || null,
+      };
+    }
+
+    // Validation lives here rather than in the buttons so "save" and "publish"
+    // cannot drift apart on what counts as complete.
+    function notifValidate(v) {
+      if (!v.title) return 'A title is required.';
+      if (!v.message) return 'A message is required.';
+      if (v.link_url && window.fsNotify && !fsNotify.safeHref(v.link_url))
+        return 'That link isn’t a page or a URL we can open.';
+      if (v.link_label && !v.link_url) return 'A link label needs a link.';
+      return null;
+    }
+
+    async function notifSave(publish) {
+      if (NF.busy) return;                       // the double-click guard
+      var v = notifRead();
+      var bad = notifValidate(v);
+      var errEl = document.getElementById('nf-err');
+      if (bad) { if (errEl) errEl.textContent = bad; return; }
+      if (errEl) errEl.textContent = '';
+      NF.busy = true;
+      ['nf-save', 'nf-pub'].forEach(function (id) {
+        var el = document.getElementById(id); if (el) el.disabled = true;
+      });
+      try {
+        var id = NF.editing && NF.editing.id;
+        if (id) {
+          var up = await db.from('notifications').update(v).eq('id', id).select().single();
+          if (up.error) throw up.error;
+        } else {
+          var ins = await db.from('notifications').insert(v).select().single();
+          if (ins.error) throw ins.error;
+          id = ins.data.id;
+          if (typeof fsTrack === 'function')
+            fsTrack('admin_notification_created', { resourceType: 'notification', resourceId: id,
+                                                    metadata: { type: v.notification_type } });
+        }
+        if (publish) {
+          var pub = await db.rpc('publish_notification', { p_id: Number(id) });
+          if (pub.error) throw pub.error;
+          if (typeof fsTrack === 'function')
+            fsTrack('admin_notification_published', { resourceType: 'notification', resourceId: id,
+                                                      metadata: { type: v.notification_type } });
+          // your own bell is one of the ones that just changed — without this
+          // it keeps its pre-publish count until a reload
+          if (window.fsNotify) fsNotify.unreadCount(true);
+          toast('Published — it’s in everyone’s panel now');
+        } else {
+          toast('Draft saved');
+        }
+        NF.editing = null;
+        await renderNotifs();
+      } catch (err) {
+        if (errEl) errEl.textContent = (err && err.message) || 'Could not save that.';
+      } finally {
+        NF.busy = false;
+        ['nf-save', 'nf-pub'].forEach(function (id2) {
+          var el = document.getElementById(id2); if (el) el.disabled = false;
+        });
+      }
+    }
+
+    function wireNotifs() {
+      var b = bodyEl(); if (!b || b.dataset.nfWired === '1') { /* re-bind below */ }
+      var nw = document.getElementById('nf-new');
+      if (nw) nw.addEventListener('click', function () {
+        NF.editing = { notification_type: 'announcement' }; drawNotifs();
+      });
+      var cancel = document.getElementById('nf-cancel');
+      if (cancel) cancel.addEventListener('click', function () { NF.editing = null; drawNotifs(); });
+
+      ['nf-title', 'nf-msg', 'nf-type', 'nf-url', 'nf-label-in'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', notifPreview);
+        if (el && el.tagName === 'SELECT') el.addEventListener('change', notifPreview);
+      });
+      if (document.getElementById('nf-preview')) notifPreview();
+
+      var save = document.getElementById('nf-save');
+      if (save) save.addEventListener('click', function () { notifSave(false); });
+      var pub = document.getElementById('nf-pub');
+      if (pub) pub.addEventListener('click', function () { notifSave(true); });
+
+      // row actions — delegated, and armed twice for anything destructive,
+      // the same two-step the catalogue's Remove uses
+      b.querySelectorAll('tr[data-nid]').forEach(function (tr) {
+        var id = Number(tr.dataset.nid);
+        var row = NF.rows.filter(function (r) { return r.id === id; })[0];
+        var ed = tr.querySelector('.nf-edit');
+        if (ed) ed.addEventListener('click', function () { NF.editing = Object.assign({}, row); drawNotifs(); });
+        var pb = tr.querySelector('.nf-publish');
+        if (pb) pb.addEventListener('click', async function () {
+          if (NF.busy) return; NF.busy = true; pb.disabled = true;
+          try {
+            var r = await db.rpc('publish_notification', { p_id: id });
+            if (r.error) throw r.error;
+            if (typeof fsTrack === 'function')
+              fsTrack('admin_notification_published', { resourceType: 'notification', resourceId: id });
+            if (window.fsNotify) fsNotify.unreadCount(true);
+            toast('Published'); await renderNotifs();
+          } catch (e) { toast((e && e.message) || 'Could not publish'); pb.disabled = false; }
+          finally { NF.busy = false; }
+        });
+        var ar = tr.querySelector('.nf-archive');
+        if (ar) ar.addEventListener('click', async function () {
+          if (ar.dataset.armed !== '1') {
+            ar.dataset.armed = '1'; ar.textContent = 'Really archive?'; ar.classList.add('mus-del-armed'); return;
+          }
+          try {
+            var r = await db.rpc('archive_notification', { p_id: id });
+            if (r.error) throw r.error;
+            if (typeof fsTrack === 'function')
+              fsTrack('admin_notification_archived', { resourceType: 'notification', resourceId: id });
+            // archiving takes it off the badge too, not just out of the list
+            if (window.fsNotify) fsNotify.unreadCount(true);
+            toast('Archived — it’s off everyone’s panel'); await renderNotifs();
+          } catch (e) { toast((e && e.message) || 'Could not archive'); }
+        });
+        var dl = tr.querySelector('.nf-del');
+        if (dl) dl.addEventListener('click', async function () {
+          if (dl.dataset.armed !== '1') {
+            dl.dataset.armed = '1'; dl.textContent = 'Really delete?'; dl.classList.add('mus-del-armed'); return;
+          }
+          try {
+            var r = await db.from('notifications').delete().eq('id', id);
+            if (r.error) throw r.error;
+            toast('Draft deleted'); await renderNotifs();
+          } catch (e) { toast((e && e.message) || 'Could not delete'); }
+        });
+      });
+      // one click anywhere else disarms, so an armed button never lingers
+      b.addEventListener('click', function (ev) {
+        b.querySelectorAll('[data-armed="1"]').forEach(function (o) {
+          if (o === ev.target || o.contains(ev.target)) return;
+          o.dataset.armed = ''; o.classList.remove('mus-del-armed');
+          o.textContent = o.classList.contains('nf-del') ? 'Delete' : 'Archive';
+        });
+      });
+    }
+
+    // ── the landing page ────────────────────────────────────────────────────
+    // A menu that only lists its options is a toll on the way to work. These
+    // cards carry the state of the thing behind them, so the page answers
+    // "is there anything for me?" without being entered.
+    async function renderHome() {
+      var b = bodyEl();
+      if (!b) return;
+      b.innerHTML =
+        '<p class="adm-intro">Two areas. Analytics is for reading, Content is for changing.</p>' +
+        '<div class="adm-areas">' + AREAS.map(function (a, i) {
+          var groups = GROUPS.filter(function (g) { return g.area === a.id; });
+          // a real href, so cmd-click and the status bar behave; no click
+          // handler needed, which means no way for one to go missing
+          return '<a class="adm-area" href="#' + a.home + '">' +
+            '<span class="adm-area-num">' + String(i + 1).padStart(2, '0') + '</span>' +
+            '<h2 class="adm-area-name">' + esc(a.label) + '</h2>' +
+            '<p class="adm-area-blurb">' + esc(a.blurb) + '</p>' +
+            '<div class="adm-area-meta" id="area-meta-' + a.id + '">' +
+              groups.map(function (g) { return esc(g.label); }).join('<span class="dot">·</span>') +
+            '</div>' +
+            '<span class="adm-area-cta">Open<span class="material-symbols-sharp">arrow_forward</span></span>' +
+          '</a>';
+        }).join('') + '</div>';
+
+      // A card only earns a badge when it is asking for something. Failure is
+      // silent: a card that cannot count is still a working door.
+      try {
+        var rows = await db.from('music_staging').select('song_id,status');
+        var pending = (rows.data || []).filter(function (r) { return r.status === 'pending'; }).length;
+        var total = (typeof SONGS !== 'undefined' ? SONGS.length : 0);
+        var meta = document.getElementById('area-meta-content');
+        if (meta) {
+          meta.innerHTML = (total ? num(total) + ' songs' : 'Music') +
+            (pending ? '<span class="dot">·</span><span class="adm-area-flag">' + num(pending) + ' need review</span>' : '');
+        }
+      } catch (e) { /* the door still opens */ }
+    }
+
     // ── router ──
     function route() {
-      var id = (location.hash || '#overview').slice(1);
+      var id = (location.hash || '#home').slice(1);
       var sec = SECTIONS.filter(function (s) { return s.id === id; })[0] || SECTIONS[0];
-      groupLast[groupOf(sec.id).label] = sec.id;
+      // 'home' belongs to no group; groupOf() would fall through to Overview
+      // and a later Overview pill click would land back on the landing page
+      if (sec.id !== 'home') groupLast[groupOf(sec.id).label] = sec.id;
       shell(sec.id);
       // every tab carries the "Updated …" stamp. Overview fills it from the
       // server snapshot time (generated_at) inside its own render; for the
