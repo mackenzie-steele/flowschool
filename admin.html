@@ -109,6 +109,39 @@
     /* Radios as rows, not a bare list — the whole row is the target, which
        matters most on a phone. State is carried by the fill AND the dot, so
        it is never colour alone. */
+    /* A small popover. Nothing like it existed, so it is built from the
+       tokens the panels already use — crest, --r, border-light. */
+    .vid-more { position: relative; }
+    .vid-menu {
+      position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+      min-width: 190px; padding: 5px;
+      border: 1px solid var(--border-light); border-radius: var(--r);
+      background: var(--paper-solid); box-shadow: var(--crest), 0 8px 24px rgba(0,0,0,.10);
+      display: flex; flex-direction: column;
+    }
+    .vid-menu[hidden] { display: none; }
+    .vid-menu button {
+      text-align: left; background: none; border: 0; cursor: pointer;
+      padding: 9px 12px; border-radius: var(--rb);
+      font-family: var(--font); font-size: var(--text-ui); color: var(--text-1);
+      transition: background var(--transition-base), color var(--transition-base);
+    }
+    .vid-menu button:hover { background: rgba(var(--ink-rgb), .05); }
+    .vid-menu button.danger { color: var(--danger); }
+    .vid-menu button.danger:hover { background: rgba(var(--danger-rgb), .08); }
+    .vid-menu-sep { height: 1px; background: var(--border-light); margin: 4px 8px; }
+
+    /* an outline button — the app had filled, secondary and ghost, but
+       nothing that reads as a full-width action on the thing above it */
+    .btn-outline {
+      width: 100%; padding: 10px 14px; cursor: pointer;
+      background: none; border: 1px solid var(--border-light); border-radius: var(--rb);
+      font-family: var(--font); font-size: var(--text-ui); color: var(--text-1);
+      transition: border-color var(--transition-base), background var(--transition-base);
+    }
+    .btn-outline:hover { border-color: var(--accent); background: var(--accent-dim); }
+    .vid-replace-btn { margin-top: 2px; }
+
     .vid-radios { display: flex; flex-direction: column; gap: 2px; }
     .vid-radio {
       display: flex; align-items: flex-start; gap: 10px;
@@ -160,7 +193,6 @@
     }
     @keyframes vid-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .vid-spinner { animation-duration: 2.4s; } }
-    .vid-meta { margin: 0; font-size: var(--text-micro); }
 
     /* tag field */
     .vid-tags {
@@ -3411,7 +3443,17 @@
             '<h1 class="vid-title-h">' + (isNew ? 'New video' : esc(v.title || 'Untitled')) + '</h1>' +
           '</div>' +
           '<div class="vid-head-right">' +
-            (isNew ? '' : videoPill(v.status)) +
+            (isNew ? '' :
+              '<div class="vid-more">' +
+                '<button class="btn-icon" id="vid-more-btn" aria-haspopup="true" aria-expanded="false" aria-label="More actions">' +
+                  '<span class="material-symbols-sharp">more_horiz</span></button>' +
+                '<div class="vid-menu" id="vid-menu" role="menu" hidden>' +
+                  '<button role="menuitem" data-act="copy">Copy member link</button>' +
+                  (v.status === 'archived' ? '' : '<button role="menuitem" data-act="archive">Archive</button>') +
+                  '<div class="vid-menu-sep"></div>' +
+                  '<button role="menuitem" class="danger" data-act="delete">Delete video</button>' +
+                '</div>' +
+              '</div>') +
             '<button class="btn-primary" id="vid-save-top">' + (isNew ? 'Create draft' : 'Save') + '</button>' +
           '</div>' +
         '</div>' +
@@ -3533,6 +3575,8 @@
           '<div class="vid-card">' +
             '<span class="vid-card-cap">Video file</span>' +
             '<div class="vid-upload" id="vid-upload">' + videoFileZone(v, isNew, processing) + '</div>' +
+            (!isNew && v.mux_playback_id
+              ? '<button class="btn-outline vid-replace-btn" id="vid-replace">Replace video</button>' : '') +
             '<p class="nf-hint" id="vid-upload-note"></p>' +
           '</div>' +
 
@@ -3572,11 +3616,6 @@
               ? '<span class="nf-hint">Goes live ' + esc(A.fmtDateTime(v.published_at)) + '</span>' : '') +
           '</div>' +
 
-          (isNew || v.status === 'archived' ? '' :
-            '<div class="adm-danger-zone"><h3>Archive</h3>' +
-            '<p class="nf-hint" style="margin:0 0 10px">Takes it out of the library. Nothing is deleted and the Mux file is untouched.</p>' +
-            '<button class="btn-icon adm-del" id="vid-archive" data-tooltip="Archive" aria-label="Archive this video">' +
-              '<span class="material-symbols-sharp">delete</span></button></div>') +
         '</aside>' +
         '</div>';
 
@@ -3618,14 +3657,10 @@
     function videoFileZone(v, isNew, processing) {
       if (isNew) return '<p class="muted">Create the draft first — the file attaches to it.</p>';
       if (v.mux_playback_id) {
+        // The player sits in the well; Replace sits under it, full width, so
+        // it reads as an action on the file rather than a control inside it.
         return '<div class="vid-player is-loading" id="vid-player">' +
-                 '<div class="vid-player-skel" aria-live="polite" aria-label="Loading the preview"></div></div>' +
-               '<p class="muted adm-mono vid-meta">' + videoDuration(v.duration_seconds) +
-                 (v.aspect_ratio ? ' · ' + esc(v.aspect_ratio) : '') +
-                 (v.max_resolution ? ' · ' + esc(v.max_resolution) : '') + '</p>' +
-               '<div class="vid-player-actions">' +
-                 '<button class="btn-ghost" id="vid-preview">Reload</button>' +
-                 '<button class="btn-ghost" id="vid-replace">Replace</button></div>';
+                 '<div class="vid-player-skel" aria-live="polite" aria-label="Loading the preview"></div></div>';
       }
       if (processing) {
         return '<div class="vid-progress-wrap">' +
@@ -3910,23 +3945,76 @@
         } finally { VID.busy = false; }
       });
 
-      var arch = $('vid-archive');
-      if (arch) arch.addEventListener('click', async function () {
-        if (arch.dataset.armed !== '1') {
-          arch.dataset.armed = '1'; arch.classList.add('armed');
-          arch.setAttribute('data-tooltip', 'Click again to archive');
-          clearTimeout(arch._d);
-          arch._d = setTimeout(function () {
-            arch.dataset.armed = '0'; arch.classList.remove('armed');
-            arch.setAttribute('data-tooltip', 'Archive'); }, 3000);
-          return;
-        }
-        try {
-          var r = await db.rpc('archive_video', { p_id: v.id });
-          if (r.error) throw r.error;
-          toast('Archived'); VID.editing = null; await renderVideos();
-        } catch (e) { toast(e.message || 'Could not archive'); }
-      });
+      // ── the More menu ──
+      var moreBtn = $('vid-more-btn'), menu = $('vid-menu');
+      if (moreBtn && menu) {
+        var closeMenu = function () {
+          menu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false');
+          document.removeEventListener('click', away);
+        };
+        var away = function (e) { if (!menu.contains(e.target) && e.target !== moreBtn) closeMenu(); };
+        moreBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = menu.hidden;
+          menu.hidden = !open;
+          moreBtn.setAttribute('aria-expanded', String(open));
+          if (open) setTimeout(function () { document.addEventListener('click', away); }, 0);
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && !menu.hidden) { closeMenu(); moreBtn.focus(); }
+        });
+
+        menu.querySelectorAll('[data-act]').forEach(function (item) {
+          item.addEventListener('click', async function () {
+            var act = item.dataset.act;
+
+            if (act === 'copy') {
+              var url = location.origin + '/video/' + (v.slug || '');
+              try { await navigator.clipboard.writeText(url); toast('Link copied'); }
+              catch (_) { toast(url); }
+              closeMenu(); return;
+            }
+
+            if (act === 'archive') {
+              closeMenu();
+              try {
+                var r = await db.rpc('archive_video', { p_id: v.id });
+                if (r.error) throw r.error;
+                toast('Archived'); VID.editing = null; await renderVideos();
+              } catch (e) { toast(e.message || 'Could not archive'); }
+              return;
+            }
+
+            if (act === 'delete') {
+              // Two clicks, in the menu itself, rather than a modal — and the
+              // label says what survives, because "delete" here does NOT
+              // touch the Mux master. Destroying that is a separate act.
+              if (item.dataset.armed !== '1') {
+                item.dataset.armed = '1';
+                item.textContent = 'Really delete? The video file stays on Mux.';
+                clearTimeout(item._d);
+                item._d = setTimeout(function () {
+                  item.dataset.armed = '0'; item.textContent = 'Delete video';
+                }, 4000);
+                return;
+              }
+              closeMenu();
+              try {
+                // resources first: their rows cascade, but the FILES do not,
+                // and an orphaned object bills forever with nothing pointing
+                // at it
+                var res = await db.from('video_resources').select('storage_path').eq('video_id', v.id);
+                var paths = (res.data || []).map(function (x) { return x.storage_path; });
+                if (paths.length) await db.storage.from('video-resources').remove(paths);
+                var d = await db.from('videos').delete().eq('id', v.id);
+                if (d.error) throw d.error;
+                toast('Deleted');
+                VID.editing = null; await renderVideos();
+              } catch (e) { toast(e.message || 'Could not delete that'); }
+            }
+          });
+        });
+      }
 
       // ── file ──
       var refresh = $('vid-refresh');
@@ -3963,8 +4051,9 @@
         startVideoUpload(true);
       });
 
-      var prev = $('vid-preview');
-      if (prev) { prev.addEventListener('click', function () { previewVideo(prev); }); previewVideo(prev, true); }
+      // The player loads because there is something to play, not because a
+      // button exists — Reload was removed and this was gated on it.
+      if (v.mux_playback_id && document.getElementById('vid-player')) previewVideo(null, true);
 
       wireVideoResources();
       videoLive();
