@@ -61,6 +61,35 @@
     }
     .adm-explain-cta .material-symbols-sharp { font-size: var(--icon-sm); }
 
+    /* ── Content › Video ─────────────────────────────────────────────
+       The uploader is a third-party web component. Left alone it looks like
+       one; these rules give it the app's own well, radius and accent so it
+       reads as part of the page rather than an embed. */
+    .vid-thumb {
+      display: grid; place-items: center;
+      width: 64px; height: 36px; flex: none;
+      border-radius: var(--rs); overflow: hidden;
+      background: var(--well-bg); box-shadow: var(--well);
+      color: var(--text-3);
+    }
+    .vid-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .vid-thumb .material-symbols-sharp { font-size: 16px; opacity: .5; }
+
+    .vid-upload {
+      border: 1px solid var(--border-light); border-radius: var(--r);
+      background: var(--well-bg); padding: 20px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .vid-upload p { margin: 0; font-size: var(--text-ui); }
+    mux-uploader {
+      --uploader-font-family: var(--font);
+      --uploader-accent-color: var(--accent);
+      --button-background-color: var(--accent);
+      --button-border-radius: var(--rb);
+      --progress-bar-fill-color: var(--accent);
+      width: 100%;
+    }
+
     /* ── Communications › Notifications ──────────────────────────────
        The preview is not decoration: publishing puts a badge on every
        teacher's screen, so the composer shows the real component, styled by
@@ -645,6 +674,11 @@
   <script src="lib/version.js"></script>
   <script src="lib/nav.js"></script>
   <script src="lib/vendor/supabase-js-v2.110.7.min.js"></script>
+  <!-- Mux's uploader, vendored and pinned like supabase-js rather than hot-
+       linked from a CDN: a third party in the critical path of the admin is
+       an availability dependency nobody chose. It is a web component, so it
+       needs no build step — it registers <mux-uploader> and that is all. -->
+  <script src="lib/vendor/mux-uploader-v1.5.0.js" defer></script>
   <script src="lib/supabase.js"></script>
   <script src="lib/telemetry.js"></script>
   <script src="lib/sync.js"></script>
@@ -684,6 +718,8 @@
     var SECTIONS = [
       { id: 'home',        label: 'Admin Center',        render: renderHome },
       { id: 'notifs',      label: 'Notifications',       render: renderNotifs },
+      { id: 'videos',           label: 'Videos',          render: renderVideos },
+      { id: 'video-categories', label: 'Categories',      render: renderVideoCategories },
       { id: 'overview',    label: 'Overview',            render: renderOverview },
       { id: 'impact',      label: 'Impact',              render: renderImpact },
       { id: 'activation',  label: 'Activation',          render: renderActivation },
@@ -722,6 +758,7 @@
       { label: 'Product',  area: 'analytics', sections: ['engagement', 'devices', 'friction', 'tools'] },
       { label: 'System',   area: 'analytics', sections: ['feedback', 'health', 'admins', 'exports'] },
       { label: 'Music',    area: 'content',   sections: ['music'] },
+      { label: 'Video',    area: 'content',   sections: ['videos', 'video-categories'] },
       { label: 'Notifications', area: 'comms', sections: ['notifs'] },
     ];
 
@@ -2984,6 +3021,447 @@
         '<div class="adm-metrics" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">' +
         items.map(function (it, i) { return '<div class="adm-metric"><div class="val" style="font-size:16px">' + esc(it[0]) + '</div><div class="sub">' + esc(it[1]) + '</div><button class="btn-secondary" data-x="' + i + '" style="margin-top:12px">Export CSV</button></div>'; }).join('') + '</div>';
       b.querySelectorAll('[data-x]').forEach(function (btn) { btn.addEventListener('click', function () { toast('Preparing export…'); items[+btn.dataset.x][2](); }); });
+    }
+
+    // ── Content › Video ─────────────────────────────────────────────────────
+    // Mux owns the file; this owns everything Flow School means by "a video".
+    // The list never asks Mux anything — it reads the videos table, which the
+    // webhook keeps current.
+    var VID = { rows: [], cats: [], editing: null, busy: false, q: '', status: 'all', cat: 'all' };
+
+    var VIDEO_STATUS = {
+      draft:      ['Draft', ''],
+      uploading:  ['Uploading', ''],
+      processing: ['Processing', ''],
+      ready:      ['Ready', ''],
+      errored:    ['Failed', 'off'],
+      published:  ['Published', 'on'],
+      archived:   ['Archived', ''],
+    };
+    function videoPill(s) {
+      var m = VIDEO_STATUS[s] || [s, ''];
+      return '<span class="adm-pill' + (m[1] ? ' ' + m[1] : '') + '">' + esc(m[0]) + '</span>';
+    }
+    function videoDuration(sec) {
+      if (sec == null) return '—';
+      var s = Math.round(Number(sec)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+      var r = s % 60;
+      return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(r).padStart(2, '0');
+    }
+    // Mux renders stills from the playback id. A signed asset needs a token
+    // for images too, so a thumbnail only appears once we have one — until
+    // then the cell shows a quiet well rather than a broken image.
+    function videoThumb(v) {
+      if (!v.mux_playback_id || !v.thumb_token) {
+        return '<span class="vid-thumb"><span class="material-symbols-sharp">movie</span></span>';
+      }
+      var t = v.thumbnail_mode === 'timestamp' && v.thumbnail_time_seconds != null
+        ? '&time=' + encodeURIComponent(v.thumbnail_time_seconds) : '';
+      return '<span class="vid-thumb has-art"><img alt="" loading="lazy" src="https://image.mux.com/' +
+        encodeURIComponent(v.mux_playback_id) + '/thumbnail.webp?width=160' + t +
+        '&token=' + encodeURIComponent(v.thumb_token) + '"></span>';
+    }
+
+    async function renderVideos() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var res = await db.from('videos').select('*').order('created_at', { ascending: false });
+        if (res.error) throw res.error;
+        VID.rows = res.data || [];
+        var cats = await db.from('video_categories').select('*').order('sort_order');
+        VID.cats = (cats.data) || [];
+        drawVideos();
+      } catch (e) {
+        b.innerHTML = /relation .* does not exist/i.test(e.message || '')
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Videos</h2></div>' +
+            '<div class="adm-intro" style="margin:0">This needs <code>supabase/video-library.sql</code> run in Supabase, then it’ll show here.</div></div>'
+          : stateError(e && e.message);
+      }
+    }
+
+    function videoMatches() {
+      var q = (VID.q || '').trim().toLowerCase();
+      return VID.rows.filter(function (v) {
+        if (VID.status !== 'all' && v.status !== VID.status) return false;
+        if (VID.cat !== 'all' && v.category_id !== VID.cat) return false;
+        if (!q) return true;
+        return ((v.title || '') + ' ' + (v.short_description || '') + ' ' +
+                (v.search_keywords || []).join(' ')).toLowerCase().indexOf(q) !== -1;
+      });
+    }
+
+    function drawVideos() {
+      var b = bodyEl(); if (!b) return;
+      if (VID.editing) { drawVideoForm(); return; }
+      var hits = videoMatches();
+      var catName = {};
+      VID.cats.forEach(function (c) { catName[c.id] = c.name; });
+
+      b.innerHTML =
+        '<div class="adm-explain">' +
+          '<p>Videos live on <strong>Mux</strong>, which handles the upload, the encoding and the streaming. Everything else — the title, the description, the category, the worksheets — lives here, and this page is where it is written.</p>' +
+          '<p>A file takes a few minutes to process after it uploads. The status below follows it: <strong>Uploading</strong>, then <strong>Processing</strong>, then <strong>Ready</strong>. You can write everything else while you wait; a video can only be published once Mux says it is ready.</p>' +
+        '</div>' +
+        '<button class="btn-primary" id="vid-new">Add a video</button>' +
+        (VID.cats.length ? '' :
+          '<p class="nf-err" style="margin-top:10px">There are no categories yet — add one in Categories before publishing.</p>') +
+        '<div class="cat-controls" style="margin-top:16px">' +
+          '<input type="text" class="modal-input" id="vid-q" placeholder="Search title, description or keywords…" value="' + esc(VID.q) + '" aria-label="Search videos">' +
+          '<select id="vid-status" aria-label="Filter by status"><option value="all">Any status</option>' +
+            Object.keys(VIDEO_STATUS).map(function (k) {
+              return '<option value="' + k + '"' + (VID.status === k ? ' selected' : '') + '>' + VIDEO_STATUS[k][0] + '</option>';
+            }).join('') + '</select>' +
+          '<select id="vid-cat" aria-label="Filter by category"><option value="all">Any category</option>' +
+            VID.cats.map(function (c) {
+              return '<option value="' + c.id + '"' + (VID.cat === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
+            }).join('') + '</select>' +
+        '</div>' +
+        '<div class="adm-panel" style="margin-top:16px"><div class="adm-panel-head"><h2>All videos</h2>' +
+          '<span class="muted adm-mono">' + num(hits.length) + '</span></div>' +
+          (hits.length
+            ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th></th><th>Title</th><th>Category</th><th>Length</th><th>Status</th><th>Updated</th><th></th></tr></thead><tbody>' +
+              hits.map(function (v) {
+                return '<tr data-vid="' + v.id + '">' +
+                  '<td>' + videoThumb(v) + '</td>' +
+                  '<td><strong>' + esc(v.title) + '</strong>' +
+                    (v.mux_error ? '<br><span class="nf-err">' + esc(v.mux_error) + '</span>' : '') + '</td>' +
+                  '<td class="muted adm-mono">' + esc(catName[v.category_id] || '—') + '</td>' +
+                  '<td class="muted adm-mono">' + videoDuration(v.duration_seconds) + '</td>' +
+                  '<td>' + videoPill(v.status) + '</td>' +
+                  '<td class="muted">' + esc(A.fmtDate(v.updated_at)) + '</td>' +
+                  '<td class="mus-actions"><button class="btn-ghost vid-edit">Edit</button></td>' +
+                '</tr>';
+              }).join('') + '</tbody></table></div>'
+            : stateEmpty(VID.rows.length ? 'Nothing matches that.' : 'No videos yet.')) +
+        '</div>';
+      wireVideos();
+    }
+
+    function wireVideos() {
+      var b = bodyEl(); if (!b) return;
+      var nw = document.getElementById('vid-new');
+      if (nw) nw.addEventListener('click', function () {
+        VID.editing = { _new: true, thumbnail_mode: 'auto', search_keywords: [] };
+        drawVideos();
+      });
+      var q = document.getElementById('vid-q');
+      if (q) { var qt; q.addEventListener('input', function () {
+        clearTimeout(qt); qt = setTimeout(function () { VID.q = q.value; drawVideos(); }, 200); }); }
+      var st = document.getElementById('vid-status');
+      if (st) st.addEventListener('change', function () { VID.status = st.value; drawVideos(); });
+      var ct = document.getElementById('vid-cat');
+      if (ct) ct.addEventListener('change', function () { VID.cat = ct.value; drawVideos(); });
+      b.querySelectorAll('tr[data-vid] .vid-edit').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.closest('tr').dataset.vid;
+          VID.editing = Object.assign({}, VID.rows.filter(function (v) { return v.id === id; })[0]);
+          drawVideos();
+        });
+      });
+    }
+
+    // ── the add/edit form ───────────────────────────────────────────────────
+    // A draft row is created BEFORE the upload, because the row's id is the
+    // Mux passthrough value — there is nothing to correlate a webhook to
+    // until it exists.
+    function drawVideoForm() {
+      var b = bodyEl(); if (!b) return;
+      var v = VID.editing;
+      var isNew = !!v._new;
+      var processing = ['uploading', 'processing'].indexOf(v.status) !== -1;
+
+      b.innerHTML =
+        '<div class="adm-panel"><div class="adm-panel-head"><h2>' +
+          (isNew ? 'Add a video' : esc(v.title || 'Edit video')) + '</h2>' +
+          '<button class="btn-ghost" id="vid-cancel">Back to all videos</button></div>' +
+
+        '<div class="nf-grid"><div class="nf-fields">' +
+          '<label class="nf-label" for="vid-title">Title <span class="nf-req">required</span></label>' +
+          '<input class="modal-input" id="vid-title" maxlength="160" value="' + esc(v.title || '') + '" placeholder="Chair Pose, three ways">' +
+
+          '<label class="nf-label" for="vid-short">Short description</label>' +
+          '<textarea class="modal-input nf-msg" id="vid-short" rows="2" maxlength="300" placeholder="One or two lines for the library card.">' + esc(v.short_description || '') + '</textarea>' +
+
+          '<label class="nf-label" for="vid-desc">Full description</label>' +
+          '<textarea class="modal-input nf-msg" id="vid-desc" rows="5" maxlength="4000" placeholder="Line breaks are kept.">' + esc(v.description || '') + '</textarea>' +
+
+          '<label class="nf-label" for="vid-category">Category</label>' +
+          '<select class="modal-input" id="vid-category">' +
+            '<option value="">— choose —</option>' +
+            VID.cats.filter(function (c) { return c.status === 'active'; }).map(function (c) {
+              return '<option value="' + c.id + '"' + (v.category_id === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
+            }).join('') + '</select>' +
+
+          '<label class="nf-label" for="vid-keywords">Search keywords</label>' +
+          '<input class="modal-input" id="vid-keywords" value="' + esc((v.search_keywords || []).join(', ')) + '" placeholder="transitions, cueing, class planning">' +
+          '<span class="nf-hint">Comma separated. These help members find the video in the library — they are not shown on the page.</span>' +
+
+          '<div class="nf-actions">' +
+            '<button class="btn-secondary" id="vid-save">' + (isNew ? 'Create draft' : 'Save') + '</button>' +
+            (!isNew && v.status !== 'published'
+              ? '<button class="btn-primary" id="vid-publish">Publish</button>' : '') +
+            (v.status === 'published'
+              ? '<button class="btn-ghost" id="vid-unpublish">Unpublish</button>' : '') +
+            '<span class="nf-err" id="vid-err"></span>' +
+          '</div>' +
+        '</div>' +
+
+        // ── the file ──
+        '<div class="nf-preview"><span class="nf-preview-cap">Video file</span>' +
+          '<div class="vid-upload" id="vid-upload">' +
+            (isNew
+              ? '<p class="muted">Create the draft first — the upload attaches to it.</p>'
+              : v.mux_playback_id
+                ? '<p class="muted">Uploaded and ready.</p><p class="muted adm-mono">' +
+                    videoDuration(v.duration_seconds) + (v.aspect_ratio ? ' · ' + esc(v.aspect_ratio) : '') +
+                    (v.max_resolution ? ' · ' + esc(v.max_resolution) : '') + '</p>' +
+                  '<button class="btn-ghost" id="vid-replace">Replace the file</button>'
+                : processing
+                  ? '<p class="muted">' + (v.status === 'uploading' ? 'Uploading…' : 'Mux is processing this — usually a few minutes.') + '</p>' +
+                    '<button class="btn-ghost" id="vid-refresh">Check again</button>'
+                  : v.status === 'errored'
+                    ? '<p class="nf-err">' + esc(v.mux_error || 'The upload failed.') + '</p>' +
+                      '<button class="btn-secondary" id="vid-start">Try another file</button>'
+                    : '<button class="btn-secondary" id="vid-start">Choose a video file</button>') +
+          '</div>' +
+          '<p class="nf-hint" id="vid-upload-note"></p>' +
+        '</div></div></div>';
+
+      wireVideoForm();
+    }
+
+    function videoRead() {
+      return {
+        title: (document.getElementById('vid-title').value || '').trim(),
+        short_description: (document.getElementById('vid-short').value || '').trim() || null,
+        description: (document.getElementById('vid-desc').value || '').trim() || null,
+        category_id: document.getElementById('vid-category').value || null,
+      };
+    }
+
+    function wireVideoForm() {
+      var v = VID.editing;
+      var err = document.getElementById('vid-err');
+      var cancel = document.getElementById('vid-cancel');
+      if (cancel) cancel.addEventListener('click', function () { VID.editing = null; renderVideos(); });
+
+      var save = document.getElementById('vid-save');
+      if (save) save.addEventListener('click', async function () {
+        if (VID.busy) return;
+        var vals = videoRead();
+        if (!vals.title) { err.textContent = 'A title is required.'; return; }
+        VID.busy = true; save.disabled = true; err.textContent = '';
+        try {
+          var kw = (document.getElementById('vid-keywords').value || '')
+            .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+          if (v._new) {
+            var slugRes = await db.rpc('video_slugify', { p_text: vals.title });
+            var slug = slugRes.data;
+            if (!slug) throw new Error('That title has no letters or numbers in it.');
+            // a slug collision is likely enough to be worth handling rather
+            // than surfacing a raw constraint error
+            var free = await db.rpc('video_slug_available', { p_slug: slug, p_exclude: null });
+            if (free.data === false) slug = slug + '-' + Date.now().toString(36).slice(-4);
+            var ins = await db.from('videos')
+              .insert(Object.assign({ slug: slug }, vals)).select().single();
+            if (ins.error) throw ins.error;
+            VID.editing = ins.data;
+            if (kw.length) await db.rpc('set_video_keywords', { p_id: ins.data.id, p_keywords: kw });
+            toast('Draft created — now add the file');
+          } else {
+            var up = await db.from('videos').update(vals).eq('id', v.id).select().single();
+            if (up.error) throw up.error;
+            await db.rpc('set_video_keywords', { p_id: v.id, p_keywords: kw });
+            VID.editing = up.data;
+            toast('Saved');
+          }
+          await renderVideos();
+          VID.editing = VID.rows.filter(function (r) { return r.id === VID.editing.id; })[0] || VID.editing;
+          drawVideos();
+        } catch (e) {
+          err.textContent = e.message || 'Could not save that.';
+        } finally { VID.busy = false; if (save) save.disabled = false; }
+      });
+
+      var pub = document.getElementById('vid-publish');
+      if (pub) pub.addEventListener('click', async function () {
+        if (VID.busy) return;
+        VID.busy = true; pub.disabled = true; err.textContent = '';
+        try {
+          var r = await db.rpc('publish_video', { p_id: v.id });
+          if (r.error) throw r.error;
+          toast('Published'); VID.editing = null; await renderVideos();
+        } catch (e) {
+          // the RPC's messages are written for a human — show them as-is
+          err.textContent = e.message || 'Could not publish.';
+          pub.disabled = false;
+        } finally { VID.busy = false; }
+      });
+
+      var unpub = document.getElementById('vid-unpublish');
+      if (unpub) unpub.addEventListener('click', async function () {
+        try {
+          var r = await db.rpc('unpublish_video', { p_id: v.id });
+          if (r.error) throw r.error;
+          toast('Unpublished'); VID.editing = null; await renderVideos();
+        } catch (e) { toast(e.message || 'Could not unpublish'); }
+      });
+
+      var refresh = document.getElementById('vid-refresh');
+      if (refresh) refresh.addEventListener('click', async function () {
+        await renderVideos();
+        VID.editing = VID.rows.filter(function (r) { return r.id === v.id; })[0] || null;
+        if (VID.editing) drawVideos();
+      });
+
+      ['vid-start', 'vid-replace'].forEach(function (id) {
+        var btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', function () { startVideoUpload(btn.id === 'vid-replace'); });
+      });
+    }
+
+    // Asks our server for a one-time Mux URL, then hands it to <mux-uploader>.
+    // The file goes browser → Mux directly; it never passes through Vercel,
+    // which is the only way a large class recording uploads at all.
+    async function startVideoUpload(replace) {
+      var v = VID.editing;
+      var host = document.getElementById('vid-upload');
+      var note = document.getElementById('vid-upload-note');
+      if (!v || v._new || !host) return;
+      host.innerHTML = '<p class="muted">Getting an upload link…</p>';
+      try {
+        var sess = await db.auth.getSession();
+        var token = sess.data && sess.data.session && sess.data.session.access_token;
+        var r = await fetch('/api/mux/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ videoId: v.id, replace: !!replace }),
+        });
+        var out = await r.json();
+        if (!r.ok) throw new Error(out.error || 'Could not start the upload');
+
+        host.innerHTML = '<mux-uploader id="vid-mux" endpoint="' + esc(out.uploadUrl) + '"></mux-uploader>';
+        note.textContent = 'Keep this tab open until the upload finishes.';
+
+        var up = document.getElementById('vid-mux');
+        // leaving mid-upload loses the transfer — Mux has no resume for a
+        // half-sent direct upload, so it is worth interrupting the admin for
+        var guard = function (e) { e.preventDefault(); e.returnValue = ''; };
+        window.addEventListener('beforeunload', guard);
+
+        up.addEventListener('success', async function () {
+          window.removeEventListener('beforeunload', guard);
+          note.textContent = 'Uploaded. Mux is processing it now — this usually takes a few minutes.';
+          // The webhook sets the real status; this only reflects what we know.
+          await db.from('videos').update({ status: 'processing' }).eq('id', v.id);
+          await renderVideos();
+          VID.editing = VID.rows.filter(function (r) { return r.id === v.id; })[0] || null;
+          if (VID.editing) drawVideos();
+        });
+        up.addEventListener('uploaderror', function (ev) {
+          window.removeEventListener('beforeunload', guard);
+          note.textContent = '';
+          host.innerHTML = '<p class="nf-err">The upload failed. ' +
+            esc((ev.detail && ev.detail.message) || '') + '</p>' +
+            '<button class="btn-secondary" id="vid-start">Try again</button>';
+          wireVideoForm();
+        });
+      } catch (e) {
+        host.innerHTML = '<p class="nf-err">' + esc(e.message) + '</p>' +
+          '<button class="btn-secondary" id="vid-start">Try again</button>';
+        wireVideoForm();
+      }
+    }
+
+    // ── Content › Video › Categories ────────────────────────────────────────
+    async function renderVideoCategories() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var res = await db.from('video_categories').select('*').order('sort_order');
+        if (res.error) throw res.error;
+        VID.cats = res.data || [];
+        drawVideoCategories();
+      } catch (e) {
+        b.innerHTML = /relation .* does not exist/i.test(e.message || '')
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Categories</h2></div>' +
+            '<div class="adm-intro" style="margin:0">This needs <code>supabase/video-library.sql</code> run in Supabase.</div></div>'
+          : stateError(e && e.message);
+      }
+    }
+
+    function drawVideoCategories() {
+      var b = bodyEl(); if (!b) return;
+      var live = VID.cats.filter(function (c) { return c.status === 'active'; });
+      b.innerHTML =
+        '<div class="adm-explain"><p>How the library is grouped. A video needs a category before it can be published, and the order here is the order members will see.</p></div>' +
+        '<div class="cat-controls"><input type="text" class="modal-input" id="vcat-name" maxlength="80" placeholder="New category name…" aria-label="New category name">' +
+        '<button class="btn-secondary" id="vcat-add">Add</button><span class="nf-err" id="vcat-err"></span></div>' +
+        '<div class="adm-panel" style="margin-top:16px"><div class="adm-panel-head"><h2>Categories</h2>' +
+          '<span class="muted adm-mono">' + num(live.length) + '</span></div>' +
+          (live.length
+            ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Name</th><th>URL</th><th>Videos</th><th></th></tr></thead><tbody>' +
+              live.map(function (c) {
+                var used = VID.rows.filter(function (v) { return v.category_id === c.id; }).length;
+                return '<tr data-cid="' + c.id + '">' +
+                  '<td><strong>' + esc(c.name) + '</strong></td>' +
+                  '<td class="muted adm-mono">' + esc(c.slug) + '</td>' +
+                  '<td class="muted adm-mono">' + num(used) + '</td>' +
+                  '<td class="adm-actcell"><button class="btn-icon adm-del vcat-del" data-tooltip="Archive" aria-label="Archive ' + esc(c.name) + '"><span class="material-symbols-sharp">delete</span></button></td>' +
+                '</tr>';
+              }).join('') + '</tbody></table></div>'
+            : stateEmpty('No categories yet.')) +
+        '</div>';
+      wireVideoCategories();
+    }
+
+    function wireVideoCategories() {
+      var b = bodyEl(); if (!b) return;
+      var add = document.getElementById('vcat-add');
+      var name = document.getElementById('vcat-name');
+      var err = document.getElementById('vcat-err');
+      if (add) add.addEventListener('click', async function () {
+        if (VID.busy) return;
+        var v = (name.value || '').trim();
+        if (!v) { err.textContent = 'Give it a name.'; return; }
+        VID.busy = true; add.disabled = true; err.textContent = '';
+        try {
+          var slugRes = await db.rpc('video_slugify', { p_text: v });
+          var slug = slugRes.data || '';
+          if (!slug) throw new Error('That name has no letters or numbers in it.');
+          var r = await db.from('video_categories').insert({ name: v, slug: slug }).select().single();
+          if (r.error) throw r.error;
+          toast('Category added');
+          name.value = '';
+          await renderVideoCategories();
+        } catch (e) {
+          err.textContent = /duplicate key/i.test(e.message || '')
+            ? 'There is already a category with that name.'
+            : (e.message || 'Could not add that.');
+        } finally { VID.busy = false; add.disabled = false; }
+      });
+      b.querySelectorAll('tr[data-cid] .vcat-del').forEach(function (btn) {
+        var id = btn.closest('tr').dataset.cid;
+        btn.addEventListener('click', async function () {
+          if (btn.dataset.armed !== '1') {
+            btn.dataset.armed = '1'; btn.classList.add('armed');
+            btn.setAttribute('data-tooltip', 'Click again to archive');
+            clearTimeout(btn._d);
+            btn._d = setTimeout(function () {
+              btn.dataset.armed = '0'; btn.classList.remove('armed');
+              btn.setAttribute('data-tooltip', 'Archive'); }, 3000);
+            return;
+          }
+          btn.disabled = true;
+          try {
+            // archived, never deleted — videos reference it, and the FK is
+            // ON DELETE RESTRICT precisely so a category cannot vanish from
+            // under them
+            var r = await db.from('video_categories').update({ status: 'archived' }).eq('id', id);
+            if (r.error) throw r.error;
+            toast('Category archived'); await renderVideoCategories();
+          } catch (e) { toast(e.message || 'Could not archive that'); btn.disabled = false; }
+        });
+      });
     }
 
     // ── Communications › Notifications ──────────────────────────────────────
