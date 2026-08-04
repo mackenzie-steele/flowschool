@@ -70,14 +70,23 @@
        Everything here is built from tokens already in the system; the only
        new shapes are the drop zone, the tag field and the search preview. */
     .vid-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .vid-head-right { display: flex; align-items: center; gap: 10px; flex: none; }
     .vid-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; padding-left: 0; }
     .vid-back .material-symbols-sharp { font-size: var(--icon-sm); }
     .vid-title-h { font-size: var(--fs-h4); font-weight: var(--weight-medium); margin: 0; }
     .vid-layout { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 28px; align-items: start; }
     @media (max-width: 1100px) { .vid-layout { grid-template-columns: 1fr; } }
 
-    .vid-section { border-top: 1px solid var(--border-light); padding: 24px 0; }
-    .vid-section:first-child { border-top: 0; padding-top: 0; }
+    /* Cards, not hairline bands. Each section is its own object with its own
+       edge, so the eye can find "Thumbnail" without reading down the page —
+       the same treatment .adm-panel already gives every other admin section. */
+    .vid-section {
+      border: 1px solid var(--border-light); border-radius: var(--r);
+      background: var(--raised), rgba(var(--ink-rgb), .02);
+      box-shadow: var(--crest);
+      padding: 20px 22px; margin-bottom: 16px;
+    }
+    .vid-main { display: flex; flex-direction: column; }
     .vid-section-head { margin-bottom: 16px; }
     .vid-section-head h2 { font-size: var(--fs-h6); font-weight: var(--weight-medium); margin: 0; }
     .vid-section-head p { font-size: var(--text-micro); color: var(--text-3); margin: 4px 0 0; }
@@ -3223,6 +3232,11 @@
     // for images too, so a thumbnail only appears once we have one — until
     // then the cell shows a quiet well rather than a broken image.
     function videoThumb(v) {
+      // a poster we uploaded wins, and needs no token
+      if (v.thumbnail_mode === 'custom' && v.custom_thumbnail_url) {
+        return '<span class="vid-thumb has-art"><img alt="" loading="lazy" src="' +
+               esc(v.custom_thumbnail_url) + '"></span>';
+      }
       if (!v.mux_playback_id || !v.thumb_token) {
         return '<span class="vid-thumb"><span class="material-symbols-sharp">movie</span></span>';
       }
@@ -3376,7 +3390,10 @@
               '<span class="material-symbols-sharp">arrow_back</span>All videos</button>' +
             '<h1 class="vid-title-h">' + (isNew ? 'New video' : esc(v.title || 'Untitled')) + '</h1>' +
           '</div>' +
-          '<div class="vid-head-right">' + (isNew ? '' : videoPill(v.status)) + '</div>' +
+          '<div class="vid-head-right">' +
+            (isNew ? '' : videoPill(v.status)) +
+            '<button class="btn-primary" id="vid-save-top">' + (isNew ? 'Create draft' : 'Save changes') + '</button>' +
+          '</div>' +
         '</div>' +
 
         '<div class="vid-layout">' +
@@ -3419,16 +3436,26 @@
                   '<div class="vid-thumb-preview" id="vid-thumb-preview"></div>' +
                   '<div class="vid-thumb-controls">' +
                     '<div class="vid-seg" role="group" aria-label="Thumbnail source">' +
-                      ['auto', 'timestamp'].map(function (m) {
-                        return '<button type="button" class="vid-seg-btn' + (v.thumbnail_mode === m ? ' on' : '') +
-                          '" data-thumb-mode="' + m + '">' + (m === 'auto' ? 'Automatic' : 'Pick a frame') + '</button>';
-                      }).join('') + '</div>' +
+                      [['auto', 'Automatic'], ['timestamp', 'Pick a frame'], ['custom', 'Upload one']]
+                        .map(function (m) {
+                          return '<button type="button" class="vid-seg-btn' + (v.thumbnail_mode === m[0] ? ' on' : '') +
+                            '" data-thumb-mode="' + m[0] + '">' + m[1] + '</button>';
+                        }).join('') + '</div>' +
                     '<div class="vid-thumb-time" id="vid-thumb-time"' + (v.thumbnail_mode === 'timestamp' ? '' : ' hidden') + '>' +
                       '<button class="btn-secondary" id="vid-usenow" type="button">Use the frame showing now</button>' +
                       '<label class="nf-label" for="vid-time">Or a time in seconds</label>' +
                       '<input class="modal-input" id="vid-time" inputmode="decimal" value="' +
                         esc(v.thumbnail_time_seconds != null ? v.thumbnail_time_seconds : '') + '" placeholder="12.5">' +
                       '<span class="nf-hint">Scrub the player, pause where you want it, then use the button.</span>' +
+                    '</div>' +
+                    '<div class="vid-thumb-custom" id="vid-thumb-custom"' + (v.thumbnail_mode === 'custom' ? '' : ' hidden') + '>' +
+                      '<label class="vid-drop vid-drop-sm" id="vid-thumb-drop">' +
+                        '<input type="file" id="vid-thumb-file" accept="image/jpeg,image/png,image/webp" hidden>' +
+                        '<span class="material-symbols-sharp">add_a_photo</span>' +
+                        '<span>Drop an image, or <u>browse</u></span>' +
+                        '<span class="nf-hint">JPG, PNG or WebP · 16:9 works best · up to 5MB</span>' +
+                      '</label>' +
+                      '<p class="nf-err" id="vid-thumb-err"></p>' +
                     '</div>' +
                   '</div>' +
                 '</div>'
@@ -3627,7 +3654,15 @@
     function videoThumbPreview() {
       var v = VID.editing;
       var host = document.getElementById('vid-thumb-preview');
-      if (!host || !v.mux_playback_id) return;
+      if (!host) return;
+      // a custom image is ours, not Mux's — no token, no playback id needed
+      if (v.thumbnail_mode === 'custom') {
+        host.innerHTML = v.custom_thumbnail_url
+          ? '<img alt="" src="' + esc(v.custom_thumbnail_url) + '">'
+          : '<span class="nf-hint">Upload an image to see it here.</span>';
+        return;
+      }
+      if (!v.mux_playback_id) return;
       if (!v.thumb_token) { host.innerHTML = '<span class="nf-hint">Preview appears once playback is authorised.</span>'; return; }
       var t = '';
       if (v.thumbnail_mode === 'timestamp') {
@@ -3744,6 +3779,8 @@
           });
           var t = $('vid-thumb-time');
           if (t) t.hidden = btn.dataset.thumbMode !== 'timestamp';
+          var cu = $('vid-thumb-custom');
+          if (cu) cu.hidden = btn.dataset.thumbMode !== 'custom';
           videoThumbPreview();
         });
       });
@@ -3759,6 +3796,24 @@
       // ── save / publish ──
       var save = $('vid-save');
       if (save) save.addEventListener('click', function () { saveVideo(save, err); });
+      var saveTop = $('vid-save-top');
+      if (saveTop) saveTop.addEventListener('click', function () { saveVideo(saveTop, err); });
+
+      // ── a thumbnail of your own ──
+      var tDrop = $('vid-thumb-drop'), tFile = $('vid-thumb-file'), tErr = $('vid-thumb-err');
+      if (tDrop && tFile) {
+        var takeThumb = function (f) { if (f) uploadThumbnail(f, tErr); };
+        tFile.addEventListener('change', function () { takeThumb(tFile.files && tFile.files[0]); tFile.value = ''; });
+        ['dragenter', 'dragover'].forEach(function (t) {
+          tDrop.addEventListener(t, function (e) { e.preventDefault(); tDrop.classList.add('over'); });
+        });
+        ['dragleave', 'drop'].forEach(function (t) {
+          tDrop.addEventListener(t, function (e) { e.preventDefault(); tDrop.classList.remove('over'); });
+        });
+        tDrop.addEventListener('drop', function (e) {
+          takeThumb(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
+        });
+      }
       var pub = $('vid-publish');
       if (pub) pub.addEventListener('click', async function () {
         if (VID.busy) return; VID.busy = true; pub.disabled = true; err.textContent = '';
@@ -3963,6 +4018,44 @@
       } catch (e) {
         err.textContent = 'Could not attach ' + file.name + ' — ' + (e.message || 'upload failed');
       } finally { tmp.remove(); }
+    }
+
+    // Straight to Supabase Storage, not through Mux — Mux stores video, and
+    // a poster we chose has nothing to do with the asset.
+    async function uploadThumbnail(file, err) {
+      var v = VID.editing;
+      if (!v || v._new) return;
+      err.textContent = '';
+      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+        err.textContent = 'That needs to be a JPG, PNG or WebP.'; return;
+      }
+      if (file.size > 5242880) { err.textContent = 'That image is over 5MB.'; return; }
+      var host = document.getElementById('vid-thumb-preview');
+      if (host) host.innerHTML = '<div class="vid-spinner" aria-label="Uploading"></div>';
+      try {
+        var ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+        // one path per video, overwritten on replace, so old posters do not
+        // pile up in the bucket unreferenced
+        var path = v.id + '/thumbnail.' + ext;
+        var up = await db.storage.from('video-thumbnails')
+          .upload(path, file, { contentType: file.type, upsert: true });
+        if (up.error) throw up.error;
+        var pub = db.storage.from('video-thumbnails').getPublicUrl(path);
+        // cache-bust: the path is stable, so a replaced image would otherwise
+        // keep showing the old one
+        var url = pub.data.publicUrl + '?v=' + Date.now().toString(36);
+        var r = await db.from('videos')
+          .update({ thumbnail_mode: 'custom', custom_thumbnail_url: url })
+          .eq('id', v.id).select().single();
+        if (r.error) throw r.error;
+        VID.editing.custom_thumbnail_url = url;
+        VID.editing.thumbnail_mode = 'custom';
+        videoThumbPreview();
+        toast('Thumbnail updated');
+      } catch (e) {
+        err.textContent = e.message || 'Could not upload that image.';
+        videoThumbPreview();
+      }
     }
 
     async function loadVideoResources() {
