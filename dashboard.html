@@ -2245,10 +2245,6 @@
 
     // ── Moon Phase Widget ─────────────────────────────────────────────────────
 
-    var MOON_PHASES = [
-      'New Moon', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous',
-      'Full Moon', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent'
-    ];
     var LUNAR_CYCLE = 29.53059;
     var KNOWN_NEW_MOON = new Date('2000-01-06T18:14:00Z').getTime();
 
@@ -2256,6 +2252,30 @@
       var elapsed = (date.getTime() - KNOWN_NEW_MOON) / 86400000;
       var phase = ((elapsed % LUNAR_CYCLE) + LUNAR_CYCLE) % LUNAR_CYCLE;
       return phase / LUNAR_CYCLE; // 0=new, 0.5=full
+    }
+
+    // NEW, FIRST QUARTER, FULL AND LAST QUARTER ARE MOMENTS, NOT WEEKS.
+    // The name used to come from Math.round(phase * 8), which handed all
+    // eight an equal 3.7-day slice — so "Last Quarter" covered 0.69 to 0.81
+    // and the dashboard called a 68%-lit waning gibbous a Last Quarter for
+    // three days before the actual event.
+    //
+    // A quarter name only holds while the moon is within MOON_EVENT of the
+    // exact instant — the same tolerance moonSVG already uses to decide when
+    // to draw a plain disc, so the shape and the words now agree. Everything
+    // between belongs to the crescent and gibbous spans, which is where the
+    // moon actually spends its month.
+    var MOON_EVENT = 0.02;   // ±0.6 days either side of the instant
+
+    function moonName(phase) {
+      if (phase < MOON_EVENT || phase > 1 - MOON_EVENT) return 'New Moon';
+      if (Math.abs(phase - 0.25) < MOON_EVENT) return 'First Quarter';
+      if (Math.abs(phase - 0.5)  < MOON_EVENT) return 'Full Moon';
+      if (Math.abs(phase - 0.75) < MOON_EVENT) return 'Last Quarter';
+      if (phase < 0.25) return 'Waxing Crescent';
+      if (phase < 0.5)  return 'Waxing Gibbous';
+      if (phase < 0.75) return 'Waning Gibbous';
+      return 'Waning Crescent';
     }
 
     function moonSVG(phase) {
@@ -2302,10 +2322,9 @@
       function tick() {
         var now = new Date();
         var phase = getMoonPhase(now);
-        var phaseIdx = Math.round(phase * 8) % 8;
         var dateStr = MONTHS[now.getMonth()].toUpperCase() + ' ' + now.getDate();
         document.getElementById('db-moon-svg').innerHTML = moonSVG(phase);
-        document.getElementById('db-moon-phase').textContent = MOON_PHASES[phaseIdx];
+        document.getElementById('db-moon-phase').textContent = moonName(phase);
         // the time is a toggle: click it to flip 24h ⇄ 12h; the choice sticks
         document.getElementById('db-moon-datetime').innerHTML =
           dateStr + ' · <button type="button" class="db-clock" id="db-clock" aria-label="Toggle 12 or 24 hour time">' + fmtClock(now) + '</button>';

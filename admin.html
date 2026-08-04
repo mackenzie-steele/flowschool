@@ -80,7 +80,10 @@
     .nf-msg { resize: vertical; min-height: 96px; font-family: var(--font); line-height: 1.5; }
     .nf-hint { font-size: var(--text-micro); color: var(--text-3); margin-top: 6px; }
     .nf-actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-    .nf-err { font-size: var(--text-micro); color: var(--serious, #B4332B); }
+    /* --danger is the token .adm-pill.off already uses; --serious was never
+       a token in this system and the hardcoded fallback beside it was a
+       colour that appears nowhere else */
+    .nf-err { font-size: var(--text-micro); color: var(--danger); }
     .nf-preview-cap {
       display: block; font-family: var(--font-mono); font-size: var(--text-nano);
       letter-spacing: var(--ls-micro); text-transform: uppercase;
@@ -93,14 +96,16 @@
     .nf-preview-box .fs-np-item { border-bottom: 0; cursor: default; }
     .nf-preview-box .fs-np-item:hover { background: none; }
 
-    .nf-pill {
-      font-family: var(--font-mono); font-size: var(--text-nano);
-      letter-spacing: var(--ls-micro); text-transform: uppercase;
-      padding: 3px 8px; border-radius: var(--rs); white-space: nowrap;
+    /* Number first, bar second. The bar is for comparing rows at a glance;
+       the number is the thing you would quote. */
+    .nf-reach { display: flex; flex-direction: column; gap: 5px; min-width: 92px; }
+    .nf-reach-n { font-family: var(--font-mono); font-size: var(--text-micro); color: var(--text-1); white-space: nowrap; }
+    .nf-reach-bar {
+      display: block; height: 3px; border-radius: 999px;
+      background: rgba(var(--ink-rgb), .10); overflow: hidden;
     }
-    .nf-draft     { background: rgba(var(--ink-rgb), .06); color: var(--text-3); }
-    .nf-published { background: var(--accent-dim); color: var(--accent); }
-    .nf-archived  { background: rgba(var(--ink-rgb), .04); color: var(--text-3); opacity: .8; }
+    .nf-reach-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+
 
     /* ── The landing page ──────────────────────────────────────────────
        Two doors. Deliberately large and few: this is the one screen where
@@ -114,7 +119,7 @@
     }
     .adm-area {
       display: flex; flex-direction: column;
-      padding: 32px; min-height: 260px;
+      padding: 32px; min-height: 190px;
       border: 1px solid var(--border-light); border-radius: var(--r);
       background: var(--raised), rgba(var(--ink-rgb), .02);
       box-shadow: var(--crest);
@@ -127,24 +132,13 @@
       transform: translateY(-2px);
     }
     .adm-area:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-    .adm-area-num {
-      font-family: var(--font-mono); font-size: var(--text-nano);
-      letter-spacing: var(--ls-micro); color: var(--text-3);
-      margin-bottom: 28px;
-    }
     .adm-area-name { font-size: var(--fs-h5); font-weight: var(--weight-medium); margin-bottom: 8px; }
+    /* flex:1 so the CTA sits on the floor of every card regardless of how
+       long its sentence runs — the three bottom edges line up */
     .adm-area-blurb {
       font-size: var(--text-body-sm); color: var(--text-2);
-      line-height: var(--lh-body); max-width: 42ch; margin-bottom: 20px;
+      line-height: var(--lh-body); max-width: 42ch; margin: 0; flex: 1;
     }
-    /* what is inside, so the card is not a guess */
-    .adm-area-meta {
-      font-family: var(--font-mono); font-size: var(--text-micro);
-      color: var(--text-3); flex: 1;
-    }
-    .adm-area-meta .dot { margin: 0 7px; opacity: .5; }
-    /* the only thing that should pull you in */
-    .adm-area-flag { color: var(--accent); }
     .adm-area-cta {
       display: flex; align-items: center; gap: 8px; margin-top: 24px;
       font-size: var(--text-ui); font-weight: var(--weight-medium); color: var(--text-3);
@@ -159,7 +153,6 @@
     @media (max-width: 720px) {
       .adm-areas { grid-template-columns: 1fr; }
       .adm-area { min-height: 0; padding: 24px; }
-      .adm-area-num { margin-bottom: 18px; }
     }
 
     /* breadcrumb — the way back out, and the only place the area is named */
@@ -3003,14 +2996,33 @@
       ['new_feature',     'New feature'],
       ['platform_update', 'Platform update'],
     ];
-    var NF = { editing: null, rows: [], busy: false };
+    var NF = { editing: null, rows: [], reach: {}, busy: false };
+
+    // "142 of 880" beside a bar. The number leads because the percentage is
+    // the thing that misleads — 50% of nine people is not a result. A draft
+    // has no reach and says so with a dash rather than a persuasive zero.
+    function notifReach(r) {
+      if (r.status !== 'published') return '<span class="muted">—</span>';
+      var x = NF.reach[r.id];
+      if (!x) return '<span class="muted">—</span>';
+      var pct = x.audience ? Math.round(x.reads / x.audience * 100) : 0;
+      return '<div class="nf-reach" title="' + num(x.reads) + ' of ' + num(x.audience) +
+             ' teachers have opened this">' +
+        '<span class="nf-reach-n">' + num(x.reads) + '<span class="muted"> / ' + num(x.audience) + '</span></span>' +
+        '<span class="nf-reach-bar"><span style="width:' + Math.min(100, pct) + '%"></span></span>' +
+      '</div>';
+    }
 
     function notifTypeLabel(t) {
       var m = NOTIF_TYPES.filter(function (x) { return x[0] === t; })[0];
       return m ? m[1] : 'Announcement';
     }
+    // .adm-pill is the admin's badge — outlined, mono, uppercase, --rf radius.
+    // Published is the only state that earns the accent: it is the one that
+    // means "this is live in front of people". Draft and archived are quiet
+    // by default, which is what the base pill already is.
     function notifStatusPill(s) {
-      return '<span class="nf-pill nf-' + esc(s) + '">' + esc(s) + '</span>';
+      return '<span class="adm-pill' + (s === 'published' ? ' on' : '') + '">' + esc(s) + '</span>';
     }
 
     async function renderNotifs() {
@@ -3019,6 +3031,17 @@
         var res = await db.from('notifications').select('*').order('created_at', { ascending: false });
         if (res.error) throw res.error;
         NF.rows = res.data || [];
+        // Reach is a separate migration. If it has not been run the table
+        // still works — the column just stays quiet — rather than the whole
+        // section failing over a number.
+        NF.reach = {};
+        try {
+          var rr = await db.rpc('notification_reach');
+          // `nid`, not notification_id — see the note in notifications-reach.sql
+          if (!rr.error) (rr.data || []).forEach(function (x) {
+            NF.reach[x.nid] = { reads: x.reads, audience: x.audience };
+          });
+        } catch (_) {}
         drawNotifs();
       } catch (e) {
         // the one error worth naming precisely: the table not existing yet
@@ -3045,14 +3068,26 @@
         '</div>' +
         (e ? notifForm(e) : '<button class="btn-primary" id="nf-new">Write an announcement</button>') +
         '<div class="adm-panel" style="margin-top:20px"><div class="adm-panel-head"><h2>Notifications</h2>' +
-          '<span class="muted adm-mono">' + num(shown.length) +
-            // say it plainly rather than letting rows quietly vanish
-            (archivedCount ? ' · ' + num(archivedCount) + ' archived' : '') + '</span></div>' +
+          // no archived count here — the Archived panel below names it, and
+          // saying it twice made this header read like a warning
+          '<span class="muted adm-mono">' + num(shown.length) + '</span></div>' +
           (shown.length
-            ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Created</th><th>Published</th><th></th></tr></thead><tbody>' +
+            ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Read</th><th>Created</th><th>Published</th><th></th></tr></thead><tbody>' +
               shown.map(notifRow).join('') + '</tbody></table></div>'
             : stateEmpty('Nothing written yet.')) +
-        '</div>';
+        '</div>' +
+        // Archived sits below rather than mixed in: it is a record, not a
+        // worklist. Delete is only offered here — a published notification
+        // has to be taken down before it can be destroyed, which makes
+        // "gone from everyone's panel" a separate decision from "gone".
+        (archivedCount
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Archived</h2>' +
+              '<span class="muted adm-mono">' + num(archivedCount) + '</span></div>' +
+              '<div class="adm-intro" style="margin:2px 0 14px">Taken down. Teachers no longer see these and they count towards nobody’s unread. Deleting one removes it and its read history for good.</div>' +
+              '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Title</th><th>Type</th><th>Published</th><th>Archived</th><th></th></tr></thead><tbody>' +
+              NF.rows.filter(function (r) { return r.status === 'archived'; }).map(notifArchivedRow).join('') +
+              '</tbody></table></div></div>'
+          : '');
       wireNotifs();
       if (e && !keepForm) { var t = document.getElementById('nf-title'); if (t) t.focus(); }
     }
@@ -3062,18 +3097,36 @@
         '<td><strong>' + esc(r.title) + '</strong></td>' +
         '<td class="muted adm-mono">' + esc(notifTypeLabel(r.notification_type)) + '</td>' +
         '<td>' + notifStatusPill(r.status) + '</td>' +
+        '<td>' + notifReach(r) + '</td>' +
         '<td class="muted">' + esc(A.fmtDate(r.created_at)) + '</td>' +
         '<td class="muted">' + (r.published_at ? esc(A.fmtDate(r.published_at)) : '—') + '</td>' +
         '<td class="mus-actions">' +
           '<button class="btn-ghost nf-edit">Edit</button> ' +
           (r.status === 'draft'
-            ? '<button class="btn-secondary nf-publish">Publish</button> <button class="btn-ghost nf-del">Delete</button>'
+            ? '<button class="btn-secondary nf-publish">Publish</button> ' +
+              '<button class="btn-icon adm-del nf-del" data-tooltip="Delete" aria-label="Delete draft ' + esc(r.title) + '">' +
+                '<span class="material-symbols-sharp">delete</span></button>'
             : r.status === 'published'
               ? '<button class="btn-ghost nf-archive">Archive</button>'
               // archived rows are filtered out of this table, so this branch
               // only fires if that filter is ever relaxed — kept, because
               // publish_notification() already restores them correctly
               : '<button class="btn-secondary nf-publish">Restore</button>') +
+        '</td></tr>';
+    }
+
+    // Same row shape as the live table minus the things that no longer apply:
+    // no status pill (they are all archived), no reach (it stopped counting
+    // when it came down).
+    function notifArchivedRow(r) {
+      return '<tr data-aid="' + r.id + '">' +
+        '<td><strong>' + esc(r.title) + '</strong></td>' +
+        '<td class="muted adm-mono">' + esc(notifTypeLabel(r.notification_type)) + '</td>' +
+        '<td class="muted">' + (r.published_at ? esc(A.fmtDate(r.published_at)) : '—') + '</td>' +
+        '<td class="muted">' + (r.archived_at ? esc(A.fmtDate(r.archived_at)) : '—') + '</td>' +
+        '<td class="adm-actcell">' +
+          '<button class="btn-icon adm-del" data-tooltip="Delete" aria-label="Delete ' + esc(r.title) + ' permanently">' +
+            '<span class="material-symbols-sharp">delete</span></button>' +
         '</td></tr>';
     }
 
@@ -3269,24 +3322,79 @@
             toast('Archived — it’s off everyone’s panel'); await renderNotifs();
           } catch (e) { toast((e && e.message) || 'Could not archive'); }
         });
+        // same icon + .armed pattern as the archived table below and the
+        // feedback table elsewhere — one delete affordance in this admin
         var dl = tr.querySelector('.nf-del');
         if (dl) dl.addEventListener('click', async function () {
           if (dl.dataset.armed !== '1') {
-            dl.dataset.armed = '1'; dl.textContent = 'Really delete?'; dl.classList.add('mus-del-armed'); return;
+            dl.dataset.armed = '1'; dl.classList.add('armed');
+            dl.setAttribute('data-tooltip', 'Click again to delete');
+            clearTimeout(dl._disarm);
+            dl._disarm = setTimeout(function () {
+              dl.dataset.armed = '0'; dl.classList.remove('armed');
+              dl.setAttribute('data-tooltip', 'Delete');
+            }, 3000);
+            return;
           }
+          dl.disabled = true;
           try {
             var r = await db.from('notifications').delete().eq('id', id);
             if (r.error) throw r.error;
             toast('Draft deleted'); await renderNotifs();
-          } catch (e) { toast((e && e.message) || 'Could not delete'); }
+          } catch (e) {
+            toast((e && e.message) || 'Could not delete');
+            dl.disabled = false; dl.dataset.armed = '0';
+            dl.classList.remove('armed'); dl.setAttribute('data-tooltip', 'Delete');
+          }
         });
       });
-      // one click anywhere else disarms, so an armed button never lingers
+      // archived rows: permanent delete, using the admin's own icon pattern —
+      // arm on first click, disarm after 3s, exactly as the feedback table does
+      b.querySelectorAll('tr[data-aid] .adm-del').forEach(function (btn) {
+        var id = Number(btn.closest('tr').dataset.aid);
+        btn.addEventListener('click', async function () {
+          if (btn.dataset.armed === '1') {
+            btn.disabled = true;
+            try {
+              // notification_reads cascades on the foreign key, so the read
+              // history goes with it rather than being orphaned
+              var r = await db.from('notifications').delete().eq('id', id);
+              if (r.error) throw r.error;
+              toast('Deleted for good');
+              await renderNotifs();
+            } catch (e) {
+              toast((e && e.message) || 'Could not delete that');
+              btn.disabled = false; btn.dataset.armed = '0';
+              btn.classList.remove('armed'); btn.setAttribute('data-tooltip', 'Delete');
+            }
+            return;
+          }
+          btn.dataset.armed = '1'; btn.classList.add('armed');
+          btn.setAttribute('data-tooltip', 'Click again to delete');
+          clearTimeout(btn._disarm);
+          btn._disarm = setTimeout(function () {
+            btn.dataset.armed = '0'; btn.classList.remove('armed');
+            btn.setAttribute('data-tooltip', 'Delete');
+          }, 3000);
+        });
+      });
+
+      // One click anywhere else disarms, so an armed button never lingers.
+      // Two kinds live here now: text buttons that swap their label, and icon
+      // buttons whose label IS a child <span>. Writing textContent to the
+      // second kind would delete the glyph and leave a bare word behind.
       b.addEventListener('click', function (ev) {
         b.querySelectorAll('[data-armed="1"]').forEach(function (o) {
           if (o === ev.target || o.contains(ev.target)) return;
-          o.dataset.armed = ''; o.classList.remove('mus-del-armed');
-          o.textContent = o.classList.contains('nf-del') ? 'Delete' : 'Archive';
+          o.dataset.armed = '';
+          clearTimeout(o._disarm);
+          if (o.querySelector('.material-symbols-sharp')) {
+            o.classList.remove('armed');
+            o.setAttribute('data-tooltip', 'Delete');
+          } else {
+            o.classList.remove('mus-del-armed');
+            o.textContent = 'Archive';
+          }
         });
       });
     }
@@ -3295,38 +3403,23 @@
     // A menu that only lists its options is a toll on the way to work. These
     // cards carry the state of the thing behind them, so the page answers
     // "is there anything for me?" without being entered.
-    async function renderHome() {
+    // Name, one line about what it is for, and a way in. The cards used to
+    // carry a number and a contents list; at three doors you are not counting
+    // and you are not choosing by inventory — the label already tells you.
+    function renderHome() {
       var b = bodyEl();
       if (!b) return;
       b.innerHTML =
-        '<p class="adm-intro">Two areas. Analytics is for reading, Content is for changing.</p>' +
-        '<div class="adm-areas">' + AREAS.map(function (a, i) {
-          var groups = GROUPS.filter(function (g) { return g.area === a.id; });
+        '<p class="adm-intro">Three areas. Analytics is for reading, Content and Communications are for changing.</p>' +
+        '<div class="adm-areas">' + AREAS.map(function (a) {
           // a real href, so cmd-click and the status bar behave; no click
           // handler needed, which means no way for one to go missing
           return '<a class="adm-area" href="#' + a.home + '">' +
-            '<span class="adm-area-num">' + String(i + 1).padStart(2, '0') + '</span>' +
             '<h2 class="adm-area-name">' + esc(a.label) + '</h2>' +
             '<p class="adm-area-blurb">' + esc(a.blurb) + '</p>' +
-            '<div class="adm-area-meta" id="area-meta-' + a.id + '">' +
-              groups.map(function (g) { return esc(g.label); }).join('<span class="dot">·</span>') +
-            '</div>' +
             '<span class="adm-area-cta">Open<span class="material-symbols-sharp">arrow_forward</span></span>' +
           '</a>';
         }).join('') + '</div>';
-
-      // A card only earns a badge when it is asking for something. Failure is
-      // silent: a card that cannot count is still a working door.
-      try {
-        var rows = await db.from('music_staging').select('song_id,status');
-        var pending = (rows.data || []).filter(function (r) { return r.status === 'pending'; }).length;
-        var total = (typeof SONGS !== 'undefined' ? SONGS.length : 0);
-        var meta = document.getElementById('area-meta-content');
-        if (meta) {
-          meta.innerHTML = (total ? num(total) + ' songs' : 'Music') +
-            (pending ? '<span class="dot">·</span><span class="adm-area-flag">' + num(pending) + ' need review</span>' : '');
-        }
-      } catch (e) { /* the door still opens */ }
     }
 
     // ── router ──
