@@ -25,3 +25,6 @@ scripts/new-songs-draft.txt.media.json
 *.p8
 *.pem
 musickit/
+
+# working notes — not app code, and not proven un-servable like docs/
+output/

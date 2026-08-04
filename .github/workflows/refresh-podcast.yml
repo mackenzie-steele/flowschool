@@ -1,0 +1,113 @@
+# ─── Pull new Yoga Strong episodes into data/yoga-strong-episodes.js ────────
+#
+# WEEKLY, NOT NIGHTLY
+# The show publishes every week or two. A nightly run would be six wasted
+# checks for every real one.
+#
+# IT ONLY APPENDS
+# scripts/refresh-podcast.js never rewrites an episode already in the file.
+# Two of the blurbs in there have been edited by hand, and a job that
+# regenerated the file from the feed each week would quietly undo that. Once
+# an episode is in the file it belongs to whoever edited it last.
+#
+# NO SECRETS
+# Both sources — the Buzzsprout RSS feed and the iTunes lookup — are public.
+# Unlike the music publish, this needs nothing configured.
+#
+# FIRST RUN
+# DRY_RUN starts "true". Let one Sunday pass, read the log, then flip it.
+# ────────────────────────────────────────────────────────────────────────────
+
+name: Refresh podcast episodes
+
+on:
+  schedule:
+    # 11:00 UTC Sunday — 4am Portland in summer. New episodes land midweek,
+    # so Sunday catches them without racing the publish.
+    - cron: '0 11 * * 0'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run reports only; publish writes and commits'
+        type: choice
+        default: dry-run
+        options: [dry-run, publish]
+
+concurrency:
+  group: refresh-podcast
+  cancel-in-progress: false
+
+env:
+  # ── flip to "false" once you have read a dry run you are happy with ──
+  DRY_RUN: "true"
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'   # global fetch; no npm install needed
+
+      - name: Decide the mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            [ "${{ inputs.mode }}" = "publish" ] && echo "write=true" >> "$GITHUB_OUTPUT" || echo "write=false" >> "$GITHUB_OUTPUT"
+          else
+            [ "$DRY_RUN" = "false" ] && echo "write=true" >> "$GITHUB_OUTPUT" || echo "write=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: What would change
+        # pipefail: without it `tee` supplies the exit code and the script's
+        # own failure — the self-revert — would read as a clean run
+        run: |
+          set -o pipefail
+          node scripts/refresh-podcast.js | tee dry-run.log
+
+      - name: Add them
+        if: steps.mode.outputs.write == 'true'
+        run: |
+          set -o pipefail
+          node scripts/refresh-podcast.js --write | tee refresh.log
+
+      - name: Commit, but only if an episode actually landed
+        if: steps.mode.outputs.write == 'true'
+        run: |
+          # ONLY the episode file. If the script ever touches anything else
+          # that is a bug and should not ride along silently.
+          git add data/yoga-strong-episodes.js
+          if git diff --cached --quiet; then
+            echo "no new episodes — no commit"
+            exit 0
+          fi
+
+          added=$(grep -oE '^ +\+ [0-9]+ .*' refresh.log | head -3 | sed 's/^ *+ */#/' | paste -sd '; ' -)
+          [ -z "$added" ] && added="new episodes"
+
+          git config user.name  "flow-school-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(podcast): add ${added}" -m \
+            "Appended from the Buzzsprout feed with Apple links from the iTunes
+          lookup. Existing rows are never rewritten — some blurbs are edited
+          by hand.
+
+          Automated by .github/workflows/refresh-podcast.yml"
+          git push
+          echo "pushed — Vercel will deploy"
+
+      - name: Keep the log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: podcast-log
+          path: |
+            dry-run.log
+            refresh.log
+          if-no-files-found: ignore
+          retention-days: 30
