@@ -75,6 +75,13 @@
        admin's rhythm is .btn-secondary's 12px 24px, and a header button that
        overshoots it reads as a different system. */
     .vid-head-right .btn-primary { padding: 12px 22px; font-size: var(--text-ui); }
+    /* "Saved" rather than a dead grey button: the disabled state is telling
+       you the work is already safe, which is worth saying. */
+    .vid-head-right .btn-primary:disabled {
+      opacity: .45; cursor: default;
+      background: none; color: var(--text-3);
+      box-shadow: inset 0 0 0 1px var(--border-light);
+    }
     .vid-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; padding-left: 0; }
     .vid-back .material-symbols-sharp { font-size: var(--icon-sm); }
     .vid-title-h { font-size: var(--fs-h4); font-weight: var(--weight-medium); margin: 0; }
@@ -162,6 +169,14 @@
     .vid-radio.on .vid-radio-name { color: var(--accent); }
     .vid-radio .nf-hint { margin: 0; }
     .vid-when { display: flex; flex-direction: column; padding: 4px 12px 0; }
+    /* The hidden ATTRIBUTE hides via display:none in the UA stylesheet,
+       which ANY author display outranks. Every element here that is toggled
+       with .hidden needs its own guard or it is simply always visible —
+       which is exactly what happened to the Go live picker. */
+    .vid-when[hidden],
+    .vid-thumb-time[hidden],
+    .vid-newcat-row[hidden],
+    .vid-thumb-custom[hidden] { display: none; }
     .vid-blockers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
     .vid-blockers li {
       display: flex; align-items: flex-start; gap: 8px;
@@ -3698,6 +3713,35 @@
       }).join('') + '</ul>';
     }
 
+    // Everything Save would write, flattened. Comparing this to a snapshot
+    // taken at render is what tells the button whether there is anything to
+    // do — a dirty FLAG would drift the moment a field was changed and put
+    // back, and the button would lie.
+    function videoFingerprint() {
+      var v = videoRead();
+      var vis = (document.querySelector('input[name="vid-vis"]:checked') || {}).value || '';
+      var when = (document.getElementById('vid-when-at') || {}).value || '';
+      return JSON.stringify([v.title, v.short_description, v.description, v.category_id,
+        v.slug, v.seo_title, v.seo_description, v.thumbnail_mode, v.thumbnail_time_seconds,
+        (VID.editing.search_keywords || []).join('\u0000'),
+        vis, vis === 'scheduled' ? when : '']);
+    }
+
+    function videoMarkClean() {
+      VID._clean = videoFingerprint();
+      videoSyncSave();
+    }
+
+    function videoSyncSave() {
+      var btn = document.getElementById('vid-save-top');
+      if (!btn) return;
+      // a new video always has something to save — it does not exist yet
+      var dirty = (VID.editing && VID.editing._new) || videoFingerprint() !== VID._clean;
+      btn.disabled = !dirty;
+      btn.textContent = (VID.editing && VID.editing._new) ? 'Create draft'
+        : dirty ? 'Save' : 'Saved';
+    }
+
     function videoRead() {
       var g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
       var t = function (id) { return (g(id) || '').trim(); };
@@ -3740,6 +3784,7 @@
           '<span class="vid-serp-desc">' + esc(desc) + '</span>';
       }
       videoThumbPreview();
+      videoSyncSave();
     }
 
     function videoThumbPreview() {
@@ -3799,6 +3844,7 @@
         tagInput.insertAdjacentHTML('beforebegin', vidTag(val));
         tagInput.value = '';
         wireTagRemovers();
+        videoSyncSave();
       };
       if (tagInput) {
         tagInput.addEventListener('keydown', function (e) {
@@ -3823,6 +3869,7 @@
           .filter(function (k) { return k !== kw; });
         var el = document.querySelector('.vid-tag[data-kw="' + CSS.escape(kw) + '"]');
         if (el) el.remove();
+        videoSyncSave();
       }
       function wireTagRemovers() {
         document.querySelectorAll('.vid-tag-x').forEach(function (x) {
@@ -3854,6 +3901,7 @@
           var sel = $('vid-category');
           sel.insertAdjacentHTML('beforeend', '<option value="' + r.data.id + '">' + esc(r.data.name) + '</option>');
           sel.value = r.data.id;          // chosen for you — it is why you made it
+          videoSyncSave();
           row.hidden = true; newcat.hidden = false;
           toast('Category added');
         } catch (e) {
@@ -3873,6 +3921,7 @@
           var cu = $('vid-thumb-custom');
           if (cu) cu.hidden = btn.dataset.thumbMode !== 'custom';
           videoThumbPreview();
+          videoSyncSave();
         });
       });
       var useNow = $('vid-usenow');
@@ -3882,6 +3931,7 @@
         VID.editing.thumbnail_mode = 'timestamp';
         var t = $('vid-time'); if (t) t.value = Math.round(p.currentTime * 10) / 10;
         videoThumbPreview();
+        videoSyncSave();
       });
 
       // ── save / publish ──
@@ -4027,8 +4077,12 @@
       // button exists — Reload was removed and this was gated on it.
       if (v.mux_playback_id && document.getElementById('vid-player')) previewVideo(null, true);
 
+      var catSel = $('vid-category');
+      if (catSel) catSel.addEventListener('change', videoSyncSave);
+
       wireVideoResources();
       videoLive();
+      videoMarkClean();            // the baseline is whatever just rendered
       if (!v._new) loadVideoResources();
     }
 
@@ -4086,7 +4140,7 @@
           var keep = VID.editing.id;
           await renderVideos();
           VID.editing = VID.rows.filter(function (r) { return r.id === keep; })[0] || VID.editing;
-          drawVideos();
+          drawVideos();       // re-renders, which re-baselines through videoMarkClean
         }
       } catch (e) {
         err.textContent = e.message || 'Could not save that.';
