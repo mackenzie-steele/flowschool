@@ -427,13 +427,29 @@
     .cat-more { display: flex; align-items: center; gap: 12px; padding: 14px 20px 4px; }
     .cat-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
     .cat-controls .modal-input { flex: 1; min-width: 220px; margin: 0; }
+    /* The native chevron is pinned hard against the right edge and no amount
+       of padding moves it — the browser draws it outside the box we control.
+       So it is suppressed and redrawn as a background image, which lets it sit
+       properly inset. Same lucide chevron-down at 1.5px as the rest of the
+       icon set; it needs a per-theme copy because a background image cannot
+       inherit currentColor. */
     .cat-controls select, .cat-e {
       font-family: var(--font-mono); font-size: var(--fs-label-2);
       color: var(--text-1); background: var(--well-bg); box-shadow: var(--well);
       border: 1px solid var(--border); border-radius: var(--rb);
-      padding: 8px 10px; cursor: pointer;
+      padding: 8px 34px 8px 12px; cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23151515' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 14px 14px;
     }
-    .cat-e { padding: 5px 8px; }
+    [data-theme="dark"] .cat-controls select,
+    [data-theme="dark"] .cat-e {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23EBEEF5' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    }
+    /* the in-table one is tighter, but keeps the same gap to the chevron */
+    .cat-e { padding: 5px 30px 5px 10px; background-position: right 10px center; }
 
     /* artwork doubles as the play control here too, same as the Builder */
     .cat-art {
@@ -496,7 +512,10 @@
     }
     /* sits in the Waiting-for-review panel head, so no top margin */
     .mus-pull { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .adm-panel-body { padding: 0 20px 20px; }
+    /* No horizontal padding: .adm-panel already pads 22px, and adding 20px on
+       top of it set the body content 42px in while the panel's own heading sat
+       at 22px — the search field looked indented against its own title. */
+    .adm-panel-body { padding: 0 0 20px; }
   </style>
 </head>
 <body class="has-sidebar">
@@ -2104,7 +2123,7 @@
     function musCataloguePanel() {
       var all = musLive(), hits = musMatches();
       var shown = hits.slice(0, MUS_PAGE);
-      return '<div class="adm-panel"><div class="adm-panel-head"><h2>Every song</h2>' +
+      return '<div class="adm-panel"><div class="adm-panel-head"><h2>All songs</h2>' +
         '<span class="muted adm-mono">' + num(all.length) + '</span></div>' +
         '<div class="adm-panel-body">' +
           '<div class="cat-controls">' +
@@ -2237,7 +2256,7 @@
         // still read elsewhere — musUnmatched() needs it — just not here.
         var liveIds = {};
         if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { liveIds[sg.id] = true; });
-        // approved — usable by teachers now, though not in the file yet
+        // approved — live for teachers now; the nightly job adds it to the file
         approved.forEach(function (r) {
           if (r.energy == null) return;                  // never judged
           liveIds[r.song_id] = true;
@@ -2260,14 +2279,19 @@
             // hand-link sub-line went with it. Approved-not-yet-in-the-file
             // is the one staging state worth surfacing: it is the difference
             // between what teachers see and what the file says.
-            '<div class="adm-metric"><div class="lbl">Songs in the catalogue</div><div class="val">' + num(inFile) + '</div>' +
-              (liveExtra ? '<div class="adm-metric-sub">' + num(liveExtra) + ' approved, not in the file yet</div>' : '') + '</div>' +
-            '<div class="adm-metric"><div class="lbl">Waiting for review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
+            '<div class="adm-metric"><div class="lbl">Songs in catalogue</div><div class="val">' + num(inFile) + '</div>' +
+              // "not in the file yet" read as a chore — something you had to
+              // go and do. Nothing is waiting on anybody: an approved song is
+              // live for teachers the moment it is approved, and the nightly
+              // job folds it into the file on its own. So this says what is
+              // true and asks for nothing.
+              (liveExtra ? '<div class="adm-metric-sub">' + num(liveExtra) + ' approved · already live</div>' : '') + '</div>' +
+            '<div class="adm-metric"><div class="lbl">Needs review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
           '</div>' +
           // Pull sits here because this is where its result lands \u2014 songs
           // arrive in the review queue, so the button and its outcome are in
           // one place rather than a panel apart.
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Waiting for review</h2>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Needs review</h2>' +
           '<div class="mus-pull"><span class="muted adm-mono">' + num(MUS.pending.length) + '</span>' +
           '<button class="btn-secondary" id="mus-pull">Pull new songs</button></div></div>' +
           '<p class="muted adm-mono" id="mus-pull-note"></p>' +

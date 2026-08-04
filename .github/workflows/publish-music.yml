@@ -1,0 +1,142 @@
+# ─── Fold approved / removed / corrected songs into data/songs.js ───────────
+#
+# WHY THIS IS NOT URGENT WORK
+# Approvals, removals, hand-links and energy corrections are ALREADY live for
+# teachers: the Playlist Builder merges music_staging, music_links,
+# music_removed and music_edits from Supabase on every page load. Nothing here
+# delivers anything to anybody. What it does is fold those rows into the
+# shipped file so the file stays the baseline — faster first paint, works
+# offline, and the live merge stays small.
+#
+# That is why this runs once a night rather than on every admin action: a
+# commit per click would be forty commits a day for something nobody is
+# waiting on.
+#
+# SAFETY
+# scripts/publish-approved.js reverts itself if the file stops parsing, if the
+# song count does not match what it meant to change, or if it produces
+# duplicate ids — and exits non-zero, which fails this job loudly rather than
+# committing something broken. It is also idempotent: a run with nothing to do
+# writes nothing and commits nothing.
+#
+# FIRST RUN
+# DRY_RUN starts "true". Let one scheduled run happen, read its log, then flip
+# it to "false". Until then this reports what it would do and changes nothing.
+# ────────────────────────────────────────────────────────────────────────────
+
+name: Publish approved music
+
+on:
+  schedule:
+    # 10:00 UTC — 3am Portland in summer, 2am in winter. Deliberately in the
+    # dead hours: the push triggers a production deploy on Vercel.
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run reports only; publish writes and commits'
+        type: choice
+        default: dry-run
+        options: [dry-run, publish]
+
+# never let two runs edit songs.js at once
+concurrency:
+  group: publish-music
+  cancel-in-progress: false
+
+env:
+  # ── flip to "false" once you have read a dry run you are happy with ──
+  DRY_RUN: "true"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # needed to push the updated data files
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'   # the script uses global fetch; no npm install needed
+
+      - name: Check the credentials are present
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          missing=
+          [ -z "$SUPABASE_URL" ] && missing="$missing SUPABASE_URL"
+          [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] && missing="$missing SUPABASE_SERVICE_ROLE_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secret(s):$missing"
+            echo "Add them under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "credentials present"
+
+      - name: Decide the mode
+        id: mode
+        run: |
+          # a manual run's choice wins; otherwise the DRY_RUN default above
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            [ "${{ inputs.mode }}" = "publish" ] && echo "write=true" >> "$GITHUB_OUTPUT" || echo "write=false" >> "$GITHUB_OUTPUT"
+          else
+            [ "$DRY_RUN" = "false" ] && echo "write=true" >> "$GITHUB_OUTPUT" || echo "write=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: What would change
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        # pipefail: without it `tee` supplies the exit code and the script's
+        # own failure — the self-revert — would read as a clean run.
+        run: |
+          set -o pipefail
+          node scripts/publish-approved.js | tee dry-run.log
+
+      - name: Publish
+        if: steps.mode.outputs.write == 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -o pipefail
+          node scripts/publish-approved.js --write | tee publish.log
+
+      - name: Commit, but only if the data actually changed
+        if: steps.mode.outputs.write == 'true'
+        run: |
+          # ONLY the two generated data files. If the script ever touches
+          # anything else, that is a bug and should not ride along silently.
+          git add data/songs.js data/apple-media.js
+          if git diff --cached --quiet; then
+            echo "nothing changed — no commit"
+            exit 0
+          fi
+
+          summary=$(grep -E '[0-9]+ added, [0-9]+ removed' publish.log | head -1 | sed 's/^ *//')
+          [ -z "$summary" ] && summary="catalogue updated"
+
+          git config user.name  "flow-school-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(music): ${summary}" -m \
+            "Folded the approved/removed/corrected rows into data/songs.js.
+          These were already live for teachers via the Supabase merge — this
+          only updates the shipped baseline.
+
+          Automated by .github/workflows/publish-music.yml"
+          git push
+          echo "pushed — Vercel will deploy"
+
+      - name: Keep the log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-log
+          path: |
+            dry-run.log
+            publish.log
+          if-no-files-found: ignore
+          retention-days: 30
