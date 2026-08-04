@@ -2231,46 +2231,37 @@
         //
         // So the live set is built ONCE, here, and every metric reads it. A
         // fourth state only has to be handled in this block.
-        var liveIds = {}, liveMedia = {};
+        // Only the catalogue count survives. A parallel media set used to be
+        // built alongside it for the artwork/preview tile; that tile is gone,
+        // so tracking media here would be counting for nobody. MUS.linked is
+        // still read elsewhere — musUnmatched() needs it — just not here.
+        var liveIds = {};
         if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { liveIds[sg.id] = true; });
-        if (typeof APPLE_MEDIA !== 'undefined') {
-          Object.keys(APPLE_MEDIA).forEach(function (k) { liveMedia[k] = true; });
-        }
         // approved — usable by teachers now, though not in the file yet
         approved.forEach(function (r) {
           if (r.energy == null) return;                  // never judged
           liveIds[r.song_id] = true;
-          if (r.apple_id) liveMedia[r.song_id] = true;
         });
-        // linked — media found by hand for a song already in the file
-        Object.keys(MUS.linked).forEach(function (id) { liveMedia[id] = true; });
         // removed — gone from the Builder immediately, file or not
-        Object.keys(MUS.removed).forEach(function (id) {
-          delete liveIds[id];
-          delete liveMedia[id];
-        });
+        Object.keys(MUS.removed).forEach(function (id) { delete liveIds[id]; });
 
         var inFile = Object.keys(liveIds).length;
 
-        // the sub-lines keep "live" and "published" visibly different things
+        // the sub-line keeps "live" and "published" visibly different things
         var shippedIds = {};
         if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { shippedIds[sg.id] = true; });
         var liveExtra = Object.keys(liveIds).filter(function (id) { return !shippedIds[id]; }).length;
-        var linkedExtra = Object.keys(liveMedia).filter(function (id) {
-          return !(typeof APPLE_MEDIA !== 'undefined' && APPLE_MEDIA[id]);
-        }).length;
 
         b.innerHTML =
           '<div class="adm-intro">The catalogue behind the Playlist Builder. Songs approved here are live for teachers immediately \u2014 read alongside <span class="adm-mono">songs.js</span> and folded into it on the next deploy.</div>' +
           '<div class="adm-metrics">' +
             // The artwork/preview count retired once the catalogue was fully
-            // matched — it read the same as the total forever. Its sub-line
-            // moved here rather than going with it: the unmatched panel is
-            // dormant, not deleted, so hand-links can happen again and
-            // "not yet in the file" would otherwise become a silent state.
+            // matched — it read the same as the total forever, and its
+            // hand-link sub-line went with it. Approved-not-yet-in-the-file
+            // is the one staging state worth surfacing: it is the difference
+            // between what teachers see and what the file says.
             '<div class="adm-metric"><div class="lbl">Songs in the catalogue</div><div class="val">' + num(inFile) + '</div>' +
-              (liveExtra ? '<div class="adm-metric-sub">' + num(liveExtra) + ' approved, not in the file yet</div>' : '') +
-              (linkedExtra ? '<div class="adm-metric-sub">' + num(linkedExtra) + ' linked by hand, not yet in the file</div>' : '') + '</div>' +
+              (liveExtra ? '<div class="adm-metric-sub">' + num(liveExtra) + ' approved, not in the file yet</div>' : '') + '</div>' +
             '<div class="adm-metric"><div class="lbl">Waiting for review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
           '</div>' +
           // Pull sits here because this is where its result lands \u2014 songs
