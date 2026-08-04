@@ -28,13 +28,19 @@
 //             (100% of 7s and 8s are bright, falling to 9% at level 3) — which
 //             makes it the best evidence we have that the energy values are
 //             roughly right, and a candidate signal for correcting them.
-//   energy  — 0–10. Not a category — a height. The Playlist Builder's curve
-//             draws eleven horizontal rules and its handles snap to them, so a
+//   energy  — 0–8. Not a category — a height. The Playlist Builder's curve
+//             draws nine horizontal rules and its handles snap to them, so a
 //             song's energy and a handle's position are the same number: drag
 //             a handle to the 6 line and you get 6s. 0 is the bottom rule and
-//             10 is the top one. Nothing else is implied — a song is not "a
+//             8 is the top one. Nothing else is implied — a song is not "a
 //             warm-up song", it is a 4, and where a 4 belongs is the teacher's
 //             call, made by dragging.
+//
+//             The ceiling came down from 10 in Aug 2026. Nothing had ever
+//             reached 9, so those two rules were places a teacher could drag
+//             to and get a silent fallback. No song changed value — the scale
+//             is absolute, so a 5 is the same 5 it was. If bigger music is
+//             ever added the ceiling goes back up and nothing is re-judged.
 //
 //             Converted Aug 2026 from a 1–100 scale that claimed a precision
 //             nobody could defend: only 49 of its 100 values were ever used,
@@ -44,9 +50,8 @@
 //             are estimates from metadata, not measurements. Correct freely.
 //             See output/song-energy-triage.txt for the ones worth hearing.
 //
-//             NOTE: nothing sits at 9 or 10. A teacher can drag a handle
-//             higher than the catalogue can currently answer — that gap is a
-//             curation job, not a scoring one. See the review in
+//             The top is thin: six songs at 8, seventeen at 7. Every peak of
+//             every class comes from those — see the review in
 //             output/playlist-database-review.txt.
 //
 //   ORDER   — rows are grouped by energy, then alphabetical by artist inside
@@ -62,35 +67,34 @@
 
 const SONGS = [
 
-  // ── 0 ──────────────────────────────────────────────────────────  19 songs
+  // ── 0 ──────────────────────────────────────────────────────────  22 songs
   { id:1430, title:'Adios, Florida', artist:'A Winged Victory for the Sullen & Adam Wiltzie & Dustin', bpm:105, dur:389, energy:0, vocal:false, electronic:false, bright:false },
   { id:1767, title:'The Slow Descent Has Begun', artist:'A Winged Victory for the Sullen & Adam Wiltzie & Dustin', bpm:114, dur:295, energy:0, vocal:false, electronic:false, bright:false },
+  { id:1759, title:'Drift Away', artist:'AAESPO', bpm:null, dur:163, energy:0,  vocal:false, electronic:false, bright:false },
+  { id:1782, title:'Essence', artist:'Aerial Lakes', bpm:null, dur:162, energy:0,  vocal:false, electronic:false, bright:false },
+  { id:35, title:'luna', artist:'Akira Kosemura', bpm:null, dur:188, energy:0,  vocal:false, electronic:false, bright:true  },
   { id:1746, title:'Overture', artist:'Alaskan Tapes', bpm:155, dur:307, energy:0, vocal:false, electronic:false, bright:false },
   { id:1131, title:'We All Speak in Poems', artist:'Alaskan Tapes', bpm:null, dur:210, energy:0, vocal:false, electronic:false, bright:false },
   { id:1766, title:'In The Cellar', artist:'Alex Somers', bpm:129, dur:288, energy:0, vocal:false, electronic:false, bright:false },
   { id:21, title:'Solitude Beauty (Meditation)',  artist:'Ambiosis',                       bpm:60,  dur:166, energy:0, vocal:false, electronic:true,  bright:false },
   { id:1189, title:'Faith\'s Hymn', artist:'Beautiful Chorus', bpm:123, dur:379, energy:0, vocal:true,  electronic:false, bright:false },
+  { id:1130, title:'Heart Chakra', artist:'Beautiful Chorus', bpm:null, dur:280, energy:0,  vocal:true,  electronic:false, bright:false },
   { id:1769, title:'Savasana Dreams', artist:'Dub Sutra', bpm:null, dur:159, energy:0, vocal:false, electronic:false, bright:false },
+  { id:47, title:'The Southern Sea', artist:'Garth Stevenson', bpm:null, dur:539, energy:0,  vocal:false, electronic:false, bright:false },
   { id:1752, title:'Threnody', artist:'Goldmund', bpm:133, dur:281, energy:0, vocal:false, electronic:false, bright:false },
   { id:1781, title:'Soft Slowed', artist:'Hollie Kenniff', bpm:117, dur:195, energy:0, vocal:false, electronic:false, bright:false },
   { id:1780, title:'Healing Is A Miracle', artist:'Julianna Barwick', bpm:140, dur:250, energy:0, vocal:true,  electronic:false, bright:false },
-  { id:1483, title:'Inspirit', artist:'Julianna Barwick', bpm:164, dur:252, energy:0, vocal:true,  electronic:false, bright:false },
   { id:1724, title:'Angle of List', artist:'Loscil', bpm:120, dur:405, energy:0, vocal:false, electronic:false, bright:false },
   { id:1753, title:'Weightless', artist:'Marconi Union', bpm:120, dur:480, energy:0, vocal:false, electronic:false, bright:false },
-  { id:1709, title:'Weightless Part 2', artist:'Marconi Union', bpm:170, dur:432, energy:0, vocal:false, electronic:false, bright:false },
   { id:1749, title:'Slow Movement: Sand', artist:'Roger Eno & Brian Eno', bpm:95, dur:295, energy:0, vocal:false, electronic:false, bright:false },
   { id:1770, title:'Solace (Ambient) (Live from the Royal Albert Hall)', artist:'RY X & London Contemporary Orchestra', bpm:130, dur:152, energy:0, vocal:true,  electronic:false, bright:false },
   { id:1773, title:'Linen Garden, Pt. 2 (feat. Hammock)', artist:'Slow Meadow & Hammock', bpm:126, dur:384, energy:0, vocal:false, electronic:false, bright:false },
   { id:1765, title:'Serenity (Breathe Deeply)', artist:'The Wong Janice', bpm:129, dur:184, energy:0, vocal:false, electronic:false, bright:false },
 
-  // ── 1 ──────────────────────────────────────────────────────────  32 songs
-  { id:1759, title:'Drift Away', artist:'AAESPO', bpm:null, dur:163, energy:1,  vocal:false, electronic:false, bright:false },
-  { id:1782, title:'Essence', artist:'Aerial Lakes', bpm:null, dur:162, energy:1,  vocal:false, electronic:false, bright:false },
-  { id:35, title:'luna',                          artist:'Akira Kosemura',                 bpm:66,  dur:188, energy:1,  vocal:false, electronic:false, bright:true  },
+  // ── 1 ──────────────────────────────────────────────────────────  29 songs
   { id:1470, title:'Plea (feat. Chantal)', artist:'Alaskan Tapes & Chantal', bpm:117, dur:125, energy:1,  vocal:true,  electronic:false, bright:false },
   { id:1443, title:'how we heal', artist:'awakened souls', bpm:154, dur:336, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1665, title:'Being of Love', artist:'Beautiful Chorus', bpm:120, dur:232, energy:1,  vocal:true,  electronic:false, bright:false },
-  { id:1130, title:'Heart Chakra', artist:'Beautiful Chorus', bpm:126, dur:280, energy:1,  vocal:true,  electronic:false, bright:false },
   { id:1129, title:'Sacral Chakra', artist:'Beautiful Chorus', bpm:123, dur:253, energy:1,  vocal:true,  electronic:false, bright:false },
   { id:1768, title:'Starwood Choker', artist:'Bing & Ruth', bpm:165, dur:376, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1778, title:'Under The Stars', artist:'Clem Leek', bpm:151, dur:142, energy:1,  vocal:false, electronic:false, bright:false },
@@ -98,18 +102,19 @@ const SONGS = [
   { id:39, title:'Farewell',                      artist:'Garth Stevenson',                bpm:64,  dur:328, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1748, title:'Horizon', artist:'Garth Stevenson', bpm:101, dur:239, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1776, title:'Ten Thousand Saints', artist:'Garth Stevenson', bpm:123, dur:182, energy:1,  vocal:false, electronic:false, bright:false },
-  { id:47, title:'The Southern Sea',              artist:'Garth Stevenson',                bpm:66,  dur:539, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1020, title:'Stop Everything! It\'s Snowing', artist:'Good Weather For An Airstrike', bpm:90, dur:237, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1485, title:'For The Summer, Or Forever', artist:'Halftribe', bpm:140, dur:241, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1762, title:'Woven Song — piano reworks', artist:'Hania Rani & Olafur Arnalds', bpm:null, dur:227, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1742, title:'To A New Beginning', artist:'Hans Christian', bpm:146, dur:477, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1164, title:'After the Rain - Piano Solo', artist:'Kyson', bpm:112, dur:179, energy:1,  vocal:false, electronic:false, bright:true  },
+  { id:1709, title:'Weightless Part 2', artist:'Marconi Union', bpm:null, dur:432, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1148, title:'Sea of Oms', artist:'Morley', bpm:null, dur:168, energy:1,  vocal:true,  electronic:false, bright:false },
   { id:1757, title:'Life and Death', artist:'Paul Cardall', bpm:null, dur:333, energy:1,  vocal:false, electronic:false, bright:true  },
   { id:1771, title:'Eyes Closed And Traveling', artist:'Peter Broderick', bpm:84, dur:219, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1783, title:'The Earth Demands Counsel', artist:'Peter M. Murray & Atmos', bpm:123, dur:293, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1336, title:'Pomegranates', artist:'Porya Hatami', bpm:103, dur:447, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1775, title:'Bardo 1', artist:'RY X', bpm:null, dur:236, energy:1,  vocal:true,  electronic:false, bright:false },
+  { id:1788, title:'Body (Ambient)', artist:'RY X', bpm:null, dur:86, energy:1,  vocal:false, electronic:false, bright:false },
   { id:42, title:'Breathing Space',               artist:'Sacred Earth',                   bpm:62,  dur:485, energy:1,  vocal:true,  electronic:false, bright:true  },
   { id:1741, title:'Rest', artist:'Simon Wester', bpm:null, dur:252, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1427, title:'Hurricane', artist:'Slow Meadow', bpm:112, dur:331, energy:1,  vocal:false, electronic:false, bright:false },
@@ -117,7 +122,7 @@ const SONGS = [
   { id:1763, title:'The Ides of Autumn (Bonus Track)', artist:'Slow Meadow', bpm:154, dur:226, energy:1,  vocal:false, electronic:false, bright:false },
   { id:1510, title:'You Felt Like Home', artist:'Slow Meadow', bpm:148, dur:276, energy:1,  vocal:false, electronic:false, bright:false },
 
-  // ── 2 ──────────────────────────────────────────────────────────  70 songs
+  // ── 2 ──────────────────────────────────────────────────────────  69 songs
   { id:1446, title:'Plus tôt', artist:'Alexandra Streliski', bpm:136, dur:179, energy:2,  vocal:false, electronic:false, bright:false },
   { id:1088, title:'Guru Stotram', artist:'Amber Riya', bpm:128, dur:345, energy:2,  vocal:true,  electronic:false, bright:false },
   { id:38, title:'Obrecht',                       artist:'Analogue Dear',                  bpm:72,  dur:216, energy:2,  vocal:false, electronic:false, bright:false },
@@ -165,7 +170,6 @@ const SONGS = [
   { id:1756, title:'Tuur mang Welten', artist:'Niklas Paschburg', bpm:180, dur:277, energy:2,  vocal:false, electronic:false, bright:true  },
   { id:1253, title:'Invisible - Piano Version', artist:'NTO & Sofiane Pamart', bpm:117, dur:174, energy:2,  vocal:false, electronic:false, bright:false },
   { id:27, title:'Blooming in the Valley',        artist:'Omid Shabani',                   bpm:74,  dur:208, energy:2,  vocal:false, electronic:false, bright:true  },
-  { id:1066, title:'Don\'t Wanna Be Without Ya', artist:'Penny and Sparrow', bpm:117, dur:207, energy:2,  vocal:true,  electronic:false, bright:false },
   { id:1076, title:'Kin', artist:'Penny and Sparrow', bpm:115, dur:204, energy:2,  vocal:true,  electronic:false, bright:false },
   { id:1099, title:'Snow Day', artist:'Pete Kuzma', bpm:108, dur:417, energy:2,  vocal:false, electronic:false, bright:false },
   { id:1772, title:'Motion', artist:'Peter Sandberg', bpm:113, dur:191, energy:2,  vocal:false, electronic:false, bright:true  },
@@ -189,7 +193,7 @@ const SONGS = [
   { id:1745, title:'undir', artist:'Ólafur Arnalds', bpm:140, dur:390, energy:2,  vocal:false, electronic:false, bright:false },
   { id:50, title:'20:17',                         artist:'Ólafur Arnalds, Nils Frahm',    bpm:78,  dur:355, energy:2,  vocal:false, electronic:false, bright:false },
 
-  // ── 3 ──────────────────────────────────────────────────────────  177 songs
+  // ── 3 ──────────────────────────────────────────────────────────  166 songs
   { id:1387, title:'Night Bird', artist:'Abe Abraham', bpm:144, dur:169, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1182, title:'The Time in Between', artist:'Afta-1', bpm:99, dur:235, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1266, title:'We are in this together', artist:'Ah. BLOOM', bpm:null, dur:230, energy:3,  vocal:true,  electronic:false, bright:true  },
@@ -201,7 +205,6 @@ const SONGS = [
   { id:1139, title:'Stardust', artist:'Alex Lustig', bpm:106, dur:144, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1036, title:'Orange Sky', artist:'Alexi Murdoch', bpm:125, dur:379, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1277, title:'The Power Is Here Now', artist:'Alexia Chellun', bpm:120, dur:288, energy:3,  vocal:true,  electronic:false, bright:true  },
-  { id:1720, title:'Younan', artist:'Ali Farahani', bpm:103, dur:418, energy:3,  vocal:false, electronic:false, bright:false },
   { id:1736, title:'Daisy', artist:'Anna St. Louis', bpm:95, dur:146, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1479, title:'Sober', artist:'Aquilo', bpm:118, dur:198, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1683, title:'Baby - Guitar Edit', artist:'Arms and Sleepers & Richard Houghten', bpm:92, dur:196, energy:3,  vocal:false, electronic:false, bright:false },
@@ -212,8 +215,9 @@ const SONGS = [
   { id:1143, title:'INT. II', artist:'BAYNK', bpm:null, dur:182, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1454, title:'The Kite (Outro)', artist:'Blonde Maze', bpm:115, dur:167, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1411, title:'Woods', artist:'Bon Iver', bpm:141, dur:285, energy:3,  vocal:true,  electronic:false, bright:false },
+  { id:1794, title:'S P E Y S I D E', artist:'Bon Iver', bpm:null, dur:209, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1551, title:'Elysian', artist:'Bonobo', bpm:95, dur:182, energy:3,  vocal:false, electronic:true,  bright:false },
-  { id:1449, title:'i should probably get moving', artist:'boxboys', bpm:null, dur:198, energy:3,  vocal:false, electronic:true,  bright:false },
+  { id:1791, title:'i should probably get moving', artist:'boxboys', bpm:null, dur:135, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1167, title:'Slowdown', artist:'Brad stank', bpm:96, dur:100, energy:3,  vocal:true,  electronic:true,  bright:false },
   { id:1457, title:'Sunday Candy', artist:'Cenji', bpm:null, dur:68, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1506, title:'Sleep Deprivation', artist:'Chance Peña', bpm:136, dur:155, energy:3,  vocal:true,  electronic:false, bright:false },
@@ -230,18 +234,12 @@ const SONGS = [
   { id:1473, title:'The Garden', artist:'Doug Kaufman', bpm:80, dur:176, energy:3,  vocal:false, electronic:false, bright:false },
   { id:1100, title:'Priceless', artist:'Dr. Toast', bpm:148, dur:280, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1721, title:'Rena Jones - Deeper (Dr. Toast Remix)', artist:'Dr. Toast', bpm:150, dur:341, energy:3,  vocal:false, electronic:true,  bright:false },
-  { id:1282, title:'Odyssey', artist:'Dream Koala', bpm:null, dur:370, energy:3,  vocal:false, electronic:true,  bright:false },
-  { id:1283, title:'Saturn Boy', artist:'Dream Koala', bpm:null, dur:246, energy:3,  vocal:true,  electronic:true,  bright:false },
-  { id:1281, title:'We Can\'t Be Friends', artist:'Dream Koala', bpm:null, dur:208, energy:3,  vocal:true,  electronic:true,  bright:false },
   { id:1097, title:'Sundays', artist:'Dream Tape & Jason Lesser', bpm:120, dur:388, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1735, title:'Autumn Remains', artist:'Drics', bpm:123, dur:140, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1376, title:'First Light', artist:'Dustin Tebbutt', bpm:125, dur:265, energy:3,  vocal:true,  electronic:false, bright:false },
-  { id:1176, title:'hold up', artist:'eevee', bpm:78, dur:126, energy:3,  vocal:false, electronic:true,  bright:false },
-  { id:1175, title:'moan', artist:'eevee', bpm:155, dur:98, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1726, title:'Bloom', artist:'Elior & G93', bpm:89, dur:177, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1627, title:'What It Used To Be', artist:'Es-K', bpm:null, dur:145, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1532, title:'Darling', artist:'Esbe', bpm:99, dur:189, energy:3,  vocal:false, electronic:true,  bright:false },
-  { id:1128, title:'Luna Negra', artist:'Fab Anavitarte', bpm:null, dur:209, energy:3,  vocal:false, electronic:false, bright:false },
   { id:1113, title:'Hypatia', artist:'fantompower & The Dawn Bombs', bpm:null, dur:214, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1262, title:'Out Getting Ribs (Slowed)', artist:'Feeling Blew', bpm:106, dur:234, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1256, title:'Love Now', artist:'Glenn Ayala & Cézanne', bpm:null, dur:154, energy:3,  vocal:true,  electronic:true,  bright:false },
@@ -251,7 +249,6 @@ const SONGS = [
   { id:1243, title:'Youth', artist:'Haux', bpm:136, dur:160, energy:3,  vocal:true,  electronic:true,  bright:false },
   { id:1653, title:'After the Fire', artist:'Heather Christie & Evan Fraser & Vir McCoy', bpm:null, dur:169, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:7,  title:'Slow',                          artist:'Henry Green',                    bpm:82,  dur:187, energy:3,  vocal:true,  electronic:true,  bright:false },
-  { id:1074, title:'Through a Glass', artist:'Henry Jamison', bpm:156, dur:180, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1033, title:'The Parting Glass (feat. Darlingside)', artist:'Henry Jamison & Darlingside', bpm:110, dur:171, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1068, title:'Still Life', artist:'Henry Jamison & JOSEPH', bpm:null, dur:228, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1608, title:'La Ritournelle', artist:'her.story', bpm:null, dur:97, energy:3,  vocal:false, electronic:true,  bright:false },
@@ -310,7 +307,6 @@ const SONGS = [
   { id:6,  title:'Glassworks: I. Opening',        artist:'Philip Glass',                   bpm:111, dur:385, energy:3,  vocal:false, electronic:false, bright:true  },
   { id:1740, title:'Luh', artist:'PIANIKA', bpm:117, dur:235, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1581, title:'waves', artist:'pj frantz', bpm:110, dur:125, energy:3,  vocal:false, electronic:true,  bright:false },
-  { id:1481, title:'Different', artist:'Radio Scenery & Aadi Rip', bpm:null, dur:190, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1688, title:'Somewhere in My Mind', artist:'Ran the Man', bpm:117, dur:186, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1723, title:'Lace', artist:'Random Rab', bpm:130, dur:227, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1637, title:'Soothe', artist:'Random Rab', bpm:72, dur:254, energy:3,  vocal:true,  electronic:true,  bright:false },
@@ -348,7 +344,6 @@ const SONGS = [
   { id:1240, title:'Secret Language', artist:'The Shivers', bpm:null, dur:272, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:26, title:'Folds',                         artist:'Thrupence',                      bpm:82,  dur:194, energy:3,  vocal:false, electronic:false, bright:true  },
   { id:28, title:'Hakea',                         artist:'Thrupence',                      bpm:76,  dur:185, energy:3,  vocal:false, electronic:false, bright:true  },
-  { id:1458, title:'sunstone', artist:'Toby Schay & Elijah Who', bpm:null, dur:198, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1163, title:'Skin & Bone', artist:'Tom Day & Monsoonsiren', bpm:96, dur:268, energy:3,  vocal:true,  electronic:true,  bright:false },
   { id:1073, title:'The Lime Tree', artist:'Trevor Hall', bpm:125, dur:200, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1392, title:'A Reminder (Remix)', artist:'Trevor Hall & East Forest', bpm:null, dur:285, energy:3,  vocal:true,  electronic:false, bright:false },
@@ -360,15 +355,13 @@ const SONGS = [
   { id:1035, title:'Speak Too Soon', artist:'Wild Rivers', bpm:76, dur:173, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1298, title:'About You', artist:'xxyyxx', bpm:115, dur:247, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1003, title:'Breeze', artist:'xxyyxx', bpm:126, dur:180, energy:3,  vocal:false, electronic:true,  bright:false },
-  { id:1761, title:'B4', artist:'Yomi', bpm:null, dur:274, energy:3,  vocal:false, electronic:true,  bright:false },
-  { id:1760, title:'Brockley', artist:'Yoni', bpm:129, dur:288, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1364, title:'Moon', artist:'Yoste', bpm:60, dur:204, energy:3,  vocal:true,  electronic:false, bright:false },
   { id:1521, title:'Pillow Valley', artist:'Your Hunni', bpm:null, dur:175, energy:3,  vocal:true,  electronic:true,  bright:false },
   { id:33, title:'sun kissed',                    artist:'Yung Beathoven, Sleepless Society', bpm:78, dur:133, energy:3,  vocal:false, electronic:true,  bright:true  },
   { id:1700, title:'green eye samurai', artist:'zaziiko', bpm:null, dur:196, energy:3,  vocal:false, electronic:true,  bright:false },
   { id:1628, title:'Falling', artist:'ZenAware', bpm:null, dur:180, energy:3,  vocal:false, electronic:true,  bright:false },
 
-  // ── 4 ──────────────────────────────────────────────────────────  278 songs
+  // ── 4 ──────────────────────────────────────────────────────────  270 songs
   { id:1107, title:'At Home in the Dark', artist:'9 Theory & Dawn Mitschele & Scarub', bpm:103, dur:372, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1786, title:'IF SHE LAUGHS', artist:'_BY.ALEXANDER', bpm:123, dur:169, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1512, title:'When We Were Young', artist:'Adele', bpm:144, dur:290, energy:4,  vocal:true,  electronic:false, bright:false },
@@ -392,7 +385,7 @@ const SONGS = [
   { id:1559, title:'The Local Police', artist:'Arc De Soleil', bpm:null, dur:153, energy:4,  vocal:false, electronic:false, bright:true  },
   { id:1102, title:'Senses', artist:'Ash', bpm:112, dur:221, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1389, title:'Lullaby', artist:'Atlas Bound', bpm:73, dur:220, energy:4,  vocal:true,  electronic:true,  bright:false },
-  { id:1360, title:'Soul', artist:'Atlas Bound', bpm:106, dur:201, energy:4,  vocal:true,  electronic:true,  bright:false },
+  { id:1793, title:'Landed on Mars', artist:'Atlas Bound', bpm:null, dur:225, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1254, title:'Croix D\'Or', artist:'AUST', bpm:89, dur:201, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1623, title:'Xuma', artist:'AWARÉ', bpm:76, dur:234, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1477, title:'I Know You Know - Delamare Remix', artist:'B O K E H & Delamare', bpm:null, dur:208, energy:4,  vocal:true,  electronic:true,  bright:false },
@@ -406,8 +399,6 @@ const SONGS = [
   { id:1232, title:'Melt', artist:'Big Red Machine', bpm:120, dur:245, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:2,  title:'The Art of Making Love',        artist:'Big Words',                      bpm:78,  dur:171, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1268, title:'Black & White', artist:'Billie Black', bpm:85, dur:239, energy:4,  vocal:true,  electronic:true,  bright:false },
-  { id:1519, title:'You Be Love - Acoustic Version', artist:'Billy Raffoul', bpm:128, dur:218, energy:4,  vocal:true,  electronic:false, bright:false },
-  { id:1486, title:'PDLIF', artist:'Bon Iver', bpm:null, dur:203, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1597, title:'Break Apart', artist:'Bonobo & Rhye', bpm:120, dur:274, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1593, title:'Death of Me', artist:'Brandon Jenner', bpm:115, dur:214, energy:4,  vocal:true,  electronic:false, bright:true  },
   { id:1394, title:'Let\'s Go for a Ride', artist:'bri.broskie', bpm:101, dur:172, energy:4,  vocal:true,  electronic:true,  bright:false },
@@ -416,7 +407,6 @@ const SONGS = [
   { id:1284, title:'Mt. Wolf - Life Size Ghosts - Catching Flies Re...', artist:'Catching Flies', bpm:170, dur:254, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1285, title:'Stay Forever', artist:'Catching Flies', bpm:112, dur:245, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1287, title:'The Long Journey Home', artist:'Catching Flies', bpm:97, dur:288, energy:4,  vocal:false, electronic:true,  bright:false },
-  { id:1375, title:'Summer Love - Recorded at Spotify Studios NYC', artist:'Chelsea Cutler', bpm:null, dur:214, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1025, title:'Pacific', artist:'Christian Löffler', bpm:118, dur:155, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1348, title:'Haul - Radio Edit', artist:'Christian Löffler & Mohna', bpm:118, dur:217, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1270, title:'I\'m On Fire', artist:'Chromatics', bpm:130, dur:245, energy:4,  vocal:true,  electronic:true,  bright:false },
@@ -447,7 +437,6 @@ const SONGS = [
   { id:1400, title:'Still Waiting', artist:'Ex-poets', bpm:96, dur:203, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1147, title:'Hidden Love', artist:'Exist Strategy', bpm:95, dur:282, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:51, title:'Grow - A COLORS ENCORE',        artist:'Facesoul',                       bpm:82,  dur:207, energy:4,  vocal:true,  electronic:false, bright:true  },
-  { id:1467, title:'Shimmer', artist:'Fairwthr', bpm:null, dur:216, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1103, title:'La lune rousse', artist:'Fakear & Deva Premal', bpm:113, dur:225, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1030, title:'Bag of Bones', artist:'Felix Laband', bpm:106, dur:365, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1527, title:'around/away', artist:'Fhin', bpm:140, dur:301, energy:4,  vocal:true,  electronic:true,  bright:false },
@@ -482,7 +471,6 @@ const SONGS = [
   { id:1248, title:'Float Back To You', artist:'Holy Hive', bpm:113, dur:255, energy:4,  vocal:true,  electronic:false, bright:true  },
   { id:1491, title:'Big Light', artist:'Houses', bpm:120, dur:288, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1083, title:'The Bloom', artist:'Houses', bpm:123, dur:313, energy:4,  vocal:true,  electronic:true,  bright:false },
-  { id:1476, title:'Feels Like', artist:'HXLY', bpm:144, dur:190, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1544, title:'Biome', artist:'il:lo', bpm:112, dur:229, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1618, title:'Waira', artist:'Iyakuh', bpm:144, dur:244, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1619, title:'Motel', artist:'J.Bernardt', bpm:86, dur:188, energy:4,  vocal:true,  electronic:true,  bright:false },
@@ -493,10 +481,8 @@ const SONGS = [
   { id:1122, title:'I Need A Forest Fire', artist:'James Blake & Bon Iver', bpm:129, dur:257, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1598, title:'Hanuman Bolo', artist:'Janet Stone & DJ Drez', bpm:154, dur:335, energy:4,  vocal:true,  electronic:false, bright:false },
   { id:1301, title:'Breathe In', artist:'Japanese Wallpaper & Wafia', bpm:117, dur:199, energy:4,  vocal:true,  electronic:true,  bright:false },
-  { id:1415, title:'Weight in Gold', artist:'Jay Warren & James VIII', bpm:null, dur:203, energy:4,  vocal:true,  electronic:false, bright:false },
   { id:1386, title:'Yellow Squash', artist:'Jaymison', bpm:123, dur:253, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1319, title:'Soul in My Bones', artist:'Joaquín Cornejo & Wabi Saabi', bpm:84, dur:354, energy:4,  vocal:false, electronic:true,  bright:false },
-  { id:1274, title:'La Voz De La Nostalgia - Original Mix', artist:'Joaquín Cornejo & Wabi Sabi', bpm:115, dur:442, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1652, title:'Mojanda (feat. Wabi Sabi)', artist:'Joaquín Cornejo & Wabi Sabi', bpm:117, dur:373, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1117, title:'Luminous Beings - Edit', artist:'Jon Hopkins', bpm:120, dur:199, energy:4,  vocal:false, electronic:true,  bright:true  },
   { id:1575, title:'Surrenderism', artist:'Jon Kennedy', bpm:88, dur:256, energy:4,  vocal:false, electronic:true,  bright:false },
@@ -531,7 +517,7 @@ const SONGS = [
   { id:1241, title:'Intoxicated', artist:'Lussx & Deverano & Olmos', bpm:null, dur:214, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1707, title:'Home', artist:'LYNY', bpm:103, dur:183, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1513, title:'Deep Water', artist:'Lyves', bpm:140, dur:290, energy:4,  vocal:true,  electronic:true,  bright:false },
-  { id:1503, title:'It\'s Alright', artist:'Majik', bpm:null, dur:190, energy:4,  vocal:true,  electronic:true,  bright:false },
+  { id:1795, title:'It\'s Alright', artist:'Majik', bpm:null, dur:306, energy:4,  vocal:true,  electronic:false, bright:false },
   { id:1439, title:'Maybe This Time', artist:'Major Tweaks', bpm:117, dur:241, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1023, title:'Home', artist:'Maribou State', bpm:100, dur:195, energy:4,  vocal:false, electronic:true,  bright:true  },
   { id:1535, title:'Vale', artist:'Maribou State', bpm:145, dur:247, energy:4,  vocal:false, electronic:true,  bright:true  },
@@ -558,8 +544,8 @@ const SONGS = [
   { id:1024, title:'Mood in C', artist:'Parra for Cuva', bpm:110, dur:292, energy:4,  vocal:false, electronic:true,  bright:true  },
   { id:1045, title:'On Your Way Home', artist:'Patrick Droney', bpm:120, dur:165, energy:4,  vocal:true,  electronic:false, bright:false },
   { id:1038, title:'When The Lights Go Out', artist:'Patrick Droney', bpm:117, dur:198, energy:4,  vocal:true,  electronic:false, bright:false },
+  { id:1790, title:'Don\'t Wanna Be Without Ya', artist:'Penny & Sparrow', bpm:null, dur:208, energy:4,  vocal:true,  electronic:false, bright:true  },
   { id:1577, title:'Robin\'s Cello (Turtle Remix)', artist:'Phoria & Turtle', bpm:99, dur:293, energy:4,  vocal:false, electronic:true,  bright:false },
-  { id:1450, title:'Pastel', artist:'Polar Inc.', bpm:null, dur:239, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1315, title:'Lanikai', artist:'Pool Cosby', bpm:126, dur:275, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1471, title:'New York Band Plays New York Venue', artist:'Pool Cosby', bpm:null, dur:183, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1785, title:'Iluminar', artist:'Poranguí', bpm:136, dur:292, energy:4,  vocal:false, electronic:false, bright:false },
@@ -602,7 +588,6 @@ const SONGS = [
   { id:1639, title:'Not Your Exotic', artist:'Sukhmani', bpm:103, dur:180, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1399, title:'Skip', artist:'SuperParka', bpm:96, dur:201, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1384, title:'Through Your Soul', artist:'Sworr.', bpm:117, dur:242, energy:4,  vocal:false, electronic:true,  bright:false },
-  { id:1499, title:'Coffee', artist:'Sylvan Esso', bpm:null, dur:189, energy:4,  vocal:true,  electronic:true,  bright:true  },
   { id:1237, title:'Rewind - Echo Mountain Sessions', artist:'Sylvan Esso', bpm:172, dur:290, energy:4,  vocal:true,  electronic:false, bright:false },
   { id:1332, title:'Numb - teddy<3 version / edit', artist:'Sylvan Esso & Teddy Geiger', bpm:null, dur:171, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1294, title:'Sunrise / Beautiful (feat. Jordan Rakei)', artist:'Ta-ku & Jordan Rakei', bpm:null, dur:336, energy:4,  vocal:true,  electronic:true,  bright:false },
@@ -618,11 +603,11 @@ const SONGS = [
   { id:1016, title:'Fallin\'', artist:'The Human Experience & Kalibri', bpm:86, dur:212, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1671, title:'Stillness in Motion', artist:'The Human Experience & Rohne', bpm:148, dur:262, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1297, title:'Together', artist:'The xx', bpm:96, dur:325, energy:4,  vocal:true,  electronic:true,  bright:false },
-  { id:1469, title:'Acacia Road', artist:'Thrupence', bpm:null, dur:187, energy:4,  vocal:false, electronic:false, bright:true  },
   { id:1685, title:'Transform', artist:'TJ Rehmi', bpm:129, dur:359, energy:4,  vocal:false, electronic:true,  bright:false },
-  { id:1482, title:'Sunrise Terracotta', artist:'To Life', bpm:null, dur:241, energy:4,  vocal:false, electronic:true,  bright:false },
+  { id:1798, title:'Sunrise Terracotta', artist:'To Life!', bpm:null, dur:261, energy:4,  vocal:false, electronic:false, bright:false },
   { id:1547, title:'SUN RAYS LIKE STILTS', artist:'Tommy Guerrero', bpm:137, dur:124, energy:4,  vocal:false, electronic:false, bright:true  },
   { id:1540, title:'White Sands', artist:'Tommy Guerrero', bpm:183, dur:179, energy:4,  vocal:false, electronic:false, bright:true  },
+  { id:1108, title:'Hearts', artist:'Tourist', bpm:null, dur:269, energy:4,  vocal:false, electronic:true,  bright:true  },
   { id:1159, title:'Let Go', artist:'Toy Box', bpm:168, dur:194, energy:4,  vocal:false, electronic:true,  bright:false },
   { id:1271, title:'Honey', artist:'TRACE', bpm:123, dur:248, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1042, title:'Everything I Need', artist:'Trevor Hall', bpm:144, dur:197, energy:4,  vocal:true,  electronic:false, bright:true  },
@@ -648,7 +633,7 @@ const SONGS = [
   { id:1342, title:'Nothing', artist:'Zola Blood', bpm:118, dur:240, energy:4,  vocal:true,  electronic:true,  bright:false },
   { id:1124, title:'re:member', artist:'Ólafur Arnalds', bpm:140, dur:364, energy:4,  vocal:false, electronic:false, bright:true  },
 
-  // ── 5 ──────────────────────────────────────────────────────────  168 songs
+  // ── 5 ──────────────────────────────────────────────────────────  159 songs
   { id:53, title:'So Free',                       artist:'Alex Serra',                     bpm:96,  dur:252, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1385, title:'Rose2', artist:'Allan Rayman', bpm:164, dur:221, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1039, title:'Rivers', artist:'Allman Brown & Robyn Sherwell', bpm:148, dur:211, energy:5,  vocal:true,  electronic:false, bright:true  },
@@ -661,9 +646,9 @@ const SONGS = [
   { id:1257, title:'All Again', artist:'BANFF', bpm:117, dur:214, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1005, title:'Longue la nuit (Kevin Parker remix)', artist:'Barbagallo', bpm:103, dur:247, energy:5,  vocal:true,  electronic:true,  bright:true  },
   { id:49, title:'Mars',                          artist:'Beauvois',                       bpm:92,  dur:243, energy:5,  vocal:false, electronic:true,  bright:false },
+  { id:1733, title:'Martin', artist:'Ben Böhmer', bpm:null, dur:229, energy:5,  vocal:false, electronic:true,  bright:false },
   { id:1205, title:'Stand By Me', artist:'Ben E. King', bpm:119, dur:180, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1193, title:'Something to Believe In', artist:'Benjamin Love', bpm:96, dur:201, energy:5,  vocal:true,  electronic:false, bright:true  },
-  { id:1136, title:'Empty Room - Cabu Remix', artist:'Big Wild & Yuna & Cabu', bpm:126, dur:226, energy:5,  vocal:true,  electronic:true,  bright:true  },
   { id:9,  title:'Oh No',                         artist:'Biig Piig',                      bpm:83,  dur:165, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:24, title:'Waking Signal',                 artist:'Blackboxx',                      bpm:108, dur:292, energy:5,  vocal:false, electronic:true,  bright:false },
   { id:1710, title:'Shy Grass', artist:'BLOND:ISH', bpm:93, dur:409, energy:5,  vocal:false, electronic:true,  bright:true  },
@@ -679,7 +664,6 @@ const SONGS = [
   { id:1155, title:'Cold War', artist:'Cautious Clay', bpm:154, dur:203, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1357, title:'Your Shirt', artist:'Chelsea Cutler', bpm:90, dur:232, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1272, title:'I\'m Into You', artist:'Chet Faker', bpm:112, dur:263, energy:5,  vocal:true,  electronic:true,  bright:false },
-  { id:1186, title:'Juno', artist:'Choker', bpm:120, dur:231, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:4,  title:'Veiled Grey',                   artist:'Christian Löffler',              bpm:122, dur:350, energy:5,  vocal:false, electronic:true,  bright:false },
   { id:1095, title:'Portals', artist:'Christian Löffler & Mogli', bpm:117, dur:231, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1701, title:'Air', artist:'CloZee & Sauvane', bpm:130, dur:265, energy:5,  vocal:false, electronic:true,  bright:true  },
@@ -689,7 +673,6 @@ const SONGS = [
   { id:1529, title:'Pimp Floyd', artist:'Desmond Cheese', bpm:153, dur:170, energy:5,  vocal:false, electronic:true,  bright:true  },
   { id:1659, title:'Grandmother Tree & the Feathered Serpent', artist:'Deya Dova & Kalya Scintilla', bpm:112, dur:449, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1380, title:'Majid', artist:'DRAMA', bpm:110, dur:286, energy:5,  vocal:true,  electronic:true,  bright:false },
-  { id:1279, title:'Finally Moving', artist:'Dubbygotbars', bpm:99, dur:277, energy:5,  vocal:false, electronic:true,  bright:true  },
   { id:1204, title:'Is It Any Wonder?', artist:'Durand Jones & The Indications', bpm:137, dur:276, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1234, title:'Child', artist:'Edward Sharpe & The Magnetic Zeros', bpm:91, dur:189, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1717, title:'Today is Your Day', artist:'Elder Island', bpm:null, dur:239, energy:5,  vocal:true,  electronic:true,  bright:true  },
@@ -700,7 +683,6 @@ const SONGS = [
   { id:1642, title:'Bombola', artist:'Evan Fraser & Vir McCoy', bpm:null, dur:329, energy:5,  vocal:false, electronic:false, bright:true  },
   { id:1674, title:'Hookah Dome', artist:'Evan Fraser & Vir McCoy & David Satori', bpm:126, dur:251, energy:5,  vocal:false, electronic:false, bright:true  },
   { id:1713, title:'Bulbo', artist:'FEATHERED SUN & Jo.Ke & Chris Schwarzwälder', bpm:76, dur:367, energy:5,  vocal:false, electronic:true,  bright:false },
-  { id:1711, title:'Miraflores', artist:'FEATHERED SUN & Jo.Ke & Chris Schwarzwälder', bpm:154, dur:332, energy:5,  vocal:false, electronic:true,  bright:false },
   { id:1307, title:'Falling Into Place', artist:'Finding Hope & Direct', bpm:null, dur:254, energy:5,  vocal:false, electronic:true,  bright:false },
   { id:1065, title:'Heaven Knows', artist:'Five For Fighting', bpm:98, dur:210, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1517, title:'Pamplemousse', artist:'Flavien Berger', bpm:126, dur:275, energy:5,  vocal:true,  electronic:true,  bright:false },
@@ -731,7 +713,6 @@ const SONGS = [
   { id:1497, title:'Hurricane', artist:'Kai Straw', bpm:81, dur:336, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:20, title:'Nevada',                        artist:'Kerala Dust',                    bpm:98,  dur:363, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1715, title:'Untitled (Late Sun)', artist:'Kerala Dust', bpm:95, dur:386, energy:5,  vocal:true,  electronic:true,  bright:false },
-  { id:1324, title:'Grow - Kidnap Dub', artist:'Kidnap & Leo Stannard', bpm:121, dur:239, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1086, title:'Time', artist:'Kidswaste', bpm:100, dur:274, energy:5,  vocal:false, electronic:true,  bright:true  },
   { id:1355, title:'Bolide', artist:'Kllo', bpm:130, dur:236, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1378, title:'Candid', artist:'Kllo', bpm:144, dur:243, energy:5,  vocal:true,  electronic:true,  bright:false },
@@ -750,7 +731,6 @@ const SONGS = [
   { id:1528, title:'Glasshouses', artist:'Maribou State', bpm:180, dur:225, energy:5,  vocal:false, electronic:true,  bright:true  },
   { id:1556, title:'Natural Fools', artist:'Maribou State', bpm:120, dur:339, energy:5,  vocal:false, electronic:true,  bright:false },
   { id:1028, title:'Wallflower', artist:'Maribou State', bpm:118, dur:223, energy:5,  vocal:false, electronic:true,  bright:true  },
-  { id:1561, title:'Spooky - Recorded at RAK Studios, London', artist:'Maribou State & Holly Walker', bpm:115, dur:221, energy:5,  vocal:true,  electronic:true,  bright:true  },
   { id:1280, title:'Say More', artist:'Maribou State & Jono McCleery', bpm:168, dur:263, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1542, title:'Feel Good', artist:'Maribou State & Khruangbin', bpm:102, dur:267, energy:5,  vocal:false, electronic:false, bright:true  },
   { id:1487, title:'Sunday Vibes', artist:'Masego & Medasin', bpm:85, dur:226, energy:5,  vocal:true,  electronic:true,  bright:true  },
@@ -759,7 +739,6 @@ const SONGS = [
   { id:1044, title:'Come On Get Higher', artist:'Matt Nathanson', bpm:92, dur:215, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1417, title:'Lovesong', artist:'Max Cooper', bpm:133, dur:238, energy:5,  vocal:false, electronic:true,  bright:false },
   { id:1408, title:'Chariot', artist:'MEGA', bpm:123, dur:216, energy:5,  vocal:true,  electronic:true,  bright:false },
-  { id:1161, title:'Togetherness', artist:'Michel Colombier', bpm:null, dur:273, energy:5,  vocal:false, electronic:false, bright:true  },
   { id:1557, title:'It\'s Been You', artist:'Mindchatter', bpm:103, dur:193, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1027, title:'Kerosene', artist:'Mindchatter', bpm:86, dur:168, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1451, title:'Blinding Light', artist:'Morillo', bpm:92, dur:225, energy:5,  vocal:false, electronic:true,  bright:true  },
@@ -779,7 +758,6 @@ const SONGS = [
   { id:1300, title:'Sunset Lover', artist:'Petit Biscuit', bpm:91, dur:237, energy:5,  vocal:false, electronic:true,  bright:true  },
   { id:1516, title:'Aliens Need Love Too', artist:'Phlake & Mercedes the Virus', bpm:120, dur:254, energy:5,  vocal:true,  electronic:true,  bright:true  },
   { id:1452, title:'My Peace (feat. Mr. Talkbox)', artist:'PJ Morton & JoJo & Mr. Talkbox', bpm:123, dur:199, energy:5,  vocal:true,  electronic:false, bright:true  },
-  { id:54, title:'Illuminar',                     artist:'Poranguí',                       bpm:98,  dur:292, energy:5,  vocal:false, electronic:false, bright:false },
   { id:1295, title:'The Open Road', artist:'Postiljonen', bpm:138, dur:190, energy:5,  vocal:true,  electronic:true,  bright:true  },
   { id:1320, title:'One Grain of Sand', artist:'Powel', bpm:123, dur:385, energy:5,  vocal:false, electronic:true,  bright:true  },
   { id:1538, title:'Westbound Train', artist:'Quantic & Flowering Inferno', bpm:164, dur:176, energy:5,  vocal:false, electronic:false, bright:true  },
@@ -801,14 +779,12 @@ const SONGS = [
   { id:1490, title:'When I Get My Hands On You', artist:'The New Basement Tapes', bpm:135, dur:190, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1181, title:'Niña Fresa', artist:'The O\'My\'s', bpm:104, dur:264, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1194, title:'Did My Best', artist:'The Voidz', bpm:123, dur:296, energy:5,  vocal:true,  electronic:true,  bright:false },
-  { id:1048, title:'Medicine - Recorded at RAK Studios, London', artist:'Tom Speight', bpm:106, dur:171, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1134, title:'When Will I Learn', artist:'Tora', bpm:null, dur:169, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1293, title:'Jaigantic (Galimatias Remix)', artist:'Tora & Galimatias', bpm:129, dur:179, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1553, title:'Bunny', artist:'Tourist', bpm:117, dur:214, energy:5,  vocal:false, electronic:true,  bright:true  },
   { id:1034, title:'Jagadeesha', artist:'Trevor Hall', bpm:126, dur:267, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1160, title:'Moon / Sun', artist:'Trevor Hall', bpm:110, dur:239, energy:5,  vocal:true,  electronic:false, bright:true  },
   { id:1153, title:'Sagittarius', artist:'Trevor Hall', bpm:null, dur:191, energy:5,  vocal:true,  electronic:false, bright:true  },
-  { id:1465, title:'Quick Musical Doodles', artist:'Two Feet', bpm:85, dur:182, energy:5,  vocal:true,  electronic:true,  bright:false },
   { id:1202, title:'Cypress', artist:'Tycho', bpm:166, dur:374, energy:5,  vocal:false, electronic:true,  bright:true  },
   { id:1573, title:'For How Long', artist:'Tycho & Saint Sinner', bpm:128, dur:180, energy:5,  vocal:true,  electronic:true,  bright:true  },
   { id:1121, title:'Mirrors', artist:'UTAH', bpm:164, dur:173, energy:5,  vocal:false, electronic:true,  bright:false },
@@ -818,15 +794,11 @@ const SONGS = [
   { id:1494, title:'Unsteady', artist:'X Ambassadors', bpm:117, dur:193, energy:5,  vocal:true,  electronic:false, bright:false },
   { id:1221, title:'Move (B-Side)', artist:'Zanski', bpm:115, dur:259, energy:5,  vocal:true,  electronic:true,  bright:false },
 
-  // ── 6 ──────────────────────────────────────────────────────────  71 songs
-  { id:19, title:'2am',                           artist:'Aaron Hibell',                   bpm:138, dur:158, energy:6,  vocal:false, electronic:true,  bright:false },
-  { id:1200, title:'Grow', artist:'Andy Grammer', bpm:115, dur:187, energy:6,  vocal:true,  electronic:false, bright:true  },
+  // ── 6 ──────────────────────────────────────────────────────────  56 songs
   { id:1397, title:'Everybody Loves You', artist:'APRE', bpm:103, dur:152, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1373, title:'You Might Be (feat. Lils) - GoldFish Remix', artist:'Autograf & Lils & GoldFish', bpm:121, dur:181, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1011, title:'Lampenda', artist:'Baaba Maal', bpm:152, dur:225, energy:6,  vocal:true,  electronic:false, bright:true  },
   { id:1144, title:'Off Limits', artist:'BAYNK & Glades', bpm:160, dur:159, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1137, title:'TESSELLATE', artist:'BAYNK & Tei Shi', bpm:117, dur:254, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1733, title:'Martin', artist:'Ben Böhmer', bpm:null, dur:229, energy:6,  vocal:false, electronic:true,  bright:false },
   { id:1629, title:'Drive, Pt. 1', artist:'Ben Khan', bpm:100, dur:205, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1057, title:'Brand New', artist:'Ben Rector', bpm:144, dur:243, energy:6,  vocal:true,  electronic:false, bright:true  },
   { id:1041, title:'Living My Best Life', artist:'Ben Rector', bpm:null, dur:215, energy:6,  vocal:true,  electronic:false, bright:true  },
@@ -841,9 +813,7 @@ const SONGS = [
   { id:1329, title:'Lonely Romance', artist:'CRi', bpm:117, dur:342, energy:6,  vocal:false, electronic:true,  bright:false },
   { id:1525, title:'Come Back to You', artist:'Crooked Colours', bpm:94, dur:188, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1104, title:'EQUILIBRIUM', artist:'Darius & WAYNE SNOW', bpm:117, dur:289, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1505, title:'That Girl Is You', artist:'Dave Matthews Band', bpm:null, dur:232, energy:6,  vocal:true,  electronic:false, bright:true  },
   { id:1054, title:'Better Days', artist:'Dermot Kennedy', bpm:null, dur:198, energy:6,  vocal:true,  electronic:false, bright:true  },
-  { id:1511, title:'You & Me - Flume Remix', artist:'Disclosure & Eliza Doolittle & Flume', bpm:150, dur:282, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1140, title:'3AM', artist:'DRAMA', bpm:103, dur:225, energy:6,  vocal:true,  electronic:true,  bright:false },
   { id:1356, title:'Forever\'s Gone', artist:'DRAMA', bpm:92, dur:227, energy:6,  vocal:true,  electronic:true,  bright:false },
   { id:1082, title:'Under The Last Tree', artist:'Fakear', bpm:null, dur:204, energy:6,  vocal:false, electronic:true,  bright:true  },
@@ -851,14 +821,13 @@ const SONGS = [
   { id:1343, title:'Fifth Ave', artist:'Gold Panda', bpm:88, dur:331, energy:6,  vocal:false, electronic:true,  bright:true  },
   { id:1504, title:'Going Home', artist:'GoldFish', bpm:117, dur:262, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1730, title:'Injured Summer', artist:'Goth Babe', bpm:117, dur:248, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1015, title:'Show Me Love (feat. Chance The Rapper, Moses...)', artist:'Hundred Waters & Chance the Rapper & Moses Sumney', bpm:130, dur:241, energy:6,  vocal:true,  electronic:true,  bright:false },
+  { id:1018, title:'So. Good.', artist:'Johnny Stimson', bpm:null, dur:227, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1596, title:'Blurred', artist:'Kiasmos', bpm:122, dur:305, energy:6,  vocal:false, electronic:true,  bright:false },
   { id:25, title:'Held',                          artist:'Kiasmos',                        bpm:120, dur:301, energy:6,  vocal:false, electronic:true,  bright:false },
   { id:1138, title:'Virgo', artist:'Le Youth', bpm:123, dur:324, energy:6,  vocal:true,  electronic:true,  bright:false },
   { id:1374, title:'The Hype', artist:'LEISURE', bpm:117, dur:202, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1592, title:'Phyllis', artist:'Lettuce', bpm:88, dur:410, energy:6,  vocal:false, electronic:false, bright:true  },
   { id:1391, title:'The Dance', artist:'Madaila', bpm:null, dur:323, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1464, title:'Limestone', artist:'Magic City Hippies', bpm:null, dur:301, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1591, title:'Turnmills', artist:'Maribou State', bpm:115, dur:304, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1171, title:'Varkala', artist:'Maribou State', bpm:116, dur:204, energy:6,  vocal:false, electronic:true,  bright:true  },
   { id:1323, title:'Por Supuesto', artist:'Marina Sena', bpm:123, dur:186, energy:6,  vocal:true,  electronic:false, bright:true  },
@@ -867,31 +836,23 @@ const SONGS = [
   { id:1390, title:'Monument - Live In Mumbai', artist:'Mutemath', bpm:136, dur:232, energy:6,  vocal:true,  electronic:false, bright:true  },
   { id:1552, title:'dancing', artist:'NEIL FRANCES', bpm:96, dur:174, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1080, title:'Light Up', artist:'nimino', bpm:123, dur:228, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1369, title:'Man Up', artist:'NoMBe', bpm:106, dur:204, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1145, title:'California Girls - Remix', artist:'NoMBe & Sonny Alven', bpm:99, dur:187, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1322, title:'Entangle', artist:'Paco Versailles', bpm:103, dur:236, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1118, title:'Be Around (feat. Ashley DuBose)', artist:'Prof & Ashley DuBose', bpm:120, dur:252, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1484, title:'Right Where You Should Be (feat. Ashe & Louis Futon)', artist:'Quinn XCII & Ashe & Louis Futon', bpm:91, dur:205, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1395, title:'Cold Love', artist:'Rainbow Kitten Surprise', bpm:115, dur:237, energy:6,  vocal:true,  electronic:false, bright:true  },
   { id:1368, title:'Brighter', artist:'RÜFÜS DU SOL', bpm:117, dur:281, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1361, title:'Fault Lines', artist:'Set Mo', bpm:106, dur:181, energy:6,  vocal:false, electronic:true,  bright:true  },
   { id:1371, title:'Find', artist:'Shallou & Kasbo & Cody Lovaas', bpm:92, dur:219, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1085, title:'Cotton Candy', artist:'spill tab', bpm:null, dur:93, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1195, title:'Rise Up (feat. Nelson Mandela)', artist:'Stargate & Nelson Mandela', bpm:121, dur:183, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1210, title:'Goodie Bag', artist:'Still Woozy', bpm:139, dur:146, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1112, title:'Count on Me', artist:'Superheart', bpm:123, dur:228, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1236, title:'Thieves & Kings', artist:'The Peach Kings', bpm:160, dur:220, energy:6,  vocal:true,  electronic:false, bright:false },
   { id:1328, title:'Into The Night', artist:'Tonic Walter', bpm:123, dur:423, energy:6,  vocal:false, electronic:true,  bright:false },
   { id:1340, title:'Someone Else', artist:'Tourist', bpm:132, dur:247, energy:6,  vocal:false, electronic:true,  bright:true  },
-  { id:1151, title:'Flashback - Original Mix', artist:'TrackLab', bpm:117, dur:234, energy:6,  vocal:false, electronic:true,  bright:true  },
   { id:3,  title:'Never Enough',                  artist:'TWO LANES',                      bpm:120, dur:272, energy:6,  vocal:false, electronic:true,  bright:true  },
   { id:1362, title:'Oh!', artist:'Vallis Alps', bpm:120, dur:248, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1578, title:'Superlove (feat. Oh Wonder)', artist:'Whethan & Oh Wonder', bpm:100, dur:184, energy:6,  vocal:true,  electronic:true,  bright:true  },
   { id:1225, title:'Maybe I\'m In Love With You (feat. Talib Kweli)', artist:'Winston Surfshirt & Talib Kweli', bpm:103, dur:208, energy:6,  vocal:true,  electronic:true,  bright:true  },
-  { id:1365, title:'Hold Me Down', artist:'Yoke Lore', bpm:145, dur:269, energy:6,  vocal:true,  electronic:false, bright:true  },
   { id:1109, title:'Wildflowers', artist:'Zimmer & Panama', bpm:101, dur:217, energy:6,  vocal:false, electronic:true,  bright:true  },
 
-  // ── 7 ──────────────────────────────────────────────────────────  17 songs
+  // ── 7 ──────────────────────────────────────────────────────────  13 songs
   { id:1062, title:'I\'m Born To Run', artist:'American Authors', bpm:126, dur:206, energy:7,  vocal:true,  electronic:false, bright:true  },
   { id:1120, title:'Feeling Good', artist:'Avicii', bpm:100, dur:230, energy:7,  vocal:true,  electronic:true,  bright:true  },
   { id:1141, title:'HIGH', artist:'BAYNK', bpm:null, dur:247, energy:7,  vocal:true,  electronic:true,  bright:true  },
@@ -899,29 +860,27 @@ const SONGS = [
   { id:1013, title:'Ultimatum', artist:'Disclosure & Fatoumata Diawara', bpm:118, dur:328, energy:7,  vocal:true,  electronic:true,  bright:true  },
   { id:1349, title:'Dance Moves', artist:'Franc Moody', bpm:116, dur:201, energy:7,  vocal:true,  electronic:true,  bright:true  },
   { id:1009, title:'Shotgun', artist:'George Ezra', bpm:116, dur:201, energy:7,  vocal:true,  electronic:false, bright:true  },
-  { id:1018, title:'So. Good.', artist:'Johnny Stimson', bpm:106, dur:227, energy:7,  vocal:true,  electronic:true,  bright:true  },
   { id:1119, title:'Verona', artist:'Klingande', bpm:129, dur:200, energy:7,  vocal:false, electronic:true,  bright:true  },
   { id:22, title:'Ribs',                          artist:'Lorde',                          bpm:128, dur:259, energy:7,  vocal:true,  electronic:true,  bright:true  },
-  { id:1455, title:'Paradise (feat. Dermot Kennedy)', artist:'MEDUZA & Dermot Kennedy', bpm:124, dur:167, energy:7,  vocal:true,  electronic:true,  bright:true  },
   { id:1728, title:'All My Life', artist:'ODESZA', bpm:117, dur:192, energy:7,  vocal:true,  electronic:true,  bright:true  },
   { id:1358, title:'Higher Ground', artist:'ODESZA & Naomi Wild', bpm:105, dur:215, energy:7,  vocal:true,  electronic:true,  bright:true  },
-  { id:1114, title:'Soul Food y Adobo', artist:'Princess Nokia', bpm:136, dur:142, energy:7,  vocal:true,  electronic:true,  bright:true  },
-  { id:1108, title:'Hearts', artist:'Tourist', bpm:123, dur:269, energy:7,  vocal:false, electronic:true,  bright:true  },
-  { id:1061, title:'One Foot', artist:'WALK THE MOON', bpm:200, dur:261, energy:7,  vocal:true,  electronic:true,  bright:true  },
-  { id:1049, title:'Win Anyway', artist:'WALK THE MOON', bpm:null, dur:176, energy:7,  vocal:true,  electronic:true,  bright:true  },
 
-  // ── 8 ──────────────────────────────────────────────────────────  6 songs
+  { id:1195, title:'Rise Up (feat. Nelson Mandela)', artist:'Stargate & Nelson Mandela', bpm:null, dur:183, energy:7,  vocal:true,  electronic:true,  bright:true  },
+  { id:1796, title:'Coffee', artist:'Sylvan Esso', bpm:null, dur:268, energy:7,  vocal:true,  electronic:true,  bright:false },
+  // ── 8 ──────────────────────────────────────────────────────────  14 songs
+  { id:19, title:'2am', artist:'Aaron Hibell', bpm:null, dur:158, energy:8,  vocal:false, electronic:true,  bright:false },
   { id:1070, title:'Best Day Of My Life', artist:'American Authors', bpm:100, dur:194, energy:8,  vocal:true,  electronic:false, bright:true  },
+  { id:1373, title:'You Might Be (feat. Lils) - GoldFish Remix', artist:'Autograf & Lils & GoldFish', bpm:null, dur:181, energy:8,  vocal:true,  electronic:true,  bright:true  },
   { id:1150, title:'Fire', artist:'Barns Courtney', bpm:110, dur:197, energy:8,  vocal:true,  electronic:false, bright:true  },
+  { id:1799, title:'Empty Room (feat. Yuna) [Cabu Remix]', artist:'Big Wild', bpm:null, dur:227, energy:8,  vocal:true,  electronic:true,  bright:true  },
+  { id:1789, title:'Divine', artist:'Blair Muir', bpm:null, dur:164, energy:8,  vocal:true,  electronic:true,  bright:true  },
+  { id:1511, title:'You & Me - Flume Remix', artist:'Disclosure & Eliza Doolittle & Flume', bpm:null, dur:282, energy:8,  vocal:true,  electronic:true,  bright:true  },
   { id:1166, title:'Free', artist:'Florence + The Machine', bpm:172, dur:234, energy:8,  vocal:true,  electronic:false, bright:true  },
   { id:1017, title:'Indian Summer', artist:'Jai Wolf', bpm:85, dur:248, energy:8,  vocal:false, electronic:true,  bright:true  },
+  { id:1792, title:'Odyssey', artist:'Koelle', bpm:null, dur:236, energy:8,  vocal:false, electronic:true,  bright:false },
+  { id:1455, title:'Paradise (feat. Dermot Kennedy)', artist:'MEDUZA & Dermot Kennedy', bpm:null, dur:167, energy:8,  vocal:true,  electronic:true,  bright:true  },
   { id:1190, title:'SUPERBLOOM', artist:'MisterWives', bpm:172, dur:213, energy:8,  vocal:true,  electronic:true,  bright:true  },
+  { id:1236, title:'Thieves & Kings', artist:'The Peach Kings', bpm:null, dur:220, energy:8,  vocal:true,  electronic:false, bright:false },
   { id:1059, title:'BOOM', artist:'X Ambassadors', bpm:108, dur:164, energy:8,  vocal:true,  electronic:true,  bright:true  },
-
-  // ── 9 ──────────────────────────────────────────────────────────  0 songs
-  //    (empty — nothing in the catalogue reaches this line yet)
-
-  // ── 10 ──────────────────────────────────────────────────────────  0 songs
-  //    (empty — nothing in the catalogue reaches this line yet)
 
 ];

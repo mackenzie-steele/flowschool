@@ -1,3 +1,6 @@
+-- ⚠ SUPERSEDED IN PART — the energy ceiling in this file is 10, and it is 8
+--   as of Aug 2026. supabase/energy-max-eight.sql narrows music_staging.energy and approve_song().
+--   Re-running THIS file would put the ceiling back to 10; run that one after.
 -- ═══════════════════════════════════════════════════════════════════════════
 -- FLOW SCHOOL — MUSIC LIBRARY STAGING  (v1)
 -- Run once in the Supabase dashboard → SQL editor.

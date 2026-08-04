@@ -40,6 +40,7 @@ const DRAFT = path.join(__dirname, 'new-songs-draft.txt');
 
 const DELAY_MS = 2500;
 const DUR_TOL = 3;
+const MAX_E = 8;    // the top of the energy scale — see supabase/energy-max-eight.sql
 const COMMIT = process.argv.includes('--commit');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -156,7 +157,7 @@ async function draft() {
   L.push('# Everything a machine could know is filled in. Fill the → line for each');
   L.push('# song, save, then run:   node scripts/add-songs.js --commit');
   L.push('#');
-  L.push('#   energy      0-10. The line on the curve. 0 is the bottom rule, 10 the top.');
+  L.push('#   energy      0-8. The line on the curve. 0 is the bottom rule, 8 the top.');
   L.push('#               Nothing in the catalogue reaches 9 or 10 yet.');
   L.push('#   vocal       y if a voice carries it, n if instrumental');
   L.push('#   electronic  y if electronic, n if acoustic');
@@ -211,7 +212,7 @@ function commit() {
     const kv = Object.fromEntries([...am[1].matchAll(/(\w+)=(\S+)/g)].map(m => [m[1], m[2].toLowerCase()]));
     const e = kv.energy;
     if (e === '?' || e === undefined) { problems.push(`${title}: energy not filled in`); continue; }
-    if (!/^\d+$/.test(e) || +e < 0 || +e > 10) { problems.push(`${title}: energy "${e}" is not 0-10`); continue; }
+    if (!/^\d+$/.test(e) || +e < 0 || +e > MAX_E) { problems.push(`${title}: energy "${e}" is not 0-${MAX_E}`); continue; }
     const yn = k => {
       const v = kv[k];
       if (v === 'y' || v === 'yes' || v === 'true') return true;

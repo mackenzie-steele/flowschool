@@ -1853,6 +1853,11 @@
         '</button>';
     }
 
+    // The top of the energy scale, matching the Playlist Builder's curve.
+    // Nothing in the catalogue has ever reached 9, so offering 9 and 10 here
+    // invited scoring a song into a level no arc can ask for.
+    var MAX_E = 8;
+
     var MUS_AXES = [
       { f: 'vocal',      off: 'instrumental', on: 'vocal' },
       { f: 'electronic', off: 'acoustic',     on: 'electronic' },
@@ -1878,6 +1883,12 @@
       return out;
     }
 
+    function musLevels() {
+      var out = [];
+      for (var i = 0; i <= MAX_E; i++) out.push(i);
+      return out;
+    }
+
     function musDur(d) { return Math.floor(d / 60) + ':' + String(d % 60).padStart(2, '0'); }
 
     function musRow(r) {
@@ -1887,7 +1898,7 @@
           (r.genre ? '<br><span class="muted adm-mono">' + esc(r.genre) + '</span>' : '') + '</td>' +
         '<td class="muted adm-mono">' + musDur(r.dur) + '</td>' +
         '<td><div class="mus-energy">' +
-          [0,1,2,3,4,5,6,7,8,9,10].map(function (n) { return '<button class="mus-e" data-e="' + n + '">' + n + '</button>'; }).join('') +
+          musLevels().map(function (n) { return '<button class="mus-e" data-e="' + n + '">' + n + '</button>'; }).join('') +
         '</div></td>' +
         '<td>' + musAxes(null) + '</td>' +
         '<td class="mus-actions"><button class="btn-primary mus-ok" disabled>Approve</button>' +
@@ -1953,7 +1964,7 @@
         // a select, not the eleven-button picker: that one is for fast triage
         // of a few songs; this list is dense and mostly read, not rewritten
         '<td><select class="cat-e" aria-label="Energy for ' + esc(sg.title) + '">' +
-          [0,1,2,3,4,5,6,7,8,9,10].map(function (n) {
+          musLevels().map(function (n) {
             return '<option value="' + n + '"' + (n === sg.energy ? ' selected' : '') + '>' + n + '</option>';
           }).join('') + '</select></td>' +
         '<td class="cat-axes">' + musAxes(sg) + '</td>' +
@@ -2043,7 +2054,7 @@
           '<div class="cat-controls">' +
             '<input type="text" class="modal-input" id="cat-q" placeholder="Search title or artist\u2026" value="' + esc(MUS.q) + '" aria-label="Search songs">' +
             '<select id="cat-lvl" aria-label="Filter by energy"><option value="all">Every energy</option>' +
-              [0,1,2,3,4,5,6,7,8,9,10].map(function (n) {
+              musLevels().map(function (n) {
                 return '<option value="' + n + '"' + (String(MUS.lvl) === String(n) ? ' selected' : '') + '>energy ' + n + '</option>';
               }).join('') + '</select>' +
           '</div>' +
@@ -2212,7 +2223,7 @@
           '</div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Waiting for review</h2><span class="muted adm-mono">' + num(MUS.pending.length) + '</span></div>' +
             (MUS.pending.length
-              ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Energy \u00b7 0\u201310</th><th>Character</th><th></th></tr></thead><tbody>' + MUS.pending.map(musRow).join('') + '</tbody></table></div>'
+              ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Energy \u00b7 0\u2013' + MAX_E + '</th><th>Character</th><th></th></tr></thead><tbody>' + MUS.pending.map(musRow).join('') + '</tbody></table></div>'
               : stateEmpty('Nothing waiting. Add songs to the master playlist in Apple Music, then pull them in.')) +
           '</div>' +
           musCataloguePanel() +

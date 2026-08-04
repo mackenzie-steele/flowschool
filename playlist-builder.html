@@ -755,9 +755,9 @@
     const ARC_SHAPES = {
       // Keypoints are in normalized class time (0–1). Section boundaries for reference:
       // Warm Up ends 0.25 · Build ends 0.50 · Peak ends 0.80 · Cool Down ends 1.0
-      'slow-build':    { name: 'Slow Build',      desc: 'Ease in. Let the energy find you.',             keys: [[0, 1],  [.45, 1],  [.65, 9],  [.82, 4],  [1, 1]] },
-      'bell-curve':    { name: 'Bell Curve',       desc: 'Rise to the middle. Land softly.',              keys: [[0, 1],  [.25, 5],  [.5, 9],  [.75, 5],  [1, 1]] },
-      'strong-start':  { name: 'Strong Start',     desc: 'Lead with fire. Land with intention.',          keys: [[0, 9],  [.08, 9],  [.25, 8],  [.50, 5],  [.67, 3],  [.87, 2],  [1, 1]] },
+      'slow-build':    { name: 'Slow Build',      desc: 'Ease in. Let the energy find you.',             keys: [[0, 1],  [.45, 1],  [.65, 8],  [.82, 4],  [1, 1]] },
+      'bell-curve':    { name: 'Bell Curve',       desc: 'Rise to the middle. Land softly.',              keys: [[0, 1],  [.25, 5],  [.5, 8],  [.75, 5],  [1, 1]] },
+      'strong-start':  { name: 'Strong Start',     desc: 'Lead with fire. Land with intention.',          keys: [[0, 8],  [.08, 8],  [.25, 7],  [.50, 5],  [.67, 3],  [.87, 2],  [1, 1]] },
       'wave':          { name: 'Wave',             desc: 'Multiple crests. Keeps them in their bodies.',  keys: [[0, 2],  [.25, 8],  [.42, 3],  [.60, 8],  [.80, 3],  [1, 1]] },
       'gentle-steady': { name: 'Gentle & Steady',  desc: 'Consistent, supportive, sustainable.',         keys: [[0, 4],  [.25, 4],  [.55, 5],  [.75, 5],  [.90, 4],  [1, 3]] }
     };
@@ -860,13 +860,22 @@
     let SVG_W = 600;
     const SVG_H = 236, PAD_T = 4, PAD_B = 52;
 
+    // The top of the scale. Was 10, but nothing in the catalogue has ever
+    // reached 9 — so those two gridlines were places a teacher could drag to
+    // and get a silent fallback instead of what she asked for. Eight is the
+    // real ceiling, and a graph should only offer what it can answer.
+    //
+    // If genuinely bigger music is ever added, this goes back up and the songs
+    // keep their values — the scale is absolute, so a 5 stays a 5 either way.
+    const MAX_E = 8;
+
     function getXS() {
       return getKnotTimes(S.duration).map(t => Math.round(t * SVG_W));
     }
 
 
-    function eToY(e) { return SVG_H - PAD_B - (e / 10) * (SVG_H - PAD_T - PAD_B); }
-    function yToE(y) { return Math.round(Math.max(0, Math.min(10, (SVG_H - PAD_B - y) / (SVG_H - PAD_T - PAD_B) * 10))); }
+    function eToY(e) { return SVG_H - PAD_B - (e / MAX_E) * (SVG_H - PAD_T - PAD_B); }
+    function yToE(y) { return Math.round(Math.max(0, Math.min(MAX_E, (SVG_H - PAD_B - y) / (SVG_H - PAD_T - PAD_B) * MAX_E))); }
     // every whole number IS a gridline now, so yToE's rounding already lands
     // on one — this stays as the single place that guarantees it
     function snapEnergy(e) { return Math.round(e); }
@@ -912,20 +921,20 @@
       const pts = S.pts.map((e, i) => ({ x: xs[i], y: eToY(e) }));
 
       // ── Grid — horizontal rules ───────────────────────────────
-      for (let lvl = 0; lvl <= 10; lvl += 1) {
+      for (let lvl = 0; lvl <= MAX_E; lvl += 1) {
         const y = eToY(lvl), l = ns('line');
-        // quarters don't land on whole levels any more — floor, middle, ceiling do
-        const isMajor = [0, 5, 10].includes(lvl);
+        // floor, middle, ceiling — the only three that land on whole levels
+        const isMajor = [0, MAX_E / 2, MAX_E].includes(lvl);
         l.setAttribute('x1', 0); l.setAttribute('x2', SVG_W);
         l.setAttribute('y1', y); l.setAttribute('y2', y);
         l.setAttribute('stroke', isMajor ? 'rgba(var(--ink-rgb),.10)' : 'rgba(var(--ink-rgb),.05)');
         l.setAttribute('stroke-width', isMajor ? '1' : '.75');
-        if (lvl === 5) l.setAttribute('stroke-dasharray', '3 5');
+        if (lvl === MAX_E / 2) l.setAttribute('stroke-dasharray', '3 5');
         svg.appendChild(l);
       }
 
       // ── Y axis labels ─────────────────────────────────────────
-      [{ v: 10, lbl: 'HIGH' }, { v: 0, lbl: 'LOW' }].forEach(({ v, lbl }) => {
+      [{ v: MAX_E, lbl: 'HIGH' }, { v: 0, lbl: 'LOW' }].forEach(({ v, lbl }) => {
         const t = ns('text');
         t.setAttribute('x', 5); t.setAttribute('y', eToY(v) + (v === 0 ? -5 : 11));
         t.setAttribute('font-size', '8'); t.setAttribute('fill', 'rgba(var(--ink-rgb),.25)');
@@ -1055,7 +1064,7 @@
     function miniCurve(keys, isActive) {
       const W = 120, H = 68, p = 9;
       // Map raw keypoints ([t, e] pairs) directly — no linear pre-sampling
-      const mapped = keys.map(([t, e]) => ({ x: t * W, y: H - p - (e / 10) * (H - p * 2) }));
+      const mapped = keys.map(([t, e]) => ({ x: t * W, y: H - p - (e / MAX_E) * (H - p * 2) }));
       const d = monotonePath(mapped);
       const lp = mapped[mapped.length - 1], fp = mapped[0];
       const fill   = isActive ? 'rgba(var(--ink-rgb),.08)' : 'rgba(var(--ink-rgb),.03)';
@@ -1270,7 +1279,7 @@
     }
 
     function pickForTarget(tgt, used, tol = 2) {
-      const clamped = Math.min(10, Math.max(0, tgt));
+      const clamped = Math.min(MAX_E, Math.max(0, tgt));
       // the mix weight is relative to an energy delta — it moved with the scale
       // (was 55 against 0-100) or mixCost would have swamped energy entirely
       const cost = s => Math.abs(s.energy - clamped) + 5.5 * mixCost(s);
@@ -1570,7 +1579,7 @@
         const d = result.slice().sort((a, b) => (b.target - b.actual) - (a.target - a.actual))[0];
         const i = result.indexOf(d);
         const secMid = (secDurs.slice(0, i).reduce((a, b) => a + b, 0) + secDurs[i] * 0.75) / totalTarget;
-        const addTgt = Math.min(10, Math.round(getCurveEnergy(secMid) * mult));
+        const addTgt = Math.min(MAX_E, Math.round(getCurveEnergy(secMid) * mult));
         const upCost = s => Math.abs(s.energy - addTgt) + 5.5 * mixCost(s);
         const closer = SONGS.filter(s => !used.has(s.id) && mixEligible(s) && s.dur >= remaining && total + s.dur <= totalMax)
           .sort((a, b) => upCost(a) - upCost(b))[0];
@@ -1624,7 +1633,7 @@
             </div>
             <div class="song-meta">
               <span class="song-dur">${fmt(s.dur)}</span>
-              <div class="ebar">${[1,2,3,4,5,6,7,8].map(i => `<div class="ebar-seg${i <= Math.round(s.energy * 8 / 10) ? ' on' : ''}"></div>`).join('')}</div>
+              <div class="ebar">${[1,2,3,4,5,6,7,8].map(i => `<div class="ebar-seg${i <= s.energy ? ' on' : ''}"></div>`).join('')}</div>
             </div>
             <div class="song-swap">
               <button class="song-swap-btn" aria-label='Swap ${s.title} for another song' data-tooltip="Swap">
