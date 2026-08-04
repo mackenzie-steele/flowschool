@@ -3,6 +3,7 @@
   "private": true,
   "description": "Flow School — static site + Vercel API functions. The site version lives in lib/version.js — bump it there and nowhere else.",
   "dependencies": {
+    "@mux/mux-node": "^14.1.1",
     "@supabase/supabase-js": "^2",
     "@vercel/analytics": "^2.0.1"
   }
