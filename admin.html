@@ -71,6 +71,10 @@
        new shapes are the drop zone, the tag field and the search preview. */
     .vid-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
     .vid-head-right { display: flex; align-items: center; gap: 10px; flex: none; }
+    /* .btn-primary is sized for marketing CTAs (--btn-pad-v is 16px). The
+       admin's rhythm is .btn-secondary's 12px 24px, and a header button that
+       overshoots it reads as a different system. */
+    .vid-head-right .btn-primary { padding: 12px 22px; font-size: var(--text-ui); }
     .vid-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; padding-left: 0; }
     .vid-back .material-symbols-sharp { font-size: var(--icon-sm); }
     .vid-title-h { font-size: var(--fs-h4); font-weight: var(--weight-medium); margin: 0; }
@@ -3605,10 +3609,6 @@
               ? '<ul class="vid-blockers">' + blockers.map(function (x) {
                   return '<li><span class="material-symbols-sharp">info</span>' + esc(x) + '</li>'; }).join('') + '</ul>'
               : '') +
-            '<div class="vid-actions">' +
-              '<button class="btn-secondary" id="vid-save">' + (isNew ? 'Create draft' : 'Save') + '</button>' +
-              (isNew ? '' : '<button class="btn-primary" id="vid-apply-vis"' + (blockers.length ? ' disabled' : '') + '>Apply</button>') +
-            '</div>' +
             '<span class="nf-err" id="vid-err"></span>' +
             (v.status === 'published' && v.published_at
               ? '<span class="nf-hint">Published ' + esc(A.fmtDate(v.published_at)) + '</span>' : '') +
@@ -3885,8 +3885,9 @@
       });
 
       // ── save / publish ──
-      var save = $('vid-save');
-      if (save) save.addEventListener('click', function () { saveVideo(save, err); });
+      // One Save. It writes the fields, then applies whatever Visibility is
+      // set to — two buttons meant you could save a video and leave its
+      // visibility unapplied, with nothing on screen saying so.
       var saveTop = $('vid-save-top');
       if (saveTop) saveTop.addEventListener('click', function () { saveVideo(saveTop, err); });
 
@@ -3914,35 +3915,6 @@
           var when = $('vid-when');
           if (when) when.hidden = r.value !== 'scheduled';
         });
-      });
-
-      var apply = $('vid-apply-vis');
-      if (apply) apply.addEventListener('click', async function () {
-        if (VID.busy) return;
-        var chosen = (document.querySelector('input[name="vid-vis"]:checked') || {}).value || 'unpublished';
-        VID.busy = true; apply.disabled = true; err.textContent = '';
-        try {
-          await saveVideo(null, err, true);          // never act on a stale row
-          var r;
-          if (chosen === 'published') {
-            r = await db.rpc('publish_video', { p_id: v.id });
-          } else if (chosen === 'scheduled') {
-            var at = ($('vid-when-at') || {}).value;
-            if (!at) throw new Error('Pick a date and time.');
-            // datetime-local has no zone; new Date() reads it as local, which
-            // is what the admin meant, and toISOString sends UTC
-            r = await db.rpc('schedule_video', { p_id: v.id, p_at: new Date(at).toISOString() });
-          } else {
-            r = await db.rpc('unpublish_video', { p_id: v.id });
-          }
-          if (r.error) throw r.error;
-          toast(chosen === 'published' ? 'Published'
-              : chosen === 'scheduled' ? 'Scheduled' : 'Unpublished');
-          VID.editing = null; await renderVideos();
-        } catch (e) {
-          err.textContent = e.message || 'Could not change that.';
-          apply.disabled = false;
-        } finally { VID.busy = false; }
       });
 
       // ── the More menu ──
@@ -4089,6 +4061,26 @@
           await db.rpc('set_video_keywords', { p_id: v.id, p_keywords: kw });
           VID.editing = up.data;
           if (!quiet) toast('Saved');
+        }
+        // then the visibility the radios are showing, if it differs from what
+        // the row already says
+        if (!quiet && !v._new) {
+          var chosen = (document.querySelector('input[name="vid-vis"]:checked') || {}).value;
+          var now = videoVisibility(VID.editing);
+          if (chosen && chosen !== now) {
+            if (chosen === 'published') {
+              var p = await db.rpc('publish_video', { p_id: VID.editing.id });
+              if (p.error) throw p.error;
+            } else if (chosen === 'scheduled') {
+              var at = (document.getElementById('vid-when-at') || {}).value;
+              if (!at) throw new Error('Pick a date and time for it to go live.');
+              var sc = await db.rpc('schedule_video', { p_id: VID.editing.id, p_at: new Date(at).toISOString() });
+              if (sc.error) throw sc.error;
+            } else {
+              var un = await db.rpc('unpublish_video', { p_id: VID.editing.id });
+              if (un.error) throw un.error;
+            }
+          }
         }
         if (!quiet) {
           var keep = VID.editing.id;
