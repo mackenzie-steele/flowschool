@@ -318,19 +318,72 @@
       display: grid; place-items: center; cursor: pointer;
     }
     .mus-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-    /* the scrim only has to make one small glyph legible, not dim the art */
+    /* Three states, matching the Playlist Builder exactly — this is the same
+       control doing the same job, and previewing a song should not feel like
+       a different app on either side of the login.
+         idle              → nothing, until you reach for it
+         playing, no hover → four bars
+         playing, hovered  → pause, which is what the click will do
+       The scrim comes and goes with whatever it has to make legible. */
     .mus-art::after {
       content: ''; position: absolute; inset: 0;
       background: radial-gradient(circle at center,
         rgba(0,0,0,.55) 0%, rgba(0,0,0,.34) 55%, rgba(0,0,0,.12) 100%);
       opacity: 0; transition: opacity var(--transition-base);
     }
-    .mus-art.has-art::after { opacity: 1; }
-    .mus-art:hover::after { opacity: 1; background: rgba(0,0,0,.5); }
+    .mus-art.playing::after { opacity: 1; }
+    .mus-art:hover::after,
+    .mus-art:focus-visible::after { opacity: 1; background: rgba(0,0,0,.5); }
     .mus-art .material-symbols-sharp {
       position: relative; z-index: 1; font-size: 18px; color: #fff;
       filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+      transition: opacity var(--transition-base);
     }
+    /* solid, not outlined: icons.js ships a 1.5px stroke with fill="none" and
+       CSS beats that presentation attribute. music_note stays a stroke so an
+       unplayable well never reads as a control. */
+    .mus-art:not(.no-audio) .material-symbols-sharp svg { fill: currentColor; }
+
+    .mus-art:not(.no-audio):not(.playing) .material-symbols-sharp { opacity: 0; }
+    .mus-art:not(.no-audio):not(.playing):hover .material-symbols-sharp,
+    .mus-art:not(.no-audio):not(.playing):focus-visible .material-symbols-sharp { opacity: 1; }
+    @media (hover: none) {
+      .mus-art:not(.no-audio):not(.playing) .material-symbols-sharp { opacity: 1; }
+      .mus-art:not(.no-audio):not(.playing)::after { opacity: 1; }
+    }
+
+    .mus-eq {
+      position: relative; z-index: 1;
+      display: none; align-items: flex-end; justify-content: center;
+      gap: 2px; height: 12px;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+    }
+    .mus-eq i {
+      display: block; width: 3px; height: 30%;
+      border-radius: 1px; background: #fff;
+      animation: mus-eq-bounce .5s ease-in-out infinite alternate;
+    }
+    .mus-eq i:nth-child(1) { animation-duration: .46s; animation-delay: -.19s; }
+    .mus-eq i:nth-child(2) { animation-duration: .60s; animation-delay: -.41s; }
+    .mus-eq i:nth-child(3) { animation-duration: .52s; animation-delay: -.08s; }
+    .mus-eq i:nth-child(4) { animation-duration: .56s; animation-delay: -.29s; }
+    @keyframes mus-eq-bounce { from { height: 22%; } to { height: 100%; } }
+
+    .mus-art.playing .material-symbols-sharp { display: none; }
+    .mus-art.playing .mus-eq { display: flex; }
+    .mus-art.playing:hover .material-symbols-sharp,
+    .mus-art.playing:focus-visible .material-symbols-sharp { display: block; }
+    .mus-art.playing:hover .mus-eq,
+    .mus-art.playing:focus-visible .mus-eq { display: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mus-eq i { animation: none; }
+      .mus-eq i:nth-child(1) { height: 45%; }
+      .mus-eq i:nth-child(2) { height: 100%; }
+      .mus-eq i:nth-child(3) { height: 62%; }
+      .mus-eq i:nth-child(4) { height: 34%; }
+    }
+
     .mus-art.no-audio { cursor: default; }
     .mus-art.no-audio::after { opacity: 0; }
     .mus-art.no-audio .material-symbols-sharp { opacity: .3; filter: none; color: var(--text-3); }
@@ -441,8 +494,8 @@
       font-family: var(--font-mono); font-size: var(--fs-label-2);
       color: var(--text-3); margin-top: 4px; line-height: 1.4;
     }
-    .mus-pull { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
-    .mus-pull .modal-input { flex: 1; min-width: 260px; margin: 0; }
+    /* sits in the Waiting-for-review panel head, so no top margin */
+    .mus-pull { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .adm-panel-body { padding: 0 20px 20px; }
   </style>
 </head>
@@ -1850,6 +1903,9 @@
         ' aria-label="' + esc(playable ? 'Preview ' + title : 'No preview for ' + title) + '">' +
         (src ? '<img src="' + esc(src) + '" alt="">' : '') +
         '<span class="material-symbols-sharp">' + (playable ? 'play_arrow' : 'music_note') + '</span>' +
+        // hidden until .playing; decoration to a screen reader, which already
+        // has the button's label
+        (playable ? '<span class="mus-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' : '') +
         '</button>';
     }
 
@@ -2158,7 +2214,8 @@
         (linked.data || []).forEach(function (l) { MUS.linked[l.song_id] = true; });
         MUS.pending = rows.filter(function (r) { return r.status === 'pending'; });
         var approved = rows.filter(function (r) { return r.status === 'approved'; });
-        var rejected = rows.filter(function (r) { return r.status === 'rejected'; });
+        // 'rejected' rows are still recorded — they are what stops a passed-on
+        // song being offered for review again — they just aren't listed here.
 
         // SONGS is the SHIPPED file. Approved songs are live for teachers the
         // moment they are approved — the Builder merges them — so leaving
@@ -2194,7 +2251,6 @@
         });
 
         var inFile = Object.keys(liveIds).length;
-        var withMedia = Object.keys(liveMedia).length;
 
         // the sub-lines keep "live" and "published" visibly different things
         var shippedIds = {};
@@ -2207,24 +2263,26 @@
         b.innerHTML =
           '<div class="adm-intro">The catalogue behind the Playlist Builder. Songs approved here are live for teachers immediately \u2014 read alongside <span class="adm-mono">songs.js</span> and folded into it on the next deploy.</div>' +
           '<div class="adm-metrics">' +
+            // The artwork/preview count retired once the catalogue was fully
+            // matched — it read the same as the total forever. Its sub-line
+            // moved here rather than going with it: the unmatched panel is
+            // dormant, not deleted, so hand-links can happen again and
+            // "not yet in the file" would otherwise become a silent state.
             '<div class="adm-metric"><div class="lbl">Songs in the catalogue</div><div class="val">' + num(inFile) + '</div>' +
-              (liveExtra ? '<div class="adm-metric-sub">' + num(liveExtra) + ' approved, not in the file yet</div>' : '') + '</div>' +
-            '<div class="adm-metric"><div class="lbl">With artwork &amp; preview</div><div class="val">' + num(withMedia) + '</div>' +
+              (liveExtra ? '<div class="adm-metric-sub">' + num(liveExtra) + ' approved, not in the file yet</div>' : '') +
               (linkedExtra ? '<div class="adm-metric-sub">' + num(linkedExtra) + ' linked by hand, not yet in the file</div>' : '') + '</div>' +
             '<div class="adm-metric"><div class="lbl">Waiting for review</div><div class="val">' + num(MUS.pending.length) + '</div></div>' +
           '</div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>The master playlist</h2>' +
-          '<a class="muted adm-mono" href="' + esc(MUSIC_PLAYLIST.url) + '" target="_blank" rel="noopener">open in Apple Music \u2197</a></div>' +
-          '<div class="adm-panel-body"><p class="muted">Add music to <strong>' + esc(MUSIC_PLAYLIST.name) + '</strong> in Apple Music, then pull it in here. Push sends back any song matched by hand, so the playlist and the catalogue stay the same set.</p>' +
-          '<div class="mus-pull"><button class="btn-secondary" id="mus-pull">Pull new songs</button>' +
-          '<button class="btn-secondary" id="mus-sync">Push missing songs</button>' +
-          '<button class="btn-ghost" id="mus-who">Check Apple sign-in</button></div>' +
+          // Pull sits here because this is where its result lands \u2014 songs
+          // arrive in the review queue, so the button and its outcome are in
+          // one place rather than a panel apart.
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Waiting for review</h2>' +
+          '<div class="mus-pull"><span class="muted adm-mono">' + num(MUS.pending.length) + '</span>' +
+          '<button class="btn-secondary" id="mus-pull">Pull new songs</button></div></div>' +
           '<p class="muted adm-mono" id="mus-pull-note"></p>' +
-          '</div></div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Waiting for review</h2><span class="muted adm-mono">' + num(MUS.pending.length) + '</span></div>' +
             (MUS.pending.length
               ? '<div class="adm-scroll"><table class="adm-table mus-table"><thead><tr><th></th><th>Song</th><th>Length</th><th>Energy \u00b7 0\u2013' + MAX_E + '</th><th>Character</th><th></th></tr></thead><tbody>' + MUS.pending.map(musRow).join('') + '</tbody></table></div>'
-              : stateEmpty('Nothing waiting. Add songs to the master playlist in Apple Music, then pull them in.')) +
+              : stateEmpty('Nothing waiting. Add songs to \u201c' + esc(MUSIC_PLAYLIST.name) + '\u201d in Apple Music, then pull them in.')) +
           '</div>' +
           musCataloguePanel() +
           musUnmatchedPanel() +
@@ -2235,11 +2293,6 @@
                   [r.vocal ? 'vocal' : 'instrumental', r.electronic ? 'electronic' : 'acoustic', r.bright ? 'bright' : 'moody'].join(' \u00b7 ') +
                   '</td><td class="muted">' + A.ago(r.reviewed_at) + '</td></tr>';
               }).join('') + '</tbody></table></div></div>'
-            : '') +
-          (rejected.length
-            ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Passed on</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Song</th><th>Why</th><th>When</th></tr></thead><tbody>' +
-              rejected.map(function (r) { return '<tr><td>' + esc(r.title) + ' <span class="muted">\u2014 ' + esc(r.artist) + '</span></td><td class="muted">' + esc(r.note || '\u2014') + '</td><td class="muted">' + A.ago(r.reviewed_at) + '</td></tr>'; }).join('') +
-              '</tbody></table></div></div>'
             : '');
         wireMusic();
         if (keepPlace) window.scrollTo(0, y);
@@ -2264,7 +2317,11 @@
     var musAudio = null, musBtn = null;
     function musStop() {
       if (musAudio) musAudio.pause();
-      if (musBtn) { musBtn.querySelector('.material-symbols-sharp').textContent = 'play_arrow'; musBtn = null; }
+      if (musBtn) {
+        musBtn.classList.remove('playing');
+        musBtn.querySelector('.material-symbols-sharp').textContent = 'play_arrow';
+        musBtn = null;
+      }
     }
 
     function wireMusic() {
@@ -2299,14 +2356,6 @@
 
       var pull = document.getElementById('mus-pull');
       if (pull) pull.addEventListener('click', musPull);
-      var sync = document.getElementById('mus-sync');
-      if (sync) sync.addEventListener('click', musSync);
-      var who = document.getElementById('mus-who');
-      if (who) {
-        who.addEventListener('click', musWho);
-        who.addEventListener('click', function (e) { if (e.shiftKey) musSignOut(); });
-        who.title = 'Shift-click to sign out of Apple Music';
-      }
     }
 
     async function musClick(ev) {
@@ -2351,6 +2400,7 @@
           if (!musAudio) { musAudio = new Audio(); musAudio.addEventListener('ended', musStop); }
           musAudio.src = play.dataset.prev;
           musBtn = play;
+          play.classList.add('playing');
           play.querySelector('.material-symbols-sharp').textContent = 'pause';
               musAudio.play().catch(musStop);
           return;
@@ -2513,143 +2563,6 @@
     // playlist read — title, artist, length, artwork, preview, genre, ISRC.
     // Only energy and the three character flags are left blank, because they
     // are the only parts a machine has no business deciding.
-    // The mirror of Pull. Pull brings songs Apple has that we don't; this sends
-    // songs we have that the playlist doesn't — which is every song linked by
-    // hand since the playlist was built, because the build only ever included
-    // songs that already had an Apple id.
-    //
-    // Reading the playlist needs no sign-in; writing to it does, so this asks
-    // once and does the whole batch rather than prompting per song.
-    // Apple gives no way to ask "which Apple ID is this". The library is the
-    // answer: if these are not your playlists, the sign-in is the wrong
-    // account — and MusicKit remembers it, so there has to be a way to undo it.
-    async function musWho() {
-      var btn = document.getElementById('mus-who');
-      var note = document.getElementById('mus-pull-note');
-      btn.disabled = true;
-      var restore = btn.textContent;
-      btn.textContent = 'Checking\u2026';
-      try {
-        var me = await fsMusicKit.whoami();
-        var mine = me.playlists.filter(function (p2) { return p2.canEdit !== false; });
-        var named = me.playlists.filter(function (p2) {
-          return String(p2.name || '').trim().toLowerCase() === MUSIC_PLAYLIST.name.toLowerCase();
-        });
-        console.info('[music] library playlists:', me.playlists);
-        // collaboration is what breaks the write, so name it if we can see it
-        var collab = me.playlists.filter(function (p2) {
-          var a = p2.attributes || {};
-          return a.isCollaborative || a.hasCollaboration || a.collaborative;
-        });
-        if (collab.length) console.warn('[music] collaborative playlists (writes fail on these):', collab);
-        var lines = [
-          me.playlists.length + ' playlists in this library, ' + mine.length + ' of them editable.',
-          named.length
-            ? named.length + ' named \u201c' + MUSIC_PLAYLIST.name + '\u201d \u2014 '
-              + named.map(function (n) { return n.id + (n.canEdit === false ? ' (not editable)' : ' (editable)'); }).join(', ')
-            : 'None named \u201c' + MUSIC_PLAYLIST.name + '\u201d \u2014 wrong Apple ID, or the playlist was renamed.',
-          'Full list in the browser console.',
-        ];
-        note.innerHTML = lines.map(esc).join('<br>');
-      } catch (e) {
-        note.textContent = 'Couldn\u2019t check: ' + ((e && e.message) || 'unknown');
-        console.error('[music] whoami failed', e);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = restore;
-      }
-    }
-
-    // Signing in with the wrong Apple ID is sticky — MusicKit keeps it across
-    // sessions, so this is the only way to correct it from the page.
-    async function musSignOut() {
-      await fsMusicKit.disconnect();
-      document.getElementById('mus-pull-note').textContent =
-        'Signed out of Apple Music. The next Push or Check will ask again \u2014 pick the Apple ID that owns the playlist.';
-    }
-
-    async function musSync() {
-      var btn = document.getElementById('mus-sync');
-      var note = document.getElementById('mus-pull-note');
-
-      // Two attempts at this failed with nothing on screen to say why, so it
-      // narrates. Each step names itself before it runs: if it stops, the
-      // last line standing is the step that broke.
-      var step = function (t) { note.textContent = t; console.info('[music] ' + t); };
-      var fail = function (where, e) {
-        var raw = (e && (e.message || e.toString())) || 'no message';
-        var extra = '';
-        try {
-          // MusicKit errors carry more than .message — a 403 for "no
-          // subscription" looks identical to a network blip without this
-          if (e && e.name) extra += ' [' + e.name + ']';
-          if (e && e.status) extra += ' status=' + e.status;
-          if (e && e.errorCode) extra += ' code=' + e.errorCode;
-        } catch (_) {}
-        note.textContent = 'Stopped at: ' + where + ' \u2014 ' + raw + extra;
-        console.error('[music] failed at ' + where, e);
-        toast(fsMusicKit.explain(e));
-      };
-
-      btn.disabled = true;
-      var restore = btn.textContent;
-      btn.textContent = 'Working\u2026';
-
-      var music;
-      try {
-        // FIRST, before any await of our own — authorize() opens Apple's
-        // sign-in and browsers only allow that inside a live user gesture.
-        step('signing in to Apple Music\u2026');
-        music = await fsMusicKit.connect();
-      } catch (e) { fail('sign-in', e); btn.disabled = false; btn.textContent = restore; return; }
-
-      try {
-        step('signed in. Checking your subscription\u2026');
-        if (music && music.isAuthorized === false) throw new Error('AUTH_DECLINED');
-
-        step('finding \u201c' + MUSIC_PLAYLIST.name + '\u201d in your library\u2026');
-        var lib = await fsMusicKit.findLibraryPlaylist(MUSIC_PLAYLIST.name);
-        // Apple says this one isn't editable. Say so and try anyway — the
-        // write is the only thing that can actually settle it, and the
-        // previous 500 came from a request built a different way.
-        step('found it (id ' + lib.id + ')'
-          + (lib.canEdit === false ? ' \u2014 Apple marks it not editable; trying anyway' : '')
-          + '. Reading what\u2019s already in the playlist\u2026');
-
-        var inPlaylist = {};
-        (await fsMusicKit.readPlaylist(MUSIC_PLAYLIST.id)).forEach(function (t) { inPlaylist[String(t.appleId)] = true; });
-
-        var mine = [], seen = {}, byId = {};
-        if (typeof SONGS !== 'undefined') SONGS.forEach(function (sg) { byId[sg.id] = sg; });
-        function offer(songId, appleId) {
-          if (!appleId || seen[String(appleId)]) return;
-          seen[String(appleId)] = true;
-          if (inPlaylist[String(appleId)]) return;
-          var sg = byId[songId] || {};
-          mine.push({ appleId: appleId, title: sg.title, artist: sg.artist });
-        }
-        if (typeof APPLE_MEDIA !== 'undefined') {
-          Object.keys(APPLE_MEDIA).forEach(function (k) { offer(k, APPLE_MEDIA[k].id); });
-        }
-        var links = await db.from('music_links').select('song_id,apple_id');
-        (links.data || []).forEach(function (l) { offer(l.song_id, l.apple_id); });
-
-        if (!mine.length) { step('The playlist already has every song we can send.'); return; }
-
-        step('adding ' + mine.length + ' song' + (mine.length === 1 ? '' : 's') + '\u2026');
-        var r = await fsMusicKit.addToPlaylistById(lib.id, mine, function (done, total) {
-          step('adding\u2026 ' + done + ' of ' + total);
-        });
-        step('Done \u2014 added ' + r.added + '.');
-        toast(r.added + (r.added === 1 ? ' song added' : ' songs added') + ' to the playlist');
-      } catch (e) {
-        fail(note.textContent.replace(/\u2026$/, ''), e);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = restore;
-      }
-    }
-
     async function musPull() {
       var btn = document.getElementById('mus-pull');
       var note = document.getElementById('mus-pull-note');

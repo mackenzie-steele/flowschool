@@ -181,9 +181,15 @@ async function apiOptional(pathname) {
   // removals next: taking a line out changes the block counts that the
   // insert below then adjusts again, and doing it the other way round would
   // have the second pass correcting a number the first pass had already moved
+  // count what actually came out, not what we meant to take out: a removal
+  // recorded for a song that already left the file (removed, then published,
+  // then removed again from a stale view) is a no-op, and expecting it to
+  // change the count made the verify below revert a perfectly good write.
+  let dropped = 0;
   for (const r of toDrop) {
     const idx = lines.findIndex(l => l.startsWith(`  { id:${r.song_id},`));
     if (idx === -1) { console.log(`  ? id ${r.song_id} already gone from the file`); continue; }
+    dropped++;
     let hdr = idx;
     while (hdr >= 0 && !/^  \/\/ ── \d+ /.test(lines[hdr])) hdr--;
     lines.splice(idx, 1);
@@ -220,9 +226,9 @@ async function apiOptional(pathname) {
   try { after = load(SONGS_JS, 'SONGS'); }
   catch (e) { fs.copyFileSync(SONGS_JS + '.bak', SONGS_JS); console.error('  ✗ broke the file — reverted. ' + e.message); process.exit(1); }
   const netAdds = usable.filter(u => !u._isEdit).length;
-  if (after.length !== songs.length + netAdds - toDrop.length) {
+  if (after.length !== songs.length + netAdds - dropped) {
     fs.copyFileSync(SONGS_JS + '.bak', SONGS_JS);
-    console.error(`  ✗ expected ${songs.length + netAdds - toDrop.length} songs, got ${after.length} — reverted`);
+    console.error(`  ✗ expected ${songs.length + netAdds - dropped} songs, got ${after.length} — reverted`);
     process.exit(1);
   }
   const ids = after.map(s => s.id);

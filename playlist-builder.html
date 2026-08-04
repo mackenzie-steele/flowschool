@@ -412,8 +412,9 @@
     /* ── Artwork, doubling as the play control ────────────────────────
        The row already carries five things; a sixth control would turn it
        into a toolbar. The art is already a good tap target, so it IS the
-       button. No hover on a phone, so the glyph is always visible — at
-       40px that costs nothing, and it makes the playing row self-evident. */
+       button. Three states: idle shows nothing until hover, playing shows
+       the bars, playing-and-hovered shows pause. Touch has no hover and is
+       handled separately below. */
     .song-art {
       position: relative;
       width: 40px; height: 40px; flex: none;
@@ -430,7 +431,10 @@
       width: 100%; height: 100%; object-fit: cover;
       display: block;
     }
-    /* the scrim only has to make one small glyph legible, not dim the art */
+    /* The scrim exists only to make the glyph legible, so it comes and goes
+       with the glyph. A permanent scrim on every row dimmed 40px of artwork
+       to light a control nobody was reaching for. Playing keeps it, because
+       the bars need the same contrast. */
     .song-art::after {
       content: '';
       position: absolute; inset: 0;
@@ -438,13 +442,80 @@
         rgba(0,0,0,.55) 0%, rgba(0,0,0,.34) 55%, rgba(0,0,0,.12) 100%);
       opacity: 0; transition: opacity var(--transition-base);
     }
-    .song-art.has-art::after { opacity: 1; }
-    .song-art:hover::after { opacity: 1; background: rgba(0,0,0,.5); }
+    .song-art.playing::after { opacity: 1; }
+    .song-art:hover::after,
+    .song-art:focus-visible::after { opacity: 1; background: rgba(0,0,0,.5); }
     .song-art .material-symbols-sharp {
       position: relative; z-index: 1;
       font-size: 20px; color: #fff;
       filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+      transition: opacity var(--transition-base);
     }
+
+    /* Idle: the artwork carries the row and the play mark appears when you
+       reach for it. Playing is deliberately different — that state has to be
+       readable without a pointer anywhere near it, which is the bars' job. */
+    .song-art:not(.no-audio):not(.playing) .material-symbols-sharp { opacity: 0; }
+    .song-art:not(.no-audio):not(.playing):hover .material-symbols-sharp,
+    .song-art:not(.no-audio):not(.playing):focus-visible .material-symbols-sharp { opacity: 1; }
+
+    /* No hover on a phone: a control that only appears on hover cannot be
+       found at all, so touch keeps the old always-visible behaviour. */
+    @media (hover: none) {
+      .song-art:not(.no-audio):not(.playing) .material-symbols-sharp { opacity: 1; }
+      .song-art:not(.no-audio):not(.playing)::after { opacity: 1; }
+    }
+    /* Play and pause are SOLID, not outlined. icons.js swaps the ligature for
+       a 1.5px lucide stroke with fill="none"; CSS beats that presentation
+       attribute, and both shapes are closed (a triangle, two rects) so they
+       fill cleanly. A filled mark is the universal "this plays" and holds up
+       at 20px where a hairline outline goes weedy over busy artwork.
+       music_note is excluded on purpose — an unplayable well must not start
+       looking like a control. */
+    .song-art:not(.no-audio) .material-symbols-sharp svg { fill: currentColor; }
+
+    /* ── playing, pointer away: the bars ──────────────────────────────
+       Borrowed from the music-app convention. It answers "which one is
+       making this sound" from across the list, where a pause glyph reads
+       as an instruction rather than a state. Hovering swaps it back to
+       pause, because pause is what the click will actually do. */
+    .song-eq {
+      position: relative; z-index: 1;
+      display: none;
+      align-items: flex-end; justify-content: center;
+      gap: 2px; height: 13px;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+    }
+    .song-eq i {
+      display: block; width: 3px; height: 30%;
+      border-radius: 1px; background: #fff;
+      animation: song-eq-bounce .5s ease-in-out infinite alternate;
+    }
+    /* Deliberately unrelated durations with negative delays: the four bars
+       never line up, so it reads as sound rather than a machine. Fast enough
+       to feel like music — a slow bounce reads as loading, not playing. */
+    .song-eq i:nth-child(1) { animation-duration: .46s; animation-delay: -.19s; }
+    .song-eq i:nth-child(2) { animation-duration: .60s; animation-delay: -.41s; }
+    .song-eq i:nth-child(3) { animation-duration: .52s; animation-delay: -.08s; }
+    .song-eq i:nth-child(4) { animation-duration: .56s; animation-delay: -.29s; }
+    @keyframes song-eq-bounce { from { height: 22%; } to { height: 100%; } }
+
+    .song-art.playing .material-symbols-sharp { display: none; }
+    .song-art.playing .song-eq { display: flex; }
+    .song-art.playing:hover .material-symbols-sharp,
+    .song-art.playing:focus-visible .material-symbols-sharp { display: block; }
+    .song-art.playing:hover .song-eq,
+    .song-art.playing:focus-visible .song-eq { display: none; }
+
+    /* still says "playing", just without the motion */
+    @media (prefers-reduced-motion: reduce) {
+      .song-eq i { animation: none; }
+      .song-eq i:nth-child(1) { height: 45%; }
+      .song-eq i:nth-child(2) { height: 100%; }
+      .song-eq i:nth-child(3) { height: 62%; }
+      .song-eq i:nth-child(4) { height: 34%; }
+    }
+
     /* nothing to play: no glyph, no scrim, just a quiet well */
     .song-art.no-audio { cursor: default; }
     .song-art.no-audio::after { opacity: 0; }
@@ -1420,6 +1491,9 @@
         + ` aria-label="${label.replace(/"/g, '&quot;')}"${playable ? '' : ' tabindex="-1" aria-disabled="true"'}>`
         + (art ? `<img src="${art}" alt="" loading="lazy" onerror="this.remove();this.parentNode.classList.remove('has-art')">` : '')
         + `<span class="material-symbols-sharp">${playable ? 'play_arrow' : 'music_note'}</span>`
+        // hidden until .playing; aria-hidden because the button's label already
+        // says what this is and three bars are decoration to a screen reader
+        + (playable ? `<span class="song-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>` : '')
         + `<span class="song-art-prog"></span></button>`;
     }
 
@@ -1458,6 +1532,7 @@
       // pause only — clearing src is what caused the abort/error race
       if (audioEl) audioEl.pause();
       if (prevBtn) {
+        prevBtn.classList.remove('playing');
         var g = prevBtn.querySelector('.material-symbols-sharp');
         if (g && !prevBtn.classList.contains('no-audio')) g.textContent = 'play_arrow';
         var bar = prevBtn.querySelector('.song-art-prog');
@@ -1490,6 +1565,7 @@
       var next = sid && container.querySelector('.song[data-sid="' + sid + '"] .song-art');
       if (!next || !next.dataset.prev) { stopPreview(); return; }
       prevBtn = next;
+      next.classList.add('playing');
       var g = next.querySelector('.material-symbols-sharp');
       if (g) g.textContent = 'pause';
       var nrow = next.closest('.song');
@@ -1509,6 +1585,7 @@
       if (a.src !== url) { a.src = url; }
       else { a.currentTime = 0; }        // same song again: start it over
 
+      btn.classList.add('playing');
       var g = btn.querySelector('.material-symbols-sharp');
       if (g) g.textContent = 'pause';
       var row = btn.closest('.song');
