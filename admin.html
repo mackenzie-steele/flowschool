@@ -61,6 +61,156 @@
     }
     .adm-explain-cta .material-symbols-sharp { font-size: var(--icon-sm); }
 
+
+    /* ── the video editor ────────────────────────────────────────────
+       Two columns: what the video IS on the left, what to DO with it on the
+       right. The rail is sticky so the file, the blockers and Publish stay in
+       view while you write — otherwise you scroll to the bottom to find out
+       whether you are allowed to publish yet.
+       Everything here is built from tokens already in the system; the only
+       new shapes are the drop zone, the tag field and the search preview. */
+    .vid-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .vid-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; padding-left: 0; }
+    .vid-back .material-symbols-sharp { font-size: var(--icon-sm); }
+    .vid-title-h { font-size: var(--fs-h4); font-weight: var(--weight-medium); margin: 0; }
+    .vid-layout { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 28px; align-items: start; }
+    @media (max-width: 1100px) { .vid-layout { grid-template-columns: 1fr; } }
+
+    .vid-section { border-top: 1px solid var(--border-light); padding: 24px 0; }
+    .vid-section:first-child { border-top: 0; padding-top: 0; }
+    .vid-section-head { margin-bottom: 16px; }
+    .vid-section-head h2 { font-size: var(--fs-h6); font-weight: var(--weight-medium); margin: 0; }
+    .vid-section-head p { font-size: var(--text-micro); color: var(--text-3); margin: 4px 0 0; }
+    .vid-section-body { display: flex; flex-direction: column; }
+
+    /* the rail */
+    .vid-rail { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 16px; }
+    @media (max-width: 1100px) { .vid-rail { position: static; } }
+    .vid-card {
+      border: 1px solid var(--border-light); border-radius: var(--r);
+      background: var(--raised), rgba(var(--ink-rgb), .02);
+      box-shadow: var(--crest); padding: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .vid-card-cap {
+      font-family: var(--font-mono); font-size: var(--text-nano);
+      letter-spacing: var(--ls-micro); text-transform: uppercase; color: var(--text-3);
+    }
+    .vid-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .vid-blockers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+    .vid-blockers li {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: var(--text-micro); color: var(--text-2);
+    }
+    .vid-blockers .material-symbols-sharp { font-size: 14px; color: var(--text-3); flex: none; margin-top: 1px; }
+    .vid-ready { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--text-ui); color: var(--accent); }
+    .vid-ready .material-symbols-sharp { font-size: 16px; }
+
+    /* the drop zone — the one place this page needed a new shape */
+    .vid-drop {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; padding: 28px 16px; text-align: center; cursor: pointer;
+      border: 1px dashed rgba(var(--ink-rgb), .18); border-radius: var(--r);
+      background: var(--well-bg); color: var(--text-2);
+      transition: border-color var(--transition-base), background var(--transition-base);
+    }
+    .vid-drop:hover { border-color: var(--accent); }
+    .vid-drop.over { border-color: var(--accent); background: var(--accent-dim); }
+    .vid-drop .material-symbols-sharp { font-size: 22px; color: var(--text-3); }
+    .vid-drop-main { font-size: var(--text-ui); color: var(--text-1); }
+    .vid-drop-sm { padding: 18px 16px; margin-top: 10px; }
+
+    /* our progress, not the uploader's */
+    .vid-progress-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 4px; text-align: center; }
+    .vid-progress-wrap p { margin: 0; font-size: var(--text-ui); }
+    .vid-bar { width: 100%; height: 3px; border-radius: 999px; background: rgba(var(--ink-rgb), .10); overflow: hidden; }
+    .vid-bar > span { display: block; height: 100%; width: 0%; background: var(--accent); border-radius: 999px; transition: width .2s ease-out; }
+    .vid-spinner {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid rgba(var(--ink-rgb), .12); border-top-color: var(--accent);
+      animation: vid-spin .7s linear infinite;
+    }
+    @keyframes vid-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .vid-spinner { animation-duration: 2.4s; } }
+    .vid-meta { margin: 0; font-size: var(--text-micro); }
+
+    /* tag field */
+    .vid-tags {
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      padding: 8px; min-height: 44px;
+      border: 1px solid rgba(var(--ink-rgb), .14); border-radius: var(--r);
+      background: var(--well-bg); cursor: text;
+    }
+    .vid-tags:focus-within { border-color: var(--accent); }
+    .vid-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; padding: 3px 4px 3px 10px;
+      border: 1px solid var(--border-light); border-radius: var(--rf);
+      color: var(--text-1); background: var(--paper-solid);
+    }
+    .vid-tag-x { background: none; border: 0; cursor: pointer; color: var(--text-3); display: flex; padding: 2px; border-radius: 50%; }
+    .vid-tag-x:hover { color: var(--danger); }
+    .vid-tag-x .material-symbols-sharp { font-size: 13px; }
+    .vid-tag-input { flex: 1; min-width: 140px; border: 0; background: none; outline: none;
+      font-family: var(--font); font-size: var(--text-ui); color: var(--text-1); padding: 4px; }
+
+    /* thumbnail picker */
+    .vid-thumb-grid { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); gap: 16px; align-items: start; }
+    @media (max-width: 720px) { .vid-thumb-grid { grid-template-columns: 1fr; } }
+    .vid-thumb-preview {
+      aspect-ratio: 16/9; border-radius: var(--rs); overflow: hidden;
+      background: var(--well-bg); box-shadow: var(--well);
+      display: grid; place-items: center;
+    }
+    .vid-thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .vid-thumb-controls { display: flex; flex-direction: column; gap: 10px; }
+    .vid-seg { display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--rb); background: var(--well-bg); }
+    .vid-seg-btn {
+      flex: 1; border: 0; background: none; cursor: pointer; padding: 7px 12px;
+      font-family: var(--font); font-size: var(--text-micro); color: var(--text-3);
+      border-radius: calc(var(--rb) - 2px); white-space: nowrap;
+      transition: color var(--transition-base), background var(--transition-base);
+    }
+    .vid-seg-btn:hover { color: var(--text-1); }
+    .vid-seg-btn.on { background: var(--paper-solid); color: var(--text-1); box-shadow: var(--crest); }
+    .vid-thumb-time { display: flex; flex-direction: column; }
+
+    /* url + counters + search preview */
+    .vid-cat-row { display: flex; gap: 8px; align-items: center; }
+    .vid-cat-row .modal-input { flex: 1; }
+    .vid-newcat-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+    .vid-newcat-row .modal-input { flex: 1; }
+    .vid-slug-row { display: flex; align-items: center; gap: 0; }
+    .vid-slug-prefix {
+      font-family: var(--font-mono); font-size: var(--text-micro); color: var(--text-3);
+      padding: 10px 0 10px 12px; background: var(--well-bg); white-space: nowrap;
+      border: 1px solid rgba(var(--ink-rgb), .14); border-right: 0;
+      border-radius: var(--r) 0 0 var(--r);
+    }
+    .vid-slug-row .modal-input { border-radius: 0 var(--r) var(--r) 0; }
+    .vid-count { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-nano); color: var(--text-3); }
+    .vid-count.over { color: var(--danger); }
+    .vid-warn { color: var(--danger); }
+    .vid-serp {
+      margin-top: 14px; padding: 14px 16px;
+      border: 1px solid var(--border-light); border-radius: var(--r);
+      background: var(--well-bg); display: flex; flex-direction: column; gap: 3px;
+    }
+    .vid-serp-url { font-size: var(--text-micro); color: var(--text-3); }
+    .vid-serp-title { font-size: var(--fs-h7); color: var(--accent); }
+    .vid-serp-desc { font-size: var(--text-micro); color: var(--text-2); line-height: 1.5; }
+
+    /* resources */
+    .vid-res-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+    .vid-res-list li {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border: 1px solid var(--border-light); border-radius: var(--r); background: var(--well-bg);
+    }
+    .vid-res-list .material-symbols-sharp { font-size: 16px; color: var(--text-3); flex: none; }
+    .vid-res-name { flex: 1; display: flex; flex-direction: column; font-size: var(--text-ui); overflow: hidden; }
+    .vid-res-name .nf-hint { margin: 0; }
+    .vid-none { margin: 0; font-size: var(--text-ui); }
+
     /* ── Content › Video ─────────────────────────────────────────────
        The uploader is a third-party web component. Left alone it looks like
        one; these rules give it the app's own well, radius and accent so it
@@ -3182,154 +3332,445 @@
     }
 
     // ── the add/edit form ───────────────────────────────────────────────────
+    // Two columns: what the video IS on the left, what to DO with it on the
+    // right. The rail is sticky so the file, the status and Publish stay with
+    // you while you write — the alternative is scrolling to the bottom to find
+    // out whether you are allowed to publish yet.
+    //
     // A draft row is created BEFORE the upload, because the row's id is the
     // Mux passthrough value — there is nothing to correlate a webhook to
     // until it exists.
+    var VIDEO_LIMITS = { short: 160, seo_title: 60, seo_desc: 155 };
+
+    function vidCounter(id, len, limit) {
+      var over = len > limit;
+      return '<span class="vid-count' + (over ? ' over' : '') + '" id="' + id + '">' +
+             len + ' / ' + limit + '</span>';
+    }
+
+    // What is standing between this video and Publish. Written as sentences
+    // because "category_id is null" is not something to read at 11pm.
+    function videoBlockers(v) {
+      var out = [];
+      if (!(v.title || '').trim()) out.push('It needs a title.');
+      if (!v.slug) out.push('It needs a URL.');
+      if (!v.category_id) out.push('Choose a category.');
+      if (!v.mux_asset_id) out.push('Upload a video file.');
+      else if (v.mux_asset_status !== 'ready') out.push('Mux is still processing the file.');
+      return out;
+    }
+
     function drawVideoForm() {
       var b = bodyEl(); if (!b) return;
       var v = VID.editing;
       var isNew = !!v._new;
       var processing = ['uploading', 'processing'].indexOf(v.status) !== -1;
+      var blockers = videoBlockers(v);
+      var kws = v.search_keywords || [];
+      var cats = VID.cats.filter(function (c) { return c.status === 'active'; });
 
       b.innerHTML =
-        '<div class="adm-panel"><div class="adm-panel-head"><h2>' +
-          (isNew ? 'Add a video' : esc(v.title || 'Edit video')) + '</h2>' +
-          '<button class="btn-ghost" id="vid-cancel">Back to all videos</button></div>' +
-
-        '<div class="nf-grid"><div class="nf-fields">' +
-          '<label class="nf-label" for="vid-title">Title <span class="nf-req">required</span></label>' +
-          '<input class="modal-input" id="vid-title" maxlength="160" value="' + esc(v.title || '') + '" placeholder="Chair Pose, three ways">' +
-
-          '<label class="nf-label" for="vid-short">Short description</label>' +
-          '<textarea class="modal-input nf-msg" id="vid-short" rows="2" maxlength="300" placeholder="One or two lines for the library card.">' + esc(v.short_description || '') + '</textarea>' +
-
-          '<label class="nf-label" for="vid-desc">Full description</label>' +
-          '<textarea class="modal-input nf-msg" id="vid-desc" rows="5" maxlength="4000" placeholder="Line breaks are kept.">' + esc(v.description || '') + '</textarea>' +
-
-          '<label class="nf-label" for="vid-category">Category</label>' +
-          '<select class="modal-input" id="vid-category">' +
-            '<option value="">— choose —</option>' +
-            VID.cats.filter(function (c) { return c.status === 'active'; }).map(function (c) {
-              return '<option value="' + c.id + '"' + (v.category_id === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
-            }).join('') + '</select>' +
-
-          '<label class="nf-label" for="vid-keywords">Search keywords</label>' +
-          '<input class="modal-input" id="vid-keywords" value="' + esc((v.search_keywords || []).join(', ')) + '" placeholder="transitions, cueing, class planning">' +
-          '<span class="nf-hint">Comma separated. These help members find the video in the library — they are not shown on the page.</span>' +
-
-          '<div class="nf-actions">' +
-            '<button class="btn-secondary" id="vid-save">' + (isNew ? 'Create draft' : 'Save') + '</button>' +
-            (!isNew && v.status !== 'published'
-              ? '<button class="btn-primary" id="vid-publish">Publish</button>' : '') +
-            (v.status === 'published'
-              ? '<button class="btn-ghost" id="vid-unpublish">Unpublish</button>' : '') +
-            '<span class="nf-err" id="vid-err"></span>' +
+        '<div class="vid-head">' +
+          '<div>' +
+            '<button class="btn-ghost vid-back" id="vid-cancel">' +
+              '<span class="material-symbols-sharp">arrow_back</span>All videos</button>' +
+            '<h1 class="vid-title-h">' + (isNew ? 'New video' : esc(v.title || 'Untitled')) + '</h1>' +
           '</div>' +
+          '<div class="vid-head-right">' + (isNew ? '' : videoPill(v.status)) + '</div>' +
         '</div>' +
 
-        // ── the file ──
-        '<div class="nf-preview"><span class="nf-preview-cap">Video file</span>' +
-          '<div class="vid-upload" id="vid-upload">' +
-            (isNew
-              ? '<p class="muted">Create the draft first — the upload attaches to it.</p>'
-              : v.mux_playback_id
-                ? '<p class="muted adm-mono">' +
-                    videoDuration(v.duration_seconds) + (v.aspect_ratio ? ' · ' + esc(v.aspect_ratio) : '') +
-                    (v.max_resolution ? ' · ' + esc(v.max_resolution) : '') + '</p>' +
-                  // The player loads itself as soon as the form opens on a
-                  // ready video. It used to wait for a click, which read as
-                  // broken — a play surface that is not there yet looks like
-                  // a failure, not like something waiting to be asked.
-                  '<div class="vid-player is-loading" id="vid-player">' +
-                    '<div class="vid-player-skel" aria-live="polite" aria-label="Loading the preview"></div>' +
+        '<div class="vid-layout">' +
+
+        // ══ LEFT: what the video is ══
+        '<div class="vid-main">' +
+
+          section('Basics', '',
+            '<label class="nf-label" for="vid-title">Title <span class="nf-req">required</span></label>' +
+            '<input class="modal-input" id="vid-title" maxlength="160" value="' + esc(v.title || '') + '" placeholder="Chair Pose, three ways">' +
+
+            '<label class="nf-label" for="vid-short">Short description' +
+              vidCounter('c-short', (v.short_description || '').length, VIDEO_LIMITS.short) + '</label>' +
+            '<textarea class="modal-input nf-msg" id="vid-short" rows="2" maxlength="400" placeholder="One or two lines. This is what shows on the library card.">' + esc(v.short_description || '') + '</textarea>' +
+
+            '<label class="nf-label" for="vid-desc">Full description</label>' +
+            '<textarea class="modal-input nf-msg" id="vid-desc" rows="6" maxlength="4000" placeholder="What is in the video, who it is for, what to look out for. Line breaks are kept.">' + esc(v.description || '') + '</textarea>' +
+
+            '<label class="nf-label" for="vid-category">Category <span class="nf-req">required to publish</span></label>' +
+            '<div class="vid-cat-row">' +
+              '<select class="modal-input" id="vid-category">' +
+                '<option value="">— choose —</option>' +
+                cats.map(function (c) {
+                  return '<option value="' + c.id + '"' + (v.category_id === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
+                }).join('') + '</select>' +
+              '<button class="btn-ghost" id="vid-newcat" type="button">New…</button>' +
+            '</div>' +
+            '<div class="vid-newcat-row" id="vid-newcat-row" hidden>' +
+              '<input class="modal-input" id="vid-newcat-name" maxlength="80" placeholder="Category name">' +
+              '<button class="btn-secondary" id="vid-newcat-save" type="button">Add</button>' +
+              '<button class="btn-ghost" id="vid-newcat-cancel" type="button">Cancel</button>' +
+            '</div>' +
+            '<span class="nf-hint">Adding one here keeps everything you have typed.</span>'
+          ) +
+
+          section('Thumbnail', 'The frame members see before they press play.',
+            isNew || !v.mux_playback_id
+              ? '<p class="muted">Once the file has processed you can pick any frame.</p>'
+              : '<div class="vid-thumb-grid">' +
+                  '<div class="vid-thumb-preview" id="vid-thumb-preview"></div>' +
+                  '<div class="vid-thumb-controls">' +
+                    '<div class="vid-seg" role="group" aria-label="Thumbnail source">' +
+                      ['auto', 'timestamp'].map(function (m) {
+                        return '<button type="button" class="vid-seg-btn' + (v.thumbnail_mode === m ? ' on' : '') +
+                          '" data-thumb-mode="' + m + '">' + (m === 'auto' ? 'Automatic' : 'Pick a frame') + '</button>';
+                      }).join('') + '</div>' +
+                    '<div class="vid-thumb-time" id="vid-thumb-time"' + (v.thumbnail_mode === 'timestamp' ? '' : ' hidden') + '>' +
+                      '<button class="btn-secondary" id="vid-usenow" type="button">Use the frame showing now</button>' +
+                      '<label class="nf-label" for="vid-time">Or a time in seconds</label>' +
+                      '<input class="modal-input" id="vid-time" inputmode="decimal" value="' +
+                        esc(v.thumbnail_time_seconds != null ? v.thumbnail_time_seconds : '') + '" placeholder="12.5">' +
+                      '<span class="nf-hint">Scrub the player, pause where you want it, then use the button.</span>' +
+                    '</div>' +
                   '</div>' +
-                  '<div class="vid-player-actions">' +
-                    '<button class="btn-ghost" id="vid-preview">Reload preview</button>' +
-                    '<button class="btn-ghost" id="vid-replace">Replace the file</button>' +
-                  '</div>'
-                : processing
-                  ? '<p class="muted">' + (v.status === 'uploading' ? 'Uploading…' : 'Mux is processing this — usually a few minutes.') + '</p>' +
-                    '<button class="btn-ghost" id="vid-refresh">Check again</button>'
-                  : v.status === 'errored'
-                    ? '<p class="nf-err">' + esc(v.mux_error || 'The upload failed.') + '</p>' +
-                      '<button class="btn-secondary" id="vid-start">Try another file</button>'
-                    : '<button class="btn-secondary" id="vid-start">Choose a video file</button>') +
+                '</div>'
+          ) +
+
+          section('Search keywords', 'How members find this in the library. Not shown on the page.',
+            '<div class="vid-tags" id="vid-tags">' +
+              kws.map(function (k) { return vidTag(k); }).join('') +
+              '<input class="vid-tag-input" id="vid-tag-input" placeholder="' +
+                (kws.length ? 'Add another…' : 'transitions, arm balances, cueing…') +
+                '" aria-label="Add a search keyword">' +
+            '</div>' +
+            '<span class="nf-hint">Enter or comma to add. Backspace on an empty box removes the last one.</span>'
+          ) +
+
+          section('Resources', 'PDFs members can download. Worksheets, sequences, notes.',
+            isNew
+              ? '<p class="muted">Save the draft first, then attach files.</p>'
+              : '<div id="vid-resources">' + videoResourceList() + '</div>' +
+                '<label class="vid-drop vid-drop-sm" id="vid-pdf-drop">' +
+                  '<input type="file" id="vid-pdf-input" accept="application/pdf" hidden multiple>' +
+                  '<span class="material-symbols-sharp">note_add</span>' +
+                  '<span>Drop a PDF here, or <u>browse</u></span>' +
+                  '<span class="nf-hint">Up to 25MB each</span>' +
+                '</label>' +
+                '<p class="nf-err" id="vid-pdf-err"></p>'
+          ) +
+
+          section('Page and search', 'How this looks as a link, and in a search result.',
+            '<label class="nf-label" for="vid-slug">URL</label>' +
+            '<div class="vid-slug-row">' +
+              '<span class="vid-slug-prefix">flowschool.io/video/</span>' +
+              '<input class="modal-input" id="vid-slug" value="' + esc(v.slug || '') + '" placeholder="chair-pose-three-ways">' +
+            '</div>' +
+            (v.status === 'published'
+              ? '<span class="nf-hint vid-warn">This video is published. Changing the URL breaks any link already shared.</span>'
+              : '<span class="nf-hint">Made from the title. Edit it and it stays as you set it.</span>') +
+
+            '<label class="nf-label" for="vid-seo-title">Page title' +
+              vidCounter('c-seot', (v.seo_title || '').length, VIDEO_LIMITS.seo_title) + '</label>' +
+            '<input class="modal-input" id="vid-seo-title" maxlength="120" value="' + esc(v.seo_title || '') + '" placeholder="' + esc(v.title || 'Defaults to the title') + '">' +
+
+            '<label class="nf-label" for="vid-seo-desc">Meta description' +
+              vidCounter('c-seod', (v.seo_description || '').length, VIDEO_LIMITS.seo_desc) + '</label>' +
+            '<textarea class="modal-input nf-msg" id="vid-seo-desc" rows="2" maxlength="320" placeholder="' + esc(v.short_description || 'Defaults to the short description') + '">' + esc(v.seo_description || '') + '</textarea>' +
+
+            '<div class="vid-serp" id="vid-serp"></div>' +
+            '<span class="nf-hint">A rough idea, not a promise — every search engine renders this differently.</span>'
+          ) +
+
+        '</div>' +
+
+        // ══ RIGHT: what to do with it ══
+        '<aside class="vid-rail">' +
+          '<div class="vid-card">' +
+            '<span class="vid-card-cap">Video file</span>' +
+            '<div class="vid-upload" id="vid-upload">' + videoFileZone(v, isNew, processing) + '</div>' +
+            '<p class="nf-hint" id="vid-upload-note"></p>' +
           '</div>' +
-          '<p class="nf-hint" id="vid-upload-note"></p>' +
-        '</div></div></div>';
+
+          '<div class="vid-card">' +
+            '<span class="vid-card-cap">Publishing</span>' +
+            (blockers.length
+              ? '<ul class="vid-blockers">' + blockers.map(function (x) {
+                  return '<li><span class="material-symbols-sharp">info</span>' + esc(x) + '</li>'; }).join('') + '</ul>'
+              : '<p class="vid-ready"><span class="material-symbols-sharp">check</span>Ready to publish.</p>') +
+            '<div class="vid-actions">' +
+              '<button class="btn-secondary" id="vid-save">' + (isNew ? 'Create draft' : 'Save') + '</button>' +
+              (!isNew && v.status !== 'published'
+                ? '<button class="btn-primary" id="vid-publish"' + (blockers.length ? ' disabled' : '') + '>Publish</button>' : '') +
+              (v.status === 'published' ? '<button class="btn-ghost" id="vid-unpublish">Unpublish</button>' : '') +
+            '</div>' +
+            '<span class="nf-err" id="vid-err"></span>' +
+            (v.published_at ? '<span class="nf-hint">Published ' + esc(A.fmtDate(v.published_at)) + '</span>' : '') +
+          '</div>' +
+
+          (isNew || v.status === 'archived' ? '' :
+            '<div class="adm-danger-zone"><h3>Archive</h3>' +
+            '<p class="nf-hint" style="margin:0 0 10px">Takes it out of the library. Nothing is deleted and the Mux file is untouched.</p>' +
+            '<button class="btn-icon adm-del" id="vid-archive" data-tooltip="Archive" aria-label="Archive this video">' +
+              '<span class="material-symbols-sharp">delete</span></button></div>') +
+        '</aside>' +
+        '</div>';
 
       wireVideoForm();
+
+      function section(title, blurb, inner) {
+        return '<section class="vid-section">' +
+          '<div class="vid-section-head"><h2>' + esc(title) + '</h2>' +
+            (blurb ? '<p>' + esc(blurb) + '</p>' : '') + '</div>' +
+          '<div class="vid-section-body">' + inner + '</div></section>';
+      }
+    }
+
+    function vidTag(k) {
+      return '<span class="vid-tag" data-kw="' + esc(k) + '">' + esc(k) +
+        '<button type="button" class="vid-tag-x" aria-label="Remove ' + esc(k) + '">' +
+        '<span class="material-symbols-sharp">close</span></button></span>';
+    }
+
+    // The drop zone. mux-uploader's own chrome is replaced entirely — it is
+    // given no UI of its own and driven through its API, so what you see is
+    // the app's, not a third party's.
+    function videoFileZone(v, isNew, processing) {
+      if (isNew) return '<p class="muted">Create the draft first — the file attaches to it.</p>';
+      if (v.mux_playback_id) {
+        return '<div class="vid-player is-loading" id="vid-player">' +
+                 '<div class="vid-player-skel" aria-live="polite" aria-label="Loading the preview"></div></div>' +
+               '<p class="muted adm-mono vid-meta">' + videoDuration(v.duration_seconds) +
+                 (v.aspect_ratio ? ' · ' + esc(v.aspect_ratio) : '') +
+                 (v.max_resolution ? ' · ' + esc(v.max_resolution) : '') + '</p>' +
+               '<div class="vid-player-actions">' +
+                 '<button class="btn-ghost" id="vid-preview">Reload</button>' +
+                 '<button class="btn-ghost" id="vid-replace">Replace</button></div>';
+      }
+      if (processing) {
+        return '<div class="vid-progress-wrap">' +
+                 '<div class="vid-spinner" aria-hidden="true"></div>' +
+                 '<p>' + (v.status === 'uploading' ? 'Uploading…' : 'Processing') + '</p>' +
+                 '<span class="nf-hint">' + (v.status === 'uploading'
+                   ? 'Keep this tab open.'
+                   : 'Mux is encoding it. Usually a few minutes — you can keep writing.') + '</span>' +
+               '</div>' +
+               '<button class="btn-ghost" id="vid-refresh">Check again</button>';
+      }
+      if (v.status === 'errored') {
+        return '<p class="nf-err">' + esc(v.mux_error || 'The upload failed.') + '</p>' +
+               '<button class="btn-secondary" id="vid-start">Try another file</button>';
+      }
+      return '<label class="vid-drop" id="vid-drop">' +
+               '<input type="file" id="vid-file" accept="video/*" hidden>' +
+               '<span class="material-symbols-sharp">movie</span>' +
+               '<span class="vid-drop-main">Drop a video here</span>' +
+               '<span class="nf-hint">or <u>browse for a file</u></span>' +
+             '</label>';
+    }
+
+    function videoResourceList() {
+      var list = VID.resources || [];
+      if (!list.length) return '<p class="muted vid-none">Nothing attached yet.</p>';
+      return '<ul class="vid-res-list">' + list.map(function (r) {
+        return '<li data-rid="' + r.id + '">' +
+          '<span class="material-symbols-sharp">note_add</span>' +
+          '<span class="vid-res-name">' + esc(r.title) +
+            '<span class="nf-hint">' + esc(r.file_name || '') +
+            (r.file_size ? ' · ' + Math.round(r.file_size / 1024) + 'KB' : '') + '</span></span>' +
+          '<button class="btn-icon adm-del vid-res-del" data-tooltip="Remove" aria-label="Remove ' + esc(r.title) + '">' +
+            '<span class="material-symbols-sharp">delete</span></button></li>';
+      }).join('') + '</ul>';
     }
 
     function videoRead() {
+      var g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
+      var t = function (id) { return (g(id) || '').trim(); };
       return {
-        title: (document.getElementById('vid-title').value || '').trim(),
-        short_description: (document.getElementById('vid-short').value || '').trim() || null,
-        description: (document.getElementById('vid-desc').value || '').trim() || null,
-        category_id: document.getElementById('vid-category').value || null,
+        title: t('vid-title'),
+        short_description: t('vid-short') || null,
+        description: t('vid-desc') || null,
+        category_id: g('vid-category') || null,
+        slug: t('vid-slug'),
+        seo_title: t('vid-seo-title') || null,
+        seo_description: t('vid-seo-desc') || null,
+        thumbnail_mode: VID.editing.thumbnail_mode || 'auto',
+        thumbnail_time_seconds: VID.editing.thumbnail_mode === 'timestamp'
+          ? (parseFloat(t('vid-time')) || 0) : null,
       };
+    }
+
+    // Everything that has to happen live: counters, the slug, the search
+    // preview, the thumbnail image. Cheap enough to run on every keystroke.
+    function videoLive() {
+      var v = VID.editing;
+      var val = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
+      var setCount = function (id, len, limit) {
+        var e = document.getElementById(id); if (!e) return;
+        e.textContent = len + ' / ' + limit;
+        e.classList.toggle('over', len > limit);
+      };
+      setCount('c-short', val('vid-short').length, VIDEO_LIMITS.short);
+      setCount('c-seot', val('vid-seo-title').length, VIDEO_LIMITS.seo_title);
+      setCount('c-seod', val('vid-seo-desc').length, VIDEO_LIMITS.seo_desc);
+
+      var serp = document.getElementById('vid-serp');
+      if (serp) {
+        var title = val('vid-seo-title') || val('vid-title') || 'Your video';
+        var desc = val('vid-seo-desc') || val('vid-short') || 'A short description of the video.';
+        var slug = val('vid-slug') || 'your-video';
+        serp.innerHTML =
+          '<span class="vid-serp-url">flowschool.io › video › ' + esc(slug) + '</span>' +
+          '<span class="vid-serp-title">' + esc(title) + '</span>' +
+          '<span class="vid-serp-desc">' + esc(desc) + '</span>';
+      }
+      videoThumbPreview();
+    }
+
+    function videoThumbPreview() {
+      var v = VID.editing;
+      var host = document.getElementById('vid-thumb-preview');
+      if (!host || !v.mux_playback_id) return;
+      if (!v.thumb_token) { host.innerHTML = '<span class="nf-hint">Preview appears once playback is authorised.</span>'; return; }
+      var t = '';
+      if (v.thumbnail_mode === 'timestamp') {
+        var el = document.getElementById('vid-time');
+        var secs = parseFloat(el ? el.value : v.thumbnail_time_seconds);
+        if (!isNaN(secs)) t = '&time=' + encodeURIComponent(secs);
+      }
+      host.innerHTML = '<img alt="" src="https://image.mux.com/' + encodeURIComponent(v.mux_playback_id) +
+        '/thumbnail.webp?width=640' + t + '&token=' + encodeURIComponent(v.thumb_token) + '">';
     }
 
     function wireVideoForm() {
       var v = VID.editing;
       var err = document.getElementById('vid-err');
-      var cancel = document.getElementById('vid-cancel');
+      var $ = function (id) { return document.getElementById(id); };
+
+      var cancel = $('vid-cancel');
       if (cancel) cancel.addEventListener('click', function () { VID.editing = null; renderVideos(); });
 
-      var save = document.getElementById('vid-save');
-      if (save) save.addEventListener('click', async function () {
-        if (VID.busy) return;
-        var vals = videoRead();
-        if (!vals.title) { err.textContent = 'A title is required.'; return; }
-        VID.busy = true; save.disabled = true; err.textContent = '';
-        try {
-          var kw = (document.getElementById('vid-keywords').value || '')
-            .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-          if (v._new) {
-            var slugRes = await db.rpc('video_slugify', { p_text: vals.title });
-            var slug = slugRes.data;
-            if (!slug) throw new Error('That title has no letters or numbers in it.');
-            // a slug collision is likely enough to be worth handling rather
-            // than surfacing a raw constraint error
-            var free = await db.rpc('video_slug_available', { p_slug: slug, p_exclude: null });
-            if (free.data === false) slug = slug + '-' + Date.now().toString(36).slice(-4);
-            var ins = await db.from('videos')
-              .insert(Object.assign({ slug: slug }, vals)).select().single();
-            if (ins.error) throw ins.error;
-            VID.editing = ins.data;
-            if (kw.length) await db.rpc('set_video_keywords', { p_id: ins.data.id, p_keywords: kw });
-            toast('Draft created — now add the file');
-          } else {
-            var up = await db.from('videos').update(vals).eq('id', v.id).select().single();
-            if (up.error) throw up.error;
-            await db.rpc('set_video_keywords', { p_id: v.id, p_keywords: kw });
-            VID.editing = up.data;
-            toast('Saved');
-          }
-          await renderVideos();
-          VID.editing = VID.rows.filter(function (r) { return r.id === VID.editing.id; })[0] || VID.editing;
-          drawVideos();
-        } catch (e) {
-          err.textContent = e.message || 'Could not save that.';
-        } finally { VID.busy = false; if (save) save.disabled = false; }
+      // ── live fields ──
+      ['vid-title', 'vid-short', 'vid-desc', 'vid-seo-title', 'vid-seo-desc', 'vid-slug', 'vid-time']
+        .forEach(function (id) { var e = $(id); if (e) e.addEventListener('input', videoLive); });
+
+      // The slug follows the title only while it has never been touched.
+      // Once edited it is the admin's, and retyping the title must not
+      // silently change a URL that may already be shared.
+      var slugEl = $('vid-slug'), titleEl = $('vid-title');
+      if (slugEl) slugEl.addEventListener('input', function () { VID._slugTouched = true; });
+      if (titleEl && slugEl) titleEl.addEventListener('input', async function () {
+        if (VID._slugTouched || v.status === 'published') return;
+        var r = await db.rpc('video_slugify', { p_text: titleEl.value });
+        if (!VID._slugTouched) { slugEl.value = r.data || ''; videoLive(); }
       });
 
-      var pub = document.getElementById('vid-publish');
-      if (pub) pub.addEventListener('click', async function () {
-        if (VID.busy) return;
-        VID.busy = true; pub.disabled = true; err.textContent = '';
+      // ── keyword tags ──
+      var tagInput = $('vid-tag-input');
+      var addTag = function (raw) {
+        var val = String(raw || '').trim().replace(/\s+/g, ' ');
+        if (!val) return;
+        var have = (VID.editing.search_keywords || []);
+        if (have.some(function (k) { return k.toLowerCase() === val.toLowerCase(); })) return;
+        VID.editing.search_keywords = have.concat([val]);
+        tagInput.insertAdjacentHTML('beforebegin', vidTag(val));
+        tagInput.value = '';
+        wireTagRemovers();
+      };
+      if (tagInput) {
+        tagInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagInput.value); }
+          else if (e.key === 'Backspace' && !tagInput.value) {
+            var last = (VID.editing.search_keywords || []).slice(-1)[0];
+            if (last) removeTag(last);
+          }
+        });
+        tagInput.addEventListener('blur', function () { addTag(tagInput.value); });
+        // pasting a comma-separated list should just work
+        tagInput.addEventListener('paste', function (e) {
+          var text = (e.clipboardData || window.clipboardData).getData('text');
+          if (text && text.indexOf(',') !== -1) {
+            e.preventDefault();
+            text.split(',').forEach(addTag);
+          }
+        });
+      }
+      function removeTag(kw) {
+        VID.editing.search_keywords = (VID.editing.search_keywords || [])
+          .filter(function (k) { return k !== kw; });
+        var el = document.querySelector('.vid-tag[data-kw="' + CSS.escape(kw) + '"]');
+        if (el) el.remove();
+      }
+      function wireTagRemovers() {
+        document.querySelectorAll('.vid-tag-x').forEach(function (x) {
+          if (x.dataset.w) return; x.dataset.w = '1';
+          x.addEventListener('click', function () { removeTag(x.closest('.vid-tag').dataset.kw); });
+        });
+      }
+      wireTagRemovers();
+
+      // ── a category without losing the draft ──
+      var newcat = $('vid-newcat'), row = $('vid-newcat-row');
+      if (newcat) newcat.addEventListener('click', function () {
+        row.hidden = false; newcat.hidden = true; $('vid-newcat-name').focus();
+      });
+      var cancelCat = $('vid-newcat-cancel');
+      if (cancelCat) cancelCat.addEventListener('click', function () {
+        row.hidden = true; newcat.hidden = false;
+      });
+      var saveCat = $('vid-newcat-save');
+      if (saveCat) saveCat.addEventListener('click', async function () {
+        var name = ($('vid-newcat-name').value || '').trim();
+        if (!name) return;
+        saveCat.disabled = true;
         try {
+          var sl = await db.rpc('video_slugify', { p_text: name });
+          var r = await db.from('video_categories').insert({ name: name, slug: sl.data }).select().single();
+          if (r.error) throw r.error;
+          VID.cats.push(r.data);
+          var sel = $('vid-category');
+          sel.insertAdjacentHTML('beforeend', '<option value="' + r.data.id + '">' + esc(r.data.name) + '</option>');
+          sel.value = r.data.id;          // chosen for you — it is why you made it
+          row.hidden = true; newcat.hidden = false;
+          toast('Category added');
+        } catch (e) {
+          toast(/duplicate/i.test(e.message || '') ? 'There is already a category with that name' : e.message);
+        } finally { saveCat.disabled = false; }
+      });
+
+      // ── thumbnail ──
+      document.querySelectorAll('[data-thumb-mode]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          VID.editing.thumbnail_mode = btn.dataset.thumbMode;
+          document.querySelectorAll('[data-thumb-mode]').forEach(function (o) {
+            o.classList.toggle('on', o === btn);
+          });
+          var t = $('vid-thumb-time');
+          if (t) t.hidden = btn.dataset.thumbMode !== 'timestamp';
+          videoThumbPreview();
+        });
+      });
+      var useNow = $('vid-usenow');
+      if (useNow) useNow.addEventListener('click', function () {
+        var p = document.querySelector('#vid-player mux-player');
+        if (!p || !p.currentTime) { toast('Play the video and pause where you want the frame'); return; }
+        VID.editing.thumbnail_mode = 'timestamp';
+        var t = $('vid-time'); if (t) t.value = Math.round(p.currentTime * 10) / 10;
+        videoThumbPreview();
+      });
+
+      // ── save / publish ──
+      var save = $('vid-save');
+      if (save) save.addEventListener('click', function () { saveVideo(save, err); });
+      var pub = $('vid-publish');
+      if (pub) pub.addEventListener('click', async function () {
+        if (VID.busy) return; VID.busy = true; pub.disabled = true; err.textContent = '';
+        try {
+          await saveVideo(null, err, true);            // never publish a stale row
           var r = await db.rpc('publish_video', { p_id: v.id });
           if (r.error) throw r.error;
           toast('Published'); VID.editing = null; await renderVideos();
-        } catch (e) {
-          // the RPC's messages are written for a human — show them as-is
-          err.textContent = e.message || 'Could not publish.';
-          pub.disabled = false;
-        } finally { VID.busy = false; }
+        } catch (e) { err.textContent = e.message || 'Could not publish.'; pub.disabled = false; }
+        finally { VID.busy = false; }
       });
-
-      var unpub = document.getElementById('vid-unpublish');
+      var unpub = $('vid-unpublish');
       if (unpub) unpub.addEventListener('click', async function () {
         try {
           var r = await db.rpc('unpublish_video', { p_id: v.id });
@@ -3337,43 +3778,216 @@
           toast('Unpublished'); VID.editing = null; await renderVideos();
         } catch (e) { toast(e.message || 'Could not unpublish'); }
       });
+      var arch = $('vid-archive');
+      if (arch) arch.addEventListener('click', async function () {
+        if (arch.dataset.armed !== '1') {
+          arch.dataset.armed = '1'; arch.classList.add('armed');
+          arch.setAttribute('data-tooltip', 'Click again to archive');
+          clearTimeout(arch._d);
+          arch._d = setTimeout(function () {
+            arch.dataset.armed = '0'; arch.classList.remove('armed');
+            arch.setAttribute('data-tooltip', 'Archive'); }, 3000);
+          return;
+        }
+        try {
+          var r = await db.rpc('archive_video', { p_id: v.id });
+          if (r.error) throw r.error;
+          toast('Archived'); VID.editing = null; await renderVideos();
+        } catch (e) { toast(e.message || 'Could not archive'); }
+      });
 
-      var refresh = document.getElementById('vid-refresh');
+      // ── file ──
+      var refresh = $('vid-refresh');
       if (refresh) refresh.addEventListener('click', async function () {
         await renderVideos();
         VID.editing = VID.rows.filter(function (r) { return r.id === v.id; })[0] || null;
         if (VID.editing) drawVideos();
       });
-
-      ['vid-start', 'vid-replace'].forEach(function (id) {
-        var btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', function () { startVideoUpload(btn.id === 'vid-replace'); });
+      var drop = $('vid-drop'), file = $('vid-file');
+      if (drop && file) {
+        file.addEventListener('change', function () {
+          if (file.files && file.files[0]) startVideoUpload(false, file.files[0]);
+        });
+        ['dragenter', 'dragover'].forEach(function (t) {
+          drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add('over'); });
+        });
+        ['dragleave', 'drop'].forEach(function (t) {
+          drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+        });
+        drop.addEventListener('drop', function (e) {
+          var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+          if (f) startVideoUpload(false, f);
+        });
+      }
+      var start = $('vid-start');
+      if (start) start.addEventListener('click', function () { startVideoUpload(false); });
+      var replace = $('vid-replace');
+      if (replace) replace.addEventListener('click', function () {
+        if (replace.dataset.armed !== '1') {
+          replace.dataset.armed = '1'; replace.textContent = 'Replace — sure?';
+          setTimeout(function () { replace.dataset.armed = '0'; replace.textContent = 'Replace'; }, 3000);
+          return;
+        }
+        startVideoUpload(true);
       });
 
-      var prev = document.getElementById('vid-preview');
-      if (prev) {
-        prev.addEventListener('click', function () { previewVideo(prev); });
-        // Load it now rather than waiting to be asked. The button stays for
-        // the one case that needs it: a playback token lasts six hours, so a
-        // form left open overnight needs a fresh one.
-        previewVideo(prev, true);
+      var prev = $('vid-preview');
+      if (prev) { prev.addEventListener('click', function () { previewVideo(prev); }); previewVideo(prev, true); }
+
+      wireVideoResources();
+      videoLive();
+      if (!v._new) loadVideoResources();
+    }
+
+    async function saveVideo(btn, err, quiet) {
+      if (VID.busy && !quiet) return;
+      var v = VID.editing;
+      var vals = videoRead();
+      if (!vals.title) { err.textContent = 'A title is required.'; throw new Error('no title'); }
+      if (!quiet) { VID.busy = true; if (btn) btn.disabled = true; }
+      err.textContent = '';
+      try {
+        var kw = VID.editing.search_keywords || [];
+        if (v._new) {
+          if (!vals.slug) {
+            var sl = await db.rpc('video_slugify', { p_text: vals.title });
+            vals.slug = sl.data;
+          }
+          var free = await db.rpc('video_slug_available', { p_slug: vals.slug, p_exclude: null });
+          if (free.data === false) vals.slug += '-' + Date.now().toString(36).slice(-4);
+          var ins = await db.from('videos').insert(vals).select().single();
+          if (ins.error) throw ins.error;
+          VID.editing = ins.data;
+          if (kw.length) await db.rpc('set_video_keywords', { p_id: ins.data.id, p_keywords: kw });
+          toast('Draft created — now add the file');
+        } else {
+          var free2 = await db.rpc('video_slug_available', { p_slug: vals.slug, p_exclude: v.id });
+          if (free2.data === false) throw new Error('That URL is taken by another video.');
+          var up = await db.from('videos').update(vals).eq('id', v.id).select().single();
+          if (up.error) throw up.error;
+          await db.rpc('set_video_keywords', { p_id: v.id, p_keywords: kw });
+          VID.editing = up.data;
+          if (!quiet) toast('Saved');
+        }
+        if (!quiet) {
+          var keep = VID.editing.id;
+          await renderVideos();
+          VID.editing = VID.rows.filter(function (r) { return r.id === keep; })[0] || VID.editing;
+          drawVideos();
+        }
+      } catch (e) {
+        err.textContent = e.message || 'Could not save that.';
+        throw e;
+      } finally {
+        if (!quiet) { VID.busy = false; if (btn) btn.disabled = false; }
       }
     }
 
+    // ── PDF resources ───────────────────────────────────────────────────────
+    // Each file uploads on its own and reports its own failure. One bad PDF
+    // must not take the others down with it.
+    function wireVideoResources() {
+      var input = document.getElementById('vid-pdf-input');
+      var drop = document.getElementById('vid-pdf-drop');
+      var err = document.getElementById('vid-pdf-err');
+      if (!input || !drop) return;
+
+      var take = function (files) {
+        [].slice.call(files || []).forEach(function (f) { uploadResource(f, err); });
+      };
+      input.addEventListener('change', function () { take(input.files); input.value = ''; });
+      ['dragenter', 'dragover'].forEach(function (t) {
+        drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add('over'); });
+      });
+      ['dragleave', 'drop'].forEach(function (t) {
+        drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+      });
+      drop.addEventListener('drop', function (e) { take(e.dataTransfer && e.dataTransfer.files); });
+
+      document.querySelectorAll('.vid-res-del').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          if (btn.dataset.armed !== '1') {
+            btn.dataset.armed = '1'; btn.classList.add('armed');
+            btn.setAttribute('data-tooltip', 'Click again to remove');
+            setTimeout(function () {
+              btn.dataset.armed = '0'; btn.classList.remove('armed');
+              btn.setAttribute('data-tooltip', 'Remove'); }, 3000);
+            return;
+          }
+          var id = btn.closest('li').dataset.rid;
+          var row = (VID.resources || []).filter(function (r) { return r.id === id; })[0];
+          try {
+            // the object first — a row without its file is recoverable, a
+            // file with no row is invisible and bills forever
+            if (row) await db.storage.from('video-resources').remove([row.storage_path]);
+            var r = await db.from('video_resources').delete().eq('id', id);
+            if (r.error) throw r.error;
+            await loadVideoResources();
+          } catch (e) { toast(e.message || 'Could not remove that'); }
+        });
+      });
+    }
+
+    async function uploadResource(file, err) {
+      var v = VID.editing;
+      if (!v || v._new) return;
+      err.textContent = '';
+      if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+        err.textContent = file.name + ' is not a PDF.'; return;
+      }
+      if (file.size > 26214400) { err.textContent = file.name + ' is over 25MB.'; return; }
+
+      var host = document.getElementById('vid-resources');
+      var tmp = document.createElement('p');
+      tmp.className = 'nf-hint';
+      tmp.textContent = 'Uploading ' + file.name + '…';
+      host.appendChild(tmp);
+      try {
+        var id = (crypto.randomUUID && crypto.randomUUID()) ||
+                 (Date.now().toString(36) + Math.random().toString(36).slice(2));
+        var path = v.id + '/' + id + '.pdf';
+        var up = await db.storage.from('video-resources')
+          .upload(path, file, { contentType: 'application/pdf', upsert: false });
+        if (up.error) throw up.error;
+        var ins = await db.from('video_resources').insert({
+          video_id: v.id, title: file.name.replace(/\.pdf$/i, ''),
+          storage_path: path, file_name: file.name, file_size: file.size,
+          sort_order: (VID.resources || []).length,
+        });
+        if (ins.error) {
+          // do not leave a file nobody can see
+          await db.storage.from('video-resources').remove([path]);
+          throw ins.error;
+        }
+        await loadVideoResources();
+      } catch (e) {
+        err.textContent = 'Could not attach ' + file.name + ' — ' + (e.message || 'upload failed');
+      } finally { tmp.remove(); }
+    }
+
+    async function loadVideoResources() {
+      var v = VID.editing; if (!v || v._new) return;
+      var r = await db.from('video_resources').select('*').eq('video_id', v.id).order('sort_order');
+      VID.resources = r.data || [];
+      var host = document.getElementById('vid-resources');
+      if (host) { host.innerHTML = videoResourceList(); wireVideoResources(); }
+    }
+
+
     // ── preview ─────────────────────────────────────────────────────────────
     // The player bundles hls.js and weighs about a megabyte, so it is fetched
-    // the first time a preview is asked for rather than on every admin page
-    // load. Loaded once per session, then cached by the browser.
+    // the first time a form with a ready video opens rather than on every
+    // admin page load. Cached for the session after that.
     var muxPlayerReady = null;
     function loadMuxPlayer() {
       if (muxPlayerReady) return muxPlayerReady;
       muxPlayerReady = new Promise(function (resolve, reject) {
         if (window.customElements && customElements.get('mux-player')) return resolve();
-        var s = document.createElement('script');
-        s.src = 'lib/vendor/mux-player-v3.13.2.js';
-        s.onload = function () { resolve(); };
-        s.onerror = function () { muxPlayerReady = null; reject(new Error('Could not load the player')); };
-        document.head.appendChild(s);
+        var sc = document.createElement('script');
+        sc.src = 'lib/vendor/mux-player-v3.13.2.js';
+        sc.onload = function () { resolve(); };
+        sc.onerror = function () { muxPlayerReady = null; reject(new Error('Could not load the player')); };
+        document.head.appendChild(sc);
       });
       return muxPlayerReady;
     }
@@ -3385,11 +3999,9 @@
       var v = VID.editing;
       var host = document.getElementById('vid-player');
       if (!v || !host) return;
-      btn.disabled = true;
-      var was = btn.textContent;
-      // On the automatic load the skeleton is already saying "loading", so
-      // the button should not shout it a second time.
-      if (!auto) { btn.textContent = 'Loading…'; host.classList.add('is-loading'); }
+      if (btn) btn.disabled = true;
+      var was = btn ? btn.textContent : '';
+      if (btn && !auto) { btn.textContent = 'Loading…'; host.classList.add('is-loading'); }
       try {
         var sess = await db.auth.getSession();
         var token = sess.data && sess.data.session && sess.data.session.access_token;
@@ -3400,6 +4012,15 @@
         });
         var out = await r.json();
         if (!r.ok) throw new Error(out.error || 'Could not start playback');
+
+        // stills are signed too — keep the token so the thumbnail picker and
+        // the list can render images at all
+        if (out.thumbnailToken) {
+          VID.editing.thumb_token = out.thumbnailToken;
+          var listed = VID.rows.filter(function (x) { return x.id === VID.editing.id; })[0];
+          if (listed) listed.thumb_token = out.thumbnailToken;
+          videoThumbPreview();
+        }
 
         await loadMuxPlayer();
 
@@ -3418,23 +4039,21 @@
         host.innerHTML = '';
         host.classList.remove('is-loading');
         host.appendChild(el);
-        btn.textContent = 'Reload preview';
-        btn.disabled = false;
+        if (btn) { btn.textContent = 'Reload'; btn.disabled = false; }
         if (typeof fsTrack === 'function') {
           fsTrack('admin_video_previewed', { resourceType: 'video', resourceId: v.id });
         }
       } catch (e) {
         host.classList.remove('is-loading');
         host.innerHTML = '<p class="nf-err">' + esc(e.message || 'Could not preview that.') + '</p>';
-        btn.textContent = was === 'Loading…' ? 'Reload preview' : was;
-        btn.disabled = false;
+        if (btn) { btn.textContent = was === 'Loading…' ? 'Reload' : was; btn.disabled = false; }
       }
     }
 
     // Asks our server for a one-time Mux URL, then hands it to <mux-uploader>.
     // The file goes browser → Mux directly; it never passes through Vercel,
     // which is the only way a large class recording uploads at all.
-    async function startVideoUpload(replace) {
+    async function startVideoUpload(replace, file) {
       var v = VID.editing;
       var host = document.getElementById('vid-upload');
       var note = document.getElementById('vid-upload-note');
@@ -3451,10 +4070,28 @@
         var out = await r.json();
         if (!r.ok) throw new Error(out.error || 'Could not start the upload');
 
-        host.innerHTML = '<mux-uploader id="vid-mux" endpoint="' + esc(out.uploadUrl) + '"></mux-uploader>';
-        note.textContent = 'Keep this tab open until the upload finishes.';
+        // mux-uploader with NO chrome of its own: our drop zone already
+        // collected the file, so it is driven through its API and only its
+        // progress is surfaced, through our own bar.
+        host.innerHTML =
+          '<div class="vid-progress-wrap">' +
+            '<div class="vid-bar"><span id="vid-bar-fill"></span></div>' +
+            '<p id="vid-pct">Starting…</p>' +
+            '<span class="nf-hint">Keep this tab open.</span>' +
+          '</div>' +
+          '<mux-uploader id="vid-mux" endpoint="' + esc(out.uploadUrl) + '" hidden></mux-uploader>';
+        note.textContent = '';
 
         var up = document.getElementById('vid-mux');
+        var fill = document.getElementById('vid-bar-fill');
+        var pct = document.getElementById('vid-pct');
+        up.addEventListener('progress', function (ev) {
+          var p = Math.max(0, Math.min(100, Math.round(ev.detail || 0)));
+          if (fill) fill.style.width = p + '%';
+          if (pct) pct.textContent = p + '%';
+        });
+        // a file the drop zone already has never needs a second dialog
+        if (file) { try { up.uploadFile ? up.uploadFile(file) : (up.file = file); } catch (_) {} }
         // leaving mid-upload loses the transfer — Mux has no resume for a
         // half-sent direct upload, so it is worth interrupting the admin for
         var guard = function (e) { e.preventDefault(); e.returnValue = ''; };
