@@ -81,6 +81,17 @@
       display: flex; flex-direction: column; align-items: center; gap: 10px;
     }
     .vid-upload p { margin: 0; font-size: var(--text-ui); }
+    .vid-player { width: 100%; }
+    .vid-player:empty { display: none; }
+    .vid-player-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    mux-player {
+      width: 100%; aspect-ratio: 16 / 9;
+      border-radius: var(--rs); overflow: hidden;
+      /* keep every native control — captions, PiP, AirPlay, fullscreen —
+         and only restyle the surface */
+      --media-object-fit: contain;
+    }
+
     mux-uploader {
       --uploader-font-family: var(--font);
       --uploader-accent-color: var(--accent);
@@ -3212,10 +3223,14 @@
             (isNew
               ? '<p class="muted">Create the draft first — the upload attaches to it.</p>'
               : v.mux_playback_id
-                ? '<p class="muted">Uploaded and ready.</p><p class="muted adm-mono">' +
+                ? '<p class="muted adm-mono">' +
                     videoDuration(v.duration_seconds) + (v.aspect_ratio ? ' · ' + esc(v.aspect_ratio) : '') +
                     (v.max_resolution ? ' · ' + esc(v.max_resolution) : '') + '</p>' +
-                  '<button class="btn-ghost" id="vid-replace">Replace the file</button>'
+                  '<div class="vid-player" id="vid-player"></div>' +
+                  '<div class="vid-player-actions">' +
+                    '<button class="btn-secondary" id="vid-preview">Preview</button>' +
+                    '<button class="btn-ghost" id="vid-replace">Replace the file</button>' +
+                  '</div>'
                 : processing
                   ? '<p class="muted">' + (v.status === 'uploading' ? 'Uploading…' : 'Mux is processing this — usually a few minutes.') + '</p>' +
                     '<button class="btn-ghost" id="vid-refresh">Check again</button>'
@@ -3318,6 +3333,76 @@
         var btn = document.getElementById(id);
         if (btn) btn.addEventListener('click', function () { startVideoUpload(btn.id === 'vid-replace'); });
       });
+
+      var prev = document.getElementById('vid-preview');
+      if (prev) prev.addEventListener('click', function () { previewVideo(prev); });
+    }
+
+    // ── preview ─────────────────────────────────────────────────────────────
+    // The player bundles hls.js and weighs about a megabyte, so it is fetched
+    // the first time a preview is asked for rather than on every admin page
+    // load. Loaded once per session, then cached by the browser.
+    var muxPlayerReady = null;
+    function loadMuxPlayer() {
+      if (muxPlayerReady) return muxPlayerReady;
+      muxPlayerReady = new Promise(function (resolve, reject) {
+        if (window.customElements && customElements.get('mux-player')) return resolve();
+        var s = document.createElement('script');
+        s.src = 'lib/vendor/mux-player-v3.13.2.js';
+        s.onload = function () { resolve(); };
+        s.onerror = function () { muxPlayerReady = null; reject(new Error('Could not load the player')); };
+        document.head.appendChild(s);
+      });
+      return muxPlayerReady;
+    }
+
+    // The token comes from the server, which checks admin AND that there is
+    // something to play. Nothing here decides who may watch — that lives in
+    // canWatch() so the rule cannot drift between admin and member.
+    async function previewVideo(btn) {
+      var v = VID.editing;
+      var host = document.getElementById('vid-player');
+      if (!v || !host) return;
+      btn.disabled = true;
+      var was = btn.textContent;
+      btn.textContent = 'Loading…';
+      try {
+        var sess = await db.auth.getSession();
+        var token = sess.data && sess.data.session && sess.data.session.access_token;
+        var r = await fetch('/api/mux/playback-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ videoId: v.id }),
+        });
+        var out = await r.json();
+        if (!r.ok) throw new Error(out.error || 'Could not start playback');
+
+        await loadMuxPlayer();
+
+        var el = document.createElement('mux-player');
+        el.setAttribute('playback-id', out.playbackId);
+        el.setAttribute('playback-token', out.playbackToken);
+        if (out.thumbnailToken) el.setAttribute('thumbnail-token', out.thumbnailToken);
+        el.setAttribute('stream-type', 'on-demand');
+        el.setAttribute('metadata-video-title', v.title || '');
+        el.setAttribute('metadata-video-id', v.id);
+        // Mux Data attributes it to the admin, not a member, so previews do
+        // not pollute the engagement numbers for this video.
+        el.setAttribute('metadata-viewer-user-id', 'admin-preview');
+        el.setAttribute('accent-color', getComputedStyle(document.documentElement)
+          .getPropertyValue('--accent').trim() || '#7A3E70');
+        host.innerHTML = '';
+        host.appendChild(el);
+        btn.textContent = 'Reload preview';
+        btn.disabled = false;
+        if (typeof fsTrack === 'function') {
+          fsTrack('admin_video_previewed', { resourceType: 'video', resourceId: v.id });
+        }
+      } catch (e) {
+        host.innerHTML = '<p class="nf-err">' + esc(e.message || 'Could not preview that.') + '</p>';
+        btn.textContent = was;
+        btn.disabled = false;
+      }
     }
 
     // Asks our server for a one-time Mux URL, then hands it to <mux-uploader>.
