@@ -1146,7 +1146,15 @@
 
     /* per-filter panels: a filter is a sub-object of this page, not a page
        section — its name sits a step below the panel scale */
-    .fil-panel .adm-panel-head h2 { font-size: var(--fs-h7); }
+    .fil-panel .adm-panel-head h2 { font-size: var(--fs-h7); flex: 1; min-width: 0; }
+    /* the filter's name is a bare input wearing the heading's clothes; the
+       hairline only appears when it is actually being edited */
+    .fil-name-input { width: 100%; border: 0; background: none; outline: none; padding: 0;
+      font: inherit; color: var(--text-1);
+      border-bottom: 1px solid transparent;
+      transition: border-color var(--transition-base); }
+    .fil-name-input:hover { border-bottom-color: var(--border); }
+    .fil-name-input:focus { border-bottom-color: var(--accent); }
     .fil-panel .adm-panel-head { margin-bottom: 10px; }
     .fil-count { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--text-3); margin-left: auto; margin-right: 10px; }
     .col-chip .chip-n { font-family: var(--font-mono); font-size: var(--fs-meta); opacity: .65; }
@@ -1202,6 +1210,7 @@
       { id: 'notifs',      label: 'Notifications',       render: renderNotifs },
       { id: 'videos',           label: 'Videos',          render: renderVideos },
       { id: 'collections',      label: 'Collections',     render: renderCollections },
+      { id: 'video-featured',   label: 'Featured',        render: renderFeatured },
       { id: 'video-categories', label: 'Categories',      render: renderVideoCategories },
       { id: 'video-resources',  label: 'Resources',       render: renderResourceLibrary },
       { id: 'video-filters',    label: 'Filters',         render: renderFilterAdmin },
@@ -1243,7 +1252,7 @@
       { label: 'Product',  area: 'analytics', sections: ['engagement', 'devices', 'friction', 'tools'] },
       { label: 'System',   area: 'analytics', sections: ['feedback', 'health', 'admins', 'exports'] },
       { label: 'Music',    area: 'content',   sections: ['music'] },
-      { label: 'Video',    area: 'content',   sections: ['videos', 'collections', 'video-categories', 'video-resources', 'video-filters'] },
+      { label: 'Video',    area: 'content',   sections: ['videos', 'collections', 'video-featured', 'video-categories', 'video-resources', 'video-filters'] },
       { label: 'Notifications', area: 'comms', sections: ['notifs'] },
     ];
 
@@ -3660,7 +3669,9 @@
               return '<option value="' + k + '"' + (VID.status === k ? ' selected' : '') + '>' + VIDEO_STATUS[k][0] + '</option>';
             }).join('') + '</select>' +
           '<select id="vid-cat" aria-label="Filter by category"><option value="all">Any category</option>' +
-            VID.cats.map(function (c) {
+            // active shelves only — archived categories keep resolving names
+            // in the rows below, but they are not a place to browse to
+            VID.cats.filter(function (c) { return c.status === 'active'; }).map(function (c) {
               return '<option value="' + c.id + '"' + (VID.cat === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
             }).join('') + '</select>' +
           '<select id="vid-sort" aria-label="Sort videos">' +
@@ -4650,8 +4661,14 @@
           });
           var when = $('vid-when');
           if (when) when.hidden = r.value !== 'scheduled';
+          // visibility is part of the save fingerprint — without this, Save
+          // stayed asleep after choosing Published (the collection editor
+          // already did it; this one had forgotten)
+          videoSyncSave();
         });
       });
+      var visWhenAt = $('vid-when-at');
+      if (visWhenAt) visWhenAt.addEventListener('input', videoSyncSave);
 
       // ── the More menu ──
       var moreBtn = $('vid-more-btn'), menu = $('vid-menu');
@@ -5218,9 +5235,7 @@
       b.innerHTML =
         '<p class="adm-intro">The shelves of the library. A video needs one before it can publish — and the order below is the order members will see, so drag the rows into it.</p>' +
         '<div class="cat-controls lib-bar">' +
-          '<input type="text" class="modal-input" id="vcat-name" maxlength="80" placeholder="New category name…" aria-label="New category name">' +
-          '<button class="btn-secondary" id="vcat-add">Add</button>' +
-          '<span class="nf-err" id="vcat-err"></span>' +
+          '<button class="btn-primary" id="vcat-new">New category</button>' +
           '<span class="adm-count">' + num(live.length) + (live.length === 1 ? ' category' : ' categories') + '</span>' +
         '</div>' +
         (live.length
@@ -5271,32 +5286,26 @@
 
     function wireVideoCategories() {
       var b = bodyEl(); if (!b) return;
-      var add = document.getElementById('vcat-add');
-      var name = document.getElementById('vcat-name');
-      var err = document.getElementById('vcat-err');
-      var addCat = async function () {
+      // New goes STRAIGHT to the editor: the row is born with a placeholder
+      // name and a throwaway slug, and the first save with a real title
+      // claims a real URL. No form before the form.
+      var nw = document.getElementById('vcat-new');
+      if (nw) nw.addEventListener('click', async function () {
         if (VID.busy) return;
-        var v = (name.value || '').trim();
-        if (!v) { err.textContent = 'Give it a name.'; return; }
-        VID.busy = true; add.disabled = true; err.textContent = '';
+        VID.busy = true; nw.disabled = true;
         try {
-          var slugRes = await db.rpc('video_slugify', { p_text: v });
-          var slug = slugRes.data || '';
-          if (!slug) throw new Error('That name has no letters or numbers in it.');
-          var r = await db.from('video_categories').insert({ name: v, slug: slug }).select().single();
+          var slug = 'new-category-' + Date.now().toString(36);
+          var r = await db.from('video_categories')
+            .insert({ name: 'New category', slug: slug }).select().single();
           if (r.error) throw r.error;
-          toast('Category added');
-          name.value = '';
-          await renderVideoCategories();
+          CATE._freshSlug = slug;
+          VID.busy = false;
+          await openCategory(r.data.id);
+          return;
         } catch (e) {
-          err.textContent = /duplicate key/i.test(e.message || '')
-            ? 'There is already a category with that name.'
-            : (e.message || 'Could not add that.');
-        } finally { VID.busy = false; add.disabled = false; }
-      };
-      if (add) add.addEventListener('click', addCat);
-      if (name) name.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); addCat(); }
+          toast(e.message || 'Could not create that.');
+          VID.busy = false; nw.disabled = false;
+        }
       });
 
       // rows open the editor; the grip drags; the bin archives
@@ -5394,13 +5403,13 @@
         // not yet run) still get About / Image / SEO
         var got = await Promise.all([
           db.from('video_category_links')
-            .select('video_id, sort_order, videos(id, title, status, duration_seconds, custom_thumbnail_url)')
+            .select('video_id, sort_order, videos(id, title, status, duration_seconds, thumbnail_mode, custom_thumbnail_url, mux_playback_id)')
             .eq('category_id', id),
           db.from('collection_categories')
-            .select('collection_id, sort_order, collections(id, title, status, custom_thumbnail_url)')
+            .select('collection_id, sort_order, collections(id, title, status, thumbnail_mode, custom_thumbnail_url)')
             .eq('category_id', id),
-          db.from('videos').select('id, title, status, category_id, duration_seconds, custom_thumbnail_url').order('created_at', { ascending: false }),
-          db.from('collections').select('id, title, status, custom_thumbnail_url').order('updated_at', { ascending: false }),
+          db.from('videos').select('id, title, status, category_id, duration_seconds, thumbnail_mode, custom_thumbnail_url, mux_playback_id').order('created_at', { ascending: false }),
+          db.from('collections').select('id, title, status, thumbnail_mode, custom_thumbnail_url').order('updated_at', { ascending: false }),
         ]);
         if (!got[0].error && !got[1].error) {
           CATE.hasLinks = true;
@@ -5467,10 +5476,8 @@
                    (it.kind === 'video' && r.status === 'ready');
         return '<li class="col-item" draggable="true" data-kind="' + it.kind + '" data-id="' + it.id + '">' +
           '<span class="col-grip" aria-hidden="true"><span class="material-symbols-sharp">drag_indicator</span></span>' +
-          (r.custom_thumbnail_url
-            ? '<span class="vid-thumb has-art"><img alt="" loading="lazy" src="' + esc(r.custom_thumbnail_url) + '"></span>'
-            : '<span class="vid-thumb"><span class="material-symbols-sharp">' + (it.kind === 'collection' ? 'stacks' : 'movie') + '</span></span>') +
-          '<span class="cate-kind">' + (it.kind === 'collection' ? 'Collection' : 'Video') + '</span>' +
+          admContentThumb(it.kind, r, it.kind === 'video' ? it.id : null, r.mux_playback_id) +
+          (it.kind === 'collection' ? '<span class="cate-kind">Collection</span>' : '') +
           '<span class="col-item-name"><strong>' + esc(r.title || 'Deleted') + '</strong>' +
             (r.status === 'published' || r.status === 'scheduled' ? '' :
               '<span class="nf-hint">' + esc(((it.kind === 'video' ? VIDEO_STATUS : COL_STATUS)[r.status] || ['Not published'])[0]) + '</span>') +
@@ -5576,8 +5583,14 @@
       var $ = function (id) { return document.getElementById(id); };
 
       var cancel = $('cate-cancel');
-      if (cancel) cancel.addEventListener('click', function () {
+      if (cancel) cancel.addEventListener('click', async function () {
         if (categoryDirty() && !window.confirm('You have unsaved changes. Leave anyway?')) return;
+        // backing out of a never-touched placeholder removes it — the New
+        // button must not litter the shelf list with "New category" rows
+        if (CATE._freshSlug && c.slug === CATE._freshSlug && c.name === 'New category' && !categoryDirty()) {
+          try { await db.from('video_categories').delete().eq('id', c.id); } catch (_) {}
+          CATE._freshSlug = null;
+        }
         CATE.editing = null; renderVideoCategories();
       });
 
@@ -5606,6 +5619,14 @@
           var sl = await db.rpc('video_slugify', { p_text: vals.name });
           vals.slug = sl.data;
         }
+        // a category born from the New button carries a throwaway slug; the
+        // first save with a real title claims the real URL — unless the
+        // admin already edited the slug herself
+        if (CATE._freshSlug && vals.slug === CATE._freshSlug &&
+            vals.name && vals.name !== 'New category') {
+          var fsl = await db.rpc('video_slugify', { p_text: vals.name });
+          if (fsl.data) vals.slug = fsl.data;
+        }
         CATE.busy = true; save.disabled = true;
         try {
           var taken = await db.from('video_categories')
@@ -5620,6 +5641,11 @@
             r = await db.from('video_categories').update(vals).eq('id', c.id).select().single();
           }
           if (r.error) throw r.error;
+          if (CATE._freshSlug && r.data.slug !== CATE._freshSlug) {
+            CATE._freshSlug = null;
+            var slugEl = $('cate-slug');
+            if (slugEl) slugEl.value = r.data.slug;   // show the URL it claimed
+          }
           CATE.editing = Object.assign({}, CATE.editing, r.data);
           var i = VID.cats.findIndex(function (x) { return x.id === c.id; });
           if (i !== -1) VID.cats[i] = CATE.editing;
@@ -5683,14 +5709,22 @@
       var add = $('cate-add');
       if (add) add.addEventListener('click', openCategoryContentPicker);
       wireCategoryContent();
+      admHydrateThumbs($('cate-content'));
 
       CATE._clean = categoryFingerprint();
       categorySyncSave();
+
+      // a fresh placeholder opens ready to be named — the whole point of
+      // New-goes-straight-to-the-editor
+      if (CATE._freshSlug && c.slug === CATE._freshSlug) {
+        var tEl = $('cate-title');
+        if (tEl) { tEl.focus(); tEl.select(); }
+      }
     }
 
     function redrawCategoryContent() {
       var host = document.getElementById('cate-content');
-      if (host) { host.innerHTML = categoryContentList(); wireCategoryContent(); }
+      if (host) { host.innerHTML = categoryContentList(); wireCategoryContent(); admHydrateThumbs(host); }
     }
 
     function wireCategoryContent() {
@@ -5828,10 +5862,8 @@
           return '<li class="vidpick-row' + (already ? ' in' : '') + '" data-key="' + key + '">' +
             '<input type="checkbox"' + (already ? ' checked disabled' : (picked[key] ? ' checked' : '')) +
               ' aria-label="Select ' + esc(it.row.title) + '">' +
-            (it.row.custom_thumbnail_url
-              ? '<span class="vid-thumb has-art"><img alt="" loading="lazy" src="' + esc(it.row.custom_thumbnail_url) + '"></span>'
-              : '<span class="vid-thumb"><span class="material-symbols-sharp">' + (it.kind === 'collection' ? 'stacks' : 'movie') + '</span></span>') +
-            '<span class="cate-kind">' + (it.kind === 'collection' ? 'Collection' : 'Video') + '</span>' +
+            admContentThumb(it.kind, it.row, it.kind === 'video' ? it.id : null, it.row.mux_playback_id) +
+            (it.kind === 'collection' ? '<span class="cate-kind">Collection</span>' : '') +
             '<span class="vidpick-name"><strong>' + esc(it.row.title) + '</strong>' +
               (already ? '<span class="nf-hint">Already in this category</span>' : '') + '</span>' +
           '</li>';
@@ -5846,6 +5878,7 @@
           });
         });
         sync();
+        admHydrateThumbs(listEl);
       }
       function sync() {
         var n = Object.keys(picked).filter(function (k) { return picked[k]; }).length;
@@ -6041,7 +6074,7 @@
               return '<option value="' + k + '"' + (COL.status === k ? ' selected' : '') + '>' + COL_STATUS[k][0] + '</option>';
             }).join('') + '</select>' +
           '<select id="col-cat" aria-label="Filter by category"><option value="all">Any category</option>' +
-            COL.cats.map(function (c) {
+            COL.cats.filter(function (c) { return c.status === 'active'; }).map(function (c) {
               return '<option value="' + c.id + '"' + (COL.cat === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
             }).join('') + '</select>' +
           '<select id="col-sort" aria-label="Sort collections">' +
@@ -7686,16 +7719,17 @@
       b.innerHTML =
         '<p class="adm-intro">How members will narrow the library. A filter is the question — Movement Focus, Experience Level — and its options are the answers. Tag videos and collections from their editors.</p>' +
         '<div class="cat-controls lib-bar">' +
-          '<input type="text" class="modal-input" id="fil-name" maxlength="80" placeholder="New filter — e.g. Movement Focus" aria-label="New filter name">' +
-          '<button class="btn-secondary" id="fil-add">Add filter</button>' +
-          '<span class="nf-err" id="fil-err"></span>' +
+          '<button class="btn-primary" id="fil-new">New filter</button>' +
           '<span class="adm-count">' + num(FIL.filters.length) + (FIL.filters.length === 1 ? ' filter' : ' filters') + '</span>' +
         '</div>' +
         (FIL.filters.length
           ? FIL.filters.map(function (f) {
               var opts = FIL.options.filter(function (o) { return o.filter_id === f.id; });
               return '<div class="adm-panel fil-panel" data-fid="' + f.id + '">' +
-                '<div class="adm-panel-head"><h2>' + esc(f.name) + '</h2>' +
+                '<div class="adm-panel-head">' +
+                  // the name IS the field — click it, type, done. A filter
+                  // has no detail page, so it renames where it lives.
+                  '<h2><input class="fil-name-input" value="' + esc(f.name) + '" maxlength="80" aria-label="Filter name"></h2>' +
                   '<span class="fil-count">' + num(opts.length) + (opts.length === 1 ? ' option' : ' options') + '</span>' +
                   '<button class="btn-icon adm-del fil-del" data-tooltip="Archive filter" aria-label="Archive ' + esc(f.name) + '">' +
                     '<span class="material-symbols-sharp">delete</span></button></div>' +
@@ -7724,27 +7758,61 @@
 
     function wireFilterAdmin() {
       var b = bodyEl(); if (!b) return;
-      var add = document.getElementById('fil-add');
-      var name = document.getElementById('fil-name');
-      var err = document.getElementById('fil-err');
-      var addFilter = async function () {
-        var v = (name.value || '').trim();
-        if (!v) { err.textContent = 'Give it a name.'; return; }
-        add.disabled = true; err.textContent = '';
+      // New creates the filter immediately and hands you its name field —
+      // no form before the thing itself
+      var nw = document.getElementById('fil-new');
+      if (nw) nw.addEventListener('click', async function () {
+        if (FIL.busy) return;
+        FIL.busy = true; nw.disabled = true;
         try {
-          var sl = await db.rpc('video_slugify', { p_text: v });
-          var r = await db.from('filters').insert({ name: v, slug: sl.data, sort_order: FIL.filters.length });
+          var name = 'New filter', n = 2;
+          while (FIL.filters.some(function (f) { return f.name.toLowerCase() === name.toLowerCase(); })) {
+            name = 'New filter ' + n++;
+          }
+          var sl = await db.rpc('video_slugify', { p_text: name });
+          var r = await db.from('filters').insert({
+            name: name, slug: sl.data, sort_order: FIL.filters.length }).select().single();
+          if (r.error && /duplicate/i.test(r.error.message || '')) {
+            // an archived filter may still hold the slug — suffix and move on
+            r = await db.from('filters').insert({
+              name: name, slug: sl.data + '-' + Date.now().toString(36),
+              sort_order: FIL.filters.length }).select().single();
+          }
           if (r.error) throw r.error;
+          FIL.busy = false;
           await renderFilterAdmin();
+          var fresh = document.querySelector('[data-fid="' + r.data.id + '"] .fil-name-input');
+          if (fresh) { fresh.focus(); fresh.select(); }
+          return;
         } catch (e) {
-          err.textContent = /duplicate/i.test(e.message || '')
-            ? 'There is already a filter with that name.' : (e.message || 'Could not add that.');
-          add.disabled = false;
+          toast(e.message || 'Could not create that.');
+          FIL.busy = false; nw.disabled = false;
         }
-      };
-      if (add) add.addEventListener('click', addFilter);
-      if (name) name.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); addFilter(); }
+      });
+
+      // renames save themselves on blur (Enter just blurs)
+      b.querySelectorAll('.fil-name-input').forEach(function (inp) {
+        var fid = inp.closest('[data-fid]').dataset.fid;
+        var was = inp.value;
+        inp.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+          if (e.key === 'Escape') { inp.value = was; inp.blur(); }
+        });
+        inp.addEventListener('blur', async function () {
+          var v = (inp.value || '').trim();
+          if (!v || v === was) { inp.value = was; return; }
+          try {
+            var r = await db.from('filters').update({ name: v }).eq('id', fid);
+            if (r.error) throw r.error;
+            was = v;
+            var f = FIL.filters.filter(function (x) { return x.id === fid; })[0];
+            if (f) f.name = v;
+          } catch (e) {
+            inp.value = was;
+            toast(/duplicate/i.test((e && e.message) || '')
+              ? 'There is already a filter with that name.' : (e.message || 'Could not rename that'));
+          }
+        });
       });
 
       b.querySelectorAll('[data-fid]').forEach(function (panel) {
@@ -7803,6 +7871,352 @@
             } catch (e) { toast(e.message || 'Could not archive that'); }
           });
         });
+      });
+    }
+
+    // ── signed stills for admin content lists ───────────────────────────────
+    // Any list row can carry data-tok="<video id>" data-pb="<playback id>";
+    // this fills them all from ONE batch call. Same sessionStorage cache the
+    // member library uses ('fs-vl-thumbtok'), so tokens minted on either
+    // side of the app serve both.
+    async function admHydrateThumbs(root) {
+      var els = [].slice.call((root || document).querySelectorAll('[data-tok]'))
+        .filter(function (el) {
+          if (el.dataset.admHydrated || el.querySelector('img')) return false;
+          el.dataset.admHydrated = '1';
+          return true;
+        });
+      if (!els.length) return;
+      var cache = {};
+      try { cache = JSON.parse(sessionStorage.getItem('fs-vl-thumbtok')) || {}; } catch (_) {}
+      var now = Date.now();
+      var need = Array.from(new Set(els.map(function (el) { return el.dataset.tok; })))
+        .filter(function (id) { return !(cache[id] && cache[id].exp > now); });
+      if (need.length) {
+        try {
+          var sess = await db.auth.getSession();
+          var tok = sess.data && sess.data.session && sess.data.session.access_token;
+          var r = await fetch('/api/mux/playback-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+            body: JSON.stringify({ videoIds: need.slice(0, 100) }),
+          });
+          var out = await r.json();
+          if (r.ok && out.thumbnails) {
+            Object.keys(out.thumbnails).forEach(function (id) {
+              cache[id] = { t: out.thumbnails[id], exp: now + 5 * 3600 * 1000 };
+            });
+            try { sessionStorage.setItem('fs-vl-thumbtok', JSON.stringify(cache)); } catch (_) {}
+          }
+        } catch (_) { /* the glyph well is the designed fallback */ }
+      }
+      els.forEach(function (el) {
+        var c = cache[el.dataset.tok];
+        if (!c || c.exp <= now || !el.dataset.pb) return;
+        var img = new Image();
+        img.alt = '';
+        img.onload = function () {
+          var glyph = el.querySelector('.material-symbols-sharp');
+          if (glyph) glyph.remove();
+          el.classList.add('has-art');
+          el.insertBefore(img, el.firstChild);
+        };
+        img.src = 'https://image.mux.com/' + encodeURIComponent(el.dataset.pb) +
+          '/thumbnail.webp?width=320&token=' + encodeURIComponent(c.t);
+      });
+    }
+
+    // the thumb cell those lists share: uploaded art wins, then a signed
+    // still hydrates in, and the glyph well is what remains
+    function admContentThumb(kind, row, tokVideoId, tokPlaybackId) {
+      if (row && row.thumbnail_mode === 'custom' && row.custom_thumbnail_url) {
+        return '<span class="vid-thumb has-art"><img alt="" loading="lazy" src="' + esc(row.custom_thumbnail_url) + '"></span>';
+      }
+      var tok = (tokVideoId && tokPlaybackId)
+        ? ' data-tok="' + esc(tokVideoId) + '" data-pb="' + esc(tokPlaybackId) + '"' : '';
+      return '<span class="vid-thumb"' + tok + '><span class="material-symbols-sharp">' +
+        (kind === 'collection' ? 'stacks' : 'movie') + '</span></span>';
+    }
+
+    // ── Content › Video › Featured ──────────────────────────────────────────
+    // The library home's hero, as a list: a row IS a slide, the order here
+    // is the carousel order. Videos and collections mix freely. Members only
+    // see slides whose content is live (RLS), so featuring something
+    // scheduled is safe — it appears when the content does.
+    var FEAT = { rows: [], videos: {}, collections: {}, stats: {}, items: [], busy: false };
+    var FEAT_SOFT_CAP = 6;
+
+    function featLive(r) {
+      return r && (r.status === 'published' ||
+        (r.status === 'scheduled' && r.published_at && new Date(r.published_at) <= new Date()));
+    }
+
+    async function renderFeatured() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      try {
+        var got = await Promise.all([
+          db.from('library_featured').select('*').order('sort_order').order('created_at'),
+          db.from('videos').select('id, title, status, published_at, duration_seconds, thumbnail_mode, custom_thumbnail_url, mux_playback_id'),
+          db.from('collections').select('id, title, status, published_at, visibility, thumbnail_mode, custom_thumbnail_url'),
+          db.from('collection_stats').select('*'),
+          db.from('collection_items').select('collection_id, kind, video_id, position').order('position'),
+        ]);
+        var err = got.filter(function (r) { return r.error; })[0];
+        if (err) throw err.error;
+        FEAT.rows = got[0].data || [];
+        FEAT.videos = {}; (got[1].data || []).forEach(function (v) { FEAT.videos[v.id] = v; });
+        FEAT.collections = {}; (got[2].data || []).forEach(function (c) { FEAT.collections[c.id] = c; });
+        FEAT.stats = {}; (got[3].data || []).forEach(function (s) { FEAT.stats[s.collection_id] = s; });
+        FEAT.items = got[4].data || [];
+        drawFeatured();
+      } catch (e) {
+        b.innerHTML = /relation .* does not exist/i.test(e.message || '')
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Featured</h2></div>' +
+            '<div class="adm-intro" style="margin:0">This needs <code>supabase/library-featured.sql</code> run in Supabase, then it’ll show here.</div></div>'
+          : stateError(e && e.message);
+      }
+    }
+
+    function featTarget(row) {
+      return row.video_id
+        ? { kind: 'video', row: FEAT.videos[row.video_id] }
+        : { kind: 'collection', row: FEAT.collections[row.collection_id] };
+    }
+
+    // a collection's stand-in art when it has none of its own: the first
+    // video in its playlist (same fallback the member library uses)
+    function featFirstVideo(colId) {
+      var first = FEAT.items.filter(function (i) {
+        return i.collection_id === colId && i.kind === 'video' && FEAT.videos[i.video_id];
+      })[0];
+      return first ? FEAT.videos[first.video_id] : null;
+    }
+    function featThumb(kind, r, id) {
+      if (kind === 'video') return admContentThumb('video', r, r && r.mux_playback_id ? id : null, r && r.mux_playback_id);
+      if (r && r.thumbnail_mode === 'custom' && r.custom_thumbnail_url) return admContentThumb('collection', r);
+      var fv = featFirstVideo(id);
+      if (fv && fv.thumbnail_mode === 'custom' && fv.custom_thumbnail_url) return admContentThumb('collection', fv);
+      return admContentThumb('collection', null, fv && fv.mux_playback_id ? fv.id : null, fv && fv.mux_playback_id);
+    }
+
+    function drawFeatured() {
+      var b = bodyEl(); if (!b) return;
+      b.innerHTML =
+        '<div class="adm-explain"><p>The hero at the top of the member library, as a list — each row is a slide, and this order is the carousel order. Only what you feature here appears; nothing lands in the hero on its own. Videos and collections mix freely, and a slide whose content is not live yet simply waits: it appears to members the moment the content does.</p></div>' +
+        '<div class="cat-controls lib-bar">' +
+          '<button class="btn-primary" id="feat-add">Feature something…</button>' +
+          (FEAT.rows.length > FEAT_SOFT_CAP
+            ? '<span class="nf-hint" style="margin:0">' + FEAT.rows.length + ' slides is a lot of hero — past ' + FEAT_SOFT_CAP + ' it reads as a list.</span>'
+            : '') +
+          '<span class="adm-count">' + num(FEAT.rows.length) + (FEAT.rows.length === 1 ? ' slide' : ' slides') + '</span>' +
+        '</div>' +
+        (FEAT.rows.length
+          ? '<ul class="col-list" id="feat-list">' +
+            FEAT.rows.map(function (f) {
+              var t = featTarget(f);
+              var r = t.row || {};
+              var art = featThumb(t.kind, t.row, f.video_id || f.collection_id);
+              var s = t.kind === 'collection' ? (FEAT.stats[f.collection_id] || {}) : null;
+              var hint = !t.row
+                ? 'This content was deleted — remove the slide.'
+                : (!featLive(r)
+                    ? (r.status === 'scheduled' ? 'Scheduled — the slide appears when it goes live.' : 'Not visible to members right now (' + esc(r.status) + ').')
+                    : (t.kind === 'collection' && s ? num(s.video_count || 0) + ' videos · ' + esc(fmtRuntime(s.total_seconds)) : ''));
+              return '<li class="col-item" draggable="true" data-feat="' + f.id + '">' +
+                '<span class="col-grip" aria-hidden="true"><span class="material-symbols-sharp">drag_indicator</span></span>' +
+                art +
+                // videos are the unmarked default; only a collection wears a tag
+                (t.kind === 'collection' ? '<span class="cate-kind">Collection</span>' : '') +
+                '<span class="col-item-name"><strong>' + esc((t.row && r.title) || 'Deleted') + '</strong>' +
+                  (hint ? '<span class="nf-hint">' + hint + '</span>' : '') + '</span>' +
+                (t.kind === 'video' && r.duration_seconds != null
+                  ? '<span class="col-item-dur">' + videoDuration(r.duration_seconds) + '</span>' : '') +
+                '<button class="btn-icon adm-del feat-del" data-tooltip="Remove from the hero" aria-label="Remove ' + esc((t.row && r.title) || 'slide') + '">' +
+                  '<span class="material-symbols-sharp">close</span></button>' +
+              '</li>';
+            }).join('') + '</ul>'
+          : '<div class="adm-state"><span class="adm-state-ico"><span class="material-symbols-sharp">movie</span></span>' +
+            '<h3>Nothing featured</h3>' +
+            '<p>The library has no hero right now — it opens straight on search and the shelves. Feature something to give it one.</p></div>');
+      wireFeatured();
+      admHydrateThumbs(b);
+    }
+
+    async function persistFeaturedOrder() {
+      var list = document.getElementById('feat-list');
+      if (!list) return;
+      var writes = [];
+      [].forEach.call(list.querySelectorAll('.col-item'), function (row, at) {
+        writes.push(db.from('library_featured').update({ sort_order: at + 1 }).eq('id', row.dataset.feat));
+        var f = FEAT.rows.filter(function (x) { return x.id === row.dataset.feat; })[0];
+        if (f) f.sort_order = at + 1;
+      });
+      var results = await Promise.all(writes);
+      var bad = results.filter(function (r) { return r.error; })[0];
+      if (bad) { toast(bad.error.message || 'Could not save the new order'); return; }
+      FEAT.rows.sort(function (a, b2) { return a.sort_order - b2.sort_order; });
+      toast('Hero order saved');
+    }
+
+    function wireFeatured() {
+      var b = bodyEl(); if (!b) return;
+      var add = document.getElementById('feat-add');
+      if (add) add.addEventListener('click', openFeaturedPicker);
+
+      b.querySelectorAll('.feat-del').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          var id = btn.closest('.col-item').dataset.feat;
+          try {
+            var r = await db.from('library_featured').delete().eq('id', id);
+            if (r.error) throw r.error;
+            FEAT.rows = FEAT.rows.filter(function (f) { return f.id !== id; });
+            drawFeatured();
+          } catch (e) { toast(e.message || 'Could not remove that'); }
+        });
+      });
+
+      var list = document.getElementById('feat-list');
+      if (!list) return;
+      var dragging = null;
+      list.querySelectorAll('.col-item').forEach(function (row) {
+        row.addEventListener('dragstart', function (e) {
+          dragging = row; row.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          try { e.dataTransfer.setData('text/plain', row.dataset.feat); } catch (_) {}
+        });
+        row.addEventListener('dragend', function () {
+          if (dragging) dragging.classList.remove('dragging');
+          dragging = null;
+          list.querySelectorAll('.col-item').forEach(function (r) {
+            r.classList.remove('drop-above', 'drop-below'); });
+        });
+        row.addEventListener('dragover', function (e) {
+          if (!dragging || dragging === row) return;
+          e.preventDefault();
+          var rect = row.getBoundingClientRect();
+          var above = e.clientY < rect.top + rect.height / 2;
+          list.querySelectorAll('.col-item').forEach(function (r) {
+            r.classList.remove('drop-above', 'drop-below'); });
+          row.classList.add(above ? 'drop-above' : 'drop-below');
+        });
+        row.addEventListener('drop', async function (e) {
+          if (!dragging || dragging === row) return;
+          e.preventDefault();
+          var rect = row.getBoundingClientRect();
+          var above = e.clientY < rect.top + rect.height / 2;
+          row.parentNode.insertBefore(dragging, above ? row : row.nextSibling);
+          list.querySelectorAll('.col-item').forEach(function (r) {
+            r.classList.remove('drop-above', 'drop-below'); });
+          await persistFeaturedOrder();
+        });
+      });
+    }
+
+    function openFeaturedPicker() {
+      var have = {};
+      FEAT.rows.forEach(function (f) { have[(f.video_id ? 'video:' + f.video_id : 'collection:' + f.collection_id)] = true; });
+      var picked = {};
+
+      // only what members could actually see — a hero should be curated from
+      // live, listed content
+      var pool = [];
+      Object.keys(FEAT.collections).forEach(function (id) {
+        var c = FEAT.collections[id];
+        if (featLive(c) && c.visibility !== 'unlisted') pool.push({ kind: 'collection', id: id, row: c });
+      });
+      Object.keys(FEAT.videos).forEach(function (id) {
+        var v = FEAT.videos[id];
+        if (featLive(v)) pool.push({ kind: 'video', id: id, row: v });
+      });
+
+      var backdrop = document.createElement('div');
+      backdrop.className = 'modal-backdrop';
+      backdrop.innerHTML =
+        '<div class="modal-card vidpick" role="dialog" aria-modal="true" aria-label="Feature content">' +
+          '<h3>Feature in the hero</h3>' +
+          '<div class="vidpick-controls">' +
+            '<input type="text" class="modal-input" id="fp-q" placeholder="Search live videos and collections…" aria-label="Search content">' +
+          '</div>' +
+          '<ul class="vidpick-list" id="fp-list"></ul>' +
+          '<div class="modal-actions">' +
+            '<button class="btn-ghost" id="fp-cancel">Cancel</button>' +
+            '<button class="btn-primary" id="fp-add" disabled>Feature</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(backdrop);
+
+      var listEl = backdrop.querySelector('#fp-list');
+      var qEl = backdrop.querySelector('#fp-q');
+      var addBtn = backdrop.querySelector('#fp-add');
+
+      function paint() {
+        var q = (qEl.value || '').trim().toLowerCase();
+        var hits = pool.filter(function (it) {
+          return !q || (it.row.title || '').toLowerCase().indexOf(q) !== -1;
+        });
+        listEl.innerHTML = hits.length ? hits.map(function (it) {
+          var key = it.kind + ':' + it.id;
+          var already = !!have[key];
+          return '<li class="vidpick-row' + (already ? ' in' : '') + '" data-key="' + key + '">' +
+            '<input type="checkbox"' + (already ? ' checked disabled' : (picked[key] ? ' checked' : '')) +
+              ' aria-label="Select ' + esc(it.row.title) + '">' +
+            featThumb(it.kind, it.row, it.id) +
+            (it.kind === 'collection' ? '<span class="cate-kind">Collection</span>' : '') +
+            '<span class="vidpick-name"><strong>' + esc(it.row.title) + '</strong>' +
+              (already ? '<span class="nf-hint">Already in the hero</span>' : '') + '</span>' +
+          '</li>';
+        }).join('') : '<li class="muted" style="padding:12px">Nothing live matches that.</li>';
+
+        listEl.querySelectorAll('.vidpick-row:not(.in)').forEach(function (row) {
+          row.addEventListener('click', function (e) {
+            var box = row.querySelector('input');
+            if (e.target !== box) box.checked = !box.checked;
+            picked[row.dataset.key] = box.checked;
+            sync();
+          });
+        });
+        sync();
+        admHydrateThumbs(listEl);
+      }
+      function sync() {
+        var n = Object.keys(picked).filter(function (k) { return picked[k]; }).length;
+        addBtn.disabled = !n;
+        addBtn.textContent = n ? 'Feature ' + n : 'Feature';
+      }
+      var qt;
+      qEl.addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(paint, 150); });
+      paint();
+      qEl.focus();
+
+      function close() { backdrop.remove(); document.removeEventListener('keydown', onKey); }
+      function onKey(e) { if (e.key === 'Escape') close(); }
+      document.addEventListener('keydown', onKey);
+      backdrop.addEventListener('click', function (e) { if (e.target === backdrop) close(); });
+      backdrop.querySelector('#fp-cancel').addEventListener('click', close);
+
+      addBtn.addEventListener('click', async function () {
+        var keys = Object.keys(picked).filter(function (k) { return picked[k]; });
+        if (!keys.length) return;
+        addBtn.disabled = true;
+        try {
+          var top = FEAT.rows.reduce(function (m, f) { return Math.max(m, f.sort_order || 0); }, 0);
+          var rows = keys.map(function (key, at) {
+            var kind = key.split(':')[0], id = key.split(':')[1];
+            return {
+              video_id: kind === 'video' ? id : null,
+              collection_id: kind === 'collection' ? id : null,
+              sort_order: top + at + 1,
+            };
+          });
+          var r = await db.from('library_featured').insert(rows);
+          if (r.error) throw r.error;
+          close();
+          toast(keys.length === 1 ? 'Featured' : keys.length + ' featured');
+          await renderFeatured();
+        } catch (e) {
+          toast(e.message || 'Could not feature those');
+          addBtn.disabled = false;
+        }
       });
     }
 

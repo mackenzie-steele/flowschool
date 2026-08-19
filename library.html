@@ -80,7 +80,7 @@
 
     // ── the hero ──
     function heroHTML() {
-      var feats = VL.featured(L, 5);
+      var feats = VL.featured(L, 8);
       if (!feats.length) return '';
       var slides = feats.map(function (f, i) {
         var href = f.kind === 'collection' ? '/collection/' + f.slug : '/video/' + f.slug;
