@@ -55,11 +55,10 @@
         heroHTML() +
         '<div class="lib-page">' +
         '<section class="explore" aria-label="Search the library">' +
-          '<h2 class="explore-q">What do you want to explore?</h2>' +
           '<div class="explore-row" id="explore-row">' +
             '<span class="material-symbols-sharp" aria-hidden="true">search</span>' +
             '<input class="explore-input" id="vl-q" type="search" autocomplete="off" ' +
-              'placeholder="Search flows, transitions, movement ideas…" aria-label="Search the library">' +
+              'placeholder="Search poses, flows, classes…" aria-label="Search the library">' +
             '<button class="explore-clear" id="vl-clear" aria-label="Clear search">' +
               '<span class="material-symbols-sharp">close</span></button>' +
             '<button class="filter-btn" id="vl-filter-btn" aria-haspopup="dialog"' +
@@ -91,8 +90,8 @@
           ? ' data-tok-video="' + esc(f.tokenVideoId || f.id) + '" data-playback="' + esc(f.playbackId) + '" data-w="1280"'
           : '';
         var eyebrow = f.kind === 'collection'
-          ? '<span class="material-symbols-sharp">stacks</span>Collection'
-          : 'New in the library';
+          ? '<span class="material-symbols-sharp">stacks</span>' + esc(f.eyebrow || 'Collection')
+          : esc(f.eyebrow || 'New in the library');
         var meta = f.kind === 'collection'
           ? f.count + (f.count === 1 ? ' video' : ' videos') + (f.runtime ? ' · ' + VL.fmtRuntime(f.runtime) : '')
           : (VL.fmtDur(f.metaSeconds) || '') + (f.instructor ? ' · ' + f.instructor : '');
@@ -128,8 +127,13 @@
       if (!track) return;
       var slides = Array.prototype.slice.call(track.children);
       var dots = Array.prototype.slice.call(document.querySelectorAll('.hero-dot'));
+      function paintDots(i) {
+        dots.forEach(function (d, di) { d.classList.toggle('on', di === i); });
+      }
       function goTo(i) {
-        var s = slides[Math.max(0, Math.min(i, slides.length - 1))];
+        i = Math.max(0, Math.min(i, slides.length - 1));
+        paintDots(i);   // the dot answers the CLICK, not the end of the glide
+        var s = slides[i];
         if (s) track.scrollTo({ left: s.offsetLeft - track.offsetLeft, behavior: 'smooth' });
       }
       function current() {
@@ -146,13 +150,12 @@
       var prev = document.getElementById('hero-prev'), next = document.getElementById('hero-next');
       if (prev) prev.addEventListener('click', function () { goTo(current() - 1); });
       if (next) next.addEventListener('click', function () { goTo(current() + 1); });
-      var t;
+      // live while scrolling — an rAF throttle, not a settle-debounce, so a
+      // swipe flips the dot the moment the nearest slide changes
+      var raf = null;
       track.addEventListener('scroll', function () {
-        clearTimeout(t);
-        t = setTimeout(function () {
-          var i = current();
-          dots.forEach(function (d, di) { d.classList.toggle('on', di === i); });
-        }, 80);
+        if (raf) return;
+        raf = requestAnimationFrame(function () { raf = null; paintDots(current()); });
       }, { passive: true });
     }
 

@@ -20,6 +20,9 @@ create table if not exists public.library_featured (
   id            uuid primary key default gen_random_uuid(),
   video_id      uuid references public.videos(id) on delete cascade,
   collection_id uuid references public.collections(id) on delete cascade,
+  -- the slide's little label ("New in the library" when null; a collection
+  -- defaults to "Collection"). Curation flavor, per slide.
+  eyebrow       text,
   sort_order    integer not null default 0,
   created_by    uuid references auth.users(id) on delete set null,
   created_at    timestamptz not null default now(),
@@ -27,6 +30,11 @@ create table if not exists public.library_featured (
   constraint featured_has_one_target check (
     (video_id is not null)::int + (collection_id is not null)::int = 1)
 );
+
+-- self-heal: eyebrow arrived after some databases first created this table —
+-- CREATE TABLE IF NOT EXISTS silently skips an existing table, so any later
+-- column needs its own guard here too
+alter table public.library_featured add column if not exists eyebrow text;
 
 -- a thing is featured once; either column may be null so partial uniques
 create unique index if not exists library_featured_video_idx

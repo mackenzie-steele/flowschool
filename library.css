@@ -119,8 +119,6 @@
    A headline and an underlined field. The input is borderless because the
    page is quiet; the hairline wakes to the accent on focus.              */
 .explore { margin: 0 0 44px; }
-.explore-q { font-size: clamp(22px, 2.6vw, 30px); font-weight: var(--weight-book);
-  letter-spacing: var(--ls-heading); margin: 0 0 14px; }
 .explore-row { display: flex; align-items: center; gap: 14px;
   border-bottom: 1px solid var(--border); padding-bottom: 10px;
   transition: border-color var(--transition-base); }
@@ -216,7 +214,9 @@
 /* no weight declared on purpose: the global heading rules own it, so the
    shelf name wears the same editorial book weight as every other headline
    ("What do you want to explore?", the hero title) — bigger-but-lighter */
-.shelf-name { font-size: var(--fs-h6); letter-spacing: var(--ls-heading); }
+/* 28px on desktop, easing to 23px on narrow screens — the viewport-
+   tracking middle keeps the step continuous, never a jump */
+.shelf-name { font-size: clamp(23px, 2.4vw, 28px); letter-spacing: var(--ls-heading); }
 /* the supporting line: a step above body copy, a clear step under the name */
 .shelf-sub { font-size: var(--fs-h7); font-weight: var(--weight-regular);
   color: var(--text-2); margin: 3px 0 0; line-height: var(--lh-tight);

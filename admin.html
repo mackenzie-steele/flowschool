@@ -1155,6 +1155,36 @@
       transition: border-color var(--transition-base); }
     .fil-name-input:hover { border-bottom-color: var(--border); }
     .fil-name-input:focus { border-bottom-color: var(--accent); }
+
+    /* ── a featured slide's row IS a miniature of the slide ──────────
+       Artwork at slide proportions, then the copy stack in hero order:
+       eyebrow over title. The eyebrow is the one editable thing here,
+       and it says so at rest — a dotted underline (the editable-text
+       convention) and a pencil that rises when the row is engaged. */
+    .feat-slide { padding: 10px 14px 10px 10px; gap: 14px; }
+    .feat-slide .vid-thumb { width: 96px; height: 54px; }
+    .feat-slide .col-item-name { gap: 3px; }
+    .feat-eyebrow-row { display: inline-flex; align-items: center; gap: 7px; }
+    /* system voice: mono caps labels are ink, never accent — the accent
+       appears only as the focus state, where the system already uses it */
+    .feat-eyebrow { border: 0; background: none; outline: none; padding: 1px 0 2px;
+      min-width: 110px; max-width: 260px; field-sizing: content;
+      font-family: var(--font-mono); font-size: var(--fs-meta);
+      letter-spacing: var(--ls-micro); text-transform: uppercase; color: var(--text-2);
+      border-bottom: 1px dashed rgba(var(--ink-rgb), .28);
+      transition: border-color var(--transition-base), color var(--transition-base); }
+    .feat-eyebrow::placeholder { color: var(--text-4); text-transform: uppercase; }
+    .feat-eyebrow:hover { border-bottom-color: rgba(var(--ink-rgb), .45); }
+    .feat-eyebrow:focus { border-bottom-style: solid; border-bottom-color: var(--accent);
+      color: var(--text-1); }
+    .feat-eyebrow-pen { font-size: 12px; color: var(--text-4); cursor: text;
+      opacity: 0; transform: translateX(-2px);
+      transition: opacity var(--transition-base), transform var(--transition-base),
+                  color var(--transition-base); }
+    .feat-slide:hover .feat-eyebrow-pen,
+    .feat-eyebrow:focus ~ .feat-eyebrow-pen { opacity: 1; transform: none; }
+    .feat-eyebrow-pen:hover { color: var(--text-2); }
+    @media (prefers-reduced-motion: reduce) { .feat-eyebrow-pen { transition: opacity var(--transition-base); transform: none; } }
     .fil-panel .adm-panel-head { margin-bottom: 10px; }
     .fil-count { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--text-3); margin-left: auto; margin-right: 10px; }
     .col-chip .chip-n { font-family: var(--font-mono); font-size: var(--fs-meta); opacity: .65; }
@@ -2985,13 +3015,10 @@
         var inFile = Object.keys(liveIds).length;
 
         b.innerHTML =
-          // What this page is and where its music comes from. Written out
-          // because the pipeline is not guessable from the screen: the source
-          // of truth is a playlist in a different application.
-          '<div class="adm-explain">' +
-            '<p>Every song here starts in <strong>' + esc(MUSIC_PLAYLIST.name) + '</strong>, a playlist in Apple Music. That playlist is the source \u2014 add music there, then <strong>Pull new songs</strong> below to bring the new tracks in.</p>' +
-            '<p>Apple supplies the title, artist, length, artwork and a 30-second preview. It cannot supply <strong>energy</strong> or <strong>character</strong>, which are judgement calls about how a song feels to move to, so every track waits in <strong>Needs review</strong> until you make them. Energy is the height a song sits at on the Playlist Builder\u2019s curve, 0 to 8.</p>' +
-            '<p>Approving a song puts it in front of teachers straight away \u2014 the Playlist Builder reads this database on every load. The catalogue file catches up on its own overnight, so nothing here is waiting on a deploy.</p>' +
+          // The one thing the old intro carried that the screen cannot: the
+          // door to the source playlist. The pipeline explanation lives in
+          // the panels' own copy now.
+          '<div>' +
             '<a class="btn-secondary adm-explain-cta" href="' + esc(MUSIC_PLAYLIST.url) + '" target="_blank" rel="noopener">' +
               'Open the playlist in Apple Music<span class="material-symbols-sharp">open_in_new</span></a>' +
           '</div>' +
@@ -3660,7 +3687,6 @@
       VID.cats.forEach(function (c) { catName[c.id] = c.name; });
 
       b.innerHTML =
-        '<p class="adm-intro">Mux holds the file; everything members read about it is written here. A video can publish once Mux reports its file ready.</p>' +
         '<div class="cat-controls lib-bar">' +
           '<input type="text" class="modal-input" id="vid-q" placeholder="Search title, description or keywords…" value="' + esc(VID.q) + '" aria-label="Search videos">' +
           '<div class="lib-bar-end">' +
@@ -5233,7 +5259,6 @@
       var live = VID.cats.filter(function (c) { return c.status === 'active'; });
       var counts = VID.catCounts || { vids: {}, cols: {} };
       b.innerHTML =
-        '<p class="adm-intro">The shelves of the library. A video needs one before it can publish — and the order below is the order members will see, so drag the rows into it.</p>' +
         '<div class="cat-controls lib-bar">' +
           '<button class="btn-primary" id="vcat-new">New category</button>' +
           '<span class="adm-count">' + num(live.length) + (live.length === 1 ? ' category' : ' categories') + '</span>' +
@@ -6065,7 +6090,6 @@
       var hits = collectionMatches();
 
       b.innerHTML =
-        '<p class="adm-intro">A collection is an ordered set of videos designed to be explored together — a class combo, a mini-series. A category is the broad shelf it sits on.</p>' +
         '<div class="cat-controls lib-bar">' +
           '<input type="text" class="modal-input" id="col-q" placeholder="Search title, description or keywords…" value="' + esc(COL.q) + '" aria-label="Search collections">' +
           '<div class="lib-bar-end">' +
@@ -7511,7 +7535,6 @@
     function drawResourceLibrary() {
       var b = bodyEl(); if (!b) return;
       b.innerHTML =
-        '<p class="adm-intro">Every downloadable file, in one place. A file uploads once and can sit on any number of videos and collections — attach and detach from their editors.</p>' +
         '<label class="vid-drop vid-drop-sm lib-drop" id="res-drop">' +
           '<input type="file" id="res-input" accept="application/pdf" hidden multiple>' +
           '<span class="material-symbols-sharp">note_add</span>' +
@@ -7717,7 +7740,6 @@
     function drawFilterAdmin() {
       var b = bodyEl(); if (!b) return;
       b.innerHTML =
-        '<p class="adm-intro">How members will narrow the library. A filter is the question — Movement Focus, Experience Level — and its options are the answers. Tag videos and collections from their editors.</p>' +
         '<div class="cat-controls lib-bar">' +
           '<button class="btn-primary" id="fil-new">New filter</button>' +
           '<span class="adm-count">' + num(FIL.filters.length) + (FIL.filters.length === 1 ? ' filter' : ' filters') + '</span>' +
@@ -8002,9 +8024,8 @@
     function drawFeatured() {
       var b = bodyEl(); if (!b) return;
       b.innerHTML =
-        '<div class="adm-explain"><p>The hero at the top of the member library, as a list — each row is a slide, and this order is the carousel order. Only what you feature here appears; nothing lands in the hero on its own. Videos and collections mix freely, and a slide whose content is not live yet simply waits: it appears to members the moment the content does.</p></div>' +
         '<div class="cat-controls lib-bar">' +
-          '<button class="btn-primary" id="feat-add">Feature something…</button>' +
+          '<button class="btn-primary" id="feat-add">Add featured video</button>' +
           (FEAT.rows.length > FEAT_SOFT_CAP
             ? '<span class="nf-hint" style="margin:0">' + FEAT.rows.length + ' slides is a lot of hero — past ' + FEAT_SOFT_CAP + ' it reads as a list.</span>'
             : '') +
@@ -8022,12 +8043,20 @@
                 : (!featLive(r)
                     ? (r.status === 'scheduled' ? 'Scheduled — the slide appears when it goes live.' : 'Not visible to members right now (' + esc(r.status) + ').')
                     : (t.kind === 'collection' && s ? num(s.video_count || 0) + ' videos · ' + esc(fmtRuntime(s.total_seconds)) : ''));
-              return '<li class="col-item" draggable="true" data-feat="' + f.id + '">' +
+              // the row is a miniature of the slide it controls: eyebrow
+              // over title, same order the hero renders them. No Collection
+              // tag here — the eyebrow's own default already says it.
+              return '<li class="col-item feat-slide" draggable="true" data-feat="' + f.id + '">' +
                 '<span class="col-grip" aria-hidden="true"><span class="material-symbols-sharp">drag_indicator</span></span>' +
                 art +
-                // videos are the unmarked default; only a collection wears a tag
-                (t.kind === 'collection' ? '<span class="cate-kind">Collection</span>' : '') +
-                '<span class="col-item-name"><strong>' + esc((t.row && r.title) || 'Deleted') + '</strong>' +
+                '<span class="col-item-name">' +
+                  '<span class="feat-eyebrow-row">' +
+                    '<input class="feat-eyebrow" maxlength="40" value="' + esc(f.eyebrow || '') + '"' +
+                      ' placeholder="' + (t.kind === 'collection' ? 'Collection' : 'New in the library') + '"' +
+                      ' aria-label="Eyebrow text for ' + esc((t.row && r.title) || 'slide') + '">' +
+                    '<span class="material-symbols-sharp feat-eyebrow-pen" aria-hidden="true">edit</span>' +
+                  '</span>' +
+                  '<strong>' + esc((t.row && r.title) || 'Deleted') + '</strong>' +
                   (hint ? '<span class="nf-hint">' + hint + '</span>' : '') + '</span>' +
                 (t.kind === 'video' && r.duration_seconds != null
                   ? '<span class="col-item-dur">' + videoDuration(r.duration_seconds) + '</span>' : '') +
@@ -8062,6 +8091,41 @@
       var b = bodyEl(); if (!b) return;
       var add = document.getElementById('feat-add');
       if (add) add.addEventListener('click', openFeaturedPicker);
+
+      // the pencil is a pointer to the field, not a second control
+      b.querySelectorAll('.feat-eyebrow-pen').forEach(function (pen) {
+        pen.addEventListener('click', function () {
+          var inp = pen.parentNode.querySelector('.feat-eyebrow');
+          if (inp) { inp.focus(); inp.select(); }
+        });
+      });
+
+      // eyebrows save themselves on blur; Enter commits, Escape reverts,
+      // and clearing the field returns the slide to its default label
+      b.querySelectorAll('.feat-eyebrow').forEach(function (inp) {
+        var id = inp.closest('.col-item').dataset.feat;
+        var was = inp.value;
+        inp.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+          if (e.key === 'Escape') { inp.value = was; inp.blur(); }
+        });
+        inp.addEventListener('blur', async function () {
+          var v = (inp.value || '').trim();
+          if (v === was) return;
+          try {
+            var r = await db.from('library_featured').update({ eyebrow: v || null }).eq('id', id);
+            if (r.error) throw r.error;
+            was = v;
+            var f = FEAT.rows.filter(function (x) { return x.id === id; })[0];
+            if (f) f.eyebrow = v || null;
+          } catch (e) {
+            inp.value = was;
+            toast(/eyebrow.*does not exist/i.test((e && e.message) || '')
+              ? 'Eyebrows need the latest supabase/library-featured.sql run'
+              : (e.message || 'Could not save that'));
+          }
+        });
+      });
 
       b.querySelectorAll('.feat-del').forEach(function (btn) {
         btn.addEventListener('click', async function () {
