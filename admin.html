@@ -253,16 +253,31 @@
     .vid-seg-btn:hover { color: var(--text-1); }
     .vid-seg-btn.on { background: var(--paper-solid); color: var(--text-1); box-shadow: var(--crest); }
     .vid-thumb-time { display: flex; flex-direction: column; }
+    /* the frame picker is self-contained: a scrubber against the still,
+       no round-trip through the player in the other column */
+    .vid-scrub { display: flex; align-items: center; gap: 14px; }
+    .vid-scrub .range-slider { flex: 1; min-width: 0; }
+    .vid-scrub .vid-time-box {
+      width: 84px; flex: none; text-align: right;
+      font-family: var(--font-mono); font-size: var(--text-ui);
+    }
+    /* the old still stays while Mux cuts the new one — the fade says
+       "working", a blank box would say "broken" */
+    .vid-thumb-preview.loading img { opacity: .45; }
+    .vid-thumb-preview img { transition: opacity var(--transition-base); }
 
     /* url + counters + search preview */
     .vid-cat-row { display: flex; gap: 8px; align-items: center; }
     .vid-cat-row .modal-input { flex: 1; }
     .vid-newcat-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
     .vid-newcat-row .modal-input { flex: 1; }
-    .vid-slug-row { display: flex; align-items: center; gap: 0; }
+    /* stretch, not center: the prefix takes the input's height exactly, so
+       the two halves read as one control even though their fonts differ */
+    .vid-slug-row { display: flex; align-items: stretch; gap: 0; }
     .vid-slug-prefix {
+      display: inline-flex; align-items: center;
       font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--text-3);
-      padding: 10px 0 10px 12px; background: var(--well-bg); white-space: nowrap;
+      padding: 0 0 0 12px; background: var(--well-bg); white-space: nowrap;
       border: 1px solid rgba(var(--ink-rgb), .14); border-right: 0;
       border-radius: var(--r) 0 0 var(--r);
     }
@@ -3546,12 +3561,47 @@
         } catch (_) {}
         VID.sel = {};
         drawVideos();
+        loadListThumbTokens();
       } catch (e) {
         b.innerHTML = /relation .* does not exist/i.test(e.message || '')
           ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Videos</h2></div>' +
             '<div class="adm-intro" style="margin:0">This needs <code>supabase/video-library.sql</code> run in Supabase, then it’ll show here.</div></div>'
           : stateError(e && e.message);
       }
+    }
+
+    // Stills are signed like everything else, so list rows without an
+    // uploaded poster start as the quiet icon well. ONE batch request
+    // fetches thumbnail tokens for the whole list, then the posters drop
+    // into the rows already on screen — no redraw, no lost search focus.
+    async function loadListThumbTokens() {
+      var need = VID.rows.filter(function (v) {
+        return v.mux_playback_id && !v.thumb_token &&
+               !(v.thumbnail_mode === 'custom' && v.custom_thumbnail_url);
+      }).map(function (v) { return v.id; });
+      if (!need.length) return;
+      try {
+        var sess = await db.auth.getSession();
+        var tok = sess.data && sess.data.session && sess.data.session.access_token;
+        if (!tok) return;
+        var r = await fetch('/api/mux/playback-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+          body: JSON.stringify({ videoIds: need }),
+        });
+        var out = await r.json();
+        if (!r.ok || !out.thumbnails) return;
+        VID.rows.forEach(function (v) {
+          if (out.thumbnails[v.id]) v.thumb_token = out.thumbnails[v.id];
+        });
+        var b = bodyEl(); if (!b) return;
+        b.querySelectorAll('.lib-row[data-vid]').forEach(function (row) {
+          var v = VID.rows.filter(function (x) { return x.id === row.dataset.vid; })[0];
+          if (!v || !v.thumb_token) return;
+          var t = row.querySelector('.lib-thumb');
+          if (t) t.outerHTML = libVideoThumb(v);
+        });
+      } catch (_) { /* the icon well is the designed fallback */ }
     }
 
     function videoMatches() {
@@ -3926,11 +3976,15 @@
                             '" data-thumb-mode="' + m[0] + '">' + m[1] + '</button>';
                         }).join('') + '</div>' +
                     '<div class="vid-thumb-time" id="vid-thumb-time"' + (v.thumbnail_mode === 'timestamp' ? '' : ' hidden') + '>' +
-                      '<button class="btn-secondary" id="vid-usenow" type="button">Use the frame showing now</button>' +
-                      '<label class="nf-label" for="vid-time">Or a time in seconds</label>' +
-                      '<input class="modal-input" id="vid-time" inputmode="decimal" value="' +
-                        esc(v.thumbnail_time_seconds != null ? v.thumbnail_time_seconds : '') + '" placeholder="12.5">' +
-                      '<span class="nf-hint">Scrub the player, pause where you want it, then use the button.</span>' +
+                      '<label class="nf-label" for="vid-time-slider">Find the frame</label>' +
+                      '<div class="vid-scrub">' +
+                        '<input type="range" class="range-slider" id="vid-time-slider" min="0" max="' +
+                          esc(Math.max(1, Math.floor(v.duration_seconds || 600))) + '" step="0.1" value="' +
+                          esc(v.thumbnail_time_seconds != null ? v.thumbnail_time_seconds : 0) + '" aria-label="Frame time">' +
+                        '<input class="modal-input vid-time-box" id="vid-time" inputmode="decimal" value="' +
+                          esc(v.thumbnail_time_seconds != null ? v.thumbnail_time_seconds : '') + '" placeholder="0" aria-label="Frame time in seconds">' +
+                      '</div>' +
+                      '<span class="nf-hint">Slide to the moment you want, or type a time in seconds — the preview follows.</span>' +
                     '</div>' +
                     '<div class="vid-thumb-custom" id="vid-thumb-custom"' + (v.thumbnail_mode === 'custom' ? '' : ' hidden') + '>' +
                       '<label class="vid-drop vid-drop-sm" id="vid-thumb-drop">' +
@@ -4325,15 +4379,62 @@
         return;
       }
       if (!v.mux_playback_id) return;
-      if (!v.thumb_token) { host.innerHTML = '<span class="nf-hint">Preview appears once playback is authorised.</span>'; return; }
-      var t = '';
-      if (v.thumbnail_mode === 'timestamp') {
-        var el = document.getElementById('vid-time');
-        var secs = parseFloat(el ? el.value : v.thumbnail_time_seconds);
-        if (!isNaN(secs)) t = '&time=' + encodeURIComponent(secs);
-      }
-      host.innerHTML = '<img alt="" src="https://image.mux.com/' + encodeURIComponent(v.mux_playback_id) +
-        '/thumbnail.webp?width=640' + t + '&token=' + encodeURIComponent(v.thumb_token) + '">';
+      // The frame time lives INSIDE the signed token — a &time= query param
+      // is ignored on signed URLs, which is why scrubbing used to do
+      // nothing. Timestamp mode prefers the token minted for the time being
+      // scrubbed; otherwise the editor's base token (saved-state claims).
+      var tok = (v.thumbnail_mode === 'timestamp' && VID._timeTok) ? VID._timeTok : v.thumb_token;
+      if (!tok) { host.innerHTML = '<span class="nf-hint">Preview appears once playback is authorised.</span>'; return; }
+      var url = 'https://image.mux.com/' + encodeURIComponent(v.mux_playback_id) +
+        '/thumbnail.webp?width=640&token=' + encodeURIComponent(tok);
+      var have = host.querySelector('img');
+      if (have && have.src === url) { host.classList.remove('loading'); return; }
+      // preload, then swap — the old frame holds (dimmed) while Mux cuts
+      // the new one, instead of the box going blank
+      var img = new Image();
+      img.alt = '';
+      img.onload = function () {
+        host.classList.remove('loading');
+        host.innerHTML = '';
+        host.appendChild(img);
+      };
+      img.onerror = function () { host.classList.remove('loading'); };
+      if (have) host.classList.add('loading');
+      img.src = url;
+      if (!have) host.innerHTML = '<span class="nf-hint">Cutting the frame…</span>';
+    }
+
+    // Scrubbing re-mints the thumbnail token with the chosen time in its
+    // claims. Debounced so dragging the slider asks once, not per pixel;
+    // sequenced so a slow early answer can never overwrite a later one.
+    function videoThumbTimeChanged() {
+      var v = VID.editing;
+      if (!v || !v.id || !v.mux_playback_id || v.thumbnail_mode !== 'timestamp') return;
+      clearTimeout(VID._timeTimer);
+      VID._timeTimer = setTimeout(async function () {
+        var secs = parseFloat((document.getElementById('vid-time') || {}).value);
+        if (isNaN(secs) || secs < 0) secs = 0;
+        var seq = (VID._timeSeq = (VID._timeSeq || 0) + 1);
+        var host = document.getElementById('vid-thumb-preview');
+        if (host && host.querySelector('img')) host.classList.add('loading');
+        try {
+          var sess = await db.auth.getSession();
+          var tok = sess.data && sess.data.session && sess.data.session.access_token;
+          var r = await fetch('/api/mux/playback-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+            body: JSON.stringify({ videoId: v.id, thumbTime: secs }),
+          });
+          var out = await r.json();
+          if (!r.ok) throw new Error(out.error || 'Could not cut that frame');
+          if (seq !== VID._timeSeq) return;   // a newer scrub already answered
+          VID._timeTok = out.thumbnailToken;
+          videoThumbPreview();
+        } catch (e) {
+          // scrubbing should not toast per hiccup — keep the last good frame
+          if (host) host.classList.remove('loading');
+        }
+      }, 350);
     }
 
     function wireVideoForm() {
@@ -4487,6 +4588,7 @@
       });
 
       // ── thumbnail ──
+      VID._timeTok = null;   // scrub tokens never outlive a form draw
       document.querySelectorAll('[data-thumb-mode]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           VID.editing.thumbnail_mode = btn.dataset.thumbMode;
@@ -4498,18 +4600,25 @@
           var cu = $('vid-thumb-custom');
           if (cu) cu.hidden = btn.dataset.thumbMode !== 'custom';
           videoThumbPreview();
+          if (btn.dataset.thumbMode === 'timestamp') videoThumbTimeChanged();
           videoSyncSave();
         });
       });
-      var useNow = $('vid-usenow');
-      if (useNow) useNow.addEventListener('click', function () {
-        var p = document.querySelector('#vid-player mux-player');
-        if (!p || !p.currentTime) { toast('Play the video and pause where you want the frame'); return; }
-        VID.editing.thumbnail_mode = 'timestamp';
-        var t = $('vid-time'); if (t) t.value = Math.round(p.currentTime * 10) / 10;
-        videoThumbPreview();
-        videoSyncSave();
-      });
+      // the scrubber: slider and seconds box are one control — moving
+      // either updates the other and re-cuts the preview frame
+      var timeSlider = $('vid-time-slider'), timeBox = $('vid-time');
+      if (timeSlider && timeBox) {
+        timeSlider.addEventListener('input', function () {
+          timeBox.value = timeSlider.value;
+          videoSyncSave();
+          videoThumbTimeChanged();
+        });
+        timeBox.addEventListener('input', function () {
+          var n = parseFloat(timeBox.value);
+          if (!isNaN(n)) timeSlider.value = Math.min(Math.max(n, 0), parseFloat(timeSlider.max));
+          videoThumbTimeChanged();
+        });
+      }
 
       // ── save / publish ──
       // One Save. It writes the fields, then applies whatever Visibility is

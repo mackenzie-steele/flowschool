@@ -50,6 +50,43 @@ module.exports = async (req, res) => {
   const db = who.db;
 
   const body = req.body || {};
+
+  // ── batch: thumbnail tokens for a list ────────────────────────────
+  // A library page needs a poster per row, and stills are signed like
+  // everything else — one request per video would be N round trips per
+  // page. This returns thumbnail-only tokens (each with the video's
+  // saved frame time in its claims); a playback token is never minted
+  // in batch, so a list request can not become a way to play things.
+  if (Array.isArray(body.videoIds)) {
+    const ids = body.videoIds
+      .filter((x) => typeof x === 'string' && x.trim())
+      .slice(0, 100);
+    if (!ids.length) return fail(res, 400, 'Which videos?');
+    const { data: rows, error: qErr } = await who.db.from('videos')
+      .select('id, status, visibility, mux_playback_id, thumbnail_mode, thumbnail_time_seconds')
+      .in('id', ids);
+    if (qErr) return fail(res, 500, 'Could not read those videos');
+    const batchAdmin = await isAdmin(who.db, who.user.id);
+    const muxBatch = new Mux({ jwtSigningKey: keyId, jwtPrivateKey: keySecret });
+    const thumbnails = {};
+    for (const row of rows || []) {
+      if (!row.mux_playback_id) continue;
+      if (!canWatch(row, { isAdmin: batchAdmin }).allowed) continue;
+      try {
+        const t = await muxBatch.jwt.signPlaybackId(row.mux_playback_id, {
+          type: ['thumbnail'],
+          expiration: TOKEN_LIFETIME,
+          params: row.thumbnail_mode === 'timestamp' && row.thumbnail_time_seconds != null
+            ? { time: String(row.thumbnail_time_seconds) }
+            : undefined,
+        });
+        if (t['thumbnail-token']) thumbnails[row.id] = t['thumbnail-token'];
+      } catch (_) { /* one bad row must not sink the list */ }
+    }
+    log('playback', 'thumbnail batch: ' + Object.keys(thumbnails).length + ' of ' + ids.length);
+    return res.status(200).json({ thumbnails });
+  }
+
   const videoId = typeof body.videoId === 'string' ? body.videoId.trim() : '';
   const slug = typeof body.slug === 'string' ? body.slug.trim() : '';
   if (!videoId && !slug) return fail(res, 400, 'Which video?');
@@ -81,15 +118,27 @@ module.exports = async (req, res) => {
   }
 
   // 5. mint. Both audiences in one call.
+  //
+  // The time a still is cut at must live INSIDE the thumbnail token's
+  // claims — on a signed URL Mux ignores query parameters, so appending
+  // &time= client-side does nothing. Normally the saved row decides; the
+  // admin's frame picker sends an explicit thumbTime while scrubbing, so
+  // the preview can show a frame that is not saved yet.
+  let thumbTime = null;
+  if (typeof body.thumbTime === 'number' && isFinite(body.thumbTime) && body.thumbTime >= 0) {
+    thumbTime = video.duration_seconds
+      ? Math.min(body.thumbTime, Number(video.duration_seconds))
+      : body.thumbTime;
+  } else if (video.thumbnail_mode === 'timestamp' && video.thumbnail_time_seconds != null) {
+    thumbTime = video.thumbnail_time_seconds;
+  }
   let tokens;
   try {
     const mux = new Mux({ jwtSigningKey: keyId, jwtPrivateKey: keySecret });
     tokens = await mux.jwt.signPlaybackId(video.mux_playback_id, {
       type: ['video', 'thumbnail'],
       expiration: TOKEN_LIFETIME,
-      params: video.thumbnail_mode === 'timestamp' && video.thumbnail_time_seconds != null
-        ? { time: String(video.thumbnail_time_seconds) }
-        : undefined,
+      params: thumbTime != null ? { time: String(thumbTime) } : undefined,
     });
   } catch (err) {
     // Never echo the signing error to the client — it can describe the key.
