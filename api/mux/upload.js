@@ -86,6 +86,13 @@ module.exports = async (req, res) => {
         playback_policy: ['signed'],
         passthrough: videoId,
         video_quality: 'basic',
+        // Every upload gets English captions generated automatically.
+        // Generation runs AFTER the asset is ready, so the track arrives as
+        // 'preparing' and the webhook's track events flip it to 'ready' —
+        // the editor's Captions section follows along on its own.
+        inputs: [{
+          generated_subtitles: [{ language_code: 'en', name: 'English (auto)' }],
+        }],
       },
     });
   } catch (err) {

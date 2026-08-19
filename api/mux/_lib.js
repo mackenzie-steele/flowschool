@@ -60,15 +60,35 @@ async function requireAdmin(req) {
 }
 
 // ── the access rule, in one place ────────────────────────────────────────────
-// TODAY: signed in, and the video is published. Admins may preview anything.
+// TODAY: signed in, and the video is live. Admins may preview anything.
 // LATER: this grows a membership/entitlement check and nothing else moves.
+//
+// "Live" includes a scheduled video whose moment has passed — the RLS read
+// policy (video-scheduling.sql) says exactly that, and this function must
+// not disagree with it or a member could see a card they cannot play.
+function isLive(row) {
+  if (!row) return false;
+  if (row.status === 'published') return true;
+  return row.status === 'scheduled' && row.published_at &&
+         new Date(row.published_at).getTime() <= Date.now();
+}
+
 function canWatch(video, { isAdmin: admin }) {
   if (!video) return { allowed: false, reason: 'not-found' };
   if (admin) return { allowed: true, reason: 'admin-preview' };
-  if (video.status !== 'published') return { allowed: false, reason: 'not-published' };
+  if (!isLive(video)) return { allowed: false, reason: 'not-published' };
   if (video.visibility === 'members' || video.visibility === 'unlisted' ||
       video.visibility === 'public') return { allowed: true, reason: 'member' };
   return { allowed: false, reason: 'visibility' };
+}
+
+// The same shape for a collection. A collection has no Mux asset — access
+// means "may see the page and download its resources".
+function canBrowseCollection(collection, { isAdmin: admin }) {
+  if (!collection) return { allowed: false, reason: 'not-found' };
+  if (admin) return { allowed: true, reason: 'admin-preview' };
+  if (!isLive(collection)) return { allowed: false, reason: 'not-published' };
+  return { allowed: true, reason: 'member' };
 }
 
 // One shape for every failure, so the client never has to guess.
@@ -80,4 +100,5 @@ function fail(res, status, message) {
 function log(where, msg) { console.log('[mux:' + where + '] ' + msg); }
 function warn(where, msg) { console.warn('[mux:' + where + '] ' + msg); }
 
-module.exports = { env, service, whoami, isAdmin, requireAdmin, canWatch, fail, log, warn };
+module.exports = { env, service, whoami, isAdmin, requireAdmin, canWatch,
+  canBrowseCollection, fail, log, warn };

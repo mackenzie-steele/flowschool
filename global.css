@@ -139,6 +139,13 @@
      here (illegible); #6E6E6E clears 4.5:1 and stays quiet. Dark mode
      keeps #A5A5A5 (its contrast was always fine). */
   --text-3: #6E6E6E;
+  /* GHOST TIER (Aug 2026, from the Cosmos teardown): a fourth,
+     barely-there voice for text that carries no information the UI
+     doesn't already say louder — placeholders, empty badges. Ink at
+     28% (~2:1, deliberately sub-legible) — the alpha rides --ink-rgb,
+     so the dark theme gets its ghost for free. NEVER for timestamps,
+     hints, or anything a user must be able to read. */
+  --text-4: rgba(var(--ink-rgb), .28);
 
   /* Accent — fig by day, periwinkle by night. The old muted plum,
      developed instead of retired: saturated and deepened until it
@@ -154,7 +161,15 @@
   /* EMISSION (Jul 2026): the accent is allowed to glow in exactly
      three places — behind the primary button, on the keyboard focus
      ring, and as the active nav dot's halo. Fig casts by day,
-     periwinkle by night. Emission, never elevation. */
+     periwinkle by night. Emission, never elevation.
+
+     HOVER = LIGHTING (Aug 2026, from the Cosmos teardown): hover
+     shifts ground brightness — ink washes (.04–.07), text toward
+     --text-1, borders deepen toward rgba(ink, .35). Hover NEVER
+     moves toward the accent: accent means active / selected /
+     "look here", and hovering is not being that. (Drag-over,
+     .on/.active, and focus-visible are states, not hovers — they
+     may keep their accent.) */
   --glow: 0 6px 24px rgba(var(--accent-rgb), .18);
   --glow-dot: 0 0 8px rgba(var(--accent-rgb), .55);
 
@@ -238,6 +253,10 @@
   --font-mono: 'ABC Monument Grotesk Mono', 'SF Mono', 'Fira Code', 'Courier New', monospace;
 
   /* Typography — weights */
+  /* book (Aug 2026, from the Cosmos teardown): the display weight.
+     Bigger-but-lighter — scale does the talking, weight never
+     shouts. Variable font already carries it. */
+  --weight-book:     350;
   --weight-regular:  400;
   --weight-medium:   500;
   --weight-semibold: 600;
@@ -281,6 +300,9 @@
   --ls-tight:   -.04em;
   --ls-heading: -.025em;
   --ls-body:    0em;
+  /* UI surfaces (Aug 2026): buttons, chips, nav — slightly tucked,
+     never loose (the Cosmos -0.02em) */
+  --ls-ui:      -.02em;
   --ls-label:   .10em;
   --ls-micro:   .12em;
 
@@ -504,8 +526,10 @@ textarea.fl-area:focus:focus-visible {
 }
 
 /* ─── 3. TYPOGRAPHY ────────────────────────────────────────────
-   WEIGHT SPLIT (Jul 2026): display sizes (h1–h3) stay regular — the
-   editorial signature. Mid-scale headings (h4–h7) and card titles
+   WEIGHT SPLIT (Jul 2026, retuned Aug 2026): display sizes (h1–h3)
+   wear BOOK (350) — one step lighter than regular, so the biggest
+   type is also the lightest touch (the editorial signature, now with
+   more scale contrast). Mid-scale headings (h4–h7) and card titles
    carry medium, so pages scan with anchors instead of size alone.
    Large CONTENT text (dealt rules, pose names, flow text) is not a
    heading — it stays regular. ─── */
@@ -513,7 +537,7 @@ textarea.fl-area:focus:focus-visible {
 h1 {
   font-family: var(--font);
   font-size: var(--fs-h1);
-  font-weight: var(--weight-regular) !important;
+  font-weight: var(--weight-book) !important;
   letter-spacing: var(--ls-tight);
   line-height: var(--lh-display);
   color: var(--text-1);
@@ -522,7 +546,7 @@ h1 {
 h2 {
   font-family: var(--font);
   font-size: var(--fs-h2);
-  font-weight: var(--weight-regular) !important;
+  font-weight: var(--weight-book) !important;
   letter-spacing: -.03em;
   line-height: var(--lh-heading);
   color: var(--text-1);
@@ -531,7 +555,7 @@ h2 {
 h3 {
   font-family: var(--font);
   font-size: var(--fs-h3);
-  font-weight: var(--weight-regular) !important;
+  font-weight: var(--weight-book) !important;
   letter-spacing: -.015em;
   line-height: var(--lh-heading);
   color: var(--text-1);
@@ -853,6 +877,7 @@ body.has-sidebar .cta-bar {
   padding: 8px 12px;
   border-radius: var(--r-cta);
   font-size: var(--text-ui);
+  letter-spacing: var(--ls-ui);
   cursor: pointer;
   transition: color var(--transition-base), background var(--transition-base);
   font-family: var(--font);
@@ -886,6 +911,7 @@ body.has-sidebar .cta-bar {
   border-radius: var(--rb);
   font-size: var(--fs-btn);
   font-weight: var(--weight-medium);
+  letter-spacing: var(--ls-ui);
   font-family: var(--font);
   cursor: pointer;
   transition: background var(--transition-base), transform .1s, box-shadow var(--transition-base);
@@ -937,6 +963,7 @@ button svg {
   border-radius: var(--rb);
   font-size: var(--text-ui);
   font-weight: var(--weight-semibold);
+  letter-spacing: var(--ls-ui);
   font-family: var(--font);
   cursor: pointer;
   transition: color var(--transition-base), background var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-fast);
@@ -1215,6 +1242,7 @@ button svg {
   font-family: var(--font);
   font-size: var(--fs-chip);
   font-weight: var(--weight-regular);
+  letter-spacing: var(--ls-ui);
   cursor: pointer;
   transition: color var(--transition-base), background var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base), transform var(--transition-fast);
 }
@@ -1502,7 +1530,7 @@ input[type=range].range-slider:disabled {
 .saved-badge.empty,
 .fav-badge.empty {
   background: rgba(var(--ink-rgb), .04);
-  color: var(--text-3);
+  color: var(--text-4);
   border-color: rgba(var(--ink-rgb), .08);
 }
 
@@ -2384,6 +2412,7 @@ textarea.fs-autogrow {
   padding: 0 12px;
   border-radius: var(--r);
   font-size: var(--fs-chip); /* 14px — on the scale; was an off-scale 13px */
+  letter-spacing: var(--ls-ui);
   color: var(--text-2);
   text-decoration: none;
   transition: background var(--transition-base), color var(--transition-base);
@@ -2928,7 +2957,7 @@ body.has-sidebar {
 }
 
 .field-input::placeholder {
-  color: var(--text-3);
+  color: var(--text-4);
 }
 
 .field-hint {
@@ -3589,7 +3618,7 @@ body.has-sidebar {
   transition: border-color var(--transition-base), background var(--transition-base);
 }
 
-.search-input::placeholder { color: var(--text-3); }
+.search-input::placeholder { color: var(--text-4); }
 
 .search-input:focus {
   border-color: rgba(var(--ink-rgb), .38);
@@ -3744,7 +3773,7 @@ body.has-sidebar {
   transition: border-color var(--transition-base), background var(--transition-base);
 }
 
-.modal-input::placeholder { color: rgba(var(--ink-rgb), .28); }
+.modal-input::placeholder { color: var(--text-4); }
 
 .modal-input:focus {
   border-color: rgba(var(--ink-rgb), .38);
@@ -3856,7 +3885,7 @@ body.has-sidebar {
   outline: none;
   transition: box-shadow var(--transition-base), background var(--transition-base);
 }
-.fb-text::placeholder { color: var(--text-3); }
+.fb-text::placeholder { color: var(--text-4); }
 .fb-text:focus {
   background: rgba(var(--accent-rgb), .04);
   box-shadow: var(--well), inset 0 0 0 1.5px rgba(var(--accent-rgb), .5);

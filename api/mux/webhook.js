@@ -49,6 +49,21 @@ function rawBody(req) {
   });
 }
 
+// The caption/subtitle tracks on an asset, as the shape videos.captions
+// stores: enough for the editor to say "English — ready (auto-generated)".
+function textTracks(tracks) {
+  return (tracks || [])
+    .filter(t => t.type === 'text')
+    .map(t => ({
+      id: t.id,
+      language_code: t.language_code || null,
+      name: t.name || null,
+      status: t.status || 'ready',
+      source: t.text_source || null,
+      closed_captions: t.closed_captions === true,
+    }));
+}
+
 // A log line that is useful at 3am and gives away nothing. Ids are safe —
 // they are not credentials — but payloads and signatures never appear.
 function log(event, videoId, note) {
@@ -136,6 +151,7 @@ module.exports = async (req, res) => {
         const track = (data.tracks || []).find(t => t.type === 'video') || {};
 
         const patch = {
+          captions: textTracks(data.tracks),
           mux_asset_id: data.id,
           mux_asset_status: 'ready',
           mux_playback_id: playback ? playback.id : null,
@@ -181,6 +197,40 @@ module.exports = async (req, res) => {
               .eq('mux_asset_id', data.id);
         await byId;
         log(type, videoId || data.id, 'record kept, marked unplayable');
+        break;
+      }
+
+      // Caption/subtitle tracks — they can arrive after asset.ready (auto-
+      // generated captions do), so the ready-time snapshot is not enough.
+      // The row's captions list is re-derived, not appended to, which keeps
+      // this idempotent under Mux's retries and out-of-order delivery.
+      case 'video.asset.track.created':
+      case 'video.asset.track.ready':
+      case 'video.asset.track.errored':
+      case 'video.asset.track.deleted': {
+        const assetId = data.asset_id || null;
+        if (!assetId && !videoId) break;
+        const q = videoId
+          ? db.from('videos').select('id, captions').eq('id', videoId).single()
+          : db.from('videos').select('id, captions').eq('mux_asset_id', assetId).single();
+        const { data: row } = await q;
+        if (!row) { log(type, videoId || assetId, 'no matching video'); break; }
+
+        let list = Array.isArray(row.captions) ? row.captions.slice() : [];
+        list = list.filter(t => t.id !== data.id);
+        if (type !== 'video.asset.track.deleted' &&
+            (data.type === 'text' || data.text_type)) {
+          list.push({
+            id: data.id,
+            language_code: data.language_code || null,
+            name: data.name || null,
+            status: type.endsWith('errored') ? 'errored' : (data.status || 'preparing'),
+            source: data.text_source || null,
+            closed_captions: data.closed_captions === true,
+          });
+        }
+        await db.from('videos').update({ captions: list }).eq('id', row.id);
+        log(type, row.id, 'track ' + data.id);
         break;
       }
 

@@ -8,17 +8,20 @@
 // So this endpoint checks access and mints a signed URL that dies in a
 // minute. Long enough to click, short enough that a copied link is useless.
 //
-// THE ACCESS RULE IS THE VIDEO'S, NOT THE FILE'S
-// A worksheet is exactly as private as the video it belongs to. Rather than a
-// second rule that could drift, this reads the parent video and asks the same
-// canWatch() the player uses.
+// THE ACCESS RULE IS THE PARENT'S, NOT THE FILE'S
+// Resources live in a shared library (video-collections.sql) and are linked
+// to videos and/or collections. A file is exactly as private as the MOST
+// public thing it is attached to: if any linked video is watchable, or any
+// linked collection is live, the download is allowed. The rules themselves
+// are canWatch()/canBrowseCollection() — the same ones the player and the
+// collection page use, so they cannot drift.
 //
 // Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 // ─────────────────────────────────────────────────────────────────────────────
 
 'use strict';
 
-const { env, whoami, isAdmin, canWatch, fail, log, warn } = require('./_lib');
+const { env, whoami, isAdmin, canWatch, canBrowseCollection, fail, log, warn } = require('./_lib');
 
 const BUCKET = 'video-resources';
 const TTL_SECONDS = 60;
@@ -39,21 +42,33 @@ module.exports = async (req, res) => {
   if (!resourceId) return fail(res, 400, 'Which resource?');
 
   // The client sends a resource id and nothing else. The path, the filename
-  // and the parent video all come from the database — a client-supplied path
-  // would let anyone read any object in the bucket.
+  // and every parent come from the database — a client-supplied path would
+  // let anyone read any object in the bucket.
   const { data: resource, error } = await db
-    .from('video_resources')
-    .select('id, video_id, title, storage_path, file_name, videos!inner(id, status, visibility)')
+    .from('resources')
+    .select('id, title, storage_path, file_name, status,' +
+            ' resource_links(video_id, collection_id,' +
+            '  videos(id, status, visibility, published_at),' +
+            '  collections(id, status, visibility, published_at))')
     .eq('id', resourceId)
     .single();
 
   if (error || !resource) return fail(res, 404, 'No such resource');
 
   const admin = await isAdmin(db, who.user.id);
-  const verdict = canWatch(resource.videos, { isAdmin: admin });
-  if (!verdict.allowed) {
-    if (verdict.reason === 'not-published') return fail(res, 404, 'No such resource');
-    return fail(res, 403, 'You do not have access to this resource');
+
+  // an archived file stays for the admin; members lose the door
+  if (resource.status !== 'active' && !admin) return fail(res, 404, 'No such resource');
+
+  const links = resource.resource_links || [];
+  const allowed = admin || links.some((l) => {
+    if (l.videos) return canWatch(l.videos, { isAdmin: false }).allowed;
+    if (l.collections) return canBrowseCollection(l.collections, { isAdmin: false }).allowed;
+    return false;
+  });
+  if (!allowed) {
+    // unattached or attached only to drafts — indistinguishable from absent
+    return fail(res, 404, 'No such resource');
   }
 
   const { data: signed, error: signErr } = await db.storage
@@ -70,7 +85,7 @@ module.exports = async (req, res) => {
   }
 
   // the id is safe to log; the signed URL never is
-  log('resource', 'signed ' + resourceId + ' for video=' + resource.video_id);
+  log('resource', 'signed ' + resourceId);
 
   return res.status(200).json({
     url: signed.signedUrl,
