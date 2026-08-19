@@ -176,23 +176,24 @@ async function createMuxUpload(videoId) {
   });
 }
 
-// ── the speed lesson from the pilot ──────────────────────────────────────────
-// Letting curl stream a cloud-only placeholder ran at ~0.7 GB/h — 15× below
-// the 23 Mbps uplink — because small interleaved reads through the File
-// Provider stall the upload. Sequential big reads pull ~7 MB/s, so each file
-// is fully materialized FIRST, and the NEXT file prefetches while the current
-// one uploads at full uplink speed.
+// ── the speed lessons, measured 2026-08-19 ──────────────────────────────────
+// 1. Streaming a cloud-only placeholder straight into curl ran at ~0.7 GB/h;
+//    a big-block sequential read first materializes at ~7 MB/s. So: download
+//    fully, then upload from local cache.
+// 2. Mackenzie's connection gives ANY single upload stream only ~3 Mbps even
+//    though aggregate capacity is ~23 Mbps (verified: 3 concurrent streams to
+//    Cloudflare each held ~3.6 Mbps). So: CONCURRENCY (4 file pipelines at
+//    once), which is why the main loop below is a worker pool, not a for-loop.
+const CONCURRENCY = 4;
 
 // a big-block sequential read is what makes Drive materialize at full speed;
 // the bytes land in the provider cache, the pipe to /dev/null costs nothing
-function materialize(localPath, background) {
-  const args = ['if=' + localPath, 'of=/dev/null', 'bs=8m'];
-  if (background) {
-    const child = spawn('dd', args, { stdio: 'ignore', detached: true });
-    child.unref();
-    return child;
-  }
-  execFileSync('dd', args, { stdio: 'ignore' });
+function materialize(localPath) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('dd', ['if=' + localPath, 'of=/dev/null', 'bs=8m'], { stdio: 'ignore' });
+    child.on('close', code => (code === 0 ? resolve() : reject(new Error('drive download failed'))));
+    child.on('error', reject);
+  });
 }
 
 // materialization eats system-volume space and macOS gives us no way to evict

@@ -1726,6 +1726,9 @@ input[type=range].range-slider:disabled {
 }
 
 .nav-initial {
+  /* flex: none — a flex child with a fixed size still SHRINKS by default,
+     and a long name+email beside it was squeezing the circle into an oval */
+  flex: none;
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -4150,52 +4153,10 @@ body.has-sidebar {
 
 
 /* ─── 24. SITE FOOTER ────────────────────────────────────────── */
-/* Injected on every page by lib/nav.js; login/signup carry it
-   statically. Bump the version string in nav.js. */
-
-.site-footer {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: .1em;
-  color: var(--text-3);
-  padding: 8px 28px 48px;
-  user-select: none;
-}
-
-.footer-main { display: block; }
-
-.footer-support {
-  display: block;
-  margin-top: 10px;
-  user-select: text;   /* let people copy the support address */
-}
-
-.footer-support a {
-  color: inherit;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color var(--transition-base);
-}
-
-.footer-support a:hover { color: var(--text-2); }
-
-/* stay clear of pages with a fixed CTA bar */
-body:has(.cta-bar) .site-footer {
-  padding-bottom: 120px;
-}
-
-/* THE RULE: a full-screen experience owns the viewport, and the footer
-   never rides along. The version plate and support line belong to the
-   app's furniture — inside a teaching room they're a seam in the
-   illusion, and on a phone they surface under the fold mid-practice.
-   Any surface that takes the whole screen sets `fs-fullscreen` on
-   <body> for as long as it holds it: the breath pacer's room and its
-   Practice Out Loud variant, Your Cues' teleprompter. New full-screen
-   surfaces set the same class — don't re-solve this per page. */
-body.fs-fullscreen .site-footer { display: none; }
+/* Removed 2026-08: the footer (brand line + support email) dated every
+   page and repeated what the sidebar plate already says. The section
+   number is kept so the map of this file stays stable. Support contact
+   lives in the feedback door and the privacy page. */
 
 
 /* ─── 25. SCROLLBARS ─────────────────────────────────────────── */
