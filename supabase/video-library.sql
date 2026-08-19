@@ -36,6 +36,7 @@ create table if not exists public.video_categories (
   id                uuid primary key default gen_random_uuid(),
   name              text not null,
   slug              text not null,
+  subtitle          text,          -- the supporting line under the title
   short_description text,
   description       text,
   cover_image_url   text,
@@ -52,6 +53,11 @@ create table if not exists public.video_categories (
   constraint category_name_not_blank check (length(btrim(name)) between 1 and 80),
   constraint category_slug_shape     check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$')
 );
+
+-- self-heal (2026-08-19): subtitle arrived after some databases first created
+-- this table — CREATE TABLE IF NOT EXISTS silently skips an existing table,
+-- so any later column needs its own guard here too.
+alter table public.video_categories add column if not exists subtitle text;
 
 -- slugs are compared case-insensitively because they arrive from a URL
 create unique index if not exists video_categories_slug_idx

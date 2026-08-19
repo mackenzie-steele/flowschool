@@ -1,6 +1,9 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/@:handle", "destination": "/teacher.html" }
+    { "source": "/@:handle", "destination": "/teacher.html" },
+    { "source": "/library/:slug", "destination": "/library-category.html" },
+    { "source": "/collection/:slug", "destination": "/collection.html" },
+    { "source": "/video/:slug", "destination": "/video.html" }
   ]
 }

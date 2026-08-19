@@ -5428,6 +5428,7 @@
       var t = function (id) { return (g(id) || '').trim(); };
       return {
         name: t('cate-title'),
+        subtitle: t('cate-subtitle') || null,
         sort_order: parseInt(g('cate-pos'), 10) || 0,
         short_description: t('cate-short') || null,
         description: t('cate-desc') || null,
@@ -5438,7 +5439,7 @@
     }
     function categoryFingerprint() {
       var v = categoryRead();
-      return JSON.stringify([v.name, v.sort_order, v.short_description, v.description,
+      return JSON.stringify([v.name, v.subtitle, v.sort_order, v.short_description, v.description,
         v.slug, v.seo_title, v.seo_description]);
     }
     function categoryDirty() {
@@ -5501,6 +5502,9 @@
           cateSection('About', '',
             '<label class="nf-label" for="cate-title">Title <span class="nf-req">required</span></label>' +
             '<input class="modal-input" id="cate-title" maxlength="80" value="' + esc(c.name || '') + '">' +
+            '<label class="nf-label" for="cate-subtitle">Subtitle <span class="nf-opt">optional</span></label>' +
+            '<input class="modal-input" id="cate-subtitle" maxlength="160" value="' + esc(c.subtitle || '') + '" placeholder="begin with these poses and create your own flow">' +
+            '<span class="nf-hint">The supporting line under the title, on the shelf and the category page.</span>' +
             '<label class="nf-label" for="cate-pos">Position</label>' +
             '<input class="modal-input" id="cate-pos" type="number" min="0" step="1" value="' + esc(c.sort_order != null ? c.sort_order : 0) + '" style="max-width:120px">' +
             '<span class="nf-hint">Lower numbers come first in the library.</span>' +
@@ -5577,7 +5581,7 @@
         CATE.editing = null; renderVideoCategories();
       });
 
-      ['cate-title', 'cate-pos', 'cate-short', 'cate-desc', 'cate-slug', 'cate-seo-title', 'cate-seo-desc']
+      ['cate-title', 'cate-subtitle', 'cate-pos', 'cate-short', 'cate-desc', 'cate-slug', 'cate-seo-title', 'cate-seo-desc']
         .forEach(function (id) {
           var e = $(id); if (e) e.addEventListener('input', function () {
             var set = function (cid, len, lim) {
@@ -5608,6 +5612,13 @@
             .select('id').ilike('slug', vals.slug).neq('id', c.id);
           if ((taken.data || []).length) throw new Error('That URL is taken by another category.');
           var r = await db.from('video_categories').update(vals).eq('id', c.id).select().single();
+          // a database that predates the subtitle column: save everything
+          // else and say what is missing, rather than failing the whole form
+          if (r.error && /subtitle.*does not exist/i.test(r.error.message || '')) {
+            delete vals.subtitle;
+            toast('Subtitle needs supabase/video-engagement.sql run — everything else saved');
+            r = await db.from('video_categories').update(vals).eq('id', c.id).select().single();
+          }
           if (r.error) throw r.error;
           CATE.editing = Object.assign({}, CATE.editing, r.data);
           var i = VID.cats.findIndex(function (x) { return x.id === c.id; });

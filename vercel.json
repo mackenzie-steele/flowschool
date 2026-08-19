@@ -22,6 +22,18 @@
     {
       "source": "/@:handle",
       "destination": "/teacher"
+    },
+    {
+      "source": "/library/:slug",
+      "destination": "/library-category"
+    },
+    {
+      "source": "/collection/:slug",
+      "destination": "/collection"
+    },
+    {
+      "source": "/video/:slug",
+      "destination": "/video"
     }
   ]
 }

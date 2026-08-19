@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <!-- served at /video/<slug> etc. — without this, every relative URL on the
+       page (scripts, styles, the nav's own links) resolves under the slug -->
+  <base href="/">
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
+  <style>html{background:#0F1116;color-scheme:dark}html[data-theme="light"]{background:#F7F6F4;color-scheme:light}</style>
+  <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library — Flow School</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="library.css">
+  <script src="lib/icons.js"></script>
+</head>
+
+<body class="has-sidebar">
+  <script src="lib/version.js"></script>
+  <script src="lib/nav.js"></script>
+  <script src="lib/vendor/supabase-js-v2.110.7.min.js"></script>
+  <script src="lib/supabase.js"></script>
+  <script src="lib/telemetry.js"></script>
+  <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
+  <script src="lib/notifications.js"></script>
+  <script src="lib/notification-panel.js"></script>
+  <script src="lib/toast.js"></script>
+  <div class="toast" id="toast"></div>
+
+  <main>
+    <div class="lib-page" id="vl-root">
+      <div class="cat-hero lib-skel" style="aspect-ratio:21/7"></div>
+      <div class="vcard-grid" style="margin-top:24px"></div>
+    </div>
+  </main>
+
+  <script src="lib/video-library.js"></script>
+  <script>
+  (function () {
+    var VL = window.fsVL;
+    var esc = VL.esc;
+    var root = document.getElementById('vl-root');
+
+    // /library/<slug> — the rewrite serves this page; the path carries the slug
+    var slug = decodeURIComponent((location.pathname.split('/')[2] || '').trim().toLowerCase());
+
+    function notFound() {
+      root.innerHTML =
+        '<a class="lib-crumb" href="/library"><span class="material-symbols-sharp">arrow_back</span>Library</a>' +
+        '<div class="lib-empty"><h3>There is no shelf here</h3>' +
+        '<p>This category may have moved. The library home has everything that is live.</p></div>';
+    }
+
+    (async function () {
+      if (!(await VL.gate(root))) return;
+      if (!slug) { notFound(); return; }
+      var L;
+      try { L = await VL.loadCatalogue(); }
+      catch (e) {
+        root.innerHTML = '<div class="lib-empty"><h3>The library could not load</h3>' +
+          '<p>' + esc((e && e.message) || 'Try again in a moment.') + '</p></div>';
+        return;
+      }
+      var cat = L.categories.filter(function (c) { return (c.slug || '').toLowerCase() === slug; })[0];
+      if (!cat) { notFound(); return; }
+
+      document.title = (cat.seo_title || cat.name) + ' — Flow School';
+      if (cat.seo_description || cat.short_description) {
+        var m = document.createElement('meta');
+        m.name = 'description';
+        m.content = cat.seo_description || cat.short_description;
+        document.head.appendChild(m);
+      }
+      var link = document.createElement('link');
+      link.rel = 'canonical';
+      link.href = 'https://flowschool.io/library/' + cat.slug;
+      document.head.appendChild(link);
+
+      var items = VL.categoryItems(L, cat.id);
+      root.innerHTML =
+        '<a class="lib-crumb" href="/library"><span class="material-symbols-sharp">arrow_back</span>Library</a>' +
+        (cat.cover_image_url
+          ? '<div class="cat-hero"><img alt="" src="' + esc(cat.cover_image_url) + '"></div>'
+          : '') +
+        '<h1 class="cat-title">' + esc(cat.name) + '</h1>' +
+        (cat.subtitle ? '<p class="cat-sub">' + esc(cat.subtitle) + '</p>' : '') +
+        (cat.description || cat.short_description
+          ? '<p class="cat-desc">' + esc(cat.description || cat.short_description) + '</p>' : '') +
+        (items.length
+          ? '<div class="vcard-grid">' + items.map(VL.cardHTML).join('') + '</div>'
+          : '<div class="lib-empty"><h3>This shelf is being stocked</h3>' +
+            '<p>Nothing is live here yet — check back soon.</p></div>');
+      VL.hydrateThumbs(root);
+    })();
+  })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <!-- served at /video/<slug> etc. — without this, every relative URL on the
+       page (scripts, styles, the nav's own links) resolves under the slug -->
+  <base href="/">
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
+  <style>html{background:#0F1116;color-scheme:dark}html[data-theme="light"]{background:#F7F6F4;color-scheme:light}</style>
+  <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watch — Flow School</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="library.css">
+  <script src="lib/icons.js"></script>
+</head>
+
+<body class="has-sidebar">
+  <script src="lib/version.js"></script>
+  <script src="lib/nav.js"></script>
+  <script src="lib/vendor/supabase-js-v2.110.7.min.js"></script>
+  <script src="lib/supabase.js"></script>
+  <script src="lib/telemetry.js"></script>
+  <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
+  <script src="lib/notifications.js"></script>
+  <script src="lib/notification-panel.js"></script>
+  <script src="lib/toast.js"></script>
+  <div class="toast" id="toast"></div>
+
+  <main>
+    <div class="lib-page" id="vl-root">
+      <div class="player-well"><div class="lib-skel" style="position:absolute;inset:0"></div></div>
+    </div>
+  </main>
+
+  <script src="lib/video-library.js"></script>
+  <script>
+  (function () {
+    var VL = window.fsVL;
+    var esc = VL.esc;
+    var root = document.getElementById('vl-root');
+
+    var slug = decodeURIComponent((location.pathname.split('/')[2] || '').trim().toLowerCase());
+    var params = new URLSearchParams(location.search);
+    var colSlug = (params.get('c') || '').trim().toLowerCase();
+    var wantAutoplay = params.get('autoplay') === '1';
+
+    var V = null;            // the video row
+    var CTX = null;          // { collection, entries:[{divider|video}], index }
+    var player = null;       // the <mux-player> element
+    var playToken = null;    // the playback-token response
+    var saved = false;
+    var engagementReady = true;   // flips false if video-engagement.sql is not run yet
+
+    var AUTOPLAY_KEY = 'fs-vl-autoplay';
+    function autoplayOn() { return localStorage.getItem(AUTOPLAY_KEY) === '1'; }
+    function setAutoplay(on) { try { localStorage.setItem(AUTOPLAY_KEY, on ? '1' : '0'); } catch (_) {} }
+
+    function fmtTS(sec) {
+      var s = Math.max(0, Math.round(Number(sec) || 0));
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+    function missingTable(e) { return /relation .* does not exist|video_notes|video_comments|library_saves/i.test((e && e.message) || ''); }
+
+    function notFound() {
+      root.innerHTML =
+        '<a class="lib-crumb" href="/library"><span class="material-symbols-sharp">arrow_back</span>Library</a>' +
+        '<div class="lib-empty"><h3>There is nothing at this address</h3>' +
+        '<p>This video may have moved or come down. The library home has everything that is live.</p></div>';
+    }
+
+    // ═══ BOOT ═══════════════════════════════════════════════════════════════
+    (async function () {
+      if (!(await VL.gate(root))) return;
+      if (!slug) { notFound(); return; }
+
+      var vr = await db.from('videos').select('*').ilike('slug', slug).or(VL.liveOr()).limit(1);
+      if (vr.error || !(vr.data || []).length) { notFound(); return; }
+      V = vr.data[0];
+
+      var got = await Promise.all([
+        db.from('video_categories').select('id, name, slug').eq('status', 'active'),
+        db.from('instructors').select('id, name'),
+        db.from('resource_links').select('id, resource_id, sort_order, resources(id, title, description, file_name, file_size)')
+          .eq('video_id', V.id).order('sort_order'),
+        db.from('content_filter_values').select('option_id').eq('video_id', V.id),
+        db.from('filter_options').select('id, name, filter_id').eq('status', 'active'),
+      ]);
+      var cats = {}; (got[0].data || []).forEach(function (c) { cats[c.id] = c; });
+      var instructors = {}; (got[1].data || []).forEach(function (i) { instructors[i.id] = i.name; });
+      var resources = (got[2].data || []).map(function (l) { return l.resources; }).filter(Boolean);
+      var optNames = {}; (got[4].data || []).forEach(function (o) { optNames[o.id] = o.name; });
+      var tags = (got[3].data || []).map(function (v) { return optNames[v.option_id]; }).filter(Boolean);
+
+      // ── SEO ──
+      document.title = (V.seo_title || V.title) + ' — Flow School';
+      if (V.seo_description || V.short_description) {
+        var m = document.createElement('meta');
+        m.name = 'description'; m.content = V.seo_description || V.short_description;
+        document.head.appendChild(m);
+      }
+      var lnk = document.createElement('link');
+      lnk.rel = 'canonical'; lnk.href = 'https://flowschool.io/video/' + V.slug;
+      document.head.appendChild(lnk);
+
+      // ── the page ──
+      var cat = cats[V.category_id];
+      var metaBits = [
+        cat ? '<a href="/library/' + esc(cat.slug) + '">' + esc(cat.name) + '</a>' : null,
+        instructors[V.instructor_id] ? esc(instructors[V.instructor_id]) : null,
+        V.duration_seconds != null ? esc(VL.fmtDur(V.duration_seconds)) : null,
+      ].filter(Boolean).join(' · ');
+
+      root.innerHTML =
+        '<a class="lib-crumb" href="' + (colSlug ? '/collection/' + esc(colSlug) : '/library') + '">' +
+          '<span class="material-symbols-sharp">arrow_back</span>' + (colSlug ? 'Collection' : 'Library') + '</a>' +
+        '<div class="watch' + (colSlug ? ' with-rail' : '') + '" id="watch">' +
+          '<div class="watch-main">' +
+            '<div class="player-well" id="player-well">' +
+              '<div class="lib-skel" style="position:absolute;inset:0"></div>' +
+              '<div class="upnext" id="upnext" hidden></div>' +
+            '</div>' +
+            '<div id="fold-host"></div>' +
+            '<div class="watch-head">' +
+              '<h1>' + esc(V.title) + '</h1>' +
+              '<div class="watch-actions">' +
+                '<button class="wa-btn" id="wa-save"><span class="material-symbols-sharp">bookmark</span><span class="wa-label">Save</span></button>' +
+                '<button class="wa-btn" id="wa-share"><span class="material-symbols-sharp">share</span><span class="wa-label">Share</span></button>' +
+              '</div>' +
+            '</div>' +
+            (metaBits ? '<div class="watch-meta">' + metaBits + '</div>' : '') +
+            '<div class="wtabs" role="tablist" id="wtabs">' +
+              '<button class="wtab on" data-pane="about" role="tab" aria-selected="true">About</button>' +
+              '<button class="wtab" data-pane="discussion" role="tab" aria-selected="false">Comments</button>' +
+              '<button class="wtab" data-pane="notes" role="tab" aria-selected="false">Notes</button>' +
+            '</div>' +
+            '<div class="wpane" id="pane-about">' +
+              (V.description || V.short_description
+                ? '<p class="about-desc">' + esc(V.description || V.short_description) + '</p>'
+                : '<p class="about-desc" style="color:var(--text-3)">No description yet.</p>') +
+              // resources live HERE, not behind a tab — a worksheet is part
+              // of what this video IS, and files behind tabs get lost
+              (resources.length ? '<div class="res-chips" id="about-res" style="margin-top:24px"></div>' : '') +
+              (tags.length
+                ? '<div class="about-tags">' + tags.map(function (t) {
+                    return '<span class="about-tag">' + esc(t) + '</span>'; }).join('') + '</div>'
+                : '') +
+            '</div>' +
+            '<div class="wpane" id="pane-discussion" hidden></div>' +
+            '<div class="wpane" id="pane-notes" hidden></div>' +
+          '</div>' +
+          (colSlug ? '<aside class="rail" id="rail"></aside>' : '') +
+        '</div>';
+
+      wireTabs();
+      wireShare();
+      wireSave();
+      renderResources(resources);
+      startPlayer();
+      if (colSlug) loadCollectionContext();
+      loadNotes();
+      loadDiscussion();
+    })();
+
+    // ═══ PLAYER ═════════════════════════════════════════════════════════════
+    var muxPlayerReady = null;
+    function loadMuxPlayer() {
+      if (window.customElements && customElements.get('mux-player')) return Promise.resolve();
+      if (muxPlayerReady) return muxPlayerReady;
+      muxPlayerReady = new Promise(function (resolve, reject) {
+        var sc = document.createElement('script');
+        sc.src = 'lib/vendor/mux-player-v3.13.2.js';
+        sc.onload = resolve;
+        sc.onerror = function () { muxPlayerReady = null; reject(new Error('Could not load the player')); };
+        document.head.appendChild(sc);
+      });
+      return muxPlayerReady;
+    }
+
+    async function startPlayer() {
+      var well = document.getElementById('player-well');
+      try {
+        var out = await VL.playbackToken({ videoId: V.id });
+        playToken = out;
+        await loadMuxPlayer();
+        var el = document.createElement('mux-player');
+        el.setAttribute('playback-id', out.playbackId);
+        el.setAttribute('playback-token', out.playbackToken);
+        if (out.thumbnailToken) el.setAttribute('thumbnail-token', out.thumbnailToken);
+        el.setAttribute('stream-type', 'on-demand');
+        el.setAttribute('metadata-video-title', V.title || '');
+        el.setAttribute('metadata-video-id', V.id);
+        // the real member, so engagement data means something — the admin
+        // string is reserved for the Admin Center's preview
+        el.setAttribute('metadata-viewer-user-id', VL.userId() || 'member');
+        el.setAttribute('accent-color', getComputedStyle(document.documentElement)
+          .getPropertyValue('--accent').trim() || '#7A3E70');
+        if (wantAutoplay && autoplayOn()) el.setAttribute('autoplay', '');
+        var skel = well.querySelector('.lib-skel');
+        if (skel) skel.remove();
+        well.insertBefore(el, well.firstChild);
+        player = el;
+        el.addEventListener('ended', onEnded);
+      } catch (e) {
+        well.innerHTML = '<div class="player-msg">' + esc(e.message || 'This video could not start.') + '</div>';
+      }
+    }
+
+    function seekTo(sec) {
+      if (!player) return;
+      try {
+        player.currentTime = Number(sec) || 0;
+        player.play && player.play();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (_) {}
+    }
+
+    // ═══ COLLECTION CONTEXT ═════════════════════════════════════════════════
+    async function loadCollectionContext() {
+      var cr = await db.from('collections').select('id, title, slug').ilike('slug', colSlug).or(VL.liveOr()).limit(1);
+      var col = (cr.data || [])[0];
+      if (!col) return;
+      var got = await Promise.all([
+        db.from('collection_items').select('kind, video_id, label, position').eq('collection_id', col.id).order('position'),
+        null,
+      ]);
+      var items = got[0].data || [];
+      var vidIds = items.filter(function (i) { return i.kind === 'video' && i.video_id; }).map(function (i) { return i.video_id; });
+      var vids = {};
+      if (vidIds.length) {
+        var vr = await db.from('videos')
+          .select('id, title, slug, duration_seconds, thumbnail_mode, custom_thumbnail_url, mux_playback_id')
+          .in('id', vidIds).or(VL.liveOr()).neq('visibility', 'unlisted');
+        (vr.data || []).forEach(function (v) { vids[v.id] = v; });
+      }
+      // dividers are headings; only live videos are entries. Numbering runs
+      // over what a member can actually see.
+      var entries = [];
+      var n = 0, index = -1;
+      items.forEach(function (it) {
+        if (it.kind === 'divider') { entries.push({ divider: it.label || '' }); return; }
+        var v = vids[it.video_id];
+        if (!v) return;
+        n += 1;
+        if (v.id === V.id) index = n;
+        entries.push({ video: v, n: n });
+      });
+      if (index === -1) return;   // this video is not (visibly) in that collection
+      CTX = { collection: col, entries: entries, count: n, index: index };
+      renderRail();
+      renderFold();
+    }
+
+    function nextEntry() {
+      if (!CTX) return null;
+      var found = null;
+      CTX.entries.forEach(function (e) {
+        if (e.video && e.n === CTX.index + 1) found = e;
+      });
+      return found;
+    }
+
+    function railListHTML() {
+      return CTX.entries.map(function (e) {
+        if (e.divider != null) return '<div class="rail-div">' + esc(e.divider) + '</div>';
+        var now = e.video.id === V.id;
+        return '<a class="rail-item' + (now ? ' now' : '') + '" href="/video/' + esc(e.video.slug) + '?c=' + esc(CTX.collection.slug) + '"' +
+            (now ? ' aria-current="true"' : '') + '>' +
+          '<span class="ri-num">' + e.n + '</span>' +
+          '<span class="ri-title">' + esc(e.video.title) + '</span>' +
+          '<span class="ri-dur">' + VL.fmtDur(e.video.duration_seconds) + '</span>' +
+        '</a>';
+      }).join('');
+    }
+
+    function renderRail() {
+      var rail = document.getElementById('rail');
+      if (!rail) return;
+      rail.innerHTML =
+        '<div class="rail-head"><span class="rail-eyebrow">Collection</span>' +
+          '<button class="rail-toggle" id="rail-toggle" aria-label="Collapse the playlist">' +
+            '<span class="material-symbols-sharp">keyboard_arrow_up</span></button></div>' +
+        '<div class="rail-title"><a href="/collection/' + esc(CTX.collection.slug) + '">' + esc(CTX.collection.title) + '</a></div>' +
+        '<span class="rail-pos">' + CTX.index + ' of ' + CTX.count + '</span>' +
+        '<div class="rail-list">' + railListHTML() + '</div>';
+      var tog = document.getElementById('rail-toggle');
+      tog.addEventListener('click', function () { rail.classList.toggle('closed'); });
+      var now = rail.querySelector('.rail-item.now');
+      if (now) now.scrollIntoView({ block: 'nearest' });
+    }
+
+    function renderFold() {
+      var host = document.getElementById('fold-host');
+      if (!host) return;
+      host.innerHTML =
+        '<div class="fold" id="fold">' +
+          '<button class="fold-bar" id="fold-bar" aria-expanded="false">' +
+            '<span class="pos">' + CTX.index + ' of ' + CTX.count + '</span>' +
+            '<span class="name">' + esc(CTX.collection.title) + '</span>' +
+            '<span class="material-symbols-sharp">keyboard_arrow_down</span>' +
+          '</button>' +
+          '<div class="fold-list">' + railListHTML() + '</div>' +
+        '</div>';
+      var fold = document.getElementById('fold');
+      document.getElementById('fold-bar').addEventListener('click', function () {
+        var open = fold.classList.toggle('open');
+        this.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
+
+    // ═══ UP NEXT ════════════════════════════════════════════════════════════
+    function onEnded() {
+      var next = nextEntry();
+      if (!next) return;
+      var host = document.getElementById('upnext');
+      var href = '/video/' + next.video.slug + '?c=' + CTX.collection.slug;
+      var nv = next.video;
+      var thumb = (nv.thumbnail_mode === 'custom' && nv.custom_thumbnail_url)
+        ? '<div class="upnext-thumb"><img alt="" src="' + esc(nv.custom_thumbnail_url) + '"></div>'
+        : '<div class="upnext-thumb"' + (nv.mux_playback_id
+            ? ' data-tok-video="' + esc(nv.id) + '" data-playback="' + esc(nv.mux_playback_id) + '" data-w="480"'
+            : '') + '></div>';
+      host.innerHTML =
+        '<div class="upnext-card">' +
+          '<div class="upnext-cap">Up next</div>' +
+          thumb +
+          '<div class="upnext-title">' + esc(next.video.title) + '</div>' +
+          '<div class="upnext-dur">' + VL.fmtDur(next.video.duration_seconds) + '</div>' +
+          '<div class="upnext-actions">' +
+            '<button class="upnext-play" id="upnext-play"><span class="material-symbols-sharp">play_arrow</span>Play next</button>' +
+            '<button class="upnext-auto' + (autoplayOn() ? ' on' : '') + '" id="upnext-auto">Autoplay<span class="tog"></span></button>' +
+          '</div>' +
+          '<div class="upnext-count" id="upnext-count" style="margin-top:10px"></div>' +
+        '</div>';
+      host.hidden = false;
+
+      VL.hydrateThumbs(host);
+      function go() { location.href = href + '&autoplay=1'; }
+      document.getElementById('upnext-play').addEventListener('click', go);
+      var autoBtn = document.getElementById('upnext-auto');
+      autoBtn.addEventListener('click', function () {
+        var on = !autoplayOn();
+        setAutoplay(on);
+        autoBtn.classList.toggle('on', on);
+        if (!on && countdown) { clearInterval(countdown); countdown = null; document.getElementById('upnext-count').textContent = ''; }
+      });
+
+      var countdown = null;
+      if (autoplayOn()) {
+        var left = 5;
+        var label = document.getElementById('upnext-count');
+        label.textContent = 'Playing in ' + left + '…';
+        countdown = setInterval(function () {
+          left -= 1;
+          if (left <= 0) { clearInterval(countdown); go(); return; }
+          label.textContent = 'Playing in ' + left + '…';
+        }, 1000);
+      }
+    }
+
+    // ═══ TABS ═══════════════════════════════════════════════════════════════
+    function wireTabs() {
+      var tabs = document.querySelectorAll('.wtab');
+      tabs.forEach(function (t) {
+        t.addEventListener('click', function () {
+          tabs.forEach(function (o) {
+            o.classList.toggle('on', o === t);
+            o.setAttribute('aria-selected', o === t ? 'true' : 'false');
+          });
+          ['about', 'notes', 'discussion'].forEach(function (p) {
+            var pane = document.getElementById('pane-' + p);
+            if (pane) pane.hidden = p !== t.dataset.pane;
+          });
+        });
+      });
+    }
+
+    // ═══ SAVE ═══════════════════════════════════════════════════════════════
+    async function wireSave() {
+      var btn = document.getElementById('wa-save');
+      try {
+        var r = await db.from('library_saves').select('id').eq('video_id', V.id).limit(1);
+        if (r.error) throw r.error;
+        saved = !!(r.data || []).length;
+      } catch (e) {
+        if (missingTable(e)) { engagementReady = false; }
+      }
+      paint();
+      btn.addEventListener('click', async function () {
+        if (!engagementReady) { toast('Saving needs supabase/video-engagement.sql run first'); return; }
+        saved = !saved; paint();   // optimistic; reality catches up below
+        try {
+          if (saved) await VL.saveVideo(V.id);
+          else await VL.unsaveVideo(V.id);
+        } catch (e) {
+          saved = !saved; paint();
+          toast(e.message || 'Could not update that');
+        }
+      });
+      function paint() {
+        btn.classList.toggle('saved', saved);
+        var label = btn.querySelector('.wa-label');
+        if (label) label.textContent = saved ? 'Saved' : 'Save';
+      }
+    }
+
+    // ═══ SHARE ══════════════════════════════════════════════════════════════
+    function wireShare() {
+      document.getElementById('wa-share').addEventListener('click', async function () {
+        var url = 'https://flowschool.io/video/' + V.slug;
+        if (navigator.share) {
+          try { await navigator.share({ title: V.title, url: url }); return; }
+          catch (e) { if (e && e.name === 'AbortError') return; }
+        }
+        try {
+          await navigator.clipboard.writeText(url);
+          toast('Link copied');
+        } catch (_) { toast(url); }
+      });
+    }
+
+    // ═══ RESOURCES — file chips under the About description ═════════════════
+    function renderResources(resources) {
+      var host = document.getElementById('about-res');
+      if (!host) return;
+      host.innerHTML = resources.map(function (r) {
+        return '<button class="res-chip" data-res="' + esc(r.id) + '"' +
+          (r.description ? ' data-tooltip="' + esc(r.description) + '"' : '') + '>' +
+          '<span class="res-title">' + esc(r.title || r.file_name || 'File') + '</span>' +
+          '<span class="res-get"><span class="material-symbols-sharp">download</span></span>' +
+        '</button>';
+      }).join('');
+      host.querySelectorAll('.res-chip').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          btn.disabled = true;
+          try {
+            var out = await VL.resourceUrl(btn.dataset.res);
+            window.open(out.url, '_blank', 'noopener');
+          } catch (e) { toast(e.message || 'Could not fetch that file'); }
+          btn.disabled = false;
+        });
+      });
+    }
+
+    // ═══ NOTES — private to the person writing them ═════════════════════════
+    var notes = [];
+    var noteAtTime = true;
+
+    async function loadNotes() {
+      var pane = document.getElementById('pane-notes');
+      try {
+        var r = await db.from('video_notes').select('*').eq('video_id', V.id).order('created_at');
+        if (r.error) throw r.error;
+        notes = r.data || [];
+      } catch (e) {
+        if (missingTable(e)) {
+          engagementReady = false;
+          pane.innerHTML = '<div class="lib-empty"><h3>Notes are almost ready</h3>' +
+            '<p>This needs <code>supabase/video-engagement.sql</code> run in Supabase.</p></div>';
+          return;
+        }
+      }
+      renderNotes();
+    }
+
+    function renderNotes() {
+      var pane = document.getElementById('pane-notes');
+      var list = notes.slice().sort(function (a, b) {
+        var at = a.timestamp_seconds, bt = b.timestamp_seconds;
+        if (at != null && bt != null) return at - bt;
+        if (at != null) return -1;
+        if (bt != null) return 1;
+        return new Date(a.created_at) - new Date(b.created_at);
+      });
+      pane.innerHTML =
+        '<div class="note-composer">' +
+          '<textarea class="modal-input note-input" id="note-input" rows="1" ' +
+            'placeholder="Capture something you want to remember…"></textarea>' +
+          '<div class="note-composer-row">' +
+            '<button class="note-at" id="note-at" title="Attach the current moment">@ <span id="note-at-time">0:00</span></button>' +
+            '<span class="nf-hint" style="margin:0">Only you can see your notes.</span>' +
+            '<span class="note-save"><button class="btn-secondary" id="note-add">Add note</button></span>' +
+          '</div>' +
+        '</div>' +
+        '<div id="note-list">' +
+        (list.length ? list.map(noteHTML).join('')
+          : '<div class="lib-empty"><h3>Nothing here yet.</h3>' +
+            '<p>Capture something you want to remember while you watch.</p></div>') +
+        '</div>';
+
+      var input = document.getElementById('note-input');
+      input.addEventListener('input', function () {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addNote(); }
+      });
+      // the chip breathes with the player so the captured moment is the one
+      // on screen when the thought happened
+      var atBtn = document.getElementById('note-at');
+      atBtn.classList.toggle('off', !noteAtTime);
+      atBtn.addEventListener('click', function () {
+        noteAtTime = !noteAtTime;
+        atBtn.classList.toggle('off', !noteAtTime);
+      });
+      setInterval(function () {
+        var t = document.getElementById('note-at-time');
+        if (t && player) t.textContent = fmtTS(player.currentTime || 0);
+      }, 1000);
+      document.getElementById('note-add').addEventListener('click', addNote);
+
+      pane.querySelectorAll('.note-ts[data-seek]').forEach(function (b) {
+        b.addEventListener('click', function () { seekTo(parseFloat(b.dataset.seek)); });
+      });
+      pane.querySelectorAll('.note-del').forEach(function (b) {
+        b.addEventListener('click', async function () {
+          var id = b.closest('.note').dataset.note;
+          try {
+            var r = await db.from('video_notes').delete().eq('id', id);
+            if (r.error) throw r.error;
+            notes = notes.filter(function (n) { return n.id !== id; });
+            renderNotes();
+          } catch (e) { toast(e.message || 'Could not delete that'); }
+        });
+      });
+    }
+
+    function noteHTML(n) {
+      var ts = n.timestamp_seconds != null
+        ? '<button class="note-ts" data-seek="' + esc(n.timestamp_seconds) + '">' + fmtTS(n.timestamp_seconds) + '</button>'
+        : '<span class="note-ts plain">·</span>';
+      return '<div class="note" data-note="' + esc(n.id) + '">' + ts +
+        '<div class="note-body">' + esc(n.body) + '</div>' +
+        '<button class="btn-icon adm-del note-del" data-tooltip="Delete" aria-label="Delete note">' +
+          '<span class="material-symbols-sharp">delete</span></button>' +
+      '</div>';
+    }
+
+    async function addNote() {
+      if (!engagementReady) { toast('Notes need supabase/video-engagement.sql run first'); return; }
+      var input = document.getElementById('note-input');
+      var body = (input.value || '').trim();
+      if (!body) return;
+      var ts = (noteAtTime && player) ? Math.round((player.currentTime || 0) * 10) / 10 : null;
+      try {
+        var r = await db.from('video_notes').insert({
+          member_id: VL.userId(), video_id: V.id, body: body, timestamp_seconds: ts,
+        }).select().single();
+        if (r.error) throw r.error;
+        notes.push(r.data);
+        renderNotes();
+      } catch (e) { toast(e.message || 'Could not save that note'); }
+    }
+
+    // ═══ DISCUSSION ═════════════════════════════════════════════════════════
+    var comments = [];
+    var hearts = {};            // comment id → [{ member_id, name }]
+    var heartsReady = false;    // false until the hearts migration has run
+
+    async function loadDiscussion() {
+      var pane = document.getElementById('pane-discussion');
+      try {
+        var r = await db.from('video_discussion').select('*').eq('video_id', V.id).order('created_at');
+        if (r.error) throw r.error;
+        comments = r.data || [];
+      } catch (e) {
+        if (missingTable(e) || /video_discussion/i.test((e && e.message) || '')) {
+          engagementReady = false;
+          pane.innerHTML = '<div class="lib-empty"><h3>Comments are almost ready</h3>' +
+            '<p>This needs <code>supabase/video-engagement.sql</code> run in Supabase.</p></div>';
+          return;
+        }
+      }
+      // hearts arrived in a later migration than comments — the section
+      // renders fine without them, the affordance simply stays hidden
+      hearts = {}; heartsReady = false;
+      if (comments.length) {
+        try {
+          var hr = await db.from('video_comment_hearts_named').select('*')
+            .in('comment_id', comments.map(function (c) { return c.id; }));
+          if (hr.error) throw hr.error;
+          heartsReady = true;
+          (hr.data || []).forEach(function (h) {
+            (hearts[h.comment_id] = hearts[h.comment_id] || []).push(h);
+          });
+        } catch (_) {}
+      } else {
+        heartsReady = true;   // nothing to heart yet, but the system is fine
+      }
+      renderDiscussion();
+    }
+
+    function heartTooltip(list) {
+      var names = list.map(function (h) { return h.name || 'A Flow School teacher'; });
+      if (names.length > 6) {
+        return names.slice(0, 5).join(', ') + ' and ' + (names.length - 5) + ' more';
+      }
+      return names.join(', ');
+    }
+
+    function avatarHTML(c) {
+      if (c && c.author_avatar) return '<span class="disc-avatar"><img alt="" src="' + esc(c.author_avatar) + '"></span>';
+      var initial = ((c && c.author_name) || 'T').charAt(0).toUpperCase();
+      return '<span class="disc-avatar">' + esc(initial) + '</span>';
+    }
+    function whenHTML(c) {
+      var edited = c.updated_at && c.created_at &&
+        (new Date(c.updated_at) - new Date(c.created_at) > 60000);
+      var d = new Date(c.created_at);
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + (edited ? ' · edited' : '');
+    }
+
+    function commentHTML(c, isReply) {
+      var mine = c.member_id === VL.userId();
+      var hs = hearts[c.id] || [];
+      var iHearted = hs.some(function (h) { return h.member_id === VL.userId(); });
+      var heartBtn = heartsReady
+        ? '<button class="cmt-heart' + (iHearted ? ' on' : '') + '" data-act="heart"' +
+            (hs.length ? ' data-tooltip="' + esc(heartTooltip(hs)) + '"' : '') +
+            ' aria-label="' + (iHearted ? 'Remove your heart' : 'Heart this comment') + '"' +
+            (hs.length ? ' aria-description="Hearted by ' + esc(heartTooltip(hs)) + '"' : '') + '>' +
+            '<span class="material-symbols-sharp">favorite</span>' +
+            (hs.length ? '<span class="n">' + hs.length + '</span>' : '') +
+          '</button>'
+        : '';
+      return '<div class="comment" data-comment="' + esc(c.id) + '">' +
+        avatarHTML(c) +
+        '<div class="comment-main">' +
+          '<div class="comment-by"><span class="comment-name">' + esc(c.author_name || 'A Flow School teacher') + '</span>' +
+            '<span class="comment-when">' + esc(whenHTML(c)) + '</span></div>' +
+          '<div class="comment-body">' + esc(c.body) + '</div>' +
+          '<div class="comment-tools">' +
+            heartBtn +
+            (!isReply ? '<button data-act="reply">Reply</button>' : '') +
+            (mine ? '<button data-act="edit">Edit</button><button data-act="delete">Delete</button>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    async function toggleHeart(c) {
+      var me = VL.userId();
+      var list = hearts[c.id] = hearts[c.id] || [];
+      var mineAt = list.findIndex(function (h) { return h.member_id === me; });
+      // optimistic — the heart lands the moment it is tapped
+      if (mineAt !== -1) {
+        list.splice(mineAt, 1);
+        renderDiscussion();
+        var d = await db.from('video_comment_hearts').delete()
+          .eq('comment_id', c.id).eq('member_id', me);
+        if (d.error) { await loadDiscussion(); toast(d.error.message || 'Could not do that'); }
+      } else {
+        list.push({ member_id: me, name: localStorage.getItem('fs-display-name') || 'You' });
+        renderDiscussion();
+        var r = await db.from('video_comment_hearts').insert({ comment_id: c.id, member_id: me });
+        if (r.error && !/duplicate/i.test(r.error.message || '')) {
+          await loadDiscussion(); toast(r.error.message || 'Could not do that');
+        }
+      }
+    }
+
+    function renderDiscussion() {
+      var pane = document.getElementById('pane-discussion');
+      var tops = comments.filter(function (c) { return !c.parent_id; });
+      var replies = {};
+      comments.forEach(function (c) {
+        if (c.parent_id) (replies[c.parent_id] = replies[c.parent_id] || []).push(c);
+      });
+      var thread = tops.map(function (c) {
+        return commentHTML(c, false) +
+          ((replies[c.id] || []).map(function (r) {
+            return '<div class="comment-thread">' + commentHTML(r, true) + '</div>';
+          }).join(''));
+      }).join('');
+
+      pane.innerHTML =
+        '<div class="disc-composer">' + avatarHTML({ author_name: localStorage.getItem('fs-display-name') || '', author_avatar: localStorage.getItem('fs-avatar-url') || '' }) +
+          '<div class="grow">' +
+            '<textarea class="modal-input note-input" id="disc-input" rows="1" placeholder="Add to the conversation…"></textarea>' +
+            '<div class="disc-actions"><button class="btn-secondary" id="disc-post">Post</button></div>' +
+          '</div>' +
+        '</div>' +
+        (thread || '<div class="lib-empty"><h3>Start the conversation.</h3><p>What did you notice?</p></div>');
+
+      var input = document.getElementById('disc-input');
+      input.addEventListener('input', function () {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 240) + 'px';
+      });
+      document.getElementById('disc-post').addEventListener('click', function () { postComment(null, input); });
+
+      pane.querySelectorAll('.comment-tools button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var box = b.closest('.comment');
+          var id = box.dataset.comment;
+          var c = comments.filter(function (x) { return x.id === id; })[0];
+          if (!c) return;
+          if (b.dataset.act === 'heart') return toggleHeart(c);
+          if (b.dataset.act === 'delete') return delComment(c);
+          if (b.dataset.act === 'edit') return editComment(c, box);
+          if (b.dataset.act === 'reply') return replyBox(c, box);
+        });
+      });
+    }
+
+    async function postComment(parentId, input) {
+      if (!engagementReady) { toast('Discussion needs supabase/video-engagement.sql run first'); return; }
+      var body = (input.value || '').trim();
+      if (!body) return;
+      try {
+        var r = await db.from('video_comments').insert({
+          member_id: VL.userId(), video_id: V.id, parent_id: parentId, body: body,
+        }).select().single();
+        if (r.error) throw r.error;
+        await loadDiscussion();   // reload through the view so the byline is real
+      } catch (e) { toast(e.message || 'Could not post that'); }
+    }
+
+    function replyBox(c, box) {
+      if (box.nextElementSibling && box.nextElementSibling.classList.contains('comment-reply-box')) {
+        box.nextElementSibling.remove(); return;
+      }
+      var wrap = document.createElement('div');
+      wrap.className = 'comment-reply-box';
+      wrap.innerHTML = '<textarea class="modal-input note-input" rows="1" placeholder="Reply…"></textarea>' +
+        '<div class="disc-actions"><button class="btn-ghost">Cancel</button>' +
+        '<button class="btn-secondary">Reply</button></div>';
+      box.insertAdjacentElement('afterend', wrap);
+      var ta = wrap.querySelector('textarea');
+      ta.focus();
+      wrap.querySelector('.btn-ghost').addEventListener('click', function () { wrap.remove(); });
+      wrap.querySelector('.btn-secondary').addEventListener('click', function () {
+        postComment(c.parent_id || c.id, ta);   // replies stay one level deep
+      });
+    }
+
+    function editComment(c, box) {
+      var bodyEl = box.querySelector('.comment-body');
+      var old = c.body;
+      bodyEl.innerHTML = '<textarea class="modal-input note-input" rows="2"></textarea>' +
+        '<div class="disc-actions"><button class="btn-ghost">Cancel</button>' +
+        '<button class="btn-secondary">Save</button></div>';
+      var ta = bodyEl.querySelector('textarea');
+      ta.value = old; ta.focus();
+      bodyEl.querySelector('.btn-ghost').addEventListener('click', renderDiscussion);
+      bodyEl.querySelector('.btn-secondary').addEventListener('click', async function () {
+        var body = (ta.value || '').trim();
+        if (!body) return;
+        try {
+          var r = await db.from('video_comments').update({ body: body }).eq('id', c.id);
+          if (r.error) throw r.error;
+          await loadDiscussion();
+        } catch (e) { toast(e.message || 'Could not save that'); }
+      });
+    }
+
+    async function delComment(c) {
+      try {
+        var r = await db.from('video_comments').delete().eq('id', c.id);
+        if (r.error) throw r.error;
+        await loadDiscussion();
+      } catch (e) { toast(e.message || 'Could not delete that'); }
+    }
+  })();
+  </script>
+</body>
+
+</html>

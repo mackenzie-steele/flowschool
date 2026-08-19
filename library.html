@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <script>!function(){var t=localStorage.getItem("fs-theme");document.documentElement.setAttribute("data-theme",t||"dark")}()</script>
+  <style>html{background:#0F1116;color-scheme:dark}html[data-theme="light"]{background:#F7F6F4;color-scheme:light}</style>
+  <link rel="icon" href="img/flow-school-favicon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Library — Flow School</title>
+  <meta name="description" content="The Flow School video library — flows, transitions and movement ideas from Bonnie Weeks.">
+  <link rel="canonical" href="https://flowschool.io/library">
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="library.css">
+  <script src="lib/icons.js"></script>
+</head>
+
+<body class="has-sidebar">
+  <script src="lib/version.js"></script>
+  <script src="lib/nav.js"></script>
+  <script src="lib/vendor/supabase-js-v2.110.7.min.js"></script>
+  <script src="lib/supabase.js"></script>
+  <script src="lib/telemetry.js"></script>
+  <script src="lib/sync.js"></script>
+  <script src="lib/analytics.js"></script>
+  <script src="lib/notifications.js"></script>
+  <script src="lib/notification-panel.js"></script>
+  <script src="lib/toast.js"></script>
+  <div class="toast" id="toast"></div>
+
+  <main>
+    <!-- classless on purpose: the hero band spans the full content width and
+         only everything AFTER it lives in the .lib-page column -->
+    <div id="vl-root">
+      <div class="hero"><div class="hero-track"><div class="hero-slide lib-skel" style="border-radius:var(--r)"></div></div></div>
+    </div>
+  </main>
+
+  <script src="lib/video-library.js"></script>
+  <script>
+  (function () {
+    var VL = window.fsVL;
+    var esc = VL.esc;
+    var root = document.getElementById('vl-root');
+
+    var L = null;              // the catalogue
+    var valueMap = null;       // filter values by content id
+    var active = new Set();    // selected filter option ids
+    var q = '';                // the search phrase
+    var searching = false;     // a search request is in flight
+
+    // ── shell ──
+    function shell() {
+      root.innerHTML =
+        heroHTML() +
+        '<div class="lib-page">' +
+        '<section class="explore" aria-label="Search the library">' +
+          '<h2 class="explore-q">What do you want to explore?</h2>' +
+          '<div class="explore-row" id="explore-row">' +
+            '<span class="material-symbols-sharp" aria-hidden="true">search</span>' +
+            '<input class="explore-input" id="vl-q" type="search" autocomplete="off" ' +
+              'placeholder="Search flows, transitions, movement ideas…" aria-label="Search the library">' +
+            '<button class="explore-clear" id="vl-clear" aria-label="Clear search">' +
+              '<span class="material-symbols-sharp">close</span></button>' +
+            '<button class="filter-btn" id="vl-filter-btn" aria-haspopup="dialog"' +
+              (filtersAvailable() ? '' : ' hidden') + '>' +
+              '<span class="material-symbols-sharp">checklist</span>Filters<span class="n" id="vl-filter-n"></span>' +
+            '</button>' +
+          '</div>' +
+          '<div class="active-filters" id="vl-active" hidden></div>' +
+        '</section>' +
+        '<div id="vl-results" hidden></div>' +
+        '<div id="vl-shelves"></div>' +
+        '</div>';
+      wireHero();
+      wireSearch();
+      renderShelves();
+      paintActiveFilters();
+    }
+
+    // ── the hero ──
+    function heroHTML() {
+      var feats = VL.featured(L, 5);
+      if (!feats.length) return '';
+      var slides = feats.map(function (f, i) {
+        var href = f.kind === 'collection' ? '/collection/' + f.slug : '/video/' + f.slug;
+        var a = f.art
+          ? '<img alt="" ' + (i === 0 ? '' : 'loading="lazy" ') + 'src="' + esc(f.art) + '">'
+          : '';
+        var tok = (!f.art && f.playbackId)
+          ? ' data-tok-video="' + esc(f.tokenVideoId || f.id) + '" data-playback="' + esc(f.playbackId) + '" data-w="1280"'
+          : '';
+        var eyebrow = f.kind === 'collection'
+          ? '<span class="material-symbols-sharp">stacks</span>Collection'
+          : 'New in the library';
+        var meta = f.kind === 'collection'
+          ? f.count + (f.count === 1 ? ' video' : ' videos') + (f.runtime ? ' · ' + VL.fmtRuntime(f.runtime) : '')
+          : (VL.fmtDur(f.metaSeconds) || '') + (f.instructor ? ' · ' + f.instructor : '');
+        return '<a class="hero-slide' + (f.art || f.playbackId ? '' : ' bare') + '" href="' + esc(href) + '"' + tok + '>' +
+          a +
+          '<span class="hero-copy">' +
+            '<span class="hero-eyebrow">' + eyebrow + '</span>' +
+            '<span class="hero-title">' + esc(f.title) + '</span>' +
+            (f.short ? '<span class="hero-desc">' + esc(f.short) + '</span>' : '') +
+            (meta ? '<span class="hero-meta">' + esc(meta) + '</span>' : '') +
+            '<span class="hero-cta">' + (f.kind === 'collection' ? 'Open the collection' : 'Watch') +
+              '<span class="material-symbols-sharp">arrow_forward</span></span>' +
+          '</span>' +
+        '</a>';
+      }).join('');
+      var dots = feats.map(function (_, i) {
+        return '<button class="hero-dot' + (i === 0 ? ' on' : '') + '" data-slide="' + i + '" aria-label="Feature ' + (i + 1) + '"></button>';
+      }).join('');
+      return '<section class="hero" aria-label="Featured">' +
+        '<div class="hero-track" id="hero-track">' + slides + '</div>' +
+        (feats.length > 1
+          ? '<div class="hero-nav"><div class="hero-dots" id="hero-dots">' + dots + '</div>' +
+            '<div class="hero-arrows">' +
+              '<button class="hero-arrow" id="hero-prev" aria-label="Previous"><span class="material-symbols-sharp">arrow_back</span></button>' +
+              '<button class="hero-arrow" id="hero-next" aria-label="Next"><span class="material-symbols-sharp">arrow_forward</span></button>' +
+            '</div></div>'
+          : '') +
+      '</section>';
+    }
+
+    function wireHero() {
+      var track = document.getElementById('hero-track');
+      if (!track) return;
+      var slides = Array.prototype.slice.call(track.children);
+      var dots = Array.prototype.slice.call(document.querySelectorAll('.hero-dot'));
+      function goTo(i) {
+        var s = slides[Math.max(0, Math.min(i, slides.length - 1))];
+        if (s) track.scrollTo({ left: s.offsetLeft - track.offsetLeft, behavior: 'smooth' });
+      }
+      function current() {
+        var x = track.scrollLeft, best = 0, bd = Infinity;
+        slides.forEach(function (s, i) {
+          var d = Math.abs((s.offsetLeft - track.offsetLeft) - x);
+          if (d < bd) { bd = d; best = i; }
+        });
+        return best;
+      }
+      dots.forEach(function (d) {
+        d.addEventListener('click', function () { goTo(parseInt(d.dataset.slide, 10)); });
+      });
+      var prev = document.getElementById('hero-prev'), next = document.getElementById('hero-next');
+      if (prev) prev.addEventListener('click', function () { goTo(current() - 1); });
+      if (next) next.addEventListener('click', function () { goTo(current() + 1); });
+      var t;
+      track.addEventListener('scroll', function () {
+        clearTimeout(t);
+        t = setTimeout(function () {
+          var i = current();
+          dots.forEach(function (d, di) { d.classList.toggle('on', di === i); });
+        }, 80);
+      }, { passive: true });
+    }
+
+    // ── shelves ──
+    function renderShelves() {
+      var host = document.getElementById('vl-shelves');
+      if (!host) return;
+      var html = '';
+      L.categories.forEach(function (cat) {
+        var items = VL.categoryItems(L, cat.id);
+        if (!items.length) return;
+        html += '<section class="shelf">' +
+          '<div class="shelf-head">' +
+            '<div class="shelf-id">' +
+              '<h2 class="shelf-name"><a href="/library/' + esc(cat.slug) + '">' + esc(cat.name) + '</a></h2>' +
+              (cat.subtitle ? '<p class="shelf-sub">' + esc(cat.subtitle) + '</p>' : '') +
+            '</div>' +
+            '<a class="shelf-all" href="/library/' + esc(cat.slug) + '">View all<span class="material-symbols-sharp">arrow_forward</span></a>' +
+          '</div>' +
+          '<div class="shelf-row">' + items.map(VL.cardHTML).join('') + '</div>' +
+        '</section>';
+      });
+      host.innerHTML = html ||
+        '<div class="lib-empty"><h3>The library is being stocked</h3>' +
+        '<p>Nothing is published yet — the shelves fill in as videos and collections go live.</p></div>';
+      VL.hydrateThumbs(host);
+    }
+
+    // ── search + filters compose into one results mode ──
+    function filtersAvailable() {
+      return L.filters.some(function (f) {
+        return L.options.some(function (o) { return o.filter_id === f.id; });
+      });
+    }
+
+    function wireSearch() {
+      var input = document.getElementById('vl-q');
+      var row = document.getElementById('explore-row');
+      var clear = document.getElementById('vl-clear');
+      var t;
+      input.addEventListener('input', function () {
+        row.classList.toggle('has-q', !!input.value);
+        clearTimeout(t);
+        t = setTimeout(function () { q = input.value.trim(); refresh(); }, 300);
+      });
+      clear.addEventListener('click', function () {
+        input.value = ''; q = ''; row.classList.remove('has-q'); refresh(); input.focus();
+      });
+      var fb = document.getElementById('vl-filter-btn');
+      if (fb) fb.addEventListener('click', openFilterPanel);
+    }
+
+    var searchSeq = 0;
+    async function refresh() {
+      var results = document.getElementById('vl-results');
+      var shelves = document.getElementById('vl-shelves');
+      var browsing = !q && !active.size;
+      results.hidden = browsing;
+      shelves.hidden = !browsing;
+      paintActiveFilters();
+      if (browsing) return;
+
+      var seq = ++searchSeq;
+      var items;
+      if (q) {
+        results.innerHTML = '<div class="results-head"><h2>Searching…</h2></div>' +
+          '<div class="vcard-grid">' + VL.skeletonCards(6) + '</div>';
+        var hits;
+        try { hits = await VL.search(q); }
+        catch (e) {
+          if (seq !== searchSeq) return;
+          results.innerHTML = '<div class="lib-empty"><h3>Search is not available</h3>' +
+            '<p>' + esc(e.message || 'Try again in a moment.') + '</p></div>';
+          return;
+        }
+        if (seq !== searchSeq) return;
+        // prefer the catalogue's richer rows (art fallbacks) when we have them
+        items = hits.map(function (h) {
+          if (h.kind === 'video' && L.byVideo[h.id]) return VL.videoItem(L, L.byVideo[h.id]);
+          if (h.kind === 'collection' && L.byCollection[h.id]) return VL.collectionItem(L, L.byCollection[h.id]);
+          return null;
+        }).filter(Boolean);
+      } else {
+        // filters alone: browse everything, curated shelves collapsed into one grid
+        items = L.collections.map(function (c) { return VL.collectionItem(L, c); })
+          .concat(L.videos.map(function (v) { return VL.videoItem(L, v); }));
+      }
+      items = items.filter(function (it) { return VL.matchesFilters(L, valueMap, it, active); });
+
+      if (!items.length) {
+        results.innerHTML = '<div class="lib-empty"><h3>Nothing matched that' + (q ? ' search' : '') + '.</h3>' +
+          '<p>Try another phrase' + (active.size ? ' or remove a filter' : '') + '.</p></div>';
+        return;
+      }
+      results.innerHTML =
+        '<div class="results-head"><h2>' + (q ? 'Results' : 'Browse') + '</h2>' +
+          '<span class="results-count">' + items.length + (items.length === 1 ? ' match' : ' matches') + '</span></div>' +
+        '<div class="vcard-grid">' + items.map(VL.cardHTML).join('') + '</div>';
+      VL.hydrateThumbs(results);
+    }
+
+    // ── the filter panel ──
+    function optName(id) {
+      var o = L.options.filter(function (x) { return x.id === id; })[0];
+      return o ? o.name : '';
+    }
+    function paintActiveFilters() {
+      var n = document.getElementById('vl-filter-n');
+      var btn = document.getElementById('vl-filter-btn');
+      if (n) n.textContent = active.size ? String(active.size) : '';
+      if (btn) btn.classList.toggle('on', !!active.size);
+      var host = document.getElementById('vl-active');
+      if (!host) return;
+      host.hidden = !active.size;
+      if (!active.size) { host.innerHTML = ''; return; }
+      var chips = '';
+      active.forEach(function (id) {
+        chips += '<button class="af-chip" data-opt="' + esc(id) + '">' + esc(optName(id)) +
+          '<span class="material-symbols-sharp">close</span></button>';
+      });
+      chips += '<button class="af-clear" id="vl-clear-filters">Clear all</button>';
+      host.innerHTML = chips;
+      host.querySelectorAll('.af-chip').forEach(function (c) {
+        c.addEventListener('click', function () { active.delete(c.dataset.opt); refresh(); });
+      });
+      var ca = document.getElementById('vl-clear-filters');
+      if (ca) ca.addEventListener('click', function () { active.clear(); refresh(); });
+    }
+
+    function openFilterPanel() {
+      var veil = document.createElement('div');
+      veil.className = 'fil-veil';
+      var panel = document.createElement('div');
+      panel.className = 'fil-panel';
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-label', 'Filter the library');
+      var groups = L.filters.map(function (f) {
+        var opts = L.options.filter(function (o) { return o.filter_id === f.id; });
+        if (!opts.length) return '';
+        return '<div class="fil-group"><div class="fil-group-name">' + esc(f.name) + '</div>' +
+          '<div class="fil-opts">' + opts.map(function (o) {
+            var on = active.has(o.id);
+            return '<button class="fil-opt' + (on ? ' on' : '') + '" data-opt="' + esc(o.id) + '">' +
+              (on ? '<span class="material-symbols-sharp">check</span>' : '') + esc(o.name) + '</button>';
+          }).join('') + '</div></div>';
+      }).join('');
+      panel.innerHTML =
+        '<div class="fil-grabber"></div>' +
+        '<div class="fil-head"><h2>Filters</h2>' +
+          '<button class="btn-icon" id="fil-close" aria-label="Close"><span class="material-symbols-sharp">close</span></button></div>' +
+        '<div class="fil-body">' + groups + '</div>' +
+        '<div class="fil-actions">' +
+          '<button class="af-clear" id="fil-clear">Clear all</button>' +
+          '<button class="btn-primary" id="fil-done">Done</button>' +
+        '</div>';
+      document.body.appendChild(veil);
+      document.body.appendChild(panel);
+      requestAnimationFrame(function () { veil.classList.add('open'); panel.classList.add('open'); });
+
+      function close() {
+        veil.classList.remove('open'); panel.classList.remove('open');
+        setTimeout(function () { veil.remove(); panel.remove(); }, 300);
+        document.removeEventListener('keydown', onKey);
+        refresh();
+      }
+      function onKey(e) { if (e.key === 'Escape') close(); }
+      document.addEventListener('keydown', onKey);
+      veil.addEventListener('click', close);
+      panel.querySelector('#fil-close').addEventListener('click', close);
+      panel.querySelector('#fil-done').addEventListener('click', close);
+      panel.querySelector('#fil-clear').addEventListener('click', function () {
+        active.clear();
+        panel.querySelectorAll('.fil-opt').forEach(function (b) {
+          b.classList.remove('on');
+          var ic = b.querySelector('.material-symbols-sharp'); if (ic) ic.remove();
+        });
+        paintActiveFilters();
+      });
+      panel.querySelectorAll('.fil-opt').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var id = b.dataset.opt;
+          if (active.has(id)) { active.delete(id); b.classList.remove('on'); var ic = b.querySelector('.material-symbols-sharp'); if (ic) ic.remove(); }
+          else { active.add(id); b.classList.add('on'); b.insertAdjacentHTML('afterbegin', '<span class="material-symbols-sharp">check</span>'); }
+          paintActiveFilters();
+        });
+      });
+    }
+
+    // ── boot ──
+    (async function () {
+      if (!(await VL.gate(root))) return;
+      try {
+        L = await VL.loadCatalogue();
+        valueMap = VL.buildValueMap(L);
+        shell();
+        VL.hydrateThumbs(root);
+      } catch (e) {
+        root.innerHTML = '<div class="lib-page"><div class="lib-empty"><h3>The library could not load</h3>' +
+          '<p>' + esc((e && e.message) || 'Try again in a moment.') + '</p></div></div>';
+      }
+    })();
+  })();
+  </script>
+</body>
+
+</html>
