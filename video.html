@@ -30,7 +30,14 @@
   <div class="toast" id="toast"></div>
 
   <main>
-    <div class="lib-page" id="vl-root">
+    <!-- the site's glass bar: same seam and grammar as the shared-class page -->
+    <div class="post-bar">
+      <a class="btn-ghost" id="vl-back" href="/library">
+        <span class="material-symbols-sharp i-md" style="margin-right:6px" aria-hidden="true">arrow_back</span>
+        <span class="post-back-label" id="vl-back-label">Library</span>
+      </a>
+    </div>
+    <div class="lib-page lib-page-underbar" id="vl-root">
       <div class="player-well"><div class="lib-skel" style="position:absolute;inset:0"></div></div>
     </div>
   </main>
@@ -67,7 +74,6 @@
 
     function notFound() {
       root.innerHTML =
-        '<a class="lib-crumb" href="/library"><span class="material-symbols-sharp">arrow_back</span>Library</a>' +
         '<div class="lib-empty"><h3>There is nothing at this address</h3>' +
         '<p>This video may have moved or come down. The library home has everything that is live.</p></div>';
     }
@@ -123,13 +129,13 @@
           if ((c2.slug || '').toLowerCase() === catSlug) backCat = c2;
         });
       }
-      var crumbHref = colSlug ? '/collection/' + esc(colSlug)
-        : backCat ? '/library/' + esc(backCat.slug) : '/library';
-      var crumbLabel = colSlug ? 'Collection' : backCat ? esc(backCat.name) : 'Library';
+      var backEl = document.getElementById('vl-back');
+      backEl.href = colSlug ? '/collection/' + colSlug
+        : backCat ? '/library/' + backCat.slug : '/library';
+      document.getElementById('vl-back-label').textContent =
+        colSlug ? 'Collection' : backCat ? backCat.name : 'Library';
 
       root.innerHTML =
-        '<a class="lib-crumb" href="' + crumbHref + '">' +
-          '<span class="material-symbols-sharp">arrow_back</span>' + crumbLabel + '</a>' +
         '<div class="watch' + (colSlug ? ' with-rail' : '') + '" id="watch">' +
           '<div class="watch-main">' +
             '<div class="player-well" id="player-well">' +
@@ -258,6 +264,12 @@
         el.setAttribute('metadata-viewer-user-id', VL.userId() || 'member');
         el.setAttribute('accent-color', getComputedStyle(document.documentElement)
           .getPropertyValue('--accent').trim() || '#7A3E70');
+        // the poster is the CHOSEN cover: a custom image comes from us (Mux
+        // never has it); a picked frame already rides the signed thumbnail
+        // token's time claim, so Mux shows exactly that frame by itself
+        if (V.thumbnail_mode === 'custom' && V.custom_thumbnail_url) {
+          el.setAttribute('poster', V.custom_thumbnail_url);
+        }
         if (wantAutoplay && autoplayOn()) el.setAttribute('autoplay', '');
         // pick up where they left off — completed videos start over clean
         var prog = VL.progressOf(V.id);

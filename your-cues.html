@@ -2366,6 +2366,7 @@ const CUE_SH = (function () {
     q = q.toLowerCase();
     const scored = [];
     fsShorthandAll().forEach(e => {
+      if (e.retired) return;   // still expands, never suggested
       const code = e.short.toLowerCase(), full = e.full.toLowerCase();
       let sc = -1;
       if (code.indexOf(q) === 0) sc = 0;

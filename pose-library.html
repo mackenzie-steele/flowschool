@@ -693,7 +693,7 @@
 
     function buildReverseLookup() {
       const m = new Map();
-      SHORTHAND.forEach(s => {
+      SHORTHAND.filter(s => !s.retired).forEach(s => {
         m.set(s.full.trim().toLowerCase(), s.short);
         const stripped = s.full.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
         if (stripped && !m.has(stripped)) m.set(stripped, s.short);
@@ -703,7 +703,7 @@
 
     function buildReverseGeneralMap() {
       const m = new Map();
-      SHORTHAND.filter(s => s.category === 'general').forEach(s => {
+      SHORTHAND.filter(s => s.category === 'general' && !s.retired).forEach(s => {
         m.set(s.full.trim().toLowerCase(), s.short);
         // also index with parentheticals stripped so "Revolved" matches "Revolved (twisted)"
         const stripped = s.full.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
@@ -782,7 +782,9 @@
     // ─── FILTERED DATA ────────────────────────────────────────────────────────────
 
     function getFiltered() {
-      const all = allShorthand();
+      // retired codes still EXPAND (old class text depends on them) but are
+      // nothing anyone browses, autocompletes, or compresses into
+      const all = allShorthand().filter(s => !s.retired);
       let pool = STATE.filter === 'all'
         ? all
         : (STATE.filter === 'yours'
@@ -871,7 +873,7 @@
     function getBestMatch(token, mode) {
       if (!token) return null;
       const lower = token.toLowerCase();
-      const pool = [...SHORTHAND];
+      const pool = SHORTHAND.filter(s => !s.retired);
       if (mode === 'expand') {
         const match = pool.find(s => s.short.toLowerCase().startsWith(lower) && s.short.toLowerCase() !== lower);
         return match ? { completion: match.short, hint: match.full } : null;

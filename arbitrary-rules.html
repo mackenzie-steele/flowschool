@@ -270,14 +270,14 @@
       { id: 129, cat: 'pose', text: 'Must include Twisted High Lunge.' },
       { id: 130, cat: 'pose', text: 'Must include Tree.' },
       { id: 5, cat: 'pose', text: 'No Chaturanga.' },
-      { id: 131, cat: 'pose', text: 'Must include a Knee Hover Tabletop.' },
+      { id: 131, cat: 'pose', text: 'Must include a Knee Hovering Tabletop.' },
       { id: 7, cat: 'pose', text: 'No Sun Salutations.' },
-      { id: 132, cat: 'pose', text: 'Must include Chair reaching down and back.' },
+      { id: 132, cat: 'pose', text: 'Must include Chair reaching your arms down and back.' },
       { id: 133, cat: 'pose', text: 'Must include Seated Wide Leg Forward Fold.' },
       { id: 10, cat: 'pose', text: 'No Child.' },
       { id: 11, cat: 'pose', text: 'No Pigeon.' },
       { id: 12, cat: 'pose', text: 'No Triangle.' },
-      { id: 134, cat: 'pose', text: 'Must include Twisted Standing Forward Fold.' },
+      { id: 134, cat: 'pose', text: 'Must include Standing Forward Fold twisted open to open side.' },
       { id: 15, cat: 'pose', text: 'No Warrior 1.' },
       { id: 135, cat: 'pose', text: 'Must include Chaturanga to Wild Thing.' },
       { id: 136, cat: 'pose', text: 'Must include Elbow Side Plank.' },
@@ -294,6 +294,7 @@
       { id: 144, cat: 'pose', text: 'Must include Shiva Squat.' },
       { id: 145, cat: 'pose', text: 'Must include Crow or Forward Fold.' },
       { id: 146, cat: 'pose', text: 'Must include Standing Splits or Handstand.' },
+      { id: 172, cat: 'pose', text: 'Must include Skandasana, but keep it high and reach both arms to the back.' },
       // Starting Position
       { id: 19, cat: 'start', text: 'Begin seated.' },
       { id: 20, cat: 'start', text: 'Begin lying on your back.' },
@@ -332,7 +333,7 @@
       { id: 159, cat: 'movement', text: 'Walk your hands to the back of the mat during the flow.' },
       { id: 41, cat: 'movement', text: 'Alternate between bent and straight legs on every posture.' },
       { id: 42, cat: 'movement', text: 'Alternate between square hips and open hips throughout.' },
-      { id: 43, cat: 'movement', text: 'Stay on one side of the mat only.' },
+      { id: 43, cat: 'movement', text: 'Stay on the front half or back half of the mat the whole time.' },
       { id: 44, cat: 'movement', text: 'The flow must include a turn-around to face the opposite direction.' },
       { id: 93, cat: 'movement', text: 'Never sit down.' },
       { id: 160, cat: 'movement', text: 'Must sit down.' },
@@ -350,7 +351,7 @@
       { id: 109, cat: 'movement', text: 'Flow at half speed.' },
       { id: 164, cat: 'movement', text: 'Keep your eyes closed the entire time.' },
       { id: 115, cat: 'movement', text: 'Keep one leg straight for the entire flow.' },
-      { id: 116, cat: 'movement', text: 'Swim your arms through every transition.' },
+      { id: 116, cat: 'movement', text: 'Swim your arms forward or back through every transition.' },
       { id: 117, cat: 'movement', text: 'Change your gaze direction every time you move to a new pose.' },
       { id: 119, cat: 'movement', text: 'Travel from the back of the mat to the front.' },
       { id: 165, cat: 'movement', text: 'No Prayer Hands.' },
@@ -373,7 +374,7 @@
       { id: 169, cat: 'body', text: 'Include a block in every pose.' },
       // Wildcard
       { id: 70, cat: 'wildcard', text: 'Design this class for one specific student in mind.' },
-      { id: 71, cat: 'wildcard', text: "Let a song you can't stop listening to lead the whole thing." },
+      { id: 71, cat: 'wildcard', text: 'What’s a song you can’t stop listening to, design a flow that mimics the energy of that song.' },
       { id: 74, cat: 'wildcard', text: "Build the class you'd want to take, not the one you think you should teach." },
       { id: 75, cat: 'wildcard', text: 'Pick a texture and let it shape the flow: soft, sharp, heavy, light, smooth, etc.' },
       { id: 77, cat: 'wildcard', text: "Build this class for a body that's been sitting all day." },
@@ -384,6 +385,59 @@
       { id: 123, cat: 'wildcard', text: 'Build a class for a body that is tired.' },
       { id: 127, cat: 'wildcard', text: "Build a class you've been too afraid to teach." },
     ];
+
+
+    // Rules removed from the deck are never dealt again, but members'
+    // saved challenges may reference them — they resolve HERE, wearing
+    // their last text, so nothing anyone kept ever goes blank.
+    const RETIRED_RULES = {
+      3: { id: 3, cat: 'pose', text: 'No lunges of any kind.' },
+      4: { id: 4, cat: 'pose', text: 'No standing balances.' },
+      6: { id: 6, cat: 'pose', text: 'No hands and knees.' },
+      8: { id: 8, cat: 'pose', text: 'No Chair Pose.' },
+      9: { id: 9, cat: 'pose', text: 'No forward folds.' },
+      13: { id: 13, cat: 'pose', text: 'No twists.' },
+      14: { id: 14, cat: 'pose', text: "Only use poses you've never taught before." },
+      17: { id: 17, cat: 'pose', text: 'No Plank of any kind.' },
+      18: { id: 18, cat: 'pose', text: 'No seated poses.' },
+      24: { id: 24, cat: 'start', text: 'Begin in Savasana.' },
+      25: { id: 25, cat: 'start', text: "Begin in Child's Pose." },
+      36: { id: 36, cat: 'movement', text: 'Use only circular transitions.' },
+      40: { id: 40, cat: 'movement', text: 'Move only backward along the mat.' },
+      48: { id: 48, cat: 'body', text: 'Include a squat.' },
+      52: { id: 52, cat: 'body', text: 'Include a hip hinge.' },
+      56: { id: 56, cat: 'body', text: 'Include an arm balance.' },
+      69: { id: 69, cat: 'wildcard', text: 'Teach the class you wish someone had taught you.' },
+      72: { id: 72, cat: 'wildcard', text: 'Steal something you love from another teacher. Make it yours.' },
+      73: { id: 73, cat: 'wildcard', text: 'Build a class that would surprise your past self.' },
+      76: { id: 76, cat: 'wildcard', text: "Build this class for someone who swears they're not flexible." },
+      78: { id: 78, cat: 'wildcard', text: 'Teach it like a conversation, not a performance.' },
+      80: { id: 80, cat: 'wildcard', text: 'Let something you felt this week lead the whole thing.' },
+      81: { id: 81, cat: 'wildcard', text: 'Build a class that makes movement feel inevitable.' },
+      83: { id: 83, cat: 'pose', text: 'No backbends.' },
+      84: { id: 84, cat: 'pose', text: 'No side angle.' },
+      88: { id: 88, cat: 'start', text: 'Begin in a squat.' },
+      90: { id: 90, cat: 'start', text: 'Begin in stillness for two minutes.' },
+      92: { id: 92, cat: 'movement', text: 'No pose held longer than one breath.' },
+      99: { id: 99, cat: 'movement', text: 'Use only diagonal pathways.' },
+      102: { id: 102, cat: 'movement', text: 'Keep palms touching the entire flow.' },
+      104: { id: 104, cat: 'movement', text: 'Stay until your body asks for the next shape.' },
+      105: { id: 105, cat: 'movement', text: 'Hold every pose for 5 breaths.' },
+      106: { id: 106, cat: 'movement', text: 'Hold every pose for 10 breaths.' },
+      107: { id: 107, cat: 'movement', text: 'Move only on exhales.' },
+      108: { id: 108, cat: 'movement', text: 'Move only on inhales.' },
+      110: { id: 110, cat: 'body', text: 'Include three asymmetrical poses.' },
+      111: { id: 111, cat: 'body', text: 'Include one balance.' },
+      113: { id: 113, cat: 'body', text: 'Include one side-body shape.' },
+      114: { id: 114, cat: 'pose', text: 'Only use symmetrical postures.' },
+      118: { id: 118, cat: 'movement', text: 'Find a new way from Down Dog to the top of the mat — no stepping from single-leg Down Dog.' },
+      120: { id: 120, cat: 'body', text: 'In each pose, move through 5 different arm shapes before transitioning.' },
+      124: { id: 124, cat: 'wildcard', text: 'Start with the hardest thing. Build everything else around it.' },
+      125: { id: 125, cat: 'wildcard', text: "Build a class that could make someone feel something they didn't expect." },
+      126: { id: 126, cat: 'wildcard', text: 'Design this class like it needs an arc — beginning, peak, release.' },
+      128: { id: 128, cat: 'wildcard', text: 'Create a class that has nothing to do with what you normally teach.' },
+    };
+    const findRule = id => RULES.find(r => r.id === id) || RETIRED_RULES[id];
 
     const INVITES = [
       'Build a flow. See what happens.',
@@ -403,6 +457,18 @@
     let ruleCount = 1;
     let currentRuleIds = [];
     let saved = JSON.parse(localStorage.getItem('flowschool_arules') || '[]');
+
+    // Saved challenges reference rules by ID, so edits flow through on
+    // their own when a challenge is reopened — this pass also rewrites
+    // each stored TITLE, so the Saved page's listing wears today's wording.
+    (function refreshSavedTitles() {
+      let changed = false;
+      saved.forEach(c => {
+        const t = (c.ids || []).map(findRule).filter(Boolean).map(r => r.text).join(' · ');
+        if (t && t !== c.title) { c.title = t; changed = true; }
+      });
+      if (changed) localStorage.setItem('flowschool_arules', JSON.stringify(saved));
+    })();
 
     // ─── GENERATE ────────────────────────────────────────────────────────────────
 
@@ -620,7 +686,7 @@
     if (_urlChallenge) {
       const _entry = saved.find(c => String(c.id) === _urlChallenge);
       if (_entry) {
-        const _rules = _entry.ids.map(id => RULES.find(r => r.id === id)).filter(Boolean);
+        const _rules = _entry.ids.map(findRule).filter(Boolean);
         if (_rules.length) {
           currentRuleIds = [..._entry.ids];
           ruleCount = _rules.length;

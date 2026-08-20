@@ -382,11 +382,9 @@
   color: var(--text-2); line-height: var(--lh-tight); max-width: 68ch; margin: -4px 0 16px; }
 .cat-desc { font-size: var(--text-body); line-height: var(--lh-body); color: var(--text-2);
   max-width: 68ch; margin: 0 0 36px; white-space: pre-line; }
-.lib-crumb { display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--text-3);
-  text-decoration: none; margin-bottom: 10px; }
-.lib-crumb:hover { color: var(--text-1); }
-.lib-crumb .material-symbols-sharp { font-size: 13px; }
+/* the way back is the site's glass bar (.post-bar, global.css) — the old
+   inline .lib-crumb retired with v7.1.7 */
+.lib-page-underbar { padding-top: 0; }
 
 /* ═══ COLLECTION PAGE ════════════════════════════════════════════════════════ */
 .col-hero { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);

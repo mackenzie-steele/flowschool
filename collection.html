@@ -30,7 +30,14 @@
   <div class="toast" id="toast"></div>
 
   <main>
-    <div class="lib-page" id="vl-root">
+    <!-- the site's glass bar: same seam and grammar as the shared-class page -->
+    <div class="post-bar">
+      <a class="btn-ghost" id="vl-back" href="/library">
+        <span class="material-symbols-sharp i-md" style="margin-right:6px" aria-hidden="true">arrow_back</span>
+        <span class="post-back-label" id="vl-back-label">Library</span>
+      </a>
+    </div>
+    <div class="lib-page lib-page-underbar" id="vl-root">
       <div class="col-hero">
         <div class="col-hero-art lib-skel"></div>
         <div><div class="lib-skel" style="height:34px;width:70%;margin-bottom:12px"></div>
@@ -50,7 +57,6 @@
 
     function notFound() {
       root.innerHTML =
-        '<a class="lib-crumb" href="/library"><span class="material-symbols-sharp">arrow_back</span>Library</a>' +
         '<div class="lib-empty"><h3>There is nothing at this address</h3>' +
         '<p>This collection may have moved or come down. The library home has everything that is live.</p></div>';
     }
@@ -130,10 +136,11 @@
       // the way back honors how you came: the category shelf by name when
       // the card carried one, the library's front door otherwise
       var backCat = ((got[2] && got[2].data) || [])[0] || null;
+      if (backCat) {
+        document.getElementById('vl-back').href = '/library/' + backCat.slug;
+        document.getElementById('vl-back-label').textContent = backCat.name;
+      }
       var heroHTML =
-        '<a class="lib-crumb" href="' + (backCat ? '/library/' + esc(backCat.slug) : '/library') + '">' +
-          '<span class="material-symbols-sharp">arrow_back</span>' +
-          (backCat ? esc(backCat.name) : 'Library') + '</a>' +
         '<div class="col-hero">' +
           '<div class="col-hero-art"' + tokAttrs + '>' +
             (art ? '<img alt="" src="' + esc(art) + '">'

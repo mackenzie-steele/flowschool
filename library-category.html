@@ -30,7 +30,14 @@
   <div class="toast" id="toast"></div>
 
   <main>
-    <div class="lib-page" id="vl-root">
+    <!-- the site's glass bar: same seam and grammar as the shared-class page -->
+    <div class="post-bar">
+      <a class="btn-ghost" id="vl-back" href="/library">
+        <span class="material-symbols-sharp i-md" style="margin-right:6px" aria-hidden="true">arrow_back</span>
+        <span class="post-back-label" id="vl-back-label">Library</span>
+      </a>
+    </div>
+    <div class="lib-page lib-page-underbar" id="vl-root">
       <div class="cat-hero lib-skel" style="aspect-ratio:21/7"></div>
       <div class="vcard-grid" style="margin-top:24px"></div>
     </div>
@@ -48,7 +55,6 @@
 
     function notFound() {
       root.innerHTML =
-        '<a class="lib-crumb" href="/library"><span class="material-symbols-sharp">arrow_back</span>Library</a>' +
         '<div class="lib-empty"><h3>There is no shelf here</h3>' +
         '<p>This category may have moved. The library home has everything that is live.</p></div>';
     }
@@ -80,7 +86,6 @@
 
       var items = VL.categoryItems(L, cat.id);
       root.innerHTML =
-        '<a class="lib-crumb" href="/library"><span class="material-symbols-sharp">arrow_back</span>Library</a>' +
         (cat.cover_image_url
           ? '<div class="cat-hero"><img alt="" src="' + esc(cat.cover_image_url) + '"></div>'
           : '') +
