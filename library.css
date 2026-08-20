@@ -495,6 +495,16 @@
 .wpane[hidden] { display: none; }
 .wpane .about-desc { font-size: var(--text-body-sm); line-height: 1.65; color: var(--text-2);
   white-space: pre-line; }
+/* rich descriptions bring their own structure — pre-line would double
+   every break the markup already draws */
+.wpane .about-desc.rich-text { white-space: normal; }
+.rich-text p { margin: 0 0 12px; }
+.rich-text p:last-child { margin-bottom: 0; }
+.rich-text ul, .rich-text ol { margin: 0 0 12px; padding-left: 22px; }
+.rich-text li { margin-bottom: 4px; }
+.rich-text strong, .rich-text b { font-weight: var(--weight-medium); color: var(--text-1); }
+.rich-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.rich-text a:hover { text-decoration: none; }
 .about-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .about-tag { font-family: var(--font); font-size: var(--fs-label-1); color: var(--text-3);
   border: 1px solid var(--border-light); border-radius: 999px; padding: 5px 12px; }

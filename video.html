@@ -138,7 +138,10 @@
             '</div>' +
             '<div class="wpane" id="pane-about">' +
               (V.description || V.short_description
-                ? '<p class="about-desc">' + esc(V.description || V.short_description) + '</p>'
+                // descriptions may carry the editor's small HTML dialect —
+                // richText renders it (and only it); plain text passes
+                // through escaped with its line breaks kept
+                ? '<div class="about-desc rich-text">' + VL.richText(V.description || V.short_description) + '</div>'
                 : '<p class="about-desc" style="color:var(--text-3)">No description yet.</p>') +
               // resources live HERE, not behind a tab — a worksheet is part
               // of what this video IS, and files behind tabs get lost

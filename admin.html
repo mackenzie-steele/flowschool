@@ -175,8 +175,7 @@
        which is exactly what happened to the Go live picker. */
     .vid-when[hidden],
     .vid-thumb-time[hidden],
-    .vid-newcat-row[hidden],
-    .vid-thumb-custom[hidden] { display: none; }
+    .vid-newcat-row[hidden] { display: none; }
     .vid-blockers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
     .vid-blockers li {
       display: flex; align-items: flex-start; gap: 8px;
@@ -230,19 +229,84 @@
     .vid-tag-x { background: none; border: 0; cursor: pointer; color: var(--text-3); display: flex; padding: 2px; border-radius: 50%; }
     .vid-tag-x:hover { color: var(--danger); }
     .vid-tag-x .material-symbols-sharp { font-size: 13px; }
+
+    /* ── the rich description editor ─────────────────────────────────────
+       One well, like every other input: the toolbar is the well's quiet
+       top edge, the writing area below. Accent marks STATE only — a
+       format that is on at the caret. */
+    .rte {
+      border: 1px solid rgba(var(--ink-rgb), .14); border-radius: var(--r);
+      background: var(--well-bg); box-shadow: var(--well);
+      /* no overflow:hidden — the link popover hangs out of the toolbar */
+    }
+    .rte:focus-within { border-color: rgba(var(--ink-rgb), .35); }
+    .rte-bar {
+      position: relative; display: flex; align-items: center; gap: 2px;
+      padding: 6px 8px; border-bottom: 1px solid var(--border-light);
+    }
+    .rte-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border: 0; border-radius: var(--rb);
+      background: none; cursor: pointer; color: var(--text-3);
+      transition: color var(--transition-base), background var(--transition-base);
+    }
+    .rte-btn:hover { color: var(--text-1); }
+    .rte-btn.on { background: var(--accent-dim); color: var(--accent); }
+    .rte-btn .material-symbols-sharp { font-size: 17px; }
+    .rte-sep { width: 1px; height: 16px; background: var(--border-light); margin: 0 4px; }
+    .rte-area {
+      min-height: 128px; padding: 12px 14px; outline: none;
+      font-family: var(--font); font-size: var(--text-ui); color: var(--text-1);
+      line-height: 1.6; overflow-wrap: break-word;
+    }
+    .rte-area:empty::before { content: attr(data-placeholder); color: var(--text-3); pointer-events: none; }
+    .rte-area strong, .rte-area b { font-weight: var(--weight-medium); }
+    .rte-area p { margin: 0 0 10px; }
+    .rte-area p:last-child { margin-bottom: 0; }
+    .rte-area ul, .rte-area ol { margin: 0 0 10px; padding-left: 22px; }
+    .rte-area a { color: var(--accent); text-decoration: underline; }
+    .rte-linkbox { left: 0; right: auto; top: calc(100% + 6px); width: 300px; padding: 10px; }
+    .rte-linkrow { display: flex; gap: 8px; margin-top: 8px; }
     .vid-tag-input { flex: 1; min-width: 140px; border: 0; background: none; outline: none;
       font-family: var(--font); font-size: var(--text-ui); color: var(--text-1); padding: 4px; }
 
     /* thumbnail picker */
-    .vid-thumb-grid { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); gap: 16px; align-items: start; }
-    @media (max-width: 720px) { .vid-thumb-grid { grid-template-columns: 1fr; } }
+    /* one column: source tabs, then ONE surface — the preview. In Upload
+       mode that surface is also the drop zone and the button, so what you
+       see is exactly what you are setting. */
+    .vid-thumb-stack { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+    .vid-thumb-stack .vid-thumb-preview,
+    .vid-thumb-stack .vid-thumb-time { width: 100%; }
+    .vid-thumb-stack .nf-err { margin: 0; }
+    .vid-thumb-stack .nf-err:empty { display: none; }
     .vid-thumb-preview {
+      position: relative;
       aspect-ratio: 16/9; border-radius: var(--rs); overflow: hidden;
       background: var(--well-bg); box-shadow: var(--well);
       display: grid; place-items: center;
     }
     .vid-thumb-preview img { width: 100%; height: 100%; object-fit: cover; }
-    .vid-thumb-controls { display: flex; flex-direction: column; gap: 10px; }
+    .vid-thumb-preview.droppable { cursor: pointer; }
+    .vid-thumb-preview.droppable.empty { border: 1px dashed rgba(var(--ink-rgb), .3); box-shadow: none; }
+    .vid-thumb-preview.droppable.empty:hover { border-color: rgba(var(--ink-rgb), .35); }
+    .vid-thumb-preview.droppable.over { border: 1px dashed var(--accent); background: var(--accent-dim); box-shadow: none; }
+    .vid-thumb-invite {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      text-align: center; padding: 20px; pointer-events: none;
+    }
+    .vid-thumb-invite .material-symbols-sharp { font-size: 22px; color: var(--text-3); }
+    /* the quiet way back in: a Replace chip that surfaces on hover or focus */
+    .vid-thumb-swap {
+      position: absolute; right: 10px; bottom: 10px;
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+      border-radius: var(--rb); background: var(--paper-solid); color: var(--text-1);
+      font-size: var(--fs-label-1); box-shadow: var(--crest);
+      opacity: 0; transition: opacity var(--transition-base); pointer-events: none;
+    }
+    .vid-thumb-swap .material-symbols-sharp { font-size: 16px; }
+    .vid-thumb-preview.droppable:hover .vid-thumb-swap,
+    .vid-thumb-preview.droppable:focus-visible .vid-thumb-swap,
+    .vid-thumb-preview.droppable.over .vid-thumb-swap { opacity: 1; }
     .vid-seg { display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--rb); background: var(--well-bg); }
     .vid-seg-btn {
       flex: 1; border: 0; background: none; cursor: pointer; padding: 7px 12px;
@@ -265,6 +329,64 @@
        "working", a blank box would say "broken" */
     .vid-thumb-preview.loading img { opacity: .45; }
     .vid-thumb-preview img { transition: opacity var(--transition-base); }
+
+    /* Selects wearing .modal-input: the native chevron pins itself to the
+       box's right edge no matter the padding, so it is suppressed and
+       redrawn properly inset — the same treatment .cat-controls selects
+       already get, at the editor's input size. */
+    select.modal-input {
+      -webkit-appearance: none; -moz-appearance: none; appearance: none;
+      cursor: pointer; padding-right: 44px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23151515' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      background-size: 14px 14px;
+    }
+    [data-theme="dark"] select.modal-input {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23EBEEF5' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    }
+
+    /* ── "Also shown in", quiet ────────────────────────────────────────
+       Only what is CHOSEN renders — a chip per extra shelf, each one a
+       breath from its ×. Adding is a single dashed chip that opens the
+       app's own popover menu. Nothing is surfaced until it is wanted. */
+    .xcat-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+    .xcat-add { position: relative; display: inline-flex; }
+    .xcat-add > .col-chip { border-style: dashed; }
+    .xcat-add > .col-chip:hover { border-style: solid; }
+    .xcat-add .vid-menu { left: 0; right: auto; max-height: 260px; overflow-y: auto; }
+    /* the home shelf is the SOLID chip; extras stay dim. Clicking a dim
+       chip promotes it, so the row is the whole picker.
+       .on.xcat-home, not .xcat-home: the base .col-chip.on rule is written
+       LATER in this sheet and was silently winning the background — the
+       "solid" chip rendered dim, while these paper-solid text rules still
+       applied, which is exactly the invisible-on-hover dark-mode bug. */
+    .col-chip.on.xcat-home { background: var(--accent); border-color: var(--accent); color: var(--paper-solid); cursor: default; }
+    .col-chip.on.xcat-home:hover { color: var(--paper-solid); }
+    .col-chip.on.xcat-home .vid-tag-x { color: color-mix(in srgb, var(--paper-solid) 70%, transparent); }
+    .col-chip.on.xcat-home .vid-tag-x:hover { color: var(--paper-solid); }
+    /* dark mode follows the app's filled-control convention (btn-primary):
+       ink-solid surface, paper-solid text */
+    [data-theme="dark"] .col-chip.on.xcat-home {
+      background: var(--ink-solid); border-color: var(--ink-solid); color: var(--paper-solid);
+    }
+    .col-chip.xcat-extra { cursor: pointer; }
+    /* the chips join the app's own tooltip component, not the browser's */
+    .xcat-row .col-chip[data-tooltip] { position: relative; }
+    .xcat-row .col-chip[data-tooltip]::before {
+      content: attr(data-tooltip);
+      position: absolute; bottom: calc(100% + 7px); left: 0;
+      transform: translateY(3px);
+      white-space: nowrap;
+      font-family: var(--font); font-size: 11px; font-weight: var(--weight-medium);
+      letter-spacing: 0; text-transform: none;
+      color: var(--paper-solid); background: var(--ink-solid);
+      border-radius: var(--rb); padding: 4px 8px;
+      pointer-events: none; opacity: 0;
+      transition: opacity var(--transition-fast), transform var(--transition-fast);
+      z-index: 40;
+    }
+    .xcat-row .col-chip[data-tooltip]:hover::before { opacity: 1; transform: translateY(0); }
 
     /* url + counters + search preview */
     .vid-cat-row { display: flex; gap: 8px; align-items: center; }
@@ -325,6 +447,8 @@
       display: flex; flex-direction: column; align-items: center; gap: 10px;
     }
     .vid-upload p { margin: 0; font-size: var(--text-ui); }
+    /* once a player is in it, the well chrome goes — the preview IS the card */
+    .vid-upload:has(.vid-player) { border: 0; background: none; padding: 0; }
     .vid-player { width: 100%; }
     .vid-player:empty { display: none; }
     /* The frame is there from the first paint, at the shape the video will
@@ -3570,6 +3694,15 @@
       var r = s % 60;
       return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(r).padStart(2, '0');
     }
+    // Detail editors have addresses — #videos/<id>, #collections/<id>,
+    // #video-categories/<id> — so a refresh lands back inside the editor
+    // instead of on its list. replaceState changes the hash WITHOUT firing
+    // hashchange, so writing it never re-routes the page.
+    function editorHash(sec, id) {
+      var want = '#' + sec + (id ? '/' + id : '');
+      if (location.hash !== want) history.replaceState(null, '', want);
+    }
+
     async function renderVideos() {
       var b = bodyEl(); b.innerHTML = stateLoading();
       try {
@@ -3596,6 +3729,17 @@
           }
         } catch (_) {}
         VID.sel = {};
+        // arriving via the router with #videos/<id> in the URL: open that
+        // editor. Plain #videos closes any editor so the page matches the
+        // address. Direct renderVideos() calls leave _openOnRender unset
+        // and keep today's behaviour.
+        if (VID._openOnRender !== undefined) {
+          var want = VID._openOnRender; VID._openOnRender = undefined;
+          var row = want && VID.rows.filter(function (r) { return r.id === want; })[0];
+          VID.editing = row ? Object.assign({}, row) : null;
+          if (row) openVideoExtras(row.id);
+          else editorHash('videos', null);   // gone or never existed — the list is the truth
+        }
         drawVideos();
         loadListThumbTokens();
       } catch (e) {
@@ -3741,6 +3885,7 @@
       var b = bodyEl(); if (!b) return;
       var fresh = function () {
         VID.editing = { _new: true, thumbnail_mode: 'auto', search_keywords: [] };
+        VID.catPrimary = null;
         VID.catExtra = []; VID.catExtraInitial = []; VID.values = [];
         drawVideos();
       };
@@ -3762,6 +3907,7 @@
           var id = row.dataset.vid;
           VID.editing = Object.assign({}, VID.rows.filter(function (v) { return v.id === id; })[0]);
           openVideoExtras(id);
+          editorHash('videos', id);
           drawVideos();
         };
         row.addEventListener('click', function (e) {
@@ -3880,9 +4026,13 @@
     // the editor's collections-layer state: which collections hold this
     // video, its extra categories, its filter values, its resource links
     function openVideoExtras(id) {
+      VID.catPrimary = (VID.editing && VID.editing.category_id) || null;
+      // the links table MIRRORS the primary (the sync trigger) — exclude it
+      // here or the home shelf would appear twice in the chip row
       VID.catExtra = (VID.x && VID.x.ok)
-        ? VID.x.links.filter(function (l) { return l.video_id === id; })
-            .map(function (l) { return l.category_id; })
+        ? VID.x.links.filter(function (l) {
+            return l.video_id === id && l.category_id !== VID.catPrimary;
+          }).map(function (l) { return l.category_id; })
         : [];
       VID.catExtraInitial = VID.catExtra.slice();
       VID.values = [];
@@ -3965,85 +4115,82 @@
             '<label class="nf-label" for="vid-title">Title <span class="nf-req">required</span></label>' +
             '<input class="modal-input" id="vid-title" maxlength="160" value="' + esc(v.title || '') + '" placeholder="Chair Pose, three ways">' +
 
+            '<label class="nf-label" id="vid-desc-label">Full description</label>' +
+            // a small rich editor — what is bolded or linked here renders
+            // the same on the member video page (fsVL.richText)
+            '<div class="rte" id="vid-desc-rte">' +
+              '<div class="rte-bar" role="toolbar" aria-label="Text formatting">' +
+                '<button type="button" class="rte-btn" data-rte="bold" data-tooltip="Bold"><span class="material-symbols-sharp">format_bold</span></button>' +
+                '<button type="button" class="rte-btn" data-rte="italic" data-tooltip="Italic"><span class="material-symbols-sharp">format_italic</span></button>' +
+                '<button type="button" class="rte-btn" data-rte="underline" data-tooltip="Underline"><span class="material-symbols-sharp">format_underlined</span></button>' +
+                '<span class="rte-sep" aria-hidden="true"></span>' +
+                '<button type="button" class="rte-btn" data-rte="insertUnorderedList" data-tooltip="Bulleted list"><span class="material-symbols-sharp">format_list_bulleted</span></button>' +
+                '<button type="button" class="rte-btn" data-rte="insertOrderedList" data-tooltip="Numbered list"><span class="material-symbols-sharp">format_list_numbered</span></button>' +
+                '<span class="rte-sep" aria-hidden="true"></span>' +
+                '<button type="button" class="rte-btn" id="rte-link" data-tooltip="Link"><span class="material-symbols-sharp">link</span></button>' +
+                '<div class="vid-menu rte-linkbox" id="rte-linkbox" hidden>' +
+                  '<input class="modal-input" id="rte-link-url" placeholder="https://…" aria-label="Link address">' +
+                  '<div class="rte-linkrow">' +
+                    '<button type="button" class="btn-secondary" id="rte-link-apply">Apply</button>' +
+                    '<button type="button" class="btn-ghost" id="rte-link-remove">Remove</button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="rte-area nf-msg" id="vid-desc" contenteditable="true" role="textbox" aria-multiline="true" ' +
+                'aria-labelledby="vid-desc-label" data-placeholder="What is in the video, who it is for, what to look out for."></div>' +
+            '</div>' +
+
             '<label class="nf-label" for="vid-short">Short description' +
               vidCounter('c-short', (v.short_description || '').length, VIDEO_LIMITS.short) + '</label>' +
-            '<textarea class="modal-input nf-msg" id="vid-short" rows="2" maxlength="400" placeholder="One or two lines. This is what shows on the library card.">' + esc(v.short_description || '') + '</textarea>' +
-
-            '<label class="nf-label" for="vid-desc">Full description</label>' +
-            '<textarea class="modal-input nf-msg" id="vid-desc" rows="6" maxlength="4000" placeholder="What is in the video, who it is for, what to look out for. Line breaks are kept.">' + esc(v.description || '') + '</textarea>' +
-
-            '<label class="nf-label" for="vid-category">Category <span class="nf-req">required to publish</span></label>' +
-            '<div class="vid-cat-row">' +
-              '<select class="modal-input" id="vid-category">' +
-                '<option value="">— choose —</option>' +
-                cats.map(function (c) {
-                  return '<option value="' + c.id + '"' + (v.category_id === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
-                }).join('') + '</select>' +
-              '<button class="btn-ghost" id="vid-newcat" type="button">New…</button>' +
-            '</div>' +
-            '<div class="vid-newcat-row" id="vid-newcat-row" hidden>' +
-              '<input class="modal-input" id="vid-newcat-name" maxlength="80" placeholder="Category name">' +
-              '<button class="btn-secondary" id="vid-newcat-save" type="button">Add</button>' +
-              '<button class="btn-ghost" id="vid-newcat-cancel" type="button">Cancel</button>' +
-            '</div>' +
-            '<span class="nf-hint">Adding one here keeps everything you have typed.</span>' +
-            (VID.x && VID.x.ok && cats.length > 1
-              ? '<label class="nf-label">Also shown in <span class="nf-opt">optional</span></label>' +
-                '<div class="col-chips" id="vid-xcats">' +
-                  cats.map(function (c2) {
-                    if (c2.id === v.category_id) return '';
-                    var on = (VID.catExtra || []).indexOf(c2.id) !== -1;
-                    return '<button type="button" class="col-chip' + (on ? ' on' : '') + '" data-xcat="' + c2.id + '">' +
-                      (on ? '<span class="material-symbols-sharp">check</span>' : '') + esc(c2.name) + '</button>';
-                  }).join('') + '</div>' +
-                '<span class="nf-hint">The category above is where it lives; these are extra shelves it also appears on.</span>'
-              : '')
+            '<textarea class="modal-input nf-msg" id="vid-short" rows="2" maxlength="400" placeholder="One or two lines. This is what shows on the library card.">' + esc(v.short_description || '') + '</textarea>'
           ) +
 
           section('Thumbnail', 'The frame members see before they press play.',
             isNew || !v.mux_playback_id
               ? '<p class="muted">Once the file has processed you can pick any frame.</p>'
-              : '<div class="vid-thumb-grid">' +
+              // one column, one surface: the tabs above, the preview below.
+              // In Upload mode the preview itself takes the drop and the
+              // click — there is no second box to reconcile with it.
+              : '<div class="vid-thumb-stack">' +
+                  '<div class="vid-seg" role="group" aria-label="Thumbnail source">' +
+                    [['auto', 'Automatic'], ['timestamp', 'Pick a frame'], ['custom', 'Upload one']]
+                      .map(function (m) {
+                        return '<button type="button" class="vid-seg-btn' + (v.thumbnail_mode === m[0] ? ' on' : '') +
+                          '" data-thumb-mode="' + m[0] + '">' + m[1] + '</button>';
+                      }).join('') + '</div>' +
                   '<div class="vid-thumb-preview" id="vid-thumb-preview"></div>' +
-                  '<div class="vid-thumb-controls">' +
-                    '<div class="vid-seg" role="group" aria-label="Thumbnail source">' +
-                      [['auto', 'Automatic'], ['timestamp', 'Pick a frame'], ['custom', 'Upload one']]
-                        .map(function (m) {
-                          return '<button type="button" class="vid-seg-btn' + (v.thumbnail_mode === m[0] ? ' on' : '') +
-                            '" data-thumb-mode="' + m[0] + '">' + m[1] + '</button>';
-                        }).join('') + '</div>' +
-                    '<div class="vid-thumb-time" id="vid-thumb-time"' + (v.thumbnail_mode === 'timestamp' ? '' : ' hidden') + '>' +
-                      '<label class="nf-label" for="vid-time-slider">Find the frame</label>' +
-                      '<div class="vid-scrub">' +
-                        '<input type="range" class="range-slider" id="vid-time-slider" min="0" max="' +
-                          esc(Math.max(1, Math.floor(v.duration_seconds || 600))) + '" step="0.1" value="' +
-                          esc(v.thumbnail_time_seconds != null ? v.thumbnail_time_seconds : 0) + '" aria-label="Frame time">' +
-                        '<input class="modal-input vid-time-box" id="vid-time" inputmode="decimal" value="' +
-                          esc(v.thumbnail_time_seconds != null ? v.thumbnail_time_seconds : '') + '" placeholder="0" aria-label="Frame time in seconds">' +
-                      '</div>' +
-                      '<span class="nf-hint">Slide to the moment you want, or type a time in seconds — the preview follows.</span>' +
+                  '<input type="file" id="vid-thumb-file" accept="image/jpeg,image/png,image/webp" hidden>' +
+                  '<div class="vid-thumb-time" id="vid-thumb-time"' + (v.thumbnail_mode === 'timestamp' ? '' : ' hidden') + '>' +
+                    '<label class="nf-label" for="vid-time-slider">Find the frame</label>' +
+                    '<div class="vid-scrub">' +
+                      '<input type="range" class="range-slider" id="vid-time-slider" min="0" max="' +
+                        esc(Math.max(1, Math.floor(v.duration_seconds || 600))) + '" step="0.1" value="' +
+                        esc(v.thumbnail_time_seconds != null ? v.thumbnail_time_seconds : 0) + '" aria-label="Frame time">' +
+                      '<input class="modal-input vid-time-box" id="vid-time" inputmode="decimal" value="' +
+                        esc(v.thumbnail_time_seconds != null ? v.thumbnail_time_seconds : '') + '" placeholder="0" aria-label="Frame time in seconds">' +
                     '</div>' +
-                    '<div class="vid-thumb-custom" id="vid-thumb-custom"' + (v.thumbnail_mode === 'custom' ? '' : ' hidden') + '>' +
-                      '<label class="vid-drop vid-drop-sm" id="vid-thumb-drop">' +
-                        '<input type="file" id="vid-thumb-file" accept="image/jpeg,image/png,image/webp" hidden>' +
-                        '<span class="material-symbols-sharp">add_a_photo</span>' +
-                        '<span>Drop an image, or <u>browse</u></span>' +
-                        '<span class="nf-hint">JPG, PNG or WebP · 16:9 works best · up to 5MB</span>' +
-                      '</label>' +
-                      '<p class="nf-err" id="vid-thumb-err"></p>' +
-                    '</div>' +
+                    '<span class="nf-hint">Slide to the moment you want, or type a time in seconds — the preview follows.</span>' +
                   '</div>' +
+                  '<p class="nf-err" id="vid-thumb-err"></p>' +
                 '</div>'
           ) +
 
-          section('Search keywords', 'How members find this in the library. Not shown on the page.',
-            '<div class="vid-tags" id="vid-tags">' +
-              kws.map(function (k) { return vidTag(k); }).join('') +
-              '<input class="vid-tag-input" id="vid-tag-input" placeholder="' +
-                (kws.length ? 'Add another…' : 'transitions, arm balances, cueing…') +
-                '" aria-label="Add a search keyword">' +
-            '</div>' +
-            '<span class="nf-hint">Enter or comma to add. Backspace on an empty box removes the last one.</span>'
+          section('Categories', 'Required to publish. The solid chip is where it lives in the library.',
+            (VID.x && VID.x.ok
+              // one chip row is the whole picker: the SOLID chip is the home
+              // category, dim chips are extra categories, the dashed chip adds
+              ? '<div class="xcat-row" id="vid-xcats">' + videoXcatsHTML() + '</div>'
+              // pre-collections databases keep the plain select
+              : '<div class="vid-cat-row"><select class="modal-input" id="vid-category">' +
+                '<option value="">— choose —</option>' +
+                cats.map(function (c) {
+                  return '<option value="' + c.id + '"' + (v.category_id === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
+                }).join('') + '</select></div>') +
+            '<div class="vid-newcat-row" id="vid-newcat-row" hidden>' +
+              '<input class="modal-input" id="vid-newcat-name" maxlength="80" placeholder="Category name">' +
+              '<button class="btn-secondary" id="vid-newcat-save" type="button">Add</button>' +
+              '<button class="btn-ghost" id="vid-newcat-cancel" type="button">Cancel</button>' +
+            '</div>'
           ) +
 
           (VID.x && VID.x.ok && VID.x.filters.length
@@ -4067,13 +4214,11 @@
                 '<p class="nf-err" id="vid-pdf-err"></p>'
           ) +
 
-          section('Captions & transcript', 'What Mux knows about this video’s captions. Members get a CC button once a track is ready.',
-            isNew || !v.mux_asset_id
-              ? '<p class="muted">Captions appear once a video file is attached.</p>'
-              : videoCaptionList(v)
-          ) +
+          section('Page and search', '',
+            '<label class="nf-label" for="vid-seo-title">Page title' +
+              vidCounter('c-seot', (v.seo_title || '').length, VIDEO_LIMITS.seo_title) + '</label>' +
+            '<input class="modal-input" id="vid-seo-title" maxlength="120" value="' + esc(v.seo_title || '') + '" placeholder="' + esc(v.title || 'Defaults to the title') + '">' +
 
-          section('Page and search', 'How this looks as a link, and in a search result.',
             '<label class="nf-label" for="vid-slug">URL</label>' +
             '<div class="vid-slug-row">' +
               '<span class="vid-slug-prefix">flowschool.io/video/</span>' +
@@ -4083,18 +4228,27 @@
               ? '<span class="nf-hint vid-warn">This video is published. Changing the URL breaks any link already shared.</span>'
               : '<span class="nf-hint">Made from the title. Edit it and it stays as you set it.</span>') +
 
-            '<label class="nf-label" for="vid-seo-title">Page title' +
-              vidCounter('c-seot', (v.seo_title || '').length, VIDEO_LIMITS.seo_title) + '</label>' +
-            '<input class="modal-input" id="vid-seo-title" maxlength="120" value="' + esc(v.seo_title || '') + '" placeholder="' + esc(v.title || 'Defaults to the title') + '">' +
-
             '<label class="nf-label" for="vid-seo-desc">Meta description' +
               vidCounter('c-seod', (v.seo_description || '').length, VIDEO_LIMITS.seo_desc) + '</label>' +
             '<textarea class="modal-input nf-msg" id="vid-seo-desc" rows="2" maxlength="320" placeholder="' + esc(v.short_description || 'Defaults to the short description') + '">' + esc(v.seo_description || '') + '</textarea>' +
 
-            '<div class="vid-serp" id="vid-serp"></div>' +
-            '<span class="nf-hint">A rough idea, not a promise — every search engine renders this differently.</span>' +
-            '<label class="nf-label" for="vid-notes" style="margin-top:20px">Internal notes <span class="nf-opt">never shown to members</span></label>' +
-            '<textarea class="modal-input nf-msg" id="vid-notes" rows="2" maxlength="4000" placeholder="needs new thumbnail · reshoot intro · update cues">' + esc(v.admin_notes || '') + '</textarea>'
+            '<div class="vid-serp" id="vid-serp"></div>'
+          ) +
+
+          section('Search keywords', 'How members find this in the library. Not shown on the page.',
+            '<div class="vid-tags" id="vid-tags">' +
+              kws.map(function (k) { return vidTag(k); }).join('') +
+              '<input class="vid-tag-input" id="vid-tag-input" placeholder="' +
+                (kws.length ? 'Add another…' : 'transitions, arm balances, cueing…') +
+                '" aria-label="Add a search keyword">' +
+            '</div>' +
+            '<span class="nf-hint">Enter or comma to add. Backspace on an empty box removes the last one.</span>'
+          ) +
+
+          section('Captions & transcript', 'What Mux knows about this video’s captions. Members get a CC button once a track is ready.',
+            isNew || !v.mux_asset_id
+              ? '<p class="muted">Captions appear once a video file is attached.</p>'
+              : videoCaptionList(v)
           ) +
 
         '</div>' +
@@ -4259,6 +4413,115 @@
         '</select></div>';
     }
 
+    // ── the category chips: one row IS the whole picker ─────────────────────
+    // The SOLID chip is the home shelf (videos.category_id — publish
+    // validation, the member page's breadcrumb). Dim chips are the extra
+    // shelves. Click a dim chip to make it home; × removes; the dashed chip
+    // opens the app's popover to add — with "New category…" at its foot.
+    function videoXcatsHTML() {
+      var cats = VID.cats.filter(function (c) { return c.status === 'active'; });
+      var byId = {}; cats.forEach(function (c) { byId[c.id] = c; });
+      var out = '';
+      if (VID.catPrimary && byId[VID.catPrimary]) {
+        out += '<span class="col-chip on xcat-home" data-xcat="' + esc(VID.catPrimary) + '" data-tooltip="Home category">' +
+          esc(byId[VID.catPrimary].name) +
+          '<button type="button" class="vid-tag-x xcat-del" aria-label="Remove ' + esc(byId[VID.catPrimary].name) + '">' +
+          '<span class="material-symbols-sharp">close</span></button></span>';
+      }
+      out += (VID.catExtra || []).map(function (id) {
+        var c = byId[id];
+        if (!c) return '';
+        return '<span class="col-chip on xcat-extra" data-xcat="' + esc(id) + '" data-tooltip="Click to make this the home category">' +
+          esc(c.name) +
+          '<button type="button" class="vid-tag-x xcat-del" aria-label="Stop showing on ' + esc(c.name) + '">' +
+          '<span class="material-symbols-sharp">close</span></button></span>';
+      }).join('');
+      var avail = cats.filter(function (c) {
+        return c.id !== VID.catPrimary && (VID.catExtra || []).indexOf(c.id) === -1;
+      });
+      out += '<span class="xcat-add">' +
+        '<button type="button" class="col-chip" id="xcat-add-btn" aria-haspopup="true" aria-expanded="false">' +
+          '<span class="material-symbols-sharp">add</span>' +
+          (VID.catPrimary ? 'Add to category' : 'Choose a category') + '</button>' +
+        '<div class="vid-menu" id="xcat-menu" role="menu" hidden>' +
+          avail.map(function (c) {
+            return '<button role="menuitem" data-xadd="' + esc(c.id) + '">' + esc(c.name) + '</button>';
+          }).join('') +
+          (avail.length ? '<div class="vid-menu-sep"></div>' : '') +
+          '<button role="menuitem" id="xcat-newcat">New category…</button>' +
+        '</div>' +
+      '</span>';
+      return out;
+    }
+
+    function wireVideoXcats() {
+      var host = document.getElementById('vid-xcats');
+      if (!host) return;
+      host.innerHTML = videoXcatsHTML();
+
+      function changed() { wireVideoXcats(); videoSyncSave(); }
+
+      host.querySelectorAll('.xcat-del').forEach(function (x) {
+        x.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var id = x.closest('[data-xcat]').dataset.xcat;
+          if (id === VID.catPrimary) {
+            // the home is gone — the first extra shelf inherits it
+            VID.catExtra = VID.catExtra || [];
+            VID.catPrimary = VID.catExtra.shift() || null;
+          } else {
+            VID.catExtra = (VID.catExtra || []).filter(function (i) { return i !== id; });
+          }
+          changed();
+        });
+      });
+
+      // a dim chip's body promotes it: the old home steps down to an extra
+      host.querySelectorAll('.xcat-extra').forEach(function (chip) {
+        chip.addEventListener('click', function (e) {
+          if (e.target.closest('.xcat-del')) return;
+          var id = chip.dataset.xcat;
+          VID.catExtra = (VID.catExtra || []).filter(function (i) { return i !== id; });
+          if (VID.catPrimary) VID.catExtra.unshift(VID.catPrimary);
+          VID.catPrimary = id;
+          changed();
+        });
+      });
+
+      var btn = document.getElementById('xcat-add-btn');
+      var menu = document.getElementById('xcat-menu');
+      if (btn && menu) {
+        var away = function (e) {
+          if (!menu.contains(e.target) && !btn.contains(e.target)) closeMenu();
+        };
+        var closeMenu = function () {
+          menu.hidden = true; btn.setAttribute('aria-expanded', 'false');
+          document.removeEventListener('click', away);
+        };
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var opening = menu.hidden;
+          menu.hidden = !opening;
+          btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+          if (opening) setTimeout(function () { document.addEventListener('click', away); }, 0);
+        });
+        menu.querySelectorAll('[data-xadd]').forEach(function (m) {
+          m.addEventListener('click', function () {
+            var id = m.dataset.xadd;
+            if (!VID.catPrimary) VID.catPrimary = id;   // the first pick is home
+            else (VID.catExtra = VID.catExtra || []).push(id);
+            changed();
+          });
+        });
+        var nc = document.getElementById('xcat-newcat');
+        if (nc) nc.addEventListener('click', function () {
+          closeMenu();
+          var row = document.getElementById('vid-newcat-row');
+          if (row) { row.hidden = false; document.getElementById('vid-newcat-name').focus(); }
+        });
+      }
+    }
+
     // which collections hold this video (read from the list-page snapshot)
     function videoCollectionsOf(videoId) {
       if (!VID.x || !VID.x.ok) return [];
@@ -4357,14 +4620,179 @@
         : dirty ? 'Save' : 'Saved';
     }
 
+    // ── the rich description ────────────────────────────────────────────────
+    // The editor writes a SMALL dialect of HTML — p, br, strong, em, u,
+    // ul/ol/li, a[href] — and rteClean is the gate that enforces it. On
+    // load, on paste and on every read, whatever the browser produced is
+    // walked and rebuilt from that allowlist, so nothing else can reach
+    // the database. fsVL.richText renders the same dialect on the member
+    // page: what is authored here is exactly what members see.
+    function rteSafeHref(h) {
+      h = (h || '').trim();
+      if (/^(https?:|mailto:)/i.test(h)) return h;
+      if (/^\//.test(h)) return h;
+      if (/^[\w-]+(\.[\w-]+)+/.test(h)) return 'https://' + h;   // typed without a protocol
+      return null;   // javascript:, data:, and other schemes never survive
+    }
+    function rteSer(node) {
+      if (node.nodeType === 3) return esc(node.nodeValue);
+      if (node.nodeType !== 1) return '';
+      var kids = Array.prototype.map.call(node.childNodes, rteSer).join('');
+      switch (node.tagName) {
+        case 'BR': return '<br>';
+        case 'B': case 'STRONG': return kids && '<strong>' + kids + '</strong>';
+        case 'I': case 'EM':     return kids && '<em>' + kids + '</em>';
+        case 'U':                return kids && '<u>' + kids + '</u>';
+        case 'UL': case 'OL':    return kids && '<' + node.tagName.toLowerCase() + '>' + kids + '</' + node.tagName.toLowerCase() + '>';
+        case 'LI':               return '<li>' + kids + '</li>';
+        case 'A': {
+          var h = rteSafeHref(node.getAttribute('href'));
+          return h ? '<a href="' + esc(h) + '">' + kids + '</a>' : kids;
+        }
+        case 'P': case 'DIV':    return kids ? '<p>' + kids + '</p>' : '';
+        case 'SCRIPT': case 'STYLE': return '';
+        default: return kids;   // spans and anything unknown unwrap to their text
+      }
+    }
+    function rteClean(html) {
+      var box = document.createElement('div');
+      box.innerHTML = html || '';
+      return Array.prototype.map.call(box.childNodes, rteSer).join('');
+    }
+    // legacy plain-text descriptions become paragraphs: blank line = new
+    // paragraph, single newline = <br> — the same shape pre-line rendered
+    function rtePlainToHtml(s) {
+      return (s || '').split(/\n{2,}/).map(function (p) {
+        p = p.trim();
+        return p ? '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>' : '';
+      }).join('');
+    }
+    function rteIsHtml(s) { return /<([a-z]+)(\s|>|\/)/i.test(s || ''); }
+    function rteValue() {
+      var area = document.getElementById('vid-desc');
+      if (!area) return VID.editing ? (VID.editing.description || null) : null;
+      var out = rteClean(area.innerHTML);
+      var probe = document.createElement('div');
+      probe.innerHTML = out;
+      return probe.textContent.trim() ? out : null;   // markup with no words is empty
+    }
+
+    function rteInit(v) {
+      var area = document.getElementById('vid-desc');
+      var bar = document.querySelector('#vid-desc-rte .rte-bar');
+      if (!area || !bar) return;
+      try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (_) {}
+      var src = v.description || '';
+      area.innerHTML = rteIsHtml(src) ? rteClean(src) : rtePlainToHtml(src);
+
+      // format buttons — mousedown is prevented so the selection being
+      // formatted survives the click
+      bar.querySelectorAll('[data-rte]').forEach(function (btn) {
+        btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        btn.addEventListener('click', function () {
+          area.focus();
+          document.execCommand(btn.dataset.rte);
+          paintBar();
+        });
+      });
+
+      // active states follow the caret
+      function paintBar() {
+        var sel = document.getSelection();
+        var inside = sel && sel.anchorNode && area.contains(sel.anchorNode);
+        var states = { bold: 'bold', italic: 'italic', underline: 'underline',
+                       insertUnorderedList: 'insertUnorderedList', insertOrderedList: 'insertOrderedList' };
+        bar.querySelectorAll('[data-rte]').forEach(function (btn) {
+          var on = false;
+          if (inside) { try { on = document.queryCommandState(states[btn.dataset.rte]); } catch (_) {} }
+          btn.classList.toggle('on', on);
+        });
+        var lk = document.getElementById('rte-link');
+        if (lk) lk.classList.toggle('on', !!(inside && caretAnchor()));
+      }
+      function caretAnchor() {
+        var sel = document.getSelection();
+        var n = sel && sel.anchorNode;
+        while (n && n !== area) { if (n.nodeType === 1 && n.tagName === 'A') return n; n = n.parentNode; }
+        return null;
+      }
+      // ONE document listener that finds the current editor by id — forms
+      // re-render constantly, so nothing here may bind to document per render
+      if (!document._fsRteSel) {
+        document._fsRteSel = true;
+        document.addEventListener('selectionchange', function () {
+          var a2 = document.getElementById('vid-desc');
+          if (a2 && a2._paintBar) a2._paintBar();
+        });
+      }
+      area._paintBar = paintBar;
+
+      // paste arrives through the same gate as everything else
+      area.addEventListener('paste', function (e) {
+        e.preventDefault();
+        var html = e.clipboardData && e.clipboardData.getData('text/html');
+        var text = e.clipboardData && e.clipboardData.getData('text/plain');
+        var ins = html ? rteClean(html) : esc(text || '').replace(/\n/g, '<br>');
+        document.execCommand('insertHTML', false, ins);
+      });
+
+      // ── links: a small popover, the app's own, not window.prompt ──
+      var lkBtn = document.getElementById('rte-link'), box = document.getElementById('rte-linkbox');
+      var url = document.getElementById('rte-link-url');
+      var saved = null;   // the selection the popover is editing
+      function closeBox() { if (box) box.hidden = true; }
+      function restoreSel() {
+        if (!saved) return;
+        var sel = document.getSelection();
+        sel.removeAllRanges(); sel.addRange(saved);
+      }
+      if (lkBtn && box && url) {
+        lkBtn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        lkBtn.addEventListener('click', function () {
+          if (!box.hidden) { closeBox(); return; }
+          var sel = document.getSelection();
+          if (!sel || !sel.rangeCount || !area.contains(sel.anchorNode)) return;
+          var a = caretAnchor();
+          if (a) { saved = document.createRange(); saved.selectNodeContents(a); }
+          else if (!sel.isCollapsed) saved = sel.getRangeAt(0).cloneRange();
+          else return;   // nothing selected and not in a link — nothing to do
+          url.value = a ? (a.getAttribute('href') || '') : '';
+          box.hidden = false;
+          url.focus();
+        });
+        document.getElementById('rte-link-apply').addEventListener('click', function () {
+          var h = rteSafeHref(url.value);
+          if (!h) { url.classList.add('shake'); setTimeout(function () { url.classList.remove('shake'); }, 350); return; }
+          restoreSel();
+          document.execCommand('createLink', false, h);
+          closeBox(); paintBar();
+        });
+        document.getElementById('rte-link-remove').addEventListener('click', function () {
+          restoreSel();
+          document.execCommand('unlink');
+          closeBox(); paintBar();
+        });
+        url.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); document.getElementById('rte-link-apply').click(); }
+          if (e.key === 'Escape') closeBox();
+        });
+        box.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+        area.addEventListener('mousedown', closeBox);
+      }
+    }
+
     function videoRead() {
       var g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
       var t = function (id) { return (g(id) || '').trim(); };
       return {
         title: t('vid-title'),
         short_description: t('vid-short') || null,
-        description: t('vid-desc') || null,
-        category_id: g('vid-category') || null,
+        description: rteValue(),
+        // chips own the category when the collections layer is present;
+        // the fallback select only exists on pre-collections databases
+        category_id: document.getElementById('vid-category')
+          ? (g('vid-category') || null)
+          : (VID.catPrimary || null),
         slug: t('vid-slug'),
         seo_title: t('vid-seo-title') || null,
         seo_description: t('vid-seo-desc') || null,
@@ -4406,13 +4834,34 @@
 
     function videoThumbPreview() {
       var v = VID.editing;
+      videoSyncPlayerPoster();   // the player shows the same frame — first, before any early return
       var host = document.getElementById('vid-thumb-preview');
       if (!host) return;
-      // a custom image is ours, not Mux's — no token, no playback id needed
-      if (v.thumbnail_mode === 'custom') {
+      // in Upload mode the preview IS the uploader — click or drop, on the
+      // image itself, to set or replace it
+      var custom = v.thumbnail_mode === 'custom';
+      host.classList.toggle('droppable', custom);
+      host.classList.toggle('empty', custom && !v.custom_thumbnail_url);
+      if (custom) {
+        host.tabIndex = 0;
+        host.setAttribute('role', 'button');
+        host.setAttribute('aria-label',
+          v.custom_thumbnail_url ? 'Replace the thumbnail image' : 'Upload a thumbnail image');
+      } else {
+        host.removeAttribute('tabindex');
+        host.removeAttribute('role');
+        host.removeAttribute('aria-label');
+      }
+      if (custom) {
+        // a custom image is ours, not Mux's — no token, no playback id needed
         host.innerHTML = v.custom_thumbnail_url
-          ? '<img alt="" src="' + esc(v.custom_thumbnail_url) + '">'
-          : '<span class="nf-hint">Upload an image to see it here.</span>';
+          ? '<img alt="" src="' + esc(v.custom_thumbnail_url) + '">' +
+            '<span class="vid-thumb-swap"><span class="material-symbols-sharp">photo_camera</span>Replace</span>'
+          : '<span class="vid-thumb-invite">' +
+              '<span class="material-symbols-sharp">add_a_photo</span>' +
+              '<span class="vid-drop-main">Drop an image, or <u>browse</u></span>' +
+              '<span class="nf-hint">JPG, PNG or WebP · 16:9 works best · up to 5MB</span>' +
+            '</span>';
         return;
       }
       if (!v.mux_playback_id) return;
@@ -4439,6 +4888,27 @@
       if (have) host.classList.add('loading');
       img.src = url;
       if (!have) host.innerHTML = '<span class="nf-hint">Cutting the frame…</span>';
+    }
+
+    // The player's poster is the SAME frame the thumbnail picker shows —
+    // custom image, scrubbed frame, or the saved one — so changing the
+    // thumbnail is visible on the video itself, not just in the picker.
+    function videoPlayerPoster() {
+      var v = VID.editing;
+      if (!v) return null;
+      if (v.thumbnail_mode === 'custom' && v.custom_thumbnail_url) return v.custom_thumbnail_url;
+      if (!v.mux_playback_id) return null;
+      var tok = (v.thumbnail_mode === 'timestamp' && VID._timeTok) ? VID._timeTok : v.thumb_token;
+      if (!tok) return null;
+      return 'https://image.mux.com/' + encodeURIComponent(v.mux_playback_id) +
+        '/thumbnail.webp?width=1280&token=' + encodeURIComponent(tok);
+    }
+
+    function videoSyncPlayerPoster() {
+      var el = document.querySelector('#vid-player mux-player');
+      if (!el) return;
+      var poster = videoPlayerPoster();
+      if (poster && el.getAttribute('poster') !== poster) el.setAttribute('poster', poster);
     }
 
     // Scrubbing re-mints the thumbnail token with the chosen time in its
@@ -4480,31 +4950,24 @@
       var $ = function (id) { return document.getElementById(id); };
 
       var cancel = $('vid-cancel');
-      if (cancel) cancel.addEventListener('click', function () { VID.editing = null; renderVideos(); });
+      if (cancel) cancel.addEventListener('click', function () { VID.editing = null; editorHash('videos', null); renderVideos(); });
 
       // ── live fields ──
-      ['vid-title', 'vid-short', 'vid-desc', 'vid-seo-title', 'vid-seo-desc', 'vid-slug', 'vid-time', 'vid-notes']
+      ['vid-title', 'vid-short', 'vid-desc', 'vid-seo-title', 'vid-seo-desc', 'vid-slug', 'vid-time']
         .forEach(function (id) { var e = $(id); if (e) e.addEventListener('input', videoLive); });
 
-      // ── extra category chips ──
-      document.querySelectorAll('#vid-xcats [data-xcat]').forEach(function (chip) {
-        chip.addEventListener('click', function () {
-          var id = chip.dataset.xcat;
-          VID.catExtra = VID.catExtra || [];
-          var at = VID.catExtra.indexOf(id);
-          if (at === -1) VID.catExtra.push(id); else VID.catExtra.splice(at, 1);
-          chip.classList.toggle('on', at === -1);
-          chip.innerHTML = (at === -1 ? '<span class="material-symbols-sharp">check</span>' : '') +
-            esc((VID.cats.filter(function (x) { return x.id === id; })[0] || {}).name || '');
-          videoSyncSave();
-        });
-      });
+      // ── the rich description ──
+      rteInit(v);
+
+      // ── extra shelves ──
+      wireVideoXcats();
 
       // ── jump to a collection this video belongs to ──
       document.querySelectorAll('.vid-col-jump').forEach(function (a) {
-        a.addEventListener('click', function () {
-          COL._openOnRender = a.dataset.col;   // renderCollections opens it
+        a.addEventListener('click', function (e) {
+          e.preventDefault();   // the deep link, not the anchor's plain #collections
           VID.editing = null;
+          location.hash = '#collections/' + a.dataset.col;
         });
       });
 
@@ -4601,7 +5064,8 @@
       });
       var cancelCat = $('vid-newcat-cancel');
       if (cancelCat) cancelCat.addEventListener('click', function () {
-        row.hidden = true; newcat.hidden = false;
+        row.hidden = true;
+        if (newcat) newcat.hidden = false;
       });
       var saveCat = $('vid-newcat-save');
       if (saveCat) saveCat.addEventListener('click', async function () {
@@ -4614,10 +5078,20 @@
           if (r.error) throw r.error;
           VID.cats.push(r.data);
           var sel = $('vid-category');
-          sel.insertAdjacentHTML('beforeend', '<option value="' + r.data.id + '">' + esc(r.data.name) + '</option>');
-          sel.value = r.data.id;          // chosen for you — it is why you made it
+          if (sel) {
+            // the pre-collections fallback select
+            sel.insertAdjacentHTML('beforeend', '<option value="' + r.data.id + '">' + esc(r.data.name) + '</option>');
+            sel.value = r.data.id;        // chosen for you — it is why you made it
+          } else {
+            // chips: it becomes home if there is none, an extra shelf otherwise
+            if (!VID.catPrimary) VID.catPrimary = r.data.id;
+            else (VID.catExtra = VID.catExtra || []).push(r.data.id);
+            wireVideoXcats();
+          }
           videoSyncSave();
-          row.hidden = true; newcat.hidden = false;
+          row.hidden = true;
+          if (newcat) newcat.hidden = false;
+          $('vid-newcat-name').value = '';
           toast('Category added');
         } catch (e) {
           toast(/duplicate/i.test(e.message || '') ? 'There is already a category with that name' : e.message);
@@ -4634,9 +5108,7 @@
           });
           var t = $('vid-thumb-time');
           if (t) t.hidden = btn.dataset.thumbMode !== 'timestamp';
-          var cu = $('vid-thumb-custom');
-          if (cu) cu.hidden = btn.dataset.thumbMode !== 'custom';
-          videoThumbPreview();
+          videoThumbPreview();   // renders the mode, including Upload's drop surface
           if (btn.dataset.thumbMode === 'timestamp') videoThumbTimeChanged();
           videoSyncSave();
         });
@@ -4665,17 +5137,32 @@
       if (saveTop) saveTop.addEventListener('click', function () { saveVideo(saveTop, err); });
 
       // ── a thumbnail of your own ──
-      var tDrop = $('vid-thumb-drop'), tFile = $('vid-thumb-file'), tErr = $('vid-thumb-err');
-      if (tDrop && tFile) {
+      // The preview surface takes the click, the drop and the keyboard —
+      // listeners live on the host, which survives every innerHTML redraw.
+      var tHost = $('vid-thumb-preview'), tFile = $('vid-thumb-file'), tErr = $('vid-thumb-err');
+      if (tHost && tFile) {
         var takeThumb = function (f) { if (f) uploadThumbnail(f, tErr); };
+        var droppable = function () { return tHost.classList.contains('droppable'); };
         tFile.addEventListener('change', function () { takeThumb(tFile.files && tFile.files[0]); tFile.value = ''; });
+        tHost.addEventListener('click', function () { if (droppable()) tFile.click(); });
+        tHost.addEventListener('keydown', function (e) {
+          if (!droppable()) return;
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tFile.click(); }
+        });
         ['dragenter', 'dragover'].forEach(function (t) {
-          tDrop.addEventListener(t, function (e) { e.preventDefault(); tDrop.classList.add('over'); });
+          tHost.addEventListener(t, function (e) {
+            if (!droppable()) return;
+            e.preventDefault(); tHost.classList.add('over');
+          });
         });
         ['dragleave', 'drop'].forEach(function (t) {
-          tDrop.addEventListener(t, function (e) { e.preventDefault(); tDrop.classList.remove('over'); });
+          tHost.addEventListener(t, function (e) {
+            if (!droppable()) return;
+            e.preventDefault(); tHost.classList.remove('over');
+          });
         });
-        tDrop.addEventListener('drop', function (e) {
+        tHost.addEventListener('drop', function (e) {
+          if (!droppable()) return;
           takeThumb(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
         });
       }
@@ -4731,7 +5218,7 @@
               try {
                 var r = await db.rpc('archive_video', { p_id: v.id });
                 if (r.error) throw r.error;
-                toast('Archived'); VID.editing = null; await renderVideos();
+                toast('Archived'); VID.editing = null; editorHash('videos', null); await renderVideos();
               } catch (e) { toast(e.message || 'Could not archive'); }
               return;
             }
@@ -4758,7 +5245,7 @@
                 var d = await db.from('videos').delete().eq('id', v.id);
                 if (d.error) throw d.error;
                 toast('Deleted. Its files stay in Resources; the video stays on Mux.');
-                VID.editing = null; await renderVideos();
+                VID.editing = null; editorHash('videos', null); await renderVideos();
               } catch (e) { toast(e.message || 'Could not delete that'); }
             }
           });
@@ -4805,7 +5292,10 @@
       if (v.mux_playback_id && document.getElementById('vid-player')) previewVideo(null, true);
 
       var catSel = $('vid-category');
-      if (catSel) catSel.addEventListener('change', videoSyncSave);
+      if (catSel) catSel.addEventListener('change', function () {
+        videoSyncSave();
+        wireVideoXcats();   // the new primary is no longer offered as an extra shelf
+      });
 
       wireVideoResources();
       videoLive();
@@ -4832,6 +5322,7 @@
           var ins = await db.from('videos').insert(vals).select().single();
           if (ins.error) throw ins.error;
           VID.editing = ins.data;
+          editorHash('videos', ins.data.id);   // the fresh draft is addressable from its first save
           if (kw.length) await db.rpc('set_video_keywords', { p_id: ins.data.id, p_keywords: kw });
           await applyVideoCategoryLinks(ins.data.id, null, vals.category_id);
           toast('Draft created — now add the file');
@@ -5133,6 +5624,8 @@
         el.setAttribute('metadata-viewer-user-id', 'admin-preview');
         el.setAttribute('accent-color', getComputedStyle(document.documentElement)
           .getPropertyValue('--accent').trim() || '#7A3E70');
+        var poster = videoPlayerPoster();
+        if (poster) el.setAttribute('poster', poster);
         host.innerHTML = '';
         host.classList.remove('is-loading');
         host.appendChild(el);
@@ -5243,6 +5736,18 @@
           (vids.data || []).forEach(function (v) {
             if (v.category_id) VID.catCounts.vids[v.category_id] = (VID.catCounts.vids[v.category_id] || 0) + 1;
           });
+        }
+        // arriving via the router: #video-categories/<id> opens that editor,
+        // the plain hash closes any editor so the page matches the address.
+        // Direct renderVideoCategories() calls skip this entirely.
+        if (CATE._openOnRender !== undefined) {
+          var want = CATE._openOnRender; CATE._openOnRender = undefined;
+          if (want && VID.cats.some(function (c) { return c.id === want; })) {
+            await openCategory(want);
+            return;
+          }
+          CATE.editing = null;
+          editorHash('video-categories', null);   // gone or never existed — the list is the truth
         }
         drawVideoCategories();
       } catch (e) {
@@ -5423,6 +5928,7 @@
         var row = await db.from('video_categories').select('*').eq('id', id).single();
         if (row.error) throw row.error;
         CATE.editing = row.data;
+        editorHash('video-categories', id);
         CATE.items = []; CATE.hasLinks = false;
         // the content list needs the junction tables; older databases (SQL
         // not yet run) still get About / Image / SEO
@@ -5616,7 +6122,7 @@
           try { await db.from('video_categories').delete().eq('id', c.id); } catch (_) {}
           CATE._freshSlug = null;
         }
-        CATE.editing = null; renderVideoCategories();
+        CATE.editing = null; editorHash('video-categories', null); renderVideoCategories();
       });
 
       ['cate-title', 'cate-subtitle', 'cate-pos', 'cate-short', 'cate-desc', 'cate-slug', 'cate-seo-title', 'cate-seo-desc']
@@ -6015,10 +6521,17 @@
       var b = bodyEl(); b.innerHTML = stateLoading();
       try {
         await loadCollectionsData();
-        if (COL._openOnRender) {          // a jump from the video editor
-          var target = COL._openOnRender; COL._openOnRender = null;
-          await openCollection(target);
-          return;
+        // arriving via the router: #collections/<id> opens that editor,
+        // plain #collections closes any editor so the page matches the
+        // address. Direct renderCollections() calls skip this entirely.
+        if (COL._openOnRender !== undefined) {
+          var target = COL._openOnRender; COL._openOnRender = undefined;
+          if (target && COL.rows.some(function (r) { return r.id === target; })) {
+            await openCollection(target);
+            return;
+          }
+          COL.editing = null;
+          editorHash('collections', null);   // gone or never existed — the list is the truth
         }
         drawCollections();
       } catch (e) {
@@ -6200,6 +6713,7 @@
         var err = got.filter(function (r) { return r.error; })[0];
         if (err) throw err.error;
         COL.editing = got[0].data;
+        editorHash('collections', id);
         COL.items = got[1].data || [];
         COL.catSel = (got[2].data || []).map(function (l) { return l.category_id; });
         COL.catInitial = COL.catSel.slice();
@@ -6282,14 +6796,7 @@
           ) +
 
           colSection('Categories', 'The shelves this collection appears on. A collection needs at least one.',
-            '<div class="col-chips" id="col-cats">' +
-              cats.map(function (x) {
-                var on = COL.catSel.indexOf(x.id) !== -1;
-                return '<button type="button" class="col-chip' + (on ? ' on' : '') + '" data-cat="' + x.id + '">' +
-                  (on ? '<span class="material-symbols-sharp">check</span>' : '') + esc(x.name) + '</button>';
-              }).join('') +
-              '<button type="button" class="col-chip" id="col-newcat">+ New category</button>' +
-            '</div>' +
+            '<div class="xcat-row" id="col-cats">' + colXcatsHTML() + '</div>' +
             '<div class="vid-newcat-row" id="col-newcat-row" hidden>' +
               '<input class="modal-input" id="col-newcat-name" maxlength="80" placeholder="Category name">' +
               '<button class="btn-secondary" id="col-newcat-save" type="button">Add</button>' +
@@ -6340,7 +6847,11 @@
               : '<p class="muted">No filters defined yet. Add some under <strong>Filters</strong> in the Video menu — things like Experience Level or Movement Focus.</p>'
           ) +
 
-          colSection('Page and search', 'How this looks as a link, and in a search result.',
+          colSection('Page and search', '',
+            '<label class="nf-label" for="col-seo-title">Page title' +
+              vidCounter('cc-seot', (c.seo_title || '').length, COL_LIMITS.seo_title) + '</label>' +
+            '<input class="modal-input" id="col-seo-title" maxlength="120" value="' + esc(c.seo_title || '') + '" placeholder="' + esc(c.title || 'Defaults to the title') + '">' +
+
             '<label class="nf-label" for="col-slug">URL</label>' +
             '<div class="vid-slug-row">' +
               '<span class="vid-slug-prefix">flowschool.io/collection/</span>' +
@@ -6350,20 +6861,11 @@
               ? '<span class="nf-hint vid-warn">This collection is published. Changing the URL breaks any link already shared.</span>'
               : '<span class="nf-hint">Made from the title. Edit it and it stays as you set it.</span>') +
 
-            '<label class="nf-label" for="col-seo-title">Page title' +
-              vidCounter('cc-seot', (c.seo_title || '').length, COL_LIMITS.seo_title) + '</label>' +
-            '<input class="modal-input" id="col-seo-title" maxlength="120" value="' + esc(c.seo_title || '') + '" placeholder="' + esc(c.title || 'Defaults to the title') + '">' +
-
             '<label class="nf-label" for="col-seo-desc">Meta description' +
               vidCounter('cc-seod', (c.seo_description || '').length, COL_LIMITS.seo_desc) + '</label>' +
             '<textarea class="modal-input nf-msg" id="col-seo-desc" rows="2" maxlength="320" placeholder="' + esc(c.short_description || 'Defaults to the short description') + '">' + esc(c.seo_description || '') + '</textarea>' +
 
-            '<div class="vid-serp" id="col-serp"></div>' +
-            '<span class="nf-hint">A rough idea, not a promise — every search engine renders this differently.</span>'
-          ) +
-
-          colSection('Internal notes', 'For you and Bonnie only. Never shown to members.',
-            '<textarea class="modal-input nf-msg" id="col-notes" rows="3" maxlength="4000" placeholder="needs new thumbnail · attach worksheet later · release next month">' + esc(c.admin_notes || '') + '</textarea>'
+            '<div class="vid-serp" id="col-serp"></div>'
           ) +
 
         '</div>' +
@@ -6531,6 +7033,82 @@
         '</select></div>';
     }
 
+    // ── the collection's shelves: same quiet picker the video editor has ────
+    // Only the CHOSEN shelves render; the dashed chip opens the popover with
+    // the rest, "New category…" at its foot. No home shelf here — collections
+    // are pure junction membership.
+    function colXcatsHTML() {
+      var cats = COL.cats.filter(function (c) { return c.status === 'active'; });
+      var byId = {}; cats.forEach(function (c) { byId[c.id] = c; });
+      var out = (COL.catSel || []).map(function (id) {
+        var c = byId[id];
+        if (!c) return '';
+        return '<span class="col-chip on" data-cat="' + esc(id) + '">' + esc(c.name) +
+          '<button type="button" class="vid-tag-x colcat-del" aria-label="Remove from ' + esc(c.name) + '">' +
+          '<span class="material-symbols-sharp">close</span></button></span>';
+      }).join('');
+      var avail = cats.filter(function (c) { return (COL.catSel || []).indexOf(c.id) === -1; });
+      out += '<span class="xcat-add">' +
+        '<button type="button" class="col-chip" id="colcat-add-btn" aria-haspopup="true" aria-expanded="false">' +
+          '<span class="material-symbols-sharp">add</span>' +
+          ((COL.catSel || []).length ? 'Add to category' : 'Choose a category') + '</button>' +
+        '<div class="vid-menu" id="colcat-menu" role="menu" hidden>' +
+          avail.map(function (c) {
+            return '<button role="menuitem" data-catadd="' + esc(c.id) + '">' + esc(c.name) + '</button>';
+          }).join('') +
+          (avail.length ? '<div class="vid-menu-sep"></div>' : '') +
+          '<button role="menuitem" id="colcat-newcat">New category…</button>' +
+        '</div>' +
+      '</span>';
+      return out;
+    }
+
+    function wireColXcats() {
+      var host = document.getElementById('col-cats');
+      if (!host) return;
+      host.innerHTML = colXcatsHTML();
+
+      function changed() { wireColXcats(); collectionLive(); }
+
+      host.querySelectorAll('.colcat-del').forEach(function (x) {
+        x.addEventListener('click', function () {
+          var id = x.closest('[data-cat]').dataset.cat;
+          COL.catSel = (COL.catSel || []).filter(function (i) { return i !== id; });
+          changed();
+        });
+      });
+      var btn = document.getElementById('colcat-add-btn');
+      var menu = document.getElementById('colcat-menu');
+      if (btn && menu) {
+        var away = function (e) {
+          if (!menu.contains(e.target) && !btn.contains(e.target)) closeMenu();
+        };
+        var closeMenu = function () {
+          menu.hidden = true; btn.setAttribute('aria-expanded', 'false');
+          document.removeEventListener('click', away);
+        };
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var opening = menu.hidden;
+          menu.hidden = !opening;
+          btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+          if (opening) setTimeout(function () { document.addEventListener('click', away); }, 0);
+        });
+        menu.querySelectorAll('[data-catadd]').forEach(function (m) {
+          m.addEventListener('click', function () {
+            (COL.catSel = COL.catSel || []).push(m.dataset.catadd);
+            changed();
+          });
+        });
+        var nc = document.getElementById('colcat-newcat');
+        if (nc) nc.addEventListener('click', function () {
+          closeMenu();
+          var row = document.getElementById('col-newcat-row');
+          if (row) { row.hidden = false; document.getElementById('col-newcat-name').focus(); }
+        });
+      }
+    }
+
     // ── filters ─────────────────────────────────────────────────────────────
     function collectionFilterGroups() {
       return COL.filters.map(function (f) {
@@ -6638,7 +7216,9 @@
         slug: t('col-slug'),
         seo_title: t('col-seo-title') || null,
         seo_description: t('col-seo-desc') || null,
-        admin_notes: t('col-notes') || null,
+        // the field left the form; saved notes ride along untouched
+        admin_notes: document.getElementById('col-notes') ? (t('col-notes') || null)
+          : (COL.editing.admin_notes || null),
         visibility: (document.getElementById('col-unlisted') || {}).checked ? 'unlisted' : 'members',
       };
       var inst = document.getElementById('col-instructor');
@@ -6733,10 +7313,10 @@
       var cancel = $('col-cancel');
       if (cancel) cancel.addEventListener('click', function () {
         if (collectionDirty() && !window.confirm('You have unsaved changes. Leave anyway?')) return;
-        COL.editing = null; renderCollections();
+        COL.editing = null; editorHash('collections', null); renderCollections();
       });
 
-      ['col-title', 'col-short', 'col-desc', 'col-seo-title', 'col-seo-desc', 'col-slug', 'col-notes']
+      ['col-title', 'col-short', 'col-desc', 'col-seo-title', 'col-seo-desc', 'col-slug']
         .forEach(function (id) { var e = $(id); if (e) e.addEventListener('input', collectionLive); });
       var inst = $('col-instructor');
       if (inst) inst.addEventListener('change', collectionSyncSave);
@@ -6795,21 +7375,8 @@
       wireColTagRemovers();
 
       // ── category chips ──
-      document.querySelectorAll('#col-cats [data-cat]').forEach(function (chip) {
-        chip.addEventListener('click', function () {
-          var id = chip.dataset.cat;
-          var at = COL.catSel.indexOf(id);
-          if (at === -1) COL.catSel.push(id); else COL.catSel.splice(at, 1);
-          chip.classList.toggle('on', at === -1);
-          chip.innerHTML = (at === -1 ? '<span class="material-symbols-sharp">check</span>' : '') +
-            esc((COL.cats.filter(function (x) { return x.id === id; })[0] || {}).name || '');
-          collectionLive();
-        });
-      });
-      var newcat = $('col-newcat'), catRow = $('col-newcat-row');
-      if (newcat) newcat.addEventListener('click', function () {
-        catRow.hidden = false; $('col-newcat-name').focus();
-      });
+      wireColXcats();
+      var catRow = $('col-newcat-row');
       var catCancel = $('col-newcat-cancel');
       if (catCancel) catCancel.addEventListener('click', function () { catRow.hidden = true; });
       var catSave = $('col-newcat-save');
@@ -6823,12 +7390,14 @@
           if (r.error) throw r.error;
           COL.cats.push(r.data);
           COL.catSel.push(r.data.id);   // chosen for you — it is why you made it
+          catRow.hidden = true;
+          $('col-newcat-name').value = '';
+          wireColXcats();
+          collectionLive();
           toast('Category added');
-          drawCollectionForm();
         } catch (e) {
           toast(/duplicate/i.test(e.message || '') ? 'There is already a category with that name' : e.message);
-          catSave.disabled = false;
-        }
+        } finally { catSave.disabled = false; }
       });
 
       // ── playlist ──
@@ -6945,7 +7514,7 @@
                 var a = await db.rpc('archive_collection', { p_id: c.id });
                 if (a.error) throw a.error;
                 toast('Archived — members no longer see it. The videos are untouched.');
-                COL.editing = null; await renderCollections();
+                COL.editing = null; editorHash('collections', null); await renderCollections();
               } catch (e) { toast(e.message || 'Could not archive'); }
               return;
             }
@@ -6966,7 +7535,7 @@
                 var d = await db.from('collections').delete().eq('id', c.id);
                 if (d.error) throw d.error;
                 toast('Deleted');
-                COL.editing = null; await renderCollections();
+                COL.editing = null; editorHash('collections', null); await renderCollections();
               } catch (e) { toast(e.message || 'Could not delete that'); }
             }
           });
@@ -7422,6 +7991,7 @@
           var ins = await db.from('collections').insert(vals).select().single();
           if (ins.error) throw ins.error;
           COL.editing = ins.data;
+          editorHash('collections', ins.data.id);   // addressable from its first save
           if (kw.length) await db.rpc('set_collection_keywords', { p_id: ins.data.id, p_keywords: kw });
           if (COL.catSel.length) {
             var catRows = COL.catSel.map(function (id) {
@@ -8722,7 +9292,13 @@
 
     // ── router ──
     function route() {
-      var id = (location.hash || '#home').slice(1);
+      var raw = (location.hash || '#home').slice(1);
+      // #<section>/<id> deep-links one detail editor; the part before the
+      // slash is still the section, so every other route is untouched
+      var slash = raw.indexOf('/');
+      var id = slash > 0 ? raw.slice(0, slash) : raw;
+      var deepable = { videos: VID, collections: COL, 'video-categories': CATE };
+      if (deepable[id]) deepable[id]._openOnRender = slash > 0 ? raw.slice(slash + 1) : null;
       var sec = SECTIONS.filter(function (s) { return s.id === id; })[0] || SECTIONS[0];
       // 'home' belongs to no group; groupOf() would fall through to Overview
       // and a later Overview pill click would land back on the landing page
