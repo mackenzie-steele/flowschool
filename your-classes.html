@@ -175,7 +175,6 @@
 
     /* bands compact inside the panel — one rhythm: 22px between bands,
        symmetric padding at the panel's top and bottom */
-    .cw-spec .cw-type,
     .cw-spec .cw-length,
     .cw-spec .cw-props,
     .cw-spec .cw-stories,
@@ -275,6 +274,9 @@
     }
 
     /* attached stories */
+    /* the story menu anchors in the block itself, not up the tree */
+    .cw-story-block { position: relative; }
+
     .cw-stories {
       margin: 20px 0 8px;
       padding: 16px 0;
@@ -425,63 +427,8 @@
     }
 
     /* class type — free text with a menu of your saved types */
-    .cw-type { padding: 0 0 16px; }
-    .cw-type .label-1 { display: block; margin-bottom: 12px; }
-    .cw-type-wrap { position: relative; }
-
-    .cw-type-input {
-      width: 100%;
-      background: rgba(var(--ink-rgb), .04);
-      border: none;
-      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
-      border-radius: var(--r);
-      padding: 12px 16px;
-      outline: none;
-      color: var(--text-1);
-      font-family: var(--font);
-      font-size: var(--text-body-sm);
-      transition: box-shadow var(--transition-base), background var(--transition-base);
-    }
-
-    .cw-type-input:focus {
-      background: rgba(var(--ink-rgb), .06);
-      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .30);
-    }
-
-    .cw-type-input::placeholder { color: rgba(var(--ink-rgb), .30); }
-
-    .cw-type-menu {
-      border-radius: var(--r); overflow: hidden;
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      right: 0;
-      z-index: 6;
-      background: var(--paper-solid);
-      border: 1px solid rgba(var(--ink-rgb), .16);
-      border-top-color: rgba(var(--ink-rgb), .30);
-      box-shadow: var(--shadow-float);
-      /* enter/exit comes from the global floating-panel system */
-      max-height: 220px;
-      overflow-y: auto;
-    }
-
-    .cw-type-row {
-      display: block;
-      width: 100%;
-      padding: 8px 16px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      text-align: left;
-      font-family: var(--font);
-      font-size: var(--text-ui);
-      color: var(--text-2);
-      transition: background var(--transition-fast), color var(--transition-fast);
-    }
-
-    .cw-type-row:hover,
-    .cw-type-row.sel { background: rgba(var(--ink-rgb), .05); color: var(--text-1); }
+    /* the class-type combo retired — the metadata token (global.css)
+       carries the type now */
 
     .cw-playlist-input {
       color: var(--text-1);
@@ -535,10 +482,24 @@
     /* section head: label left, flow name + insert affordance right */
     .cw-section-head {
       display: flex;
-      align-items: baseline;
+      align-items: center;   /* the grip sits ON the label's line */
       justify-content: space-between;
       gap: 12px;
     }
+
+    /* the reorder grips: always present — the order is the teacher's,
+       and a control you must discover isn't a control */
+    .cw-grip {
+      display: inline-flex; flex: none; align-self: center;
+      cursor: grab; color: var(--text-4); margin-right: -4px;
+      align-self: center;
+      transition: opacity var(--transition-base), color var(--transition-base);
+    }
+    .cw-grip:hover { color: var(--text-2); }
+    .cw-grip:active { cursor: grabbing; }
+    .cw-grip .material-symbols-sharp { font-size: 16px; }
+    .cw-section-head .label-1 { flex: 1; min-width: 0; }
+    .cw-section.dragging { opacity: .45; }
 
     .cw-head-right { display: flex; align-items: baseline; gap: 16px; min-width: 0; }
 
@@ -618,6 +579,13 @@
 
     /* flow picker rides the suggest-panel look */
     .flow-pick { min-width: 280px; }
+    /* group heading inside a picker panel — mono-caps, a breath above */
+    .sh-group {
+      font-family: var(--font-mono); font-size: var(--fs-meta);
+      letter-spacing: var(--ls-micro); text-transform: uppercase;
+      color: var(--text-3); padding: 10px 14px 4px;
+      border-top: 1px solid var(--border-light); margin-top: 4px;
+    }
 
     .flp-action {
       display: flex;
@@ -1155,56 +1123,8 @@
     .tv-notes-log { margin-top: 20px; }
 
     /* ── Story picker modal ── */
-    .story-pick-list {
-      border-radius: var(--r); overflow: hidden;
-      border: 1px solid rgba(var(--ink-rgb), .10);
-      max-height: 300px;
-      overflow-y: auto;
-      margin-bottom: 4px;
-    }
-
-    .story-pick-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      cursor: pointer;
-      border-bottom: 1px solid rgba(var(--ink-rgb), .07);
-      transition: background var(--transition-fast);
-    }
-
-    .story-pick-item:last-child { border-bottom: none; }
-    .story-pick-item:hover { background: rgba(var(--ink-rgb), .04); }
-
-    .story-pick-info { flex: 1; min-width: 0; }
-
-    .story-pick-title {
-      font-size: var(--text-body-sm);
-      color: var(--text-1);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .story-pick-starter {
-      font-size: 11px;
-      color: var(--text-3);
-      font-style: italic;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-top: 2px;
-    }
-
-    .story-pick-check {
-      flex-shrink: 0;
-      color: var(--accent);
-      font-size: 18px;
-      opacity: 0;
-      transition: opacity var(--transition-fast);
-    }
-
-    .story-pick-item.on .story-pick-check { opacity: 1; }
+    /* story-pick modal CSS retired with the modal — the STP popover
+       wears the shared sh-suggest anatomy */
 
 
     /* mobile teaching comfort */
@@ -1462,7 +1382,16 @@
 
       <div class="cw-layout">
         <div class="cw-editor">
-          <input type="text" class="cw-title-input" id="cw-title" placeholder="Name your class&#8230;" maxlength="120" aria-label="Class title">
+          <div class="fl-title-row">
+            <input type="text" class="cw-title-input" id="cw-title" placeholder="Name your class&#8230;" maxlength="120" aria-label="Class title">
+            <!-- the class type is metadata ON the class — the flow editor's
+                 token pattern, fed by the types your classes already wear -->
+            <button type="button" class="fl-kind-token unset" id="cw-type-token" aria-haspopup="menu" aria-expanded="false">
+              <span id="cw-type-token-label">Class Type</span>
+              <span class="material-symbols-sharp" aria-hidden="true">keyboard_arrow_down</span>
+            </button>
+            <div class="fl-kind-menu" id="cw-type-menu2" hidden></div>
+          </div>
 
           <div class="cw-section cw-story-block">
             <button type="button" class="cw-add-row" id="story-add-row">
@@ -1488,14 +1417,6 @@
 
         <aside class="cw-margin">
           <div class="cw-spec">
-          <div class="cw-type">
-            <span class="label-1">Class Type</span>
-            <div class="cw-type-wrap">
-              <input type="text" class="cw-type-input" id="cw-class-type" placeholder="Vinyasa, Slow Flow, Restorative&#8230;" maxlength="60" autocomplete="off" aria-label="Class type">
-              <div class="cw-type-menu" id="cw-type-menu" hidden></div>
-            </div>
-          </div>
-
           <div class="cw-length">
             <span class="label-1">Class Length</span>
             <div class="cw-length-bar" id="cw-length-bar">
@@ -1607,17 +1528,6 @@
   </div>
 
   <!-- ── STORY PICKER ── -->
-  <div class="modal-backdrop" id="story-modal" hidden>
-    <div class="modal-card">
-      <h3>Attach a story</h3>
-      <p class="modal-hint">Pick from Your Stories &#8212; open class with one of them.</p>
-      <div class="story-pick-list" id="story-pick-list"></div>
-      <div class="modal-actions">
-        <button class="btn-primary" id="story-modal-done">Done</button>
-      </div>
-    </div>
-  </div>
-
   <script src="lib/class-editor.js"></script>
 </body>
 

@@ -1041,7 +1041,10 @@ button svg {
 .wsf-open[data-tooltip],
 .fd-cues-open[data-tooltip],
 .fd-cues-print[data-tooltip],
-.tv-mark[data-tooltip] {
+.tv-mark[data-tooltip],
+.cw-remove-btn[data-tooltip],
+.cw-swap-btn[data-tooltip],
+.cw-grip[data-tooltip] {
   position: relative;
 }
 
@@ -1052,7 +1055,10 @@ button svg {
 .wsf-open[data-tooltip]::before,
 .fd-cues-open[data-tooltip]::before,
 .fd-cues-print[data-tooltip]::before,
-.tv-mark[data-tooltip]::before {
+.tv-mark[data-tooltip]::before,
+.cw-remove-btn[data-tooltip]::before,
+.cw-swap-btn[data-tooltip]::before,
+.cw-grip[data-tooltip]::before {
   content: attr(data-tooltip);
   position: absolute;
   bottom: calc(100% + 7px);
@@ -1080,12 +1086,77 @@ button svg {
 .wsf-open[data-tooltip]:hover::before,
 .fd-cues-open[data-tooltip]:hover::before,
 .fd-cues-print[data-tooltip]:hover::before,
-.tv-mark[data-tooltip]:hover::before {
+.tv-mark[data-tooltip]:hover::before,
+.cw-remove-btn[data-tooltip]:hover::before,
+.cw-swap-btn[data-tooltip]:hover::before,
+.cw-grip[data-tooltip]:hover::before {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
   transition-delay: 350ms;
 }
 
+
+
+
+/* ─── METADATA TOKEN — a tag beside a title that opens a small menu.
+   Born in the flow editor (flow type), now shared by the class editor
+   (class type). fl- prefix kept: renaming would orphan nothing but
+   history. ─────────────────────────────────────────────────────── */
+/* ── the kind, worn as metadata ─────────────────────────────────
+   The token beside the title IS the flow-tag its card will wear —
+   dashed and quiet while unset, the real accent tag once chosen.
+   Behind it, one small menu: the kinds with their one-line whys,
+   your own kinds with a way out, and "New kind…" at the foot. */
+.fd-meta .flow-tag { margin-right: 10px; vertical-align: middle; }
+
+.fl-title-row { position: relative; display: flex; align-items: flex-start; gap: 14px; }
+.fl-title-row .fl-title-input { flex: 1; min-width: 0; }
+/* larger than the card tag on purpose: this one is a REQUIRED control,
+   not a label — it must read as pressable at a glance */
+.fl-kind-token {
+  display: inline-flex; align-items: center; gap: 5px; flex: none; margin-top: 6px;
+  font-family: var(--font-mono); font-size: var(--fs-meta); text-transform: uppercase;
+  letter-spacing: .08em; color: var(--accent); background: none; cursor: pointer;
+  border: 1px solid var(--accent-border); border-radius: var(--rb); padding: 8px 8px 8px 14px;
+  transition: color var(--transition-base), border-color var(--transition-base);
+}
+.fl-kind-token .material-symbols-sharp { font-size: 16px; }
+.fl-kind-token.unset { color: var(--text-3); border-style: dashed; border-color: rgba(var(--ink-rgb), .30); }
+.fl-kind-token.unset:hover { color: var(--text-1); border-color: rgba(var(--ink-rgb), .45); }
+.fl-kind-token.shake { animation: fsShake .3s ease; }
+.fl-kind-menu {
+  position: absolute; right: 0; top: calc(100% - 4px); z-index: 30;
+  width: min(300px, 92vw); padding: 5px;
+  background: var(--paper-solid); border: 1px solid var(--border-light);
+  border-radius: var(--r); box-shadow: 0 8px 28px rgba(0, 0, 0, .12);
+}
+.fl-kind-menu[hidden] { display: none; }   /* author display beats UA [hidden] */
+.fl-kind-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  text-align: left; background: none; border: 0; cursor: pointer;
+  padding: 8px 10px; border-radius: var(--rb);
+  font-family: var(--font); color: var(--text-1);
+  transition: background var(--transition-base);
+}
+.fl-kind-item:hover { background: rgba(var(--ink-rgb), .05); }
+.fl-kind-item-body { flex: 1; min-width: 0; }
+.fl-kind-item-name { display: block; font-size: var(--text-ui); }
+.fl-kind-item.on .fl-kind-item-name { color: var(--accent); }
+.fl-kind-item-desc { display: block; font-size: 11px; line-height: 1.45; color: var(--text-3); margin-top: 1px; }
+.fl-kind-x {
+  display: inline-flex; flex: none; background: none; border: 0; cursor: pointer;
+  color: var(--text-3); opacity: .5; padding: 2px;
+  transition: opacity var(--transition-base), color var(--transition-base);
+}
+.fl-kind-x:hover { opacity: 1; color: var(--danger); }
+.fl-kind-x .material-symbols-sharp { font-size: 13px; }
+.fl-kind-new { border-top: 1px solid var(--border-light); margin-top: 4px; padding-top: 8px; color: var(--text-3); }
+.fl-kind-new:hover { color: var(--text-1); }
+.fl-kind-input {
+  width: 100%; background: none; border: none; outline: none;
+  padding: 8px 10px; border-top: 1px solid var(--border-light); margin-top: 4px;
+  font-family: var(--font); font-size: var(--text-ui); color: var(--text-1);
+}
 
 /* ─── 9. CHIPS / TOGGLE SELECTORS ────────────────────────────── */
 
