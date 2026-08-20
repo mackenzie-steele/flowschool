@@ -277,6 +277,25 @@
     /* the story menu anchors in the block itself, not up the tree */
     .cw-story-block { position: relative; }
 
+    /* ── the classic-arc offer: a whisper under the door on an empty
+       class — the method as an opening move, never a demand ── */
+    .cw-arc-offer {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      margin-top: 20px; text-align: center;
+    }
+    .cw-arc-btn {
+      background: none; border: none; padding: 2px 4px; cursor: pointer;
+      font-family: var(--font); font-size: var(--text-small); color: var(--text-3);
+      text-decoration: underline; text-underline-offset: 3px;
+      text-decoration-color: rgba(var(--ink-rgb), .25);
+      transition: color var(--transition-base), text-decoration-color var(--transition-base);
+    }
+    .cw-arc-btn:hover { color: var(--text-1); text-decoration-color: currentColor; }
+    .cw-arc-path {
+      font-family: var(--font-mono); font-size: var(--fs-meta);
+      letter-spacing: var(--ls-micro); color: var(--text-4);
+    }
+
     .cw-stories {
       margin: 20px 0 8px;
       padding: 16px 0;
@@ -375,56 +394,16 @@
     .cw-change-btn:hover { color: var(--text-1); }
 
     /* props — decided state shows only what's needed */
-    .cw-props-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
+    /* the Blocks chip's inline count — two micro-steps riding the chip */
+    .chip-step {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; margin-left: 2px; border-radius: 50%;
+      font-family: var(--font-mono); font-size: 12px; line-height: 1;
+      opacity: .6; transition: opacity var(--transition-base), background var(--transition-base);
     }
+    .chip-step:first-of-type { margin-left: 8px; }
+    .chip-step:hover { opacity: 1; background: rgba(var(--ink-rgb), .08); }
 
-    .cw-props-tags {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .cw-props-tags:empty { display: none; }
-
-    .cw-blocks-count {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .cw-blocks-label {
-      font-size: var(--text-small);
-      color: var(--text-3);
-      white-space: nowrap;
-    }
-
-    .cw-props-done { margin-top: 12px; }
-
-    .cw-blocks-input {
-      width: 64px;
-      background: rgba(var(--ink-rgb), .04);
-      border: none;
-      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .12);
-      border-radius: var(--r);
-      padding: 8px 12px;
-      outline: none;
-      color: var(--text-1);
-      font-family: var(--font-mono);
-      font-size: 13px;
-      text-align: center;
-      transition: box-shadow var(--transition-base), background var(--transition-base);
-    }
-
-    .cw-blocks-input:focus {
-      background: rgba(var(--ink-rgb), .06);
-      box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), .30);
-    }
 
     /* class type — free text with a menu of your saved types */
     /* the class-type combo retired — the metadata token (global.css)
@@ -1432,39 +1411,30 @@
             </div>
           </div>
 
+          <!-- props: the chips ARE both display and control — no modes,
+               no Done. The Blocks chip carries its own count when on. -->
           <div class="cw-props">
             <span class="label-1">Props</span>
-            <div class="cw-props-bar" id="cw-props-bar">
-              <span class="cw-props-tags" id="cw-props-tags"></span>
-              <button type="button" class="cw-change-btn" id="cw-props-change">Add Props</button>
-            </div>
-            <div id="cw-props-open" hidden>
-              <div class="chips" id="cw-props-chips">
-                <button type="button" class="chip" data-prop="Blocks">Blocks</button>
-                <button type="button" class="chip" data-prop="Strap">Strap</button>
-                <button type="button" class="chip" data-prop="Bolster">Bolster</button>
-                <button type="button" class="chip" data-prop="Blanket">Blanket</button>
-                <button type="button" class="chip" data-prop="Wall">Wall</button>
-                <button type="button" class="chip" data-prop="Chair">Chair</button>
-              </div>
-              <div class="cw-blocks-count" id="cw-blocks-count" hidden>
-                <span class="cw-blocks-label">How many blocks?</span>
-                <input type="number" class="cw-blocks-input" id="cw-blocks-input" min="1" max="99" step="1" value="2" inputmode="numeric" aria-label="Number of blocks">
-              </div>
-              <button type="button" class="cw-change-btn cw-props-done" id="cw-props-done">Done</button>
+            <div class="chips" id="cw-props-chips">
+              <button type="button" class="chip" data-prop="Blocks">Blocks</button>
+              <button type="button" class="chip" data-prop="Strap">Strap</button>
+              <button type="button" class="chip" data-prop="Bolster">Bolster</button>
+              <button type="button" class="chip" data-prop="Blanket">Blanket</button>
+              <button type="button" class="chip" data-prop="Wall">Wall</button>
+              <button type="button" class="chip" data-prop="Chair">Chair</button>
             </div>
           </div>
 
           <div class="cw-playlist">
             <span class="label-1">Playlist</span>
             <div class="cw-playlist-fields">
-              <input type="text" class="cw-playlist-input" id="cw-playlist" placeholder="Playlist title" maxlength="120" aria-label="Playlist name">
-              <input type="url" class="cw-playlist-url" id="cw-playlist-url" placeholder="Playlist link" maxlength="500" aria-label="Playlist link">
+              <input type="text" class="cw-playlist-input" id="cw-playlist" placeholder="Playlist name&#8230;" maxlength="120" aria-label="Playlist name">
+              <input type="url" class="cw-playlist-url" id="cw-playlist-url" placeholder="Link to Spotify, Tidal, Apple Music&#8230;" maxlength="500" aria-label="Playlist link">
             </div>
           </div>
           <div class="cw-video">
             <span class="label-1">Video</span>
-            <input type="url" class="cw-playlist-url cw-video-input" id="cw-video-url" placeholder="Link to your class video" maxlength="500" aria-label="Class video link">
+            <input type="url" class="cw-playlist-url cw-video-input" id="cw-video-url" placeholder="Link to your class video&#8230;" maxlength="500" aria-label="Class video link">
           </div>
           </div>
           <div class="cw-notes" id="cw-notes" hidden>
