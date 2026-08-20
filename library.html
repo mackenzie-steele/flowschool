@@ -32,6 +32,7 @@
     <!-- classless on purpose: the hero band spans the full content width and
          only everything AFTER it lives in the .lib-page column -->
     <div id="vl-root">
+      <div class="lib-page lib-page-top"><div class="lib-skel" style="height:44px"></div></div>
       <div class="hero"><div class="hero-track"><div class="hero-slide lib-skel" style="border-radius:var(--r)"></div></div></div>
     </div>
   </main>
@@ -44,6 +45,7 @@
     var root = document.getElementById('vl-root');
 
     var L = null;              // the catalogue
+    var savedRow = [];         // this member's saved items, newest first
     var valueMap = null;       // filter values by content id
     var active = new Set();    // selected filter option ids
     var q = '';                // the search phrase
@@ -52,13 +54,15 @@
     // ── shell ──
     function shell() {
       root.innerHTML =
-        heroHTML() +
-        '<div class="lib-page">' +
+        // the question comes first, then the editorial band, then the rows —
+        // search gets its own slice of the page column above the hero
+        '<div class="lib-page lib-page-top">' +
         '<section class="explore" aria-label="Search the library">' +
           '<div class="explore-row" id="explore-row">' +
             '<span class="material-symbols-sharp" aria-hidden="true">search</span>' +
             '<input class="explore-input" id="vl-q" type="search" autocomplete="off" ' +
               'placeholder="Search poses, flows, classes…" aria-label="Search the library">' +
+            '<kbd class="explore-kbd" aria-hidden="true">/</kbd>' +
             '<button class="explore-clear" id="vl-clear" aria-label="Clear search">' +
               '<span class="material-symbols-sharp">close</span></button>' +
             '<button class="filter-btn" id="vl-filter-btn" aria-haspopup="dialog"' +
@@ -68,13 +72,56 @@
           '</div>' +
           '<div class="active-filters" id="vl-active" hidden></div>' +
         '</section>' +
+        '</div>' +
+        heroHTML() +
+        '<div class="lib-page lib-page-body">' +
+        // your two personal views live behind tabs, not shelves — the page
+        // opens on the catalogue, and what's yours is one click away
+        '<div class="wtabs lib-view" id="vl-view" role="tablist" aria-label="Library views" hidden></div>' +
         '<div id="vl-results" hidden></div>' +
+        '<div id="vl-gallery" hidden></div>' +
         '<div id="vl-shelves"></div>' +
         '</div>';
       wireHero();
       wireSearch();
+      renderView();
       renderShelves();
       paintActiveFilters();
+    }
+
+    // ── the view tabs: All · Continue watching · Saved ──
+    var view = 'all';
+    function renderView() {
+      var host = document.getElementById('vl-view');
+      if (!host) return;
+      var cont = VL.continueWatching(L, 24);
+      var tabs = [{ id: 'all', label: 'All' }];
+      if (cont.length) tabs.push({ id: 'cont', label: 'Continue watching', n: cont.length });
+      if (savedRow.length) tabs.push({ id: 'saved', label: 'Saved', n: savedRow.length });
+      if (tabs.length < 2) { host.hidden = true; view = 'all'; return; }   // nothing personal yet — no row
+      if (!tabs.some(function (t) { return t.id === view; })) view = 'all';
+      host.hidden = false;
+      host.innerHTML = tabs.map(function (t) {
+        return '<button class="wtab' + (t.id === view ? ' on' : '') + '" data-view="' + t.id + '" role="tab"' +
+          ' aria-selected="' + (t.id === view) + '">' + t.label +
+          (t.n ? '<span class="wtab-n">' + t.n + '</span>' : '') + '</button>';
+      }).join('');
+      host.querySelectorAll('.wtab').forEach(function (b) {
+        b.addEventListener('click', function () { view = b.dataset.view; renderView(); paintView(); });
+      });
+      paintView();
+    }
+    function paintView() {
+      var gallery = document.getElementById('vl-gallery');
+      var shelves = document.getElementById('vl-shelves');
+      var searching2 = !!(q || active.size);
+      if (searching2) return;   // results mode owns the page; refresh() restores us
+      shelves.hidden = view !== 'all';
+      gallery.hidden = view === 'all';
+      if (view === 'all') return;
+      var items = view === 'cont' ? VL.continueWatching(L, 24) : savedRow;
+      gallery.innerHTML = '<div class="vcard-grid">' + items.map(VL.cardHTML).join('') + '</div>';
+      VL.hydrateThumbs(gallery);
     }
 
     // ── the hero ──
@@ -206,15 +253,47 @@
       });
       var fb = document.getElementById('vl-filter-btn');
       if (fb) fb.addEventListener('click', openFilterPanel);
+
+      // the keyboard path: "/" (or Cmd/Ctrl+K) lands in the search from
+      // anywhere on the page; Escape clears, then blurs
+      document.addEventListener('keydown', function (e) {
+        var el = document.activeElement;
+        var typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+        if ((e.key === '/' && !typing) ||
+            (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey))) {
+          e.preventDefault();
+          input.focus();
+          input.select();
+          return;
+        }
+        if (e.key === 'Escape' && el === input) {
+          if (input.value) { input.value = ''; q = ''; row.classList.remove('has-q'); refresh(); }
+          else input.blur();
+        }
+      });
     }
 
     var searchSeq = 0;
     async function refresh() {
       var results = document.getElementById('vl-results');
       var shelves = document.getElementById('vl-shelves');
+      var viewRow = document.getElementById('vl-view');
+      var gallery = document.getElementById('vl-gallery');
       var browsing = !q && !active.size;
       results.hidden = browsing;
-      shelves.hidden = !browsing;
+      // searching owns the page: the hero, the view tabs and their gallery
+      // all step aside so results land right under the question — browsing
+      // hands back to whichever view was open
+      var hero = root.querySelector('.hero');
+      if (hero) hero.hidden = !browsing;
+      if (browsing) {
+        renderView();
+        shelves.hidden = view !== 'all';
+      } else {
+        shelves.hidden = true;
+        viewRow.hidden = true;
+        gallery.hidden = true;
+      }
       paintActiveFilters();
       if (browsing) return;
 
@@ -348,7 +427,9 @@
     (async function () {
       if (!(await VL.gate(root))) return;
       try {
-        L = await VL.loadCatalogue();
+        var got = await Promise.all([VL.loadCatalogue(), VL.loadProgress()]);
+        L = got[0];
+        savedRow = await VL.savedItems(L);   // needs L to resolve rows into cards
         valueMap = VL.buildValueMap(L);
         shell();
         VL.hydrateThumbs(root);

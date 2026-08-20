@@ -57,7 +57,7 @@
       if (!(await VL.gate(root))) return;
       if (!slug) { notFound(); return; }
       var L;
-      try { L = await VL.loadCatalogue(); }
+      try { L = (await Promise.all([VL.loadCatalogue(), VL.loadProgress()]))[0]; }
       catch (e) {
         root.innerHTML = '<div class="lib-empty"><h3>The library could not load</h3>' +
           '<p>' + esc((e && e.message) || 'Try again in a moment.') + '</p></div>';
@@ -92,6 +92,11 @@
           ? '<div class="vcard-grid">' + items.map(VL.cardHTML).join('') + '</div>'
           : '<div class="lib-empty"><h3>This shelf is being stocked</h3>' +
             '<p>Nothing is live here yet — check back soon.</p></div>');
+      // cards leave carrying this shelf — the next page's crumb leads back
+      // HERE, not to the library's front door
+      root.querySelectorAll('.vcard').forEach(function (a) {
+        a.href += (a.href.indexOf('?') === -1 ? '?' : '&') + 'cat=' + encodeURIComponent(cat.slug);
+      });
       VL.hydrateThumbs(root);
     })();
   })();

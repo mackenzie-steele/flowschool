@@ -45,6 +45,7 @@
     var slug = decodeURIComponent((location.pathname.split('/')[2] || '').trim().toLowerCase());
     var params = new URLSearchParams(location.search);
     var colSlug = (params.get('c') || '').trim().toLowerCase();
+    var catSlug = (params.get('cat') || '').trim().toLowerCase();
     var wantAutoplay = params.get('autoplay') === '1';
 
     var V = null;            // the video row
@@ -87,6 +88,7 @@
           .eq('video_id', V.id).order('sort_order'),
         db.from('content_filter_values').select('option_id').eq('video_id', V.id),
         db.from('filter_options').select('id, name, filter_id').eq('status', 'active'),
+        VL.loadProgress(),   // resume position + watched marks on the rail
       ]);
       var cats = {}; (got[0].data || []).forEach(function (c) { cats[c.id] = c; });
       var instructors = {}; (got[1].data || []).forEach(function (i) { instructors[i.id] = i.name; });
@@ -113,9 +115,21 @@
         V.duration_seconds != null ? esc(VL.fmtDur(V.duration_seconds)) : null,
       ].filter(Boolean).join(' · ');
 
+      // the way back honors how you came: a collection first, then the
+      // category shelf (by name), then the library's front door
+      var backCat = null;
+      if (!colSlug && catSlug) {
+        (got[0].data || []).forEach(function (c2) {
+          if ((c2.slug || '').toLowerCase() === catSlug) backCat = c2;
+        });
+      }
+      var crumbHref = colSlug ? '/collection/' + esc(colSlug)
+        : backCat ? '/library/' + esc(backCat.slug) : '/library';
+      var crumbLabel = colSlug ? 'Collection' : backCat ? esc(backCat.name) : 'Library';
+
       root.innerHTML =
-        '<a class="lib-crumb" href="' + (colSlug ? '/collection/' + esc(colSlug) : '/library') + '">' +
-          '<span class="material-symbols-sharp">arrow_back</span>' + (colSlug ? 'Collection' : 'Library') + '</a>' +
+        '<a class="lib-crumb" href="' + crumbHref + '">' +
+          '<span class="material-symbols-sharp">arrow_back</span>' + crumbLabel + '</a>' +
         '<div class="watch' + (colSlug ? ' with-rail' : '') + '" id="watch">' +
           '<div class="watch-main">' +
             '<div class="player-well" id="player-well">' +
@@ -125,9 +139,13 @@
             '<div id="fold-host"></div>' +
             '<div class="watch-head">' +
               '<h1>' + esc(V.title) + '</h1>' +
+              // the app's own icon buttons — the bookmark fills when kept,
+              // the tooltip says what the glyph means
               '<div class="watch-actions">' +
-                '<button class="wa-btn" id="wa-save"><span class="material-symbols-sharp">bookmark</span><span class="wa-label">Save</span></button>' +
-                '<button class="wa-btn" id="wa-share"><span class="material-symbols-sharp">share</span><span class="wa-label">Share</span></button>' +
+                '<button class="btn-icon" id="wa-save" data-tooltip="Save" aria-label="Save">' +
+                  '<span class="material-symbols-sharp save-icon">bookmark</span></button>' +
+                '<button class="btn-icon" id="wa-share" data-tooltip="Share" aria-label="Share">' +
+                  '<span class="material-symbols-sharp">share</span></button>' +
               '</div>' +
             '</div>' +
             (metaBits ? '<div class="watch-meta">' + metaBits + '</div>' : '') +
@@ -146,6 +164,9 @@
               // resources live HERE, not behind a tab — a worksheet is part
               // of what this video IS, and files behind tabs get lost
               (resources.length ? '<div class="res-chips" id="about-res" style="margin-top:24px"></div>' : '') +
+              // the door back into curated context — filled lazily from the
+              // (cached) catalogue once the page is up
+              '<div class="appears-in" id="appears-in" hidden></div>' +
               (tags.length
                 ? '<div class="about-tags">' + tags.map(function (t) {
                     return '<span class="about-tag">' + esc(t) + '</span>'; }).join('') + '</div>'
@@ -163,9 +184,37 @@
       renderResources(resources);
       startPlayer();
       if (colSlug) loadCollectionContext();
+      loadAppearsIn();
       loadNotes();
       loadDiscussion();
     })();
+
+    // ═══ APPEARS IN — the collections this video belongs to ═════════════════
+    // A video reached by search or a shared link has no context; these cards
+    // hand it back. The collection being watched right now is left out (its
+    // rail already owns the page), and unlisted collections never show —
+    // the catalogue simply does not carry them.
+    async function loadAppearsIn() {
+      try {
+        var host = document.getElementById('appears-in');
+        if (!host) return;
+        var L = await VL.loadCatalogue();
+        var inCols = {};
+        L.items.forEach(function (i) {
+          if (i.kind === 'video' && i.video_id === V.id) inCols[i.collection_id] = true;
+        });
+        var cols = L.collections.filter(function (c2) {
+          return inCols[c2.id] && (c2.slug || '').toLowerCase() !== colSlug;
+        });
+        if (!cols.length) return;
+        host.innerHTML = '<div class="ai-head">Appears in</div>' +
+          '<div class="vcard-grid">' + cols.map(function (c2) {
+            return VL.cardHTML(VL.collectionItem(L, c2));
+          }).join('') + '</div>';
+        host.hidden = false;
+        VL.hydrateThumbs(host);
+      } catch (_) { /* context is a bonus, never a break */ }
+    }
 
     // ═══ PLAYER ═════════════════════════════════════════════════════════════
     var muxPlayerReady = null;
@@ -201,14 +250,46 @@
         el.setAttribute('accent-color', getComputedStyle(document.documentElement)
           .getPropertyValue('--accent').trim() || '#7A3E70');
         if (wantAutoplay && autoplayOn()) el.setAttribute('autoplay', '');
+        // pick up where they left off — completed videos start over clean
+        var prog = VL.progressOf(V.id);
+        if (VL.progressStarted(prog)) {
+          el.setAttribute('start-time', String(Math.floor(prog.position_seconds)));
+          toast('Picking up at ' + fmtTS(prog.position_seconds));
+        }
         var skel = well.querySelector('.lib-skel');
         if (skel) skel.remove();
         well.insertBefore(el, well.firstChild);
         player = el;
         el.addEventListener('ended', onEnded);
+        wireProgress(el);
       } catch (e) {
         well.innerHTML = '<div class="player-msg">' + esc(e.message || 'This video could not start.') + '</div>';
       }
+    }
+
+    // ═══ WATCH PROGRESS ═══════════════════════════════════════════════════
+    // The position writes itself: every ~10s while playing, and immediately
+    // on pause and on leaving the tab. Completed flips on at 95% (or on
+    // 'ended') and never flips off — scrubbing back never unwatches.
+    var progDone = false;   // seeded from the loaded row in wireProgress
+    var progLast = -Infinity;
+    function pingProgress(force) {
+      if (!player) return;
+      var pos = Number(player.currentTime) || 0;
+      var dur = Number(player.duration) || Number(V.duration_seconds) || 0;
+      if (pos < 3 && !force) return;                    // opening moments are noise
+      if (!force && Math.abs(pos - progLast) < 10) return;
+      progLast = pos;
+      if (dur && pos >= dur * 0.95) progDone = true;
+      VL.saveProgress(V.id, pos, dur || null, progDone);
+    }
+    function wireProgress(el) {
+      progDone = !!(VL.progressOf(V.id) || {}).completed;   // completed never flips off
+      el.addEventListener('timeupdate', function () { pingProgress(false); });
+      el.addEventListener('pause', function () { pingProgress(true); });
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') pingProgress(true);
+      });
     }
 
     function seekTo(sec) {
@@ -269,9 +350,14 @@
       return CTX.entries.map(function (e) {
         if (e.divider != null) return '<div class="rail-div">' + esc(e.divider) + '</div>';
         var now = e.video.id === V.id;
-        return '<a class="rail-item' + (now ? ' now' : '') + '" href="/video/' + esc(e.video.slug) + '?c=' + esc(CTX.collection.slug) + '"' +
+        var done = !!(VL.progressOf(e.video.id) || {}).completed;
+        return '<a class="rail-item' + (now ? ' now' : '') + (done ? ' done' : '') +
+            '" href="/video/' + esc(e.video.slug) + '?c=' + esc(CTX.collection.slug) + '"' +
             (now ? ' aria-current="true"' : '') + '>' +
-          '<span class="ri-num">' + e.n + '</span>' +
+          // the check replaces the number: "done" reads at a glance, and the
+          // list stays one quiet column of marks
+          '<span class="ri-num">' + (done && !now
+            ? '<span class="material-symbols-sharp ri-check">check</span>' : e.n) + '</span>' +
           '<span class="ri-title">' + esc(e.video.title) + '</span>' +
           '<span class="ri-dur">' + VL.fmtDur(e.video.duration_seconds) + '</span>' +
         '</a>';
@@ -315,6 +401,9 @@
 
     // ═══ UP NEXT ════════════════════════════════════════════════════════════
     function onEnded() {
+      progDone = true;
+      var endDur = Number(player && player.duration) || Number(V.duration_seconds) || null;
+      VL.saveProgress(V.id, endDur || 0, endDur, true);
       var next = nextEntry();
       if (!next) return;
       var host = document.getElementById('upnext');
@@ -380,6 +469,17 @@
       });
     }
 
+    // A quiet mono count on a tab says "there is life in here" without a
+    // click. Zero stays silent — no badge, no "0", no empty-state noise.
+    function paintTabCount(pane, n) {
+      var t = document.querySelector('.wtab[data-pane="' + pane + '"]');
+      if (!t) return;
+      var s = t.querySelector('.wtab-n');
+      if (!n) { if (s) s.remove(); return; }
+      if (!s) { s = document.createElement('span'); s.className = 'wtab-n'; t.appendChild(s); }
+      s.textContent = String(n);
+    }
+
     // ═══ SAVE ═══════════════════════════════════════════════════════════════
     async function wireSave() {
       var btn = document.getElementById('wa-save');
@@ -404,8 +504,8 @@
       });
       function paint() {
         btn.classList.toggle('saved', saved);
-        var label = btn.querySelector('.wa-label');
-        if (label) label.textContent = saved ? 'Saved' : 'Save';
+        btn.setAttribute('data-tooltip', saved ? 'Saved' : 'Save');
+        btn.setAttribute('aria-label', saved ? 'Saved — click to remove' : 'Save');
       }
     }
 
@@ -470,6 +570,7 @@
 
     function renderNotes() {
       var pane = document.getElementById('pane-notes');
+      paintTabCount('notes', notes.length);   // every add/delete re-renders through here
       var list = notes.slice().sort(function (a, b) {
         var at = a.timestamp_seconds, bt = b.timestamp_seconds;
         if (at != null && bt != null) return at - bt;
@@ -667,6 +768,7 @@
 
     function renderDiscussion() {
       var pane = document.getElementById('pane-discussion');
+      paintTabCount('discussion', comments.length);   // replies count — they are activity too
       var tops = comments.filter(function (c) { return !c.parent_id; });
       var replies = {};
       comments.forEach(function (c) {

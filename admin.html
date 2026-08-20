@@ -124,13 +124,20 @@
        tokens the panels already use — crest, --r, border-light. */
     .vid-more { position: relative; }
     .vid-menu {
-      position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+      position: absolute; right: 0; top: calc(100% + 6px); z-index: 40;
       min-width: 190px; padding: 5px;
       border: 1px solid var(--border-light); border-radius: var(--r);
       background: var(--paper-solid); box-shadow: var(--crest), 0 8px 24px rgba(0,0,0,.10);
       display: flex; flex-direction: column;
     }
     .vid-menu[hidden] { display: none; }
+    /* Whatever hosts an OPEN popover must beat its sibling cards and the
+       sticky rail — a sibling stacking context otherwise caps the menu's
+       own z-index at its host's level. :has() flips it only while a menu
+       is open, so normal paint order is untouched the rest of the time. */
+    .vid-section:has(.vid-menu:not([hidden])),
+    .vid-card:has(.vid-menu:not([hidden])),
+    .vid-head:has(.vid-menu:not([hidden])) { position: relative; z-index: 41; }
     .vid-menu button {
       text-align: left; background: none; border: 0; cursor: pointer;
       padding: 9px 12px; border-radius: var(--rb);
@@ -1364,8 +1371,8 @@
       { id: 'notifs',      label: 'Notifications',       render: renderNotifs },
       { id: 'videos',           label: 'Videos',          render: renderVideos },
       { id: 'collections',      label: 'Collections',     render: renderCollections },
-      { id: 'video-featured',   label: 'Featured',        render: renderFeatured },
       { id: 'video-categories', label: 'Categories',      render: renderVideoCategories },
+      { id: 'video-featured',   label: 'Featured',        render: renderFeatured },
       { id: 'video-resources',  label: 'Resources',       render: renderResourceLibrary },
       { id: 'video-filters',    label: 'Filters',         render: renderFilterAdmin },
       { id: 'overview',    label: 'Overview',            render: renderOverview },
@@ -1406,7 +1413,7 @@
       { label: 'Product',  area: 'analytics', sections: ['engagement', 'devices', 'friction', 'tools'] },
       { label: 'System',   area: 'analytics', sections: ['feedback', 'health', 'admins', 'exports'] },
       { label: 'Music',    area: 'content',   sections: ['music'] },
-      { label: 'Video',    area: 'content',   sections: ['videos', 'collections', 'video-featured', 'video-categories', 'video-resources', 'video-filters'] },
+      { label: 'Video',    area: 'content',   sections: ['videos', 'collections', 'video-categories', 'video-featured', 'video-resources', 'video-filters'] },
       { label: 'Notifications', area: 'comms', sections: ['notifs'] },
     ];
 
@@ -4116,29 +4123,9 @@
             '<input class="modal-input" id="vid-title" maxlength="160" value="' + esc(v.title || '') + '" placeholder="Chair Pose, three ways">' +
 
             '<label class="nf-label" id="vid-desc-label">Full description</label>' +
-            // a small rich editor — what is bolded or linked here renders
-            // the same on the member video page (fsVL.richText)
-            '<div class="rte" id="vid-desc-rte">' +
-              '<div class="rte-bar" role="toolbar" aria-label="Text formatting">' +
-                '<button type="button" class="rte-btn" data-rte="bold" data-tooltip="Bold"><span class="material-symbols-sharp">format_bold</span></button>' +
-                '<button type="button" class="rte-btn" data-rte="italic" data-tooltip="Italic"><span class="material-symbols-sharp">format_italic</span></button>' +
-                '<button type="button" class="rte-btn" data-rte="underline" data-tooltip="Underline"><span class="material-symbols-sharp">format_underlined</span></button>' +
-                '<span class="rte-sep" aria-hidden="true"></span>' +
-                '<button type="button" class="rte-btn" data-rte="insertUnorderedList" data-tooltip="Bulleted list"><span class="material-symbols-sharp">format_list_bulleted</span></button>' +
-                '<button type="button" class="rte-btn" data-rte="insertOrderedList" data-tooltip="Numbered list"><span class="material-symbols-sharp">format_list_numbered</span></button>' +
-                '<span class="rte-sep" aria-hidden="true"></span>' +
-                '<button type="button" class="rte-btn" id="rte-link" data-tooltip="Link"><span class="material-symbols-sharp">link</span></button>' +
-                '<div class="vid-menu rte-linkbox" id="rte-linkbox" hidden>' +
-                  '<input class="modal-input" id="rte-link-url" placeholder="https://…" aria-label="Link address">' +
-                  '<div class="rte-linkrow">' +
-                    '<button type="button" class="btn-secondary" id="rte-link-apply">Apply</button>' +
-                    '<button type="button" class="btn-ghost" id="rte-link-remove">Remove</button>' +
-                  '</div>' +
-                '</div>' +
-              '</div>' +
-              '<div class="rte-area nf-msg" id="vid-desc" contenteditable="true" role="textbox" aria-multiline="true" ' +
-                'aria-labelledby="vid-desc-label" data-placeholder="What is in the video, who it is for, what to look out for."></div>' +
-            '</div>' +
+            // the shared rich editor — what is bolded or linked here renders
+            // the same on the member page (fsVL.richText)
+            rteHTML('vid-desc', 'What is in the video, who it is for, what to look out for.', 'vid-desc-label') +
 
             '<label class="nf-label" for="vid-short">Short description' +
               vidCounter('c-short', (v.short_description || '').length, VIDEO_LIMITS.short) + '</label>' +
@@ -4668,21 +4655,54 @@
       }).join('');
     }
     function rteIsHtml(s) { return /<([a-z]+)(\s|>|\/)/i.test(s || ''); }
-    function rteValue() {
-      var area = document.getElementById('vid-desc');
-      if (!area) return VID.editing ? (VID.editing.description || null) : null;
+    // one editor component, any field: ids derive from the area's id, so the
+    // video and collection editors share every line of this
+    function rteHTML(id, placeholder, labelId) {
+      return '<div class="rte" id="' + id + '-rte">' +
+        '<div class="rte-bar" role="toolbar" aria-label="Text formatting">' +
+          [['bold', 'format_bold', 'Bold'],
+           ['italic', 'format_italic', 'Italic'],
+           ['underline', 'format_underlined', 'Underline']].map(function (b) {
+            return '<button type="button" class="rte-btn" data-rte="' + b[0] + '" data-tooltip="' + b[2] + '">' +
+              '<span class="material-symbols-sharp">' + b[1] + '</span></button>';
+          }).join('') +
+          '<span class="rte-sep" aria-hidden="true"></span>' +
+          [['insertUnorderedList', 'format_list_bulleted', 'Bulleted list'],
+           ['insertOrderedList', 'format_list_numbered', 'Numbered list']].map(function (b) {
+            return '<button type="button" class="rte-btn" data-rte="' + b[0] + '" data-tooltip="' + b[2] + '">' +
+              '<span class="material-symbols-sharp">' + b[1] + '</span></button>';
+          }).join('') +
+          '<span class="rte-sep" aria-hidden="true"></span>' +
+          '<button type="button" class="rte-btn" id="' + id + '-lk" data-tooltip="Link"><span class="material-symbols-sharp">link</span></button>' +
+          '<div class="vid-menu rte-linkbox" id="' + id + '-lkbox" hidden>' +
+            '<input class="modal-input" id="' + id + '-lkurl" placeholder="https://…" aria-label="Link address">' +
+            '<div class="rte-linkrow">' +
+              '<button type="button" class="btn-secondary" id="' + id + '-lkapply">Apply</button>' +
+              '<button type="button" class="btn-ghost" id="' + id + '-lkremove">Remove</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="rte-area nf-msg" id="' + id + '" contenteditable="true" role="textbox" aria-multiline="true"' +
+          (labelId ? ' aria-labelledby="' + labelId + '"' : '') +
+          ' data-placeholder="' + esc(placeholder || '') + '"></div>' +
+      '</div>';
+    }
+
+    function rteValue(id, fallback) {
+      var area = document.getElementById(id);
+      if (!area) return fallback || null;
       var out = rteClean(area.innerHTML);
       var probe = document.createElement('div');
       probe.innerHTML = out;
       return probe.textContent.trim() ? out : null;   // markup with no words is empty
     }
 
-    function rteInit(v) {
-      var area = document.getElementById('vid-desc');
-      var bar = document.querySelector('#vid-desc-rte .rte-bar');
+    function rteWire(id, src) {
+      var area = document.getElementById(id);
+      var bar = document.querySelector('#' + id + '-rte .rte-bar');
       if (!area || !bar) return;
       try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (_) {}
-      var src = v.description || '';
+      src = src || '';
       area.innerHTML = rteIsHtml(src) ? rteClean(src) : rtePlainToHtml(src);
 
       // format buttons — mousedown is prevented so the selection being
@@ -4707,7 +4727,7 @@
           if (inside) { try { on = document.queryCommandState(states[btn.dataset.rte]); } catch (_) {} }
           btn.classList.toggle('on', on);
         });
-        var lk = document.getElementById('rte-link');
+        var lk = document.getElementById(id + '-lk');
         if (lk) lk.classList.toggle('on', !!(inside && caretAnchor()));
       }
       function caretAnchor() {
@@ -4716,15 +4736,18 @@
         while (n && n !== area) { if (n.nodeType === 1 && n.tagName === 'A') return n; n = n.parentNode; }
         return null;
       }
-      // ONE document listener that finds the current editor by id — forms
-      // re-render constantly, so nothing here may bind to document per render
+      // ONE document listener, a registry of editor ids — forms re-render
+      // constantly, so nothing here may bind to document per render
       if (!document._fsRteSel) {
-        document._fsRteSel = true;
+        document._fsRteSel = [];
         document.addEventListener('selectionchange', function () {
-          var a2 = document.getElementById('vid-desc');
-          if (a2 && a2._paintBar) a2._paintBar();
+          document._fsRteSel.forEach(function (rid) {
+            var a2 = document.getElementById(rid);
+            if (a2 && a2._paintBar) a2._paintBar();
+          });
         });
       }
+      if (document._fsRteSel.indexOf(id) === -1) document._fsRteSel.push(id);
       area._paintBar = paintBar;
 
       // paste arrives through the same gate as everything else
@@ -4737,8 +4760,8 @@
       });
 
       // ── links: a small popover, the app's own, not window.prompt ──
-      var lkBtn = document.getElementById('rte-link'), box = document.getElementById('rte-linkbox');
-      var url = document.getElementById('rte-link-url');
+      var lkBtn = document.getElementById(id + '-lk'), box = document.getElementById(id + '-lkbox');
+      var url = document.getElementById(id + '-lkurl');
       var saved = null;   // the selection the popover is editing
       function closeBox() { if (box) box.hidden = true; }
       function restoreSel() {
@@ -4760,20 +4783,20 @@
           box.hidden = false;
           url.focus();
         });
-        document.getElementById('rte-link-apply').addEventListener('click', function () {
+        document.getElementById(id + '-lkapply').addEventListener('click', function () {
           var h = rteSafeHref(url.value);
           if (!h) { url.classList.add('shake'); setTimeout(function () { url.classList.remove('shake'); }, 350); return; }
           restoreSel();
           document.execCommand('createLink', false, h);
           closeBox(); paintBar();
         });
-        document.getElementById('rte-link-remove').addEventListener('click', function () {
+        document.getElementById(id + '-lkremove').addEventListener('click', function () {
           restoreSel();
           document.execCommand('unlink');
           closeBox(); paintBar();
         });
         url.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') { e.preventDefault(); document.getElementById('rte-link-apply').click(); }
+          if (e.key === 'Enter') { e.preventDefault(); document.getElementById(id + '-lkapply').click(); }
           if (e.key === 'Escape') closeBox();
         });
         box.addEventListener('mousedown', function (e) { e.stopPropagation(); });
@@ -4787,7 +4810,7 @@
       return {
         title: t('vid-title'),
         short_description: t('vid-short') || null,
-        description: rteValue(),
+        description: rteValue('vid-desc', VID.editing ? VID.editing.description : null),
         // chips own the category when the collections layer is present;
         // the fallback select only exists on pre-collections databases
         category_id: document.getElementById('vid-category')
@@ -4957,7 +4980,7 @@
         .forEach(function (id) { var e = $(id); if (e) e.addEventListener('input', videoLive); });
 
       // ── the rich description ──
-      rteInit(v);
+      rteWire('vid-desc', v.description);
 
       // ── extra shelves ──
       wireVideoXcats();
@@ -6783,8 +6806,9 @@
               vidCounter('cc-short', (c.short_description || '').length, COL_LIMITS.short) + '</label>' +
             '<textarea class="modal-input nf-msg" id="col-short" rows="2" maxlength="400" placeholder="One or two lines. This is what shows on the library card.">' + esc(c.short_description || '') + '</textarea>' +
 
-            '<label class="nf-label" for="col-desc">Full description</label>' +
-            '<textarea class="modal-input nf-msg" id="col-desc" rows="6" maxlength="4000" placeholder="What the collection covers, who it is for, how to move through it. Line breaks are kept.">' + esc(c.description || '') + '</textarea>' +
+            '<label class="nf-label" id="col-desc-label">Full description</label>' +
+            // the same rich editor the video editor uses — one component
+            rteHTML('col-desc', 'What the collection covers, who it is for, how to move through it.', 'col-desc-label') +
 
             (COL.instructors.length > 1
               ? '<label class="nf-label" for="col-instructor">Instructor</label>' +
@@ -7212,7 +7236,7 @@
       var out = {
         title: t('col-title'),
         short_description: t('col-short') || null,
-        description: t('col-desc') || null,
+        description: rteValue('col-desc', COL.editing ? COL.editing.description : null),
         slug: t('col-slug'),
         seo_title: t('col-seo-title') || null,
         seo_description: t('col-seo-desc') || null,
@@ -7309,6 +7333,9 @@
       var c = COL.editing;
       var err = document.getElementById('col-err');
       var $ = function (id) { return document.getElementById(id); };
+
+      // ── the rich description ──
+      rteWire('col-desc', c.description);
 
       var cancel = $('col-cancel');
       if (cancel) cancel.addEventListener('click', function () {

@@ -9,6 +9,11 @@
 /* ── the page ── */
 .lib-page { max-width: 1280px; margin: 0 auto; padding: 40px 28px 120px; }
 @media (max-width: 640px) { .lib-page { padding: 20px 16px 100px; } }
+/* the search band rides above the hero in its own slice of the column;
+   the body slice picks up below the hero */
+.lib-page-top { padding-bottom: 0; }
+.lib-page-top .explore { margin-bottom: 0; }
+.lib-page-body { padding-top: 12px; }
 
 /* ── access states (admin-only phase + signed-out) ── */
 .lib-denied { max-width: 460px; margin: 120px auto; text-align: center; }
@@ -30,7 +35,7 @@
    peeks in from the right, which IS the affordance — the arrows only appear
    for people who hover looking for them. Nothing advances by itself and
    nothing plays by itself.                                                */
-.hero { position: relative; margin: 40px 0 16px;
+.hero { position: relative; margin: 24px 0 8px;
   --hgut: max(28px, calc((100% - 1224px) / 2)); }
 .hero-track {
   display: flex; gap: 20px;
@@ -108,7 +113,7 @@
 .hero-arrow:hover { color: var(--text-1); border-color: rgba(var(--ink-rgb), .35); }
 .hero-arrow .material-symbols-sharp { font-size: 16px; }
 @media (max-width: 640px) {
-  .hero { margin: 20px 0 0; --hgut: 16px; }
+  .hero { margin: 14px 0 0; --hgut: 16px; }
   .hero-track { gap: 12px; }
   .hero-slide { flex-basis: 92%; aspect-ratio: 4 / 3; }
   .hero-copy { padding: 18px 20px; }
@@ -127,6 +132,17 @@
 .explore-input { flex: 1; min-width: 0; border: 0; background: none; outline: none;
   font-family: var(--font); font-size: var(--fs-h7); color: var(--text-1); padding: 6px 0; }
 .explore-input::placeholder { color: var(--text-4); }
+/* the quiet keycap that teaches the shortcut — pointer devices only, and
+   it steps aside the moment the field is in use */
+.explore-kbd { display: none; }
+@media (hover: hover) {
+  .explore-kbd { display: grid; place-items: center; flex: none;
+    min-width: 22px; height: 22px; padding: 0 5px;
+    border: 1px solid var(--border-light); border-radius: var(--rf);
+    font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--text-4); }
+  .explore-row:focus-within .explore-kbd,
+  .explore-row.has-q .explore-kbd { display: none; }
+}
 .explore-clear { display: none; border: 0; background: none; cursor: pointer;
   color: var(--text-3); padding: 6px; }
 .explore-clear:hover { color: var(--text-1); }
@@ -147,6 +163,7 @@
 
 /* active filters, readable and removable in place */
 .active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.active-filters[hidden] { display: none; }   /* flex outranks the UA's [hidden] */
 .af-chip { display: inline-flex; align-items: center; gap: 6px;
   border: 0; border-radius: 999px; cursor: pointer; padding: 6px 12px;
   background: var(--accent-dim); color: var(--accent);
@@ -204,12 +221,22 @@
   border-top: 1px solid var(--border-light); }
 .fil-actions .btn-primary { padding: 12px 22px; font-size: var(--text-ui); margin-left: auto; }
 
+/* ── the library's view tabs: All · Continue watching · Saved ──
+   The video page's tab grammar, promoted to the library. Sits tight under
+   the search band; the count is a quiet mono whisper, not a badge. */
+.lib-view { margin: 0 0 36px; }
+/* .wtabs' display:flex outranks the UA's [hidden] rule — without this
+   guard the row can never actually hide (search mode relies on it) */
+.lib-view[hidden] { display: none; }
+.wtab-n { font-family: var(--font-mono); font-size: var(--fs-meta);
+  color: var(--text-3); margin-left: 7px; }
+
 /* ═══ SHELVES ════════════════════════════════════════════════════════════════
    A shelf is a heading and a row of artwork. The row scrolls past the page
    gutter so motion feels free; a mask fades content at the edges instead
    of clipping it dead.                                                    */
 .shelf { margin-bottom: 52px; }
-.shelf-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 14px; }
+.shelf-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 6px; }
 .shelf-id { flex: 1; min-width: 0; }
 /* no weight declared on purpose: the global heading rules own it, so the
    shelf name wears the same editorial book weight as every other headline
@@ -231,12 +258,12 @@
 .shelf-all:hover { color: var(--text-1); gap: 9px; }
 .shelf-row { display: flex; gap: 18px; overflow-x: auto;
   scroll-snap-type: x proximity; scrollbar-width: none;
-  margin: 0 -28px; padding: 4px 28px 8px; scroll-padding-left: 28px; }
+  margin: 0 -28px; padding: 20px 28px 8px; scroll-padding-left: 28px; }
 .shelf-row::-webkit-scrollbar { display: none; }
 .shelf-row > * { scroll-snap-align: start; }
 @media (max-width: 640px) {
   .shelf { margin-bottom: 40px; }
-  .shelf-row { margin: 0 -16px; padding: 4px 16px 8px; scroll-padding-left: 16px; gap: 12px; }
+  .shelf-row { margin: 0 -16px; padding: 20px 16px 8px; scroll-padding-left: 16px; gap: 12px; }
   .shelf-desc { display: none; }
 }
 
@@ -248,7 +275,7 @@
   display: flex; flex-direction: column; gap: 10px; }
 .vcard-grid .vcard { flex: initial; }
 @media (max-width: 640px) { .shelf-row .vcard { flex-basis: 200px; } }
-.vcard-art { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r);
+.vcard-art { position: relative; aspect-ratio: 16 / 9; border-radius: var(--rs);
   overflow: hidden; background: var(--well-bg); box-shadow: var(--well); }
 /* Hover is the ARTWORK's moment, not the type's: a slow zoom with a
    gentle brightening, like light falling on the thing you're reaching
@@ -261,7 +288,7 @@
   .vcard:hover .vcard-art img { transform: scale(1.04); filter: brightness(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .vcard-art img, .hero-slide img { transition: none !important; transform: none !important; }
+  .vcard-art img, .hero-slide img, .pl-thumb img { transition: none !important; transform: none !important; }
 }
 .vcard-art .bare-glyph { position: absolute; inset: 0; display: grid; place-items: center;
   color: var(--text-4); }
@@ -269,16 +296,44 @@
 .vcard-dur { position: absolute; right: 8px; bottom: 8px;
   font-family: var(--font-mono); font-size: var(--fs-meta); color: #fff;
   background: rgba(0,0,0,.6); padding: 2px 6px; border-radius: var(--rf); }
-/* the collection cue: two offset sheets behind the artwork */
-.vcard.is-collection .vcard-art { overflow: visible; border-radius: var(--r); }
+/* where you are in a started video: a thin line along the artwork's foot.
+   Accent because progress IS state; capped at 96% in JS so a nearly-done
+   video still visibly has a sliver to go. */
+.vcard-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: rgba(0,0,0,.45); }
+.vcard-progress > span { display: block; height: 100%; background: var(--accent); }
+/* ── the collection deck: REAL images stacked behind the cover ──
+   Each sheet is an actual thumbnail from inside the collection, narrowed
+   and lifted so a strip of it shows above the cover; a veil dims each
+   step back so depth reads as depth. Sheets without art yet hold the
+   quiet tinted edge until their signed still arrives. */
+.vcard.is-collection .vcard-art { overflow: visible; border-radius: var(--rs); }
 .vcard.is-collection .vcard-art > .vcard-art-in { position: absolute; inset: 0;
-  border-radius: var(--r); overflow: hidden; background: var(--well-bg); }
-.vcard.is-collection .vcard-art::before, .vcard.is-collection .vcard-art::after {
-  content: ''; position: absolute; left: 6px; right: 6px; height: 8px;
-  border-radius: var(--r) var(--r) 0 0;
-  background: rgba(var(--ink-rgb), .10); top: -4px; z-index: -1; }
-.vcard.is-collection .vcard-art::after { left: 12px; right: 12px; top: -8px;
-  background: rgba(var(--ink-rgb), .06); }
+  border-radius: var(--rs); overflow: hidden;
+  /* opaque paper under the translucent well — the sheets behind must never
+     ghost through an art-less or still-loading cover */
+  background: linear-gradient(var(--well-bg), var(--well-bg)) var(--paper-solid);
+  box-shadow: 0 -3px 10px rgba(10, 11, 14, .22); }
+.vcard-stack { position: absolute; inset: 0;
+  border-radius: var(--rs) var(--rs) 0 0; overflow: hidden;
+  background: rgba(var(--ink-rgb), .08);
+  transform-origin: bottom center;
+  transition: transform .7s cubic-bezier(.16, 1, .3, 1); }
+.vcard-stack img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vcard-stack::after { content: ''; position: absolute; inset: 0; }
+.vcard-stack.vs-1 { transform: translateY(-6px) scaleX(.94); }
+.vcard-stack.vs-1::after { background: rgba(10, 11, 14, .30); }
+.vcard-stack.vs-2 { transform: translateY(-12px) scaleX(.88); }
+.vcard-stack.vs-2::after { background: rgba(10, 11, 14, .48); }
+/* the deck breathes on hover — the sheets fan a breath further while the
+   cover does the cards' zoom */
+@media (hover: hover) {
+  .vcard.is-collection:hover .vcard-stack.vs-1 { transform: translateY(-9px) scaleX(.94); }
+  .vcard.is-collection:hover .vcard-stack.vs-2 { transform: translateY(-17px) scaleX(.88); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vcard-stack { transition: none !important; }
+}
 .vcard-title { font-size: var(--text-body-sm); font-weight: var(--weight-medium);
   line-height: var(--lh-tight); letter-spacing: var(--ls-ui);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -288,7 +343,7 @@
 
 /* results / category grids */
 .vcard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 24px 18px; }
+  gap: 26px 18px; padding-top: 14px; }
 @media (max-width: 640px) { .vcard-grid { grid-template-columns: repeat(2, 1fr); gap: 20px 12px; } }
 
 /* results framing */
@@ -333,6 +388,7 @@
   margin-bottom: 14px; }
 .col-hero-desc { font-size: var(--text-body-sm); line-height: var(--lh-body); color: var(--text-2);
   white-space: pre-line; margin-bottom: 20px; }
+.col-hero-desc.rich-text { white-space: normal; }   /* rich markup draws its own breaks */
 .col-start { display: inline-flex; align-items: center; gap: 10px; }
 .col-start .btn-primary { display: inline-flex; align-items: center; gap: 8px;
   padding: 13px 24px; font-size: var(--text-ui); }
@@ -352,20 +408,33 @@
   width: 22px; text-align: right; flex: none; }
 .pl-thumb { position: relative; width: 132px; aspect-ratio: 16 / 9; flex: none;
   border-radius: var(--rs); overflow: hidden; background: var(--well-bg); box-shadow: var(--well); }
-.pl-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pl-thumb img { width: 100%; height: 100%; object-fit: cover; display: block;
+  will-change: transform;
+  transition: transform .7s cubic-bezier(.16, 1, .3, 1), filter .7s cubic-bezier(.16, 1, .3, 1); }
+/* one hover grammar everywhere: the CONTENT responds, the type stays
+   still — same zoom-and-brighten the cards use */
+@media (hover: hover) {
+  .pl-row:hover .pl-thumb img { transform: scale(1.04); filter: brightness(1.06); }
+}
 .pl-thumb .material-symbols-sharp { position: absolute; inset: 0; display: grid;
   place-items: center; font-size: 18px; color: var(--text-4); }
 .pl-body { flex: 1; min-width: 0; }
 .pl-title { font-size: var(--fs-h7); font-weight: var(--weight-medium);
-  letter-spacing: var(--ls-ui); transition: color var(--transition-base);
+  letter-spacing: var(--ls-ui);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pl-row:hover .pl-title { color: var(--accent); }
 .pl-sub { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--text-3); margin-top: 3px;
   display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pl-dur { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--text-3); flex: none; }
+/* watched: the check takes the number's seat, and the row steps back a
+   little — done things go quiet, the next thing stays forward */
+.pl-check { font-size: 14px; color: var(--text-3); }
+.pl-row.done .pl-title { color: var(--text-2); }
+.pl-row.done .pl-thumb { opacity: .75; }
 @media (max-width: 640px) {
   .pl-thumb { width: 96px; }
+  /* numbers yield to the tight row; the watched check is worth its space */
   .pl-num { display: none; }
+  .pl-row.done .pl-num { display: block; width: auto; }
 }
 
 /* ═══ VIDEO PAGE ═════════════════════════════════════════════════════════════ */
@@ -386,18 +455,9 @@
   margin-bottom: 20px; }
 .watch-meta a { color: inherit; text-decoration: none; }
 .watch-meta a:hover { color: var(--text-1); }
+/* Save/Share are the app's own .btn-icon (global.css) — the bookmark fills
+   via .saved, the tooltip names the glyph. No page-local button dialect. */
 .watch-actions { display: flex; gap: 8px; flex: none; padding-top: 2px; }
-.wa-btn { display: inline-flex; align-items: center; gap: 8px;
-  border: 1px solid var(--border-light); border-radius: 999px; background: none;
-  cursor: pointer; padding: 9px 16px;
-  font-family: var(--font); font-size: var(--text-ui); color: var(--text-2);
-  transition: color var(--transition-base), border-color var(--transition-base),
-              background var(--transition-base); }
-.wa-btn:hover { color: var(--text-1); border-color: rgba(var(--ink-rgb), .35); }
-.wa-btn .material-symbols-sharp { font-size: var(--icon-md); }
-.wa-btn.saved { color: var(--accent); border-color: transparent; background: var(--accent-dim); }
-.wa-btn.saved .material-symbols-sharp svg { fill: currentColor; }
-@media (max-width: 640px) { .wa-btn span.wa-label { display: none; } .wa-btn { padding: 9px 12px; } }
 
 /* ── the collection rail (desktop) / fold (mobile) ── */
 .rail { position: sticky; top: 20px; align-self: start;
@@ -432,6 +492,10 @@
 .ri-title { flex: 1; min-width: 0; font-size: var(--text-ui);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ri-dur { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--text-3); flex: none; }
+/* watched rail entries: the check sits where the number was, the title
+   steps back — same grammar as the collection page's playlist */
+.ri-check { font-size: 13px; color: var(--text-3); }
+.rail-item.done .ri-title { color: var(--text-3); }
 
 /* mobile collection fold under the player */
 .fold { display: none; }
@@ -505,6 +569,13 @@
 .rich-text strong, .rich-text b { font-weight: var(--weight-medium); color: var(--text-1); }
 .rich-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 .rich-text a:hover { text-decoration: none; }
+/* ── appears in: the collections that hold this video ── */
+.appears-in { margin-top: 32px; }
+.ai-head { font-family: var(--font-mono); font-size: var(--fs-meta);
+  letter-spacing: var(--ls-micro); text-transform: uppercase; color: var(--text-3);
+  margin-bottom: 14px; }
+.appears-in .vcard-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 260px)); }
+
 .about-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .about-tag { font-family: var(--font); font-size: var(--fs-label-1); color: var(--text-3);
   border: 1px solid var(--border-light); border-radius: 999px; padding: 5px 12px; }

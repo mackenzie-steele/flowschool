@@ -46,6 +46,7 @@
     var esc = VL.esc;
     var root = document.getElementById('vl-root');
     var slug = decodeURIComponent((location.pathname.split('/')[2] || '').trim().toLowerCase());
+    var catSlug = (new URLSearchParams(location.search).get('cat') || '').trim().toLowerCase();
 
     function notFound() {
       root.innerHTML =
@@ -64,6 +65,10 @@
       var got = await Promise.all([
         db.from('collections').select('*').ilike('slug', slug).or(VL.liveOr()).limit(1),
         db.from('instructors').select('id, name'),
+        // only fetched when the crumb needs a shelf to lead back to
+        catSlug
+          ? db.from('video_categories').select('name, slug').eq('status', 'active').ilike('slug', catSlug).limit(1)
+          : Promise.resolve({ data: [] }),
       ]);
       if (got[0].error || !(got[0].data || []).length) { notFound(); return; }
       var c = got[0].data[0];
@@ -76,6 +81,7 @@
         db.from('collection_stats').select('*').eq('collection_id', c.id),
         db.from('resource_links').select('id, resource_id, sort_order, resources(id, title, description, file_name, file_size)')
           .eq('collection_id', c.id).order('sort_order'),
+        VL.loadProgress(),   // watched checks + the Continue button
       ]);
       var items = got2[0].data || [];
       var stats = (got2[1].data || [])[0] || {};
@@ -121,8 +127,13 @@
         stats.total_seconds ? VL.fmtRuntime(stats.total_seconds) : null,
       ].filter(Boolean).join(' · ');
 
+      // the way back honors how you came: the category shelf by name when
+      // the card carried one, the library's front door otherwise
+      var backCat = ((got[2] && got[2].data) || [])[0] || null;
       var heroHTML =
-        '<a class="lib-crumb" href="/library"><span class="material-symbols-sharp">arrow_back</span>Library</a>' +
+        '<a class="lib-crumb" href="' + (backCat ? '/library/' + esc(backCat.slug) : '/library') + '">' +
+          '<span class="material-symbols-sharp">arrow_back</span>' +
+          (backCat ? esc(backCat.name) : 'Library') + '</a>' +
         '<div class="col-hero">' +
           '<div class="col-hero-art"' + tokAttrs + '>' +
             (art ? '<img alt="" src="' + esc(art) + '">'
@@ -133,11 +144,32 @@
             '<h1>' + esc(c.title) + '</h1>' +
             (meta ? '<div class="col-hero-meta">' + esc(meta) + '</div>' : '') +
             (c.description || c.short_description
-              ? '<p class="col-hero-desc">' + esc(c.description || c.short_description) + '</p>' : '') +
-            (firstVid
-              ? '<div class="col-start"><a class="btn-primary" href="/video/' + esc(firstVid.slug) + '?c=' + esc(c.slug) + '">' +
-                '<span class="material-symbols-sharp">play_arrow</span>Start the collection</a></div>'
-              : '') +
+              // the editor's small HTML dialect renders; plain text passes
+              // through escaped with its line breaks kept
+              ? '<div class="col-hero-desc rich-text">' + VL.richText(c.description || c.short_description) + '</div>' : '') +
+            (function () {
+              // one action row: the play button knows where you are (fresh →
+              // Start; mid-way → Continue at the first unwatched; all done →
+              // Watch again), and Save/Share sit beside it — the same quiet
+              // pair the video page wears.
+              var cta = '';
+              if (firstVid) {
+                var liveVids = items.filter(function (i) { return i.kind === 'video' && vids[i.video_id]; })
+                  .map(function (i) { return vids[i.video_id]; });
+                var touched = liveVids.some(function (v2) { return VL.progressOf(v2.id); });
+                var nextUp = liveVids.filter(function (v2) { return !(VL.progressOf(v2.id) || {}).completed; })[0];
+                var target = (touched && nextUp) ? nextUp : firstVid;
+                var label = !touched ? 'Start the collection' : (nextUp ? 'Continue' : 'Watch again');
+                cta = '<a class="btn-primary" href="/video/' + esc(target.slug) + '?c=' + esc(c.slug) + '">' +
+                  '<span class="material-symbols-sharp">play_arrow</span>' + label + '</a>';
+              }
+              return '<div class="col-start">' + cta +
+                '<button class="btn-icon" id="col-save" data-tooltip="Save" aria-label="Save">' +
+                  '<span class="material-symbols-sharp save-icon">bookmark</span></button>' +
+                '<button class="btn-icon" id="col-share" data-tooltip="Share" aria-label="Share">' +
+                  '<span class="material-symbols-sharp">share</span></button>' +
+              '</div>';
+            })() +
             (resLinks.length ? '<div class="res-chips" id="col-res" style="margin-top:24px"></div>' : '') +
           '</div>' +
         '</div>';
@@ -160,8 +192,12 @@
         var thumbTok = !(v.thumbnail_mode === 'custom' && v.custom_thumbnail_url) && v.mux_playback_id
           ? ' data-tok-video="' + esc(v.id) + '" data-playback="' + esc(v.mux_playback_id) + '" data-w="320"'
           : '';
-        listHTML += '<a class="pl-row" href="/video/' + esc(v.slug) + '?c=' + esc(c.slug) + '">' +
-          '<span class="pl-num">' + String(n).padStart(2, '0') + '</span>' +
+        var done = !!(VL.progressOf(v.id) || {}).completed;
+        listHTML += '<a class="pl-row' + (done ? ' done' : '') + '" href="/video/' + esc(v.slug) + '?c=' + esc(c.slug) + '">' +
+          // the check replaces the number — one quiet column carries both
+          '<span class="pl-num">' + (done
+            ? '<span class="material-symbols-sharp pl-check">check</span>'
+            : String(n).padStart(2, '0')) + '</span>' +
           '<span class="pl-thumb"' + thumbTok + '>' + thumbInner + '</span>' +
           '<span class="pl-body"><span class="pl-title">' + esc(v.title) + '</span>' +
             (v.short_description ? '<span class="pl-sub">' + esc(v.short_description) + '</span>' : '') +
@@ -199,6 +235,47 @@
           });
         });
       }
+
+      // ── save + share ──
+      (async function () {
+        var saveBtn = document.getElementById('col-save');
+        var shareBtn = document.getElementById('col-share');
+        if (!saveBtn) return;
+        var isSaved = false, ready = true;
+        function paint() {
+          saveBtn.classList.toggle('saved', isSaved);
+          saveBtn.setAttribute('data-tooltip', isSaved ? 'Saved' : 'Save');
+          saveBtn.setAttribute('aria-label', isSaved ? 'Saved — click to remove' : 'Save');
+        }
+        try {
+          var sr = await db.from('library_saves').select('id').eq('collection_id', c.id).limit(1);
+          if (sr.error) throw sr.error;
+          isSaved = !!(sr.data || []).length;
+        } catch (e) {
+          if (/relation .* does not exist|library_saves/i.test((e && e.message) || '')) ready = false;
+        }
+        paint();
+        saveBtn.addEventListener('click', async function () {
+          if (!ready) { toast('Saving needs supabase/video-engagement.sql run first'); return; }
+          isSaved = !isSaved; paint();   // optimistic; reality catches up below
+          try {
+            if (isSaved) await VL.saveCollection(c.id);
+            else await VL.unsaveCollection(c.id);
+          } catch (e2) {
+            isSaved = !isSaved; paint();
+            toast(e2.message || 'Could not update that');
+          }
+        });
+        shareBtn.addEventListener('click', async function () {
+          var url = 'https://flowschool.io/collection/' + c.slug;
+          if (navigator.share) {
+            try { await navigator.share({ title: c.title, url: url }); return; }
+            catch (e3) { if (e3 && e3.name === 'AbortError') return; }
+          }
+          try { await navigator.clipboard.writeText(url); toast('Link copied'); }
+          catch (_) { toast(url); }
+        });
+      })();
 
       VL.hydrateThumbs(root);
     })();
