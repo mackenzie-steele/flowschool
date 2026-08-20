@@ -121,7 +121,64 @@
       if (view === 'all') return;
       var items = view === 'cont' ? VL.continueWatching(L, 24) : savedRow;
       gallery.innerHTML = '<div class="vcard-grid">' + items.map(VL.cardHTML).join('') + '</div>';
+      // these two galleries are MANAGED here: a quiet control on each card —
+      // × un-saves, ✓ marks watched. Cards everywhere else stay pure.
+      var cards = gallery.querySelectorAll('.vcard');
+      items.forEach(function (it, i) {
+        var art = cards[i] && cards[i].querySelector('.vcard-art');
+        if (!art) return;
+        // the gallery has room for the one number that matters here — how
+        // much is left. Shelf cards elsewhere stay art-and-title.
+        if (view === 'cont') {
+          var p = VL.progressOf(it.id);
+          var leftSec = p && Number(p.duration_seconds)
+            ? Number(p.duration_seconds) - Number(p.position_seconds || 0) : 0;
+          if (leftSec > 0) {
+            var meta = document.createElement('span');
+            meta.className = 'vcard-meta';
+            meta.textContent = VL.fmtRuntime(leftSec) + ' left';
+            cards[i].appendChild(meta);
+          }
+        }
+        var label = view === 'saved' ? 'Remove from Saved' : 'Mark as watched';
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn-icon card-manage';
+        b.setAttribute('data-tooltip', label);
+        b.setAttribute('aria-label', label + ' — ' + it.title);
+        b.innerHTML = '<span class="material-symbols-sharp">' + (view === 'saved' ? 'close' : 'check') + '</span>';
+        b.addEventListener('click', function (ev) {
+          ev.preventDefault(); ev.stopPropagation();   // the card underneath is a link
+          manageRemove(it);
+        });
+        art.appendChild(b);
+      });
       VL.hydrateThumbs(gallery);
+    }
+    // optimistic in both directions: the card leaves NOW, the write follows;
+    // a failed unsave puts the truth back
+    async function manageRemove(it) {
+      if (view === 'saved') {
+        savedRow = savedRow.filter(function (x) { return !(x.kind === it.kind && x.id === it.id); });
+        renderView();   // counts update; an emptied tab hands back to All
+        toast('Removed from Saved');
+        try {
+          if (it.kind === 'collection') await VL.unsaveCollection(it.id);
+          else await VL.unsaveVideo(it.id);
+        } catch (e) {
+          toast(e.message || 'Could not remove that');
+          savedRow = await VL.savedItems(L);
+          renderView();
+        }
+      } else {
+        var p = VL.progressOf(it.id);
+        if (p) p.completed = true;   // dismiss IS completion — same verb
+        VL.saveProgress(it.id, Number((p || {}).duration_seconds) || Number((p || {}).position_seconds) || 0,
+          (p || {}).duration_seconds || null, true);
+        renderView();
+        renderShelves();             // the card's progress line retires too
+        toast('Marked as watched');
+      }
     }
 
     // ── the hero ──
@@ -438,6 +495,18 @@
           '<p>' + esc((e && e.message) || 'Try again in a moment.') + '</p></div></div>';
       }
     })();
+
+    // The back/forward cache restores this page without running a line of
+    // code — so coming BACK from a video must refetch the personal layers,
+    // or Continue watching and Saved show the world as it was before the
+    // very actions the member just took.
+    window.addEventListener('pageshow', async function (e) {
+      if (!e.persisted || !L) return;
+      await VL.loadProgress(true);
+      savedRow = await VL.savedItems(L);
+      if (!q && !active.size) renderView();   // search mode keeps owning the page
+      renderShelves();                        // progress lines on the cards
+    });
   })();
   </script>
 </body>

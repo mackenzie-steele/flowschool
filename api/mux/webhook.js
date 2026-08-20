@@ -37,6 +37,7 @@
 
 const Mux = require('@mux/mux-node').default || require('@mux/mux-node');
 const { createClient } = require('@supabase/supabase-js');
+const { muxSetAssetMeta } = require('./_lib');
 
 // Read the request as bytes. Never touches req.body, which would trigger
 // Vercel's parser and lose the original encoding.
@@ -51,6 +52,10 @@ function rawBody(req) {
 
 // The caption/subtitle tracks on an asset, as the shape videos.captions
 // stores: enough for the editor to say "English — ready (auto-generated)".
+function warnMeta(videoId, e) {
+  console.warn('[mux-webhook] meta.title sync failed video=' + videoId + ' — ' + (e && e.message));
+}
+
 function textTracks(tracks) {
   return (tracks || [])
     .filter(t => t.type === 'text')
@@ -168,6 +173,12 @@ module.exports = async (req, res) => {
           .in('status', ['draft', 'uploading', 'processing', 'errored']);
         // …but always refresh the Mux facts, whatever the status.
         await db.from('videos').update(patch).eq('id', videoId);
+        // hand the title UP to Mux so the asset is findable by name in
+        // their dashboard — best-effort, never the webhook's problem
+        try {
+          const { data: row } = await db.from('videos').select('title').eq('id', videoId).single();
+          if (row && row.title) await muxSetAssetMeta(data.id, row.title, videoId);
+        } catch (e) { warnMeta(videoId, e); }
         log(type, videoId, 'playback ' + (playback ? playback.id : 'NONE'));
         break;
       }

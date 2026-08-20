@@ -477,6 +477,11 @@
       --media-object-fit: contain;
     }
 
+    /* the component sets display:block on itself from INSIDE its shadow
+       root, which outranks the hidden attribute's UA rule — the third
+       sighting of this bug class. Without the guard, its stock "Drop a
+       video file here" chrome paints over ours. */
+    mux-uploader[hidden] { display: none !important; }
     mux-uploader {
       --uploader-font-family: var(--font);
       --uploader-accent-color: var(--accent);
@@ -4334,7 +4339,9 @@
     // given no UI of its own and driven through its API, so what you see is
     // the app's, not a third party's.
     function videoFileZone(v, isNew, processing) {
-      if (isNew) return '<p class="muted">Create the draft first — the file attaches to it.</p>';
+      // a NEW video takes the file first: dropping one quietly creates the
+      // draft (named from the title box, or the file) and starts uploading
+      if (isNew) return dropZoneHTML();
       if (v.mux_playback_id) {
         // The player sits in the well; Replace sits under it, full width, so
         // it reads as an action on the file rather than a control inside it.
@@ -4355,6 +4362,9 @@
         return '<p class="nf-err">' + esc(v.mux_error || 'The upload failed.') + '</p>' +
                '<button class="btn-secondary" id="vid-start">Try another file</button>';
       }
+      return dropZoneHTML();
+    }
+    function dropZoneHTML() {
       return '<label class="vid-drop" id="vid-drop">' +
                '<input type="file" id="vid-file" accept="video/*" hidden>' +
                '<span class="material-symbols-sharp">movie</span>' +
@@ -5348,7 +5358,9 @@
           editorHash('videos', ins.data.id);   // the fresh draft is addressable from its first save
           if (kw.length) await db.rpc('set_video_keywords', { p_id: ins.data.id, p_keywords: kw });
           await applyVideoCategoryLinks(ins.data.id, null, vals.category_id);
-          toast('Draft created — now add the file');
+          // quiet = upload-first created this draft; "add the file" would
+          // be nonsense while the file is already on its way
+          if (!quiet) toast('Draft created — now add the file');
         } else {
           var free2 = await db.rpc('video_slug_available', { p_slug: vals.slug, p_exclude: v.id });
           if (free2.data === false) throw new Error('That URL is taken by another video.');
@@ -5358,6 +5370,9 @@
           await db.rpc('set_video_keywords', { p_id: v.id, p_keywords: kw });
           await applyVideoCategoryLinks(v.id, oldPrimary, vals.category_id);
           VID.editing = up.data;
+          // a rename follows the video up to Mux, so their dashboard keeps
+          // knowing this asset by name — fire and forget
+          if (vals.title !== v.title && up.data.mux_asset_id) syncAssetTitle(v.id);
           if (!quiet) toast('Saved');
         }
         // then the visibility the radios are showing, if it differs from what
@@ -5603,6 +5618,21 @@
       return muxPlayerReady;
     }
 
+    // Mux's dashboard lists assets by meta.title — this keeps that name in
+    // step with ours. Best-effort: a miss costs nothing and self-heals on
+    // the next title save.
+    async function syncAssetTitle(videoId) {
+      try {
+        var sess = await db.auth.getSession();
+        var token = sess.data && sess.data.session && sess.data.session.access_token;
+        await fetch('/api/mux/asset-title', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ videoId: videoId }),
+        });
+      } catch (_) { /* never interrupts a save */ }
+    }
+
     // The token comes from the server, which checks admin AND that there is
     // something to play. Nothing here decides who may watch — that lives in
     // canWatch() so the rule cannot drift between admin and member.
@@ -5670,7 +5700,26 @@
       var v = VID.editing;
       var host = document.getElementById('vid-upload');
       var note = document.getElementById('vid-upload-note');
-      if (!v || v._new || !host) return;
+      if (!v || !host) return;
+      // upload-first: a brand-new form creates its own draft the moment a
+      // file arrives — named from the title box if one was typed, else from
+      // the file itself. The form stays put; only the zone changes.
+      if (v._new) {
+        var titleEl = document.getElementById('vid-title');
+        if (titleEl && !titleEl.value.trim() && file) {
+          titleEl.value = file.name.replace(/\.[a-z0-9]+$/i, '').replace(/[._-]+/g, ' ').trim() || 'Untitled video';
+        }
+        try {
+          await saveVideo(null, document.getElementById('vid-err'), true);
+          v = VID.editing;              // the row exists now, with an id
+          videoMarkClean();             // the Save button relaxes to Saved
+        } catch (e2) {
+          host.innerHTML = '<p class="nf-err">' + esc(e2.message || 'Could not create the draft.') + '</p>' +
+            '<button class="btn-secondary" id="vid-start">Try again</button>';
+          wireVideoForm();
+          return;
+        }
+      }
       host.innerHTML = '<p class="muted">Getting an upload link…</p>';
       try {
         var sess = await db.auth.getSession();

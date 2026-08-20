@@ -100,5 +100,24 @@ function fail(res, status, message) {
 function log(where, msg) { console.log('[mux:' + where + '] ' + msg); }
 function warn(where, msg) { console.warn('[mux:' + where + '] ' + msg); }
 
+// The asset carries the video's TITLE into the Mux dashboard (meta.title),
+// with our row id as external_id — so assets are findable by name there.
+// Raw REST on purpose: meta arrived after the pinned SDK version.
+// Best-effort by contract: callers fire-and-forget; a failed PATCH must
+// never take a webhook or a save down with it.
+async function muxSetAssetMeta(assetId, title, videoId) {
+  if (!assetId) return;
+  const auth = Buffer.from(
+    process.env.MUX_TOKEN_ID + ':' + process.env.MUX_TOKEN_SECRET).toString('base64');
+  const r = await fetch('https://api.mux.com/video/v1/assets/' + encodeURIComponent(assetId), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Basic ' + auth },
+    body: JSON.stringify({
+      meta: { title: String(title || '').slice(0, 512), external_id: String(videoId || '') },
+    }),
+  });
+  if (!r.ok) throw new Error('Mux meta PATCH ' + r.status);
+}
+
 module.exports = { env, service, whoami, isAdmin, requireAdmin, canWatch,
-  canBrowseCollection, fail, log, warn };
+  canBrowseCollection, fail, log, warn, muxSetAssetMeta };

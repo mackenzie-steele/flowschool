@@ -189,6 +189,15 @@
       loadDiscussion();
     })();
 
+    // Restored from the back/forward cache: the rail's watched marks may be
+    // stale (something was finished, then Back landed here). The player is
+    // deliberately left alone — its restored position is exactly right.
+    window.addEventListener('pageshow', async function (e) {
+      if (!e.persisted || !V) return;
+      await VL.loadProgress(true);
+      if (CTX) { renderRail(); renderFold(); }
+    });
+
     // ═══ APPEARS IN — the collections this video belongs to ═════════════════
     // A video reached by search or a shared link has no context; these cards
     // hand it back. The collection being watched right now is left out (its

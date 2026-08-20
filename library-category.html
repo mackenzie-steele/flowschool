@@ -53,7 +53,7 @@
         '<p>This category may have moved. The library home has everything that is live.</p></div>';
     }
 
-    (async function () {
+    async function boot() {
       if (!(await VL.gate(root))) return;
       if (!slug) { notFound(); return; }
       var L;
@@ -98,7 +98,14 @@
         a.href += (a.href.indexOf('?') === -1 ? '?' : '&') + 'cat=' + encodeURIComponent(cat.slug);
       });
       VL.hydrateThumbs(root);
-    })();
+    }
+    boot();
+
+    // restored from the back/forward cache without running a line — re-boot
+    // so the progress lines on the cards are today's
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) { VL.loadProgress(true).then(boot); }
+    });
   })();
   </script>
 </body>

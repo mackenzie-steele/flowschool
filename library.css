@@ -132,6 +132,10 @@
 .explore-input { flex: 1; min-width: 0; border: 0; background: none; outline: none;
   font-family: var(--font); font-size: var(--fs-h7); color: var(--text-1); padding: 6px 0; }
 .explore-input::placeholder { color: var(--text-4); }
+/* type="search" brings the browser's own ✕ — the app's clear button is the
+   one true clear, so the native twin goes */
+.explore-input::-webkit-search-cancel-button,
+.explore-input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
 /* the quiet keycap that teaches the shortcut — pointer devices only, and
    it steps aside the moment the field is in use */
 .explore-kbd { display: none; }
@@ -341,6 +345,19 @@
   display: inline-flex; align-items: center; gap: 6px; }
 .vcard-meta .material-symbols-sharp { font-size: 12px; }
 
+/* ── managing the personal galleries: one quiet control per card ──
+   Rides .btn-icon for its tooltip and focus behavior; sized down and
+   hover-revealed so the artwork stays the card. Touch gets it always —
+   an affordance you must hover to find does not exist on a phone. */
+.card-manage { position: absolute; top: 8px; right: 8px; z-index: 2;
+  width: 30px; height: 30px; border: 0; border-radius: var(--rb);
+  background: var(--paper-solid); color: var(--text-2); box-shadow: var(--crest);
+  opacity: 0; transition: opacity var(--transition-base), color var(--transition-base); }
+.card-manage .material-symbols-sharp { font-size: 15px; }
+.card-manage:hover { color: var(--text-1); background: var(--paper-solid); border: 0; }
+.vcard:hover .card-manage, .card-manage:focus-visible { opacity: 1; }
+@media (hover: none) { .card-manage { opacity: 1; } }
+
 /* results / category grids */
 .vcard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 26px 18px; padding-top: 14px; }
@@ -439,7 +456,9 @@
 
 /* ═══ VIDEO PAGE ═════════════════════════════════════════════════════════════ */
 .watch { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 36px; }
-.watch.with-rail { grid-template-columns: minmax(0, 1fr) 360px; }
+/* the video owns the page: ~75% player, ~25% rail. The rail keeps just
+   enough to stay readable; below that it drops to the fold instead. */
+.watch.with-rail { grid-template-columns: minmax(0, 3fr) minmax(210px, 1fr); }
 @media (max-width: 1040px) { .watch.with-rail { grid-template-columns: 1fr; } }
 .player-well { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r);
   overflow: hidden; background: #000; }
@@ -544,6 +563,22 @@
   transition: transform var(--transition-base); }
 .upnext-auto.on .tog { background: var(--accent); }
 .upnext-auto.on .tog::after { transform: translateX(12px); }
+/* a phone's 16:9 well is ~220px tall — the stacked card cannot fit, so it
+   lies down: thumb beside the words, actions on their own row, everything
+   inside the frame including the player's own control bar */
+@media (max-width: 640px) {
+  .upnext { padding: 12px 14px 40px; }
+  .upnext-card { max-width: none; width: 100%; text-align: left;
+    display: grid; grid-template-columns: 96px minmax(0, 1fr);
+    gap: 0 12px; align-items: center; }
+  .upnext-cap { grid-column: 1 / -1; margin-bottom: 8px; }
+  .upnext-thumb { width: 96px; margin: 0; grid-row: 2 / 4; }
+  .upnext-title { font-size: var(--text-ui);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .upnext-actions { grid-column: 1 / -1; justify-content: flex-start; margin-top: 12px; }
+  .upnext-play { padding: 8px 14px; }
+  .upnext-count { grid-column: 1 / -1; }
+}
 
 /* ═══ TABS — a hairline, not a toolbar ═══════════════════════════════════════ */
 .wtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-light);

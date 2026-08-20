@@ -55,7 +55,7 @@
         '<p>This collection may have moved or come down. The library home has everything that is live.</p></div>';
     }
 
-    (async function () {
+    async function boot() {
       if (!(await VL.gate(root))) return;
       if (!slug) { notFound(); return; }
 
@@ -278,7 +278,15 @@
       })();
 
       VL.hydrateThumbs(root);
-    })();
+    }
+    boot();
+
+    // restored from the back/forward cache without running a line — re-boot
+    // so the watched checks, the Continue button and the save state are
+    // today's, not the moment the member left
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) { VL.loadProgress(true).then(boot); }
+    });
   })();
   </script>
 </body>
