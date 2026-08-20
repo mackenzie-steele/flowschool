@@ -203,7 +203,7 @@
       letter-spacing: -.01em;
       line-height: var(--lh-heading);
       color: var(--text-1);
-      margin-bottom: 8px;
+      margin-bottom: 14px;
     }
 
     .fd-meta {
@@ -278,10 +278,33 @@
     }
 
     /* the empty drawer — dashed where the cues will sit */
-    .fd-cues-empty {
-      border-style: dashed;
-      border-top-color: rgba(var(--ink-rgb), .12);
+    /* CSS dashes can't be sized, so the border is an SVG: long dashes, wide
+       gaps, and real contrast against the paper — an invitation, not a
+       whisper. The element's own border goes transparent underneath. */
+    .fd-cues-empty,
+    .fd-cues-empty:hover {
+      border-color: transparent;
       background: none;
+      /* one drawn border, stretched to the box — an unsized SVG tile
+         would repeat and read as a double line. Origin AND clip on the
+         border box: painted from the padding box (the default), the
+         stroke escapes clipping at the corners and reads thicker there. */
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      background-origin: border-box;
+      background-clip: border-box;
+    }
+    .fd-cues-empty {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='rgba(22,22,18,0.18)' stroke-width='2' stroke-dasharray='3 3'/%3E%3C/svg%3E");
+    }
+    .fd-cues-empty:hover {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='rgba(22,22,18,0.30)' stroke-width='2' stroke-dasharray='3 3'/%3E%3C/svg%3E");
+    }
+    [data-theme="dark"] .fd-cues-empty {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='rgba(235,238,245,0.18)' stroke-width='2' stroke-dasharray='3 3'/%3E%3C/svg%3E");
+    }
+    [data-theme="dark"] .fd-cues-empty:hover {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='rgba(235,238,245,0.30)' stroke-width='2' stroke-dasharray='3 3'/%3E%3C/svg%3E");
     }
 
     .fd-cues-empty-name { color: var(--text-2); }
@@ -540,27 +563,6 @@
 
     .fl-section .label-1 { display: block; margin-bottom: 16px; }
 
-    /* collapsed type — a tag, not a control panel */
-    .fl-typebar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 2px 0 8px;
-    }
-
-    .fl-type-change {
-      background: none;
-      border: none;
-      padding: 2px 0;
-      cursor: pointer;
-      font-family: var(--font);
-      font-size: var(--text-small);
-      color: var(--text-3);
-      transition: color var(--transition-base);
-    }
-
-    .fl-type-change:hover { color: var(--text-1); }
-
     /* section head with a live counter */
     .fl-head {
       display: flex;
@@ -611,55 +613,61 @@
 
 
     /* type picker — the taxonomy, selectable */
-    .fl-types {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+    /* ── the kind, worn as metadata ─────────────────────────────────
+       The token beside the title IS the flow-tag its card will wear —
+       dashed and quiet while unset, the real accent tag once chosen.
+       Behind it, one small menu: the kinds with their one-line whys,
+       your own kinds with a way out, and "New kind…" at the foot. */
+    .fd-meta .flow-tag { margin-right: 10px; vertical-align: middle; }
+
+    .fl-title-row { position: relative; display: flex; align-items: flex-start; gap: 14px; }
+    .fl-title-row .fl-title-input { flex: 1; min-width: 0; }
+    /* larger than the card tag on purpose: this one is a REQUIRED control,
+       not a label — it must read as pressable at a glance */
+    .fl-kind-token {
+      display: inline-flex; align-items: center; gap: 5px; flex: none; margin-top: 6px;
+      font-family: var(--font-mono); font-size: var(--fs-meta); text-transform: uppercase;
+      letter-spacing: .08em; color: var(--accent); background: none; cursor: pointer;
+      border: 1px solid var(--accent-border); border-radius: var(--rb); padding: 8px 8px 8px 14px;
+      transition: color var(--transition-base), border-color var(--transition-base);
     }
-
-    @media (max-width: 640px) {
-      .fl-types { grid-template-columns: 1fr; }
+    .fl-kind-token .material-symbols-sharp { font-size: 16px; }
+    .fl-kind-token.unset { color: var(--text-3); border-style: dashed; border-color: rgba(var(--ink-rgb), .30); }
+    .fl-kind-token.unset:hover { color: var(--text-1); border-color: rgba(var(--ink-rgb), .45); }
+    .fl-kind-token.shake { animation: fsShake .3s ease; }
+    .fl-kind-menu {
+      position: absolute; right: 0; top: calc(100% - 4px); z-index: 30;
+      width: min(300px, 92vw); padding: 5px;
+      background: var(--paper-solid); border: 1px solid var(--border-light);
+      border-radius: var(--r); box-shadow: 0 8px 28px rgba(0, 0, 0, .12);
     }
-
-    .fl-type {
-      border-radius: var(--r);
-      display: block;
-      text-align: left;
-      background: none;
-      border: 1px solid rgba(var(--ink-rgb), .13);
-      padding: 12px 16px;
-      cursor: pointer;
-      font-family: var(--font);
-      transition: border-color var(--transition-base), background var(--transition-base);
-    }
-
-    .fl-type:hover { border-color: rgba(var(--ink-rgb), .30); }
-
-    .fl-type.on {
-      border-color: rgba(var(--ink-rgb), .55);
-      background: rgba(var(--ink-rgb), .04);
-    }
-
-    .fl-type-name {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: var(--text-ui);
-      font-weight: var(--weight-medium);
-      color: var(--text-1);
-      margin-bottom: 4px;
-    }
-
-    .fl-type-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: rgba(var(--ink-rgb), .18);
-      flex-shrink: 0;
+    .fl-kind-menu[hidden] { display: none; }   /* author display beats UA [hidden] */
+    .fl-kind-item {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      text-align: left; background: none; border: 0; cursor: pointer;
+      padding: 8px 10px; border-radius: var(--rb);
+      font-family: var(--font); color: var(--text-1);
       transition: background var(--transition-base);
     }
-
-    .fl-type.on .fl-type-dot { background: var(--accent); }
+    .fl-kind-item:hover { background: rgba(var(--ink-rgb), .05); }
+    .fl-kind-item-body { flex: 1; min-width: 0; }
+    .fl-kind-item-name { display: block; font-size: var(--text-ui); }
+    .fl-kind-item.on .fl-kind-item-name { color: var(--accent); }
+    .fl-kind-item-desc { display: block; font-size: 11px; line-height: 1.45; color: var(--text-3); margin-top: 1px; }
+    .fl-kind-x {
+      display: inline-flex; flex: none; background: none; border: 0; cursor: pointer;
+      color: var(--text-3); opacity: .5; padding: 2px;
+      transition: opacity var(--transition-base), color var(--transition-base);
+    }
+    .fl-kind-x:hover { opacity: 1; color: var(--danger); }
+    .fl-kind-x .material-symbols-sharp { font-size: 13px; }
+    .fl-kind-new { border-top: 1px solid var(--border-light); margin-top: 4px; padding-top: 8px; color: var(--text-3); }
+    .fl-kind-new:hover { color: var(--text-1); }
+    .fl-kind-input {
+      width: 100%; background: none; border: none; outline: none;
+      padding: 8px 10px; border-top: 1px solid var(--border-light); margin-top: 4px;
+      font-family: var(--font); font-size: var(--text-ui); color: var(--text-1);
+    }
 
     /* ── Elements of Flow — the Peak Flow checklist ─────────────
        one quiet instrument row until asked; sections carry the
@@ -774,13 +782,6 @@
     .ef-item.on .ef-item-label,
     .ef-item.on .ef-item-sub { opacity: .45; }
 
-    .fl-type-desc {
-      display: block;
-      font-size: 11px;
-      line-height: 1.5;
-      color: var(--text-3);
-    }
-
     /* the writing field — grounded, like the class editor */
     .fl-area {
       width: 100%;
@@ -815,18 +816,32 @@
       border: none;
       box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .12);
       border-radius: var(--r);
-      padding: 13px 16px;
+      /* same box as the dashed button it replaces — swapping them must
+         not shift the page */
+      padding: 16px 20px;
+      min-height: 54px;
+      box-sizing: border-box;
       color: var(--text-1);
       font-family: var(--font);
-      font-size: var(--text-body-sm);
+      /* the same voice as The Flow field — one field grammar per form */
+      font-size: var(--fs-body);
+      line-height: 1.7;
       outline: none;
       transition: box-shadow var(--transition-base), background var(--transition-base);
+    }
+    /* Chrome paints url inputs its own autofill tint mid-typing — pin the
+       well background so the typing state matches the flow box */
+    .fl-video-input:-webkit-autofill,
+    .fl-video-input:-webkit-autofill:focus {
+      -webkit-box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .30), inset 0 0 0 1000px var(--paper-solid);
+      -webkit-text-fill-color: var(--text-1);
     }
     .fl-video-input:focus {
       background: rgba(var(--ink-rgb), .06);
       box-shadow: var(--well), inset 0 0 0 1px rgba(var(--ink-rgb), .30);
     }
     .fl-video-input::placeholder { color: rgba(var(--ink-rgb), .30); }
+    .fl-video-input.shake { animation: fsShake .3s ease; }
 
 
     /* the printed sheet wears the mark, top right — screen never sees it */
@@ -1047,7 +1062,16 @@
     <div class="wrap" style="padding-top: 0;">
 
       <div class="fl-editor">
-        <input type="text" class="fl-title-input" id="fl-title" placeholder="Name your flow&#8230;" maxlength="120" aria-label="Flow name">
+        <div class="fl-title-row">
+          <input type="text" class="fl-title-input" id="fl-title" placeholder="Name your flow&#8230;" maxlength="120" aria-label="Flow name">
+          <!-- the kind is metadata ON the flow, not a form section: the very
+               tag the card will wear, worn here first, with a menu behind it -->
+          <button type="button" class="fl-kind-token unset" id="fl-kind-token" aria-haspopup="menu" aria-expanded="false">
+            <span id="fl-kind-token-label">Flow Type</span>
+            <span class="material-symbols-sharp" aria-hidden="true">keyboard_arrow_down</span>
+          </button>
+          <div class="fl-kind-menu" id="fl-kind-menu" hidden></div>
+        </div>
 
         <!-- the challenge — rules this flow was built under, pinned from
              Arbitrary Rules via the fs-seed handoff -->
@@ -1062,22 +1086,12 @@
           <div id="fl-challenge-body"></div>
         </div>
 
-        <div class="fl-typebar" id="fl-typebar" hidden>
-          <span class="flow-tag" id="fl-typebar-tag"></span>
-          <button type="button" class="fl-type-change" id="fl-type-change">Change</button>
-        </div>
-
-        <div class="fl-section" id="fl-types-wrap">
-          <span class="label-1">What kind of flow?</span>
-          <div class="fl-types" id="fl-types"></div>
-        </div>
-
         <div class="fl-section">
           <div class="fl-head">
             <span class="label-1" id="fl-flow-label">The Flow</span>
             <span class="fl-count" id="fl-count" hidden></span>
           </div>
-          <textarea class="fl-area" id="fl-area" rows="3" placeholder="SEATED TWIST / BOAT / PIGEON / SL DD"></textarea>
+          <textarea class="fl-area" id="fl-area" rows="3" placeholder="Type your flow here…"></textarea>
         </div>
 
         <!-- video link — opt-in, mirroring "Attach cues": the button seats
@@ -1190,8 +1204,26 @@
       { key: 'restorative', name: 'Restorative Flow', desc: 'When it’s time to rest and lay it all down.' },
     ];
 
+    // ── custom kinds — the teacher's own, kept with the account ──
+    // Removing one TOMBSTONES it (retired: true): it leaves the picker but
+    // keeps resolving, so flows already wearing it never lose their tag.
+    var KINDS_KEY = 'flowschool_flow_types';
+    function loadCustomTypes() {
+      try { return JSON.parse(localStorage.getItem(KINDS_KEY) || '[]'); } catch (_) { return []; }
+    }
+    var customTypes = loadCustomTypes();
+    function persistCustomTypes() { localStorage.setItem(KINDS_KEY, JSON.stringify(customTypes)); }
+    function liveCustomTypes() { return customTypes.filter(function (t) { return !t.retired; }); }
+
     function typeOf(key) {
-      return FLOW_TYPES.find(function (t) { return t.key === key; });
+      return FLOW_TYPES.find(function (t) { return t.key === key; }) ||
+        customTypes.find(function (t) { return t.key === key; });
+    }
+    // the display name for any kind, past or present
+    function tagName(key) {
+      if (TAG_NAMES[key]) return TAG_NAMES[key];
+      var c = customTypes.find(function (t) { return t.key === key; });
+      return c ? c.name : (key || '');
     }
 
     function loadFlows() {
@@ -1242,9 +1274,14 @@
 
     function renderFilter(count) {
       var el = document.getElementById('flow-filter');
+      var used = {};
+      flows.forEach(function (f) { used[f.type] = true; });
+      var kinds = FLOW_TYPES.map(function (t) { return t.key; })
+        .concat(customTypes.filter(function (t) { return !t.retired || used[t.key]; })
+          .map(function (t) { return t.key; }));
       el.innerHTML = '<button class="filter-chip' + (listFilter === 'all' ? ' active' : '') + '" data-f="all">All</button>' +
-        FLOW_TYPES.map(function (t) {
-          return '<button class="filter-chip' + (listFilter === t.key ? ' active' : '') + '" data-f="' + t.key + '">' + TAG_NAMES[t.key] + '</button>';
+        kinds.map(function (k) {
+          return '<button class="filter-chip' + (listFilter === k ? ' active' : '') + '" data-f="' + esc(k) + '">' + esc(tagName(k)) + '</button>';
         }).join('');
       document.getElementById('result-count').textContent =
         count + ' result' + (count !== 1 ? 's' : '');
@@ -1285,7 +1322,7 @@
           if (!q) return true;
           return (f.name || '').toLowerCase().indexOf(q) !== -1 ||
                  (f.text || '').toLowerCase().indexOf(q) !== -1 ||
-                 (TAG_NAMES[f.type] || '').toLowerCase().indexOf(q) !== -1;
+                 tagName(f.type).toLowerCase().indexOf(q) !== -1;
         })
         .sort(sorterFor(sortMode()));
 
@@ -1323,7 +1360,7 @@
         return '<div class="flow-card" data-id="' + f.id + '">' +
           (f.pinned ? '<span class="material-symbols-sharp fav-mark fc-fav">favorite</span>' : '') +
           '<div class="fc-top">' +
-            '<span class="flow-tag">' + (TAG_NAMES[f.type] || f.type) + '</span>' +
+            '<span class="flow-tag">' + esc(tagName(f.type)) + '</span>' +
           '</div>' +
           '<span class="fc-title">' + esc(f.name || 'Untitled Flow') + '</span>' +
           '<span class="fc-text">' + esc(f.text || '') + '</span>' +
@@ -1434,23 +1471,103 @@
 
     // ─── EDITOR ──────────────────────────────────────────────────────────────────    // ─── EDITOR ──────────────────────────────────────────────────────────────────
 
-    function renderTypes() {
-      document.getElementById('fl-types').innerHTML = FLOW_TYPES.map(function (t) {
-        return '<button type="button" class="fl-type' + (editType === t.key ? ' on' : '') + '" data-type="' + t.key + '">' +
-          '<span class="fl-type-name"><span class="fl-type-dot"></span>' + t.name + '</span>' +
-          '<span class="fl-type-desc">' + t.desc + '</span>' +
-        '</button>';
-      }).join('');
+    // ── the kind token + its menu ──
+    var addingKind = false;
+    function paintKindToken() {
+      var tok = document.getElementById('fl-kind-token');
+      var lbl = document.getElementById('fl-kind-token-label');
+      lbl.textContent = editType ? tagName(editType) : 'Flow Type';
+      tok.classList.toggle('unset', !editType);
+    }
+    function kindMenuOpen() { return !document.getElementById('fl-kind-menu').hidden; }
+    function renderKindMenu() {
+      var host = document.getElementById('fl-kind-menu');
+      host.innerHTML =
+        FLOW_TYPES.map(function (t) {
+          return '<button type="button" class="fl-kind-item' + (editType === t.key ? ' on' : '') +
+            '" data-type="' + t.key + '" role="menuitem">' +
+            '<span class="fl-kind-item-body"><span class="fl-kind-item-name">' + t.name + '</span>' +
+            '<span class="fl-kind-item-desc">' + t.desc + '</span></span></button>';
+        }).join('') +
+        liveCustomTypes().map(function (t) {
+          return '<button type="button" class="fl-kind-item' + (editType === t.key ? ' on' : '') +
+            '" data-type="' + esc(t.key) + '" role="menuitem">' +
+            '<span class="fl-kind-item-body"><span class="fl-kind-item-name">' + esc(t.name) + '</span></span>' +
+            '<span class="fl-kind-x" data-del="' + esc(t.key) + '" role="button" aria-label="Remove ' + esc(t.name) + '">' +
+            '<span class="material-symbols-sharp">close</span></span></button>';
+        }).join('') +
+        (addingKind
+          ? '<input class="fl-kind-input" id="fl-kind-input" maxlength="24" placeholder="Name your flow type\u2026" aria-label="New flow type">'
+          : '<button type="button" class="fl-kind-item fl-kind-new" data-add="1" role="menuitem">' +
+            '<span class="fl-kind-item-body"><span class="fl-kind-item-name">New flow type\u2026</span></span></button>');
+      var inp = document.getElementById('fl-kind-input');
+      if (inp) {
+        inp.focus();
+        inp.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter') { ev.preventDefault(); commitKind(inp.value); }
+          if (ev.key === 'Escape') { ev.stopPropagation(); addingKind = false; renderKindMenu(); }
+        });
+        inp.addEventListener('blur', function () { if (addingKind) commitKind(inp.value); });
+      }
+    }
+    function openKindMenu() {
+      addingKind = false;
+      renderKindMenu();
+      document.getElementById('fl-kind-menu').hidden = false;
+      document.getElementById('fl-kind-token').setAttribute('aria-expanded', 'true');
+      setTimeout(function () { document.addEventListener('click', kindAway); }, 0);
+      document.addEventListener('keydown', kindEsc);
+    }
+    function closeKindMenu() {
+      document.getElementById('fl-kind-menu').hidden = true;
+      document.getElementById('fl-kind-token').setAttribute('aria-expanded', 'false');
+      document.removeEventListener('click', kindAway);
+      document.removeEventListener('keydown', kindEsc);
+    }
+    function kindAway(e) {
+      // a click that re-rendered the menu detaches its own target — by the
+      // time the click bubbles here, closest() can't see the menu around it
+      // and would slam the menu shut. Detached targets were inside.
+      if (!e.target.isConnected) return;
+      if (!e.target.closest('.fl-kind-menu') && !e.target.closest('.fl-kind-token')) closeKindMenu();
+    }
+    function kindEsc(e) { if (e.key === 'Escape') closeKindMenu(); }
+
+    function commitKind(raw) {
+      addingKind = false;
+      var name = (raw || '').trim();
+      if (!name) { renderKindMenu(); return; }
+      var lower = name.toLowerCase();
+      // typing a kind that already exists just chooses it; a name matching
+      // a removed custom kind revives it, so old flows' filters knit back up
+      var builtin = FLOW_TYPES.find(function (t) {
+        return t.name.toLowerCase() === lower || TAG_NAMES[t.key].toLowerCase() === lower;
+      });
+      var existing = customTypes.find(function (t) { return t.name.toLowerCase() === lower; });
+      if (builtin) { editType = builtin.key; }
+      else if (existing) { delete existing.retired; persistCustomTypes(); editType = existing.key; }
+      else {
+        var entry = { key: 'c' + Date.now().toString(36), name: name };
+        customTypes.push(entry);
+        persistCustomTypes();
+        editType = entry.key;
+      }
+      paintKindToken();
+      updateTypeLabels();
+      efUpdateVisibility();
+      pwUpdateVisibility();
+      markDirty();
+      closeKindMenu();
     }
 
-    // the type is a decision, not a dashboard — once made, it collapses
-    function setTypeCollapsed(collapsed) {
-      document.getElementById('fl-types-wrap').hidden = collapsed;
-      document.getElementById('fl-typebar').hidden = !collapsed;
-      if (collapsed && editType) {
-        document.getElementById('fl-typebar-tag').textContent = TAG_NAMES[editType] || editType;
-      }
-      updateTypeLabels();
+    function removeCustomKind(key) {
+      var t = customTypes.find(function (x) { return x.key === key; });
+      if (!t) return;
+      t.retired = true;   // flows wearing it keep their tag; the picker forgets it
+      persistCustomTypes();
+      if (editType === key) { editType = null; paintKindToken(); updateTypeLabels(); }
+      if (listFilter === key) listFilter = 'all';
+      renderKindMenu();   // the menu stays open — removing is housekeeping, not choosing
     }
 
     // the title placeholder and the flow-section label follow the chosen type
@@ -1843,7 +1960,9 @@
       var n = poseCount(f.text);
       var st = stampFor(f);
       document.getElementById('fd-meta').innerHTML =
-        esc((TAG_NAMES[f.type] || f.type)) + ' \u00B7 ' + n + (n === 1 ? ' pose' : ' poses') + ' \u00B7 ' +
+        // the type wears its chip here too — the same flow-tag the list cards use
+        '<span class="flow-tag">' + esc(tagName(f.type)) + '</span>' +
+        n + (n === 1 ? ' pose' : ' poses') + ' \u00B7 ' +
         '<span class="date-toggle" title="Show ' + (dateMode() === 'edited' ? 'created' : 'edited') + ' date">' +
         st.label + ' ' + fmtDate(st.ts) + '</span>';
     }
@@ -1867,8 +1986,10 @@
         showVideoField(!!vurl);
         var area = document.getElementById('fl-area');
         area.value = f ? (f.text || '') : '';
-        renderTypes();
-        setTypeCollapsed(!!editType);
+        addingKind = false;
+        closeKindMenu();
+        paintKindToken();
+        updateTypeLabels();
         efLoad(f);
         efRender();
         efUpdateVisibility();
@@ -2148,13 +2269,39 @@
       var name = document.getElementById('fl-title').value.trim();
       var text = document.getElementById('fl-area').value.trim();
       var video = document.getElementById('fl-video-url').value.trim();
-      if (!editType) { toast('Pick what kind of flow this is.'); return; }
+      // three things make a flow worth keeping: a name, the flow itself,
+      // and what kind it is — checked in the order the form reads
+      if (!name) { toast('Give your flow a name.'); document.getElementById('fl-title').focus(); return; }
       if (!text) { toast('A flow needs at least a pose.'); document.getElementById('fl-area').focus(); return; }
+      if (video) {
+        if (!/^https?:\/\//i.test(video) && /^[\w-]+(\.[\w-]+)+/.test(video)) video = 'https://' + video;
+        var okUrl = false;
+        try { var u = new URL(video); okUrl = u.protocol === 'http:' || u.protocol === 'https:'; } catch (_) {}
+        if (!okUrl) {
+          toast('That video link doesn\u2019t look like a real URL.');
+          showVideoField(true);
+          var ve = document.getElementById('fl-video-url');
+          ve.classList.add('shake');
+          setTimeout(function () { ve.classList.remove('shake'); }, 400);
+          ve.focus();
+          return;
+        }
+        document.getElementById('fl-video-url').value = video;   // the normalized form is what saves
+      }
+      if (!editType) {
+        toast('Pick what kind of flow this is.');
+        var tok = document.getElementById('fl-kind-token');
+        tok.classList.add('shake');
+        setTimeout(function () { tok.classList.remove('shake'); }, 400);
+        openKindMenu();
+        return;
+      }
 
+      var wasNew = editingId == null;
       if (editingId != null) {
         var f = byId(editingId);
         if (!f) return;
-        f.name = name || 'Untitled Flow';
+        f.name = name;
         f.type = editType;
         f.text = text;
         f.videoUrl = video;
@@ -2165,7 +2312,7 @@
       } else {
         var entry = {
           id: Date.now(),
-          name: name || 'Untitled Flow',
+          name: name,
           type: editType,
           text: text,
           videoUrl: video,
@@ -2192,6 +2339,16 @@
       }
       dirty = false;
       setSaveButton('saved');
+      toast('Flow saved.');
+      // saving closes the editor: a new flow lands back on the shelf, an
+      // edited one lands on its own detail page — the work, presented
+      if (wasNew) {
+        showList();
+        fsReplaceState('your-flows');
+      } else {
+        showDetail(editingId);
+        fsReplaceState('your-flows?id=' + editingId);   // the page's own deep-link param
+      }
     });
 
     // ─── EVENTS ──────────────────────────────────────────────────────────────────
@@ -2261,20 +2418,22 @@
     document.getElementById('fl-title').addEventListener('input', markDirty);
     document.getElementById('fl-video-url').addEventListener('input', markDirty);
 
-    document.getElementById('fl-types').addEventListener('click', function (e) {
-      var btn = e.target.closest('.fl-type');
-      if (!btn) return;
-      editType = btn.dataset.type;
-      renderTypes();
-      setTypeCollapsed(true);
+    document.getElementById('fl-kind-token').addEventListener('click', function () {
+      if (kindMenuOpen()) closeKindMenu(); else openKindMenu();
+    });
+    document.getElementById('fl-kind-menu').addEventListener('click', function (e) {
+      var del = e.target.closest('.fl-kind-x');
+      if (del) { removeCustomKind(del.dataset.del); return; }
+      if (e.target.closest('[data-add]')) { addingKind = true; renderKindMenu(); return; }
+      var item = e.target.closest('.fl-kind-item[data-type]');
+      if (!item) return;
+      editType = item.dataset.type;
+      paintKindToken();
+      updateTypeLabels();
       efUpdateVisibility();
       pwUpdateVisibility();
       markDirty();
-      document.getElementById('fl-area').focus();
-    });
-
-    document.getElementById('fl-type-change').addEventListener('click', function () {
-      setTypeCollapsed(false);
+      closeKindMenu();
     });
 
     // ─── SHORTHAND SUGGEST ───────────────────────────────────────────────────────

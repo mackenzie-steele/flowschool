@@ -521,7 +521,8 @@ select:focus:focus-visible {
 textarea.fb-text:focus:focus-visible,
 textarea.lg-area:focus:focus-visible,
 textarea.cw-area:focus:focus-visible,
-textarea.fl-area:focus:focus-visible {
+textarea.fl-area:focus:focus-visible,
+input.fl-video-input:focus:focus-visible {
   box-shadow: var(--well), inset 0 0 0 1px rgba(var(--accent-rgb), .60);
 }
 

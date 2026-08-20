@@ -2110,12 +2110,12 @@ function saveSheet() {
   flowName = name;
   try {
     const list = getSheets();
+    const wasNew = sheetId == null;
     let e = sheetId != null ? list.find(x => x.id === sheetId) : null;
     if (!e) {
       e = { id: Date.now() };
       list.push(e);
       sheetId = e.id;
-      fsReplaceState('your-cues?edit=' + sheetId);
     }
     e.name = name;
     e.rows = rows;
@@ -2124,9 +2124,16 @@ function saveSheet() {
     e.editedAt = Date.now();
     setSheets(list);
     dirty = false;
-    setSaveButton('saved');
-    document.getElementById('sheet-back-label').textContent = fsBackLabel(name);
-    document.title = name + ' \u2014 Flow School';
+    showToast('Cue sheet saved.');
+    // saving closes the editor — the site-wide contract: a new sheet lands
+    // back on the shelf, an edited one on its own detail page
+    if (wasNew) {
+      showList(false);
+      fsReplaceState('your-cues');
+    } else {
+      showDetail(sheetId, false);
+      fsReplaceState('your-cues?id=' + sheetId);
+    }
   } catch (e2) {
     showToast('Could not save \u2014 storage may be full.');
   }
