@@ -476,6 +476,26 @@
    via .saved, the tooltip names the glyph. No page-local button dialect. */
 .watch-actions { display: flex; gap: 8px; flex: none; padding-top: 2px; }
 
+/* ── chapters: a quiet strip riding under the player ──
+   Mono times, plain names, the current one lit — a map you can touch
+   without leaving the moment. Scrolls sideways past the frame edge. */
+.chap-strip { display: flex; gap: 8px; overflow-x: auto; margin-top: 12px;
+  padding-bottom: 4px; scrollbar-width: none; }
+.chap-strip::-webkit-scrollbar { display: none; }
+.chap-strip[hidden] { display: none; }   /* flex outranks the UA's [hidden] */
+.chap-chip { display: inline-flex; align-items: baseline; gap: 8px; flex: none;
+  max-width: 260px; border: 1px solid var(--border-light); border-radius: 999px;
+  background: none; cursor: pointer; padding: 7px 14px;
+  transition: color var(--transition-base), border-color var(--transition-base),
+              background var(--transition-base); }
+.chap-chip-time { font-family: var(--font-mono); font-size: var(--fs-meta);
+  color: var(--text-3); flex: none; }
+.chap-chip-name { font-family: var(--font); font-size: var(--fs-label-1);
+  color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chap-chip:hover .chap-chip-name { color: var(--text-1); }
+.chap-chip.on { background: var(--accent-dim); border-color: transparent; }
+.chap-chip.on .chap-chip-time, .chap-chip.on .chap-chip-name { color: var(--accent); }
+
 /* ── the collection rail (desktop) / fold (mobile) ── */
 .rail { position: sticky; top: 20px; align-self: start;
   border-left: 1px solid var(--border-light); padding-left: 24px;

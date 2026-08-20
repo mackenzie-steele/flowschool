@@ -142,6 +142,7 @@
               '<div class="lib-skel" style="position:absolute;inset:0"></div>' +
               '<div class="upnext" id="upnext" hidden></div>' +
             '</div>' +
+            '<div class="chap-strip" id="chap-strip" hidden></div>' +
             '<div id="fold-host"></div>' +
             '<div class="watch-head">' +
               '<h1>' + esc(V.title) + '</h1>' +
@@ -283,9 +284,57 @@
         player = el;
         el.addEventListener('ended', onEnded);
         wireProgress(el);
+        wireChapters(el);
       } catch (e) {
         well.innerHTML = '<div class="player-msg">' + esc(e.message || 'This video could not start.') + '</div>';
       }
+    }
+
+    // ═══ CHAPTERS — markers on the timeline, a living strip below ═══════════
+    // Curated in the admin (pasted from Mux's generated set) and shown only
+    // while the video's chapters are switched on. The strip follows the
+    // playhead: the current chapter holds the accent and keeps itself in
+    // view; every chip is a seek.
+    function wireChapters(el) {
+      var list = (V.chapters_enabled && Array.isArray(V.chapters)) ? V.chapters : [];
+      list = list.filter(function (c) { return c && c.title && c.t != null; });
+      if (!list.length) return;
+
+      // the player's own chapter markers on the time bar
+      el.addEventListener('loadedmetadata', function () {
+        if (typeof el.addChapters === 'function') {
+          el.addChapters(list.map(function (c) { return { startTime: c.t, value: c.title }; }));
+        }
+      });
+
+      var strip = document.getElementById('chap-strip');
+      strip.innerHTML = list.map(function (c, i) {
+        return '<button type="button" class="chap-chip" data-i="' + i + '">' +
+          '<span class="chap-chip-time">' + fmtTS(c.t) + '</span>' +
+          '<span class="chap-chip-name">' + esc(c.title) + '</span>' +
+        '</button>';
+      }).join('');
+      strip.hidden = false;
+
+      strip.addEventListener('click', function (e) {
+        var chip = e.target.closest('.chap-chip');
+        if (chip) seekTo(list[parseInt(chip.dataset.i, 10)].t);
+      });
+
+      // the playhead lights the chapter it is inside
+      var activeI = -1;
+      el.addEventListener('timeupdate', function () {
+        var pos = Number(el.currentTime) || 0;
+        var i = -1;
+        for (var k = 0; k < list.length; k++) { if (pos >= list[k].t) i = k; else break; }
+        if (i === activeI) return;
+        activeI = i;
+        strip.querySelectorAll('.chap-chip').forEach(function (chip, ci) {
+          chip.classList.toggle('on', ci === i);
+        });
+        var on = strip.querySelector('.chap-chip.on');
+        if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+      });
     }
 
     // ═══ WATCH PROGRESS ═══════════════════════════════════════════════════

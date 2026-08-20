@@ -159,6 +159,7 @@
     }
     .btn-outline:hover { border-color: rgba(var(--ink-rgb), .35); background: rgba(var(--ink-rgb), .05); }
     .vid-replace-btn { margin-top: 2px; }
+    .vid-cancel-upload { margin-top: 2px; color: var(--text-3); }
 
     .vid-radios { display: flex; flex-direction: column; gap: 2px; }
     .vid-radio {
@@ -236,6 +237,29 @@
     .vid-tag-x { background: none; border: 0; cursor: pointer; color: var(--text-3); display: flex; padding: 2px; border-radius: 50%; }
     .vid-tag-x:hover { color: var(--danger); }
     .vid-tag-x .material-symbols-sharp { font-size: 13px; }
+
+    /* ── chapters: a quiet ledger of rows — mono time, plain title, ✕ ── */
+    .chap-seg { margin-bottom: 14px; }
+    .chap-list { display: flex; flex-direction: column; gap: 6px; }
+    .chap-list:empty { display: none; }
+    .chap-row { display: flex; align-items: center; gap: 10px; }
+    .chap-time {
+      width: 72px; flex: none; text-align: right;
+      font-family: var(--font-mono); font-size: var(--text-ui);
+      background: var(--well-bg); border: 1px solid rgba(var(--ink-rgb), .12);
+      border-radius: var(--rs); padding: 8px 10px; color: var(--text-1); outline: none;
+    }
+    .chap-title2, .chap-row .chap-title {
+      flex: 1; min-width: 0;
+      font-family: var(--font); font-size: var(--text-ui);
+      background: var(--well-bg); border: 1px solid rgba(var(--ink-rgb), .12);
+      border-radius: var(--rs); padding: 8px 12px; color: var(--text-1); outline: none;
+    }
+    .chap-time:focus, .chap-row .chap-title:focus { border-color: rgba(var(--accent-rgb), .60); }
+    .chap-actions { display: flex; gap: 18px; margin: 10px 0 4px; }
+    .chap-add { display: inline-flex; align-items: center; gap: 6px; }
+    #vid-chap-importbox { margin-top: 10px; }
+    .chap-add .material-symbols-sharp { font-size: 15px; }
 
     /* ── the rich description editor ─────────────────────────────────────
        One well, like every other input: the toolbar is the well's quiet
@@ -4243,6 +4267,31 @@
               : videoCaptionList(v)
           ) +
 
+          section('Chapters', 'Paste what Mux generated — members get timeline markers and a chapter strip under the player.',
+            isNew || !v.mux_asset_id
+              ? '<p class="muted">Chapters appear once a video file is attached.</p>'
+              : '<div class="vid-seg chap-seg" role="group" aria-label="Chapters visibility">' +
+                  [['on', 'Shown to members'], ['off', 'Hidden']].map(function (m) {
+                    var on = (!!v.chapters_enabled ? 'on' : 'off') === m[0];
+                    return '<button type="button" class="vid-seg-btn' + (on ? ' on' : '') + '" data-chapvis="' + m[0] + '">' + m[1] + '</button>';
+                  }).join('') + '</div>' +
+                '<div class="chap-list" id="vid-chapters"></div>' +
+                '<div class="chap-actions">' +
+                  '<button type="button" class="btn-ghost chap-add" id="vid-chap-add">' +
+                    '<span class="material-symbols-sharp">add</span>Add a chapter</button>' +
+                  '<button type="button" class="btn-ghost chap-add" id="vid-chap-open">' +
+                    '<span class="material-symbols-sharp">content_copy</span>Import from Mux&#8230;</button>' +
+                '</div>' +
+                '<div id="vid-chap-importbox" hidden>' +
+                  '<textarea class="modal-input nf-msg" id="vid-chap-paste" rows="2" placeholder="Paste from Mux — their JSON, a VTT, or one per line: 0:00 Intro"></textarea>' +
+                  '<div class="vid-newcat-row" style="margin-top:8px">' +
+                    '<button type="button" class="btn-secondary" id="vid-chap-import">Import</button>' +
+                    '<button type="button" class="btn-ghost" id="vid-chap-cancel">Cancel</button>' +
+                    '<span class="nf-hint">Importing replaces the list above.</span>' +
+                  '</div>' +
+                '</div>'
+          ) +
+
         '</div>' +
 
         // ══ RIGHT: what to do with it ══
@@ -4356,7 +4405,12 @@
                    ? 'Keep this tab open.'
                    : 'Mux is encoding it. Usually a few minutes — you can keep writing.') + '</span>' +
                '</div>' +
-               '<button class="btn-ghost" id="vid-refresh">Check again</button>';
+               '<button class="btn-ghost" id="vid-refresh">Check again</button>' +
+               // an upload that died with its tab leaves the row stranded in
+               // "Uploading…" forever — the way out lives right here
+               (v.status === 'uploading'
+                 ? '<button class="btn-ghost vid-cancel-upload" id="vid-upload-cancel">Cancel and start over</button>'
+                 : '');
       }
       if (v.status === 'errored') {
         return '<p class="nf-err">' + esc(v.mux_error || 'The upload failed.') + '</p>' +
@@ -4597,6 +4651,7 @@
       var when = (document.getElementById('vid-when-at') || {}).value || '';
       return JSON.stringify([v.title, v.short_description, v.description, v.category_id,
         v.slug, v.seo_title, v.seo_description, v.thumbnail_mode, v.thumbnail_time_seconds,
+        JSON.stringify(v.chapters || []), v.chapters_enabled,
         v.admin_notes, (VID.catExtra || []).slice().sort().join(','),
         (VID.editing.search_keywords || []).join('\u0000'),
         vis, vis === 'scheduled' ? when : '']);
@@ -4814,6 +4869,91 @@
       }
     }
 
+    // ── chapters: time parsing, row rendering, paste importing ─────────────
+    function chapParseTime(str) {
+      var m = String(str || '').trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})(?:\.\d+)?$|^(\d+(?:\.\d+)?)$/);
+      if (!m) return null;
+      if (m[4] != null) return Math.floor(parseFloat(m[4]));
+      return (parseInt(m[1] || 0, 10) * 3600) + (parseInt(m[2], 10) * 60) + parseInt(m[3], 10);
+    }
+    function chapFmtTime(sec) {
+      sec = Math.max(0, Math.floor(sec || 0));
+      var h = Math.floor(sec / 3600), mn = Math.floor((sec % 3600) / 60), s2 = sec % 60;
+      return (h ? h + ':' + String(mn).padStart(2, '0') : mn) + ':' + String(s2).padStart(2, '0');
+    }
+    function chapRowHTML(c) {
+      return '<div class="chap-row">' +
+        '<input class="chap-time" value="' + esc(chapFmtTime(c.t)) + '" inputmode="numeric" aria-label="Chapter time">' +
+        '<input class="chap-title" value="' + esc(c.title || '') + '" maxlength="120" placeholder="Chapter title" aria-label="Chapter title">' +
+        '<button type="button" class="vid-tag-x chap-del" aria-label="Remove chapter"><span class="material-symbols-sharp">close</span></button>' +
+      '</div>';
+    }
+    function renderChapterRows(list) {
+      var host = document.getElementById('vid-chapters');
+      if (host) host.innerHTML = (list || []).map(chapRowHTML).join('');
+    }
+    function readChapterRows() {
+      var out = [];
+      document.querySelectorAll('#vid-chapters .chap-row').forEach(function (row) {
+        var t2 = chapParseTime(row.querySelector('.chap-time').value);
+        var title = row.querySelector('.chap-title').value.trim();
+        if (t2 != null && title) out.push({ t: t2, title: title });
+      });
+      out.sort(function (a, b) { return a.t - b.t; });
+      return out;
+    }
+    // Mux's dashboard beta has no read API — whatever the admin copied
+    // parses here: their player SNIPPET (addChapters([...]) with unquoted
+    // keys), bare JSON, a WebVTT, or plain "0:00 Title" lines
+    function parseChaptersPaste(raw) {
+      raw = (raw || '').trim();
+      if (!raw) return [];
+      // the snippet path first: startTime: 12.3, value: '…' pairs anywhere
+      // in the paste — this is what Mux's copy button actually produces
+      var pairs = [], re = /startTime\s*:\s*([\d.]+)\s*,\s*value\s*:\s*(['"])([\s\S]*?)\2/g, pm;
+      while ((pm = re.exec(raw))) {
+        var pt = Math.floor(parseFloat(pm[1]));
+        if (!isNaN(pt) && pm[3].trim()) pairs.push({ t: pt, title: pm[3].trim() });
+      }
+      if (pairs.length) return pairs.sort(function (a, b) { return a.t - b.t; });
+      try {
+        var j = JSON.parse(raw);
+        // Mux's export wraps the list: { "chapters": [ … ] }
+        if (j && !Array.isArray(j) && Array.isArray(j.chapters)) j = j.chapters;
+        if (Array.isArray(j)) {
+          return j.map(function (o) {
+            var t2 = o.startTime != null ? o.startTime
+              : o.start_time != null ? o.start_time
+              : o.start != null ? o.start
+              : o.time != null ? o.time : o.t;
+            if (typeof t2 === 'string') t2 = chapParseTime(t2);
+            var title = String(o.value != null ? o.value : (o.title != null ? o.title : (o.text || ''))).trim();
+            return (t2 != null && title) ? { t: Math.floor(Number(t2)), title: title } : null;
+          }).filter(Boolean).sort(function (a, b) { return a.t - b.t; });
+        }
+      } catch (_) {}
+      var out = [];
+      if (/^WEBVTT/i.test(raw)) {
+        var cues = raw.split(/\n\s*\n/).slice(1);
+        cues.forEach(function (cue) {
+          var lines = cue.trim().split('\n');
+          var timeLine = lines.find(function (l) { return l.indexOf('-->') !== -1; });
+          if (!timeLine) return;
+          var t2 = chapParseTime(timeLine.split('-->')[0].trim().replace(/,/g, '.'));
+          var title = lines.slice(lines.indexOf(timeLine) + 1).join(' ').trim();
+          if (t2 != null && title) out.push({ t: t2, title: title });
+        });
+      } else {
+        raw.split('\n').forEach(function (line) {
+          var m = line.trim().match(/^((?:\d+:)?\d{1,2}:\d{2}(?:\.\d+)?)\s*[-–—·]?\s*(.+)$/);
+          if (!m) return;
+          var t2 = chapParseTime(m[1]);
+          if (t2 != null && m[2].trim()) out.push({ t: t2, title: m[2].trim() });
+        });
+      }
+      return out.sort(function (a, b) { return a.t - b.t; });
+    }
+
     function videoRead() {
       var g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
       var t = function (id) { return (g(id) || '').trim(); };
@@ -4831,6 +4971,12 @@
         seo_description: t('vid-seo-desc') || null,
         admin_notes: document.getElementById('vid-notes') ? (t('vid-notes') || null)
           : (VID.editing.admin_notes || null),
+        chapters: document.getElementById('vid-chapters')
+          ? readChapterRows()
+          : (VID.editing.chapters || null),
+        chapters_enabled: document.querySelector('.chap-seg')
+          ? !!document.querySelector('.chap-seg .vid-seg-btn.on[data-chapvis="on"]')
+          : !!VID.editing.chapters_enabled,
         thumbnail_mode: VID.editing.thumbnail_mode || 'auto',
         thumbnail_time_seconds: VID.editing.thumbnail_mode === 'timestamp'
           ? (parseFloat(t('vid-time')) || 0) : null,
@@ -4991,6 +5137,59 @@
 
       // ── the rich description ──
       rteWire('vid-desc', v.description);
+
+      // ── chapters ──
+      renderChapterRows(v.chapters || []);
+      var chapList = $('vid-chapters');
+      if (chapList) {
+        chapList.addEventListener('input', videoSyncSave);
+        chapList.addEventListener('click', function (e) {
+          var del = e.target.closest('.chap-del');
+          if (!del) return;
+          del.closest('.chap-row').remove();
+          videoSyncSave();
+        });
+        document.querySelectorAll('.chap-seg .vid-seg-btn').forEach(function (b) {
+          b.addEventListener('click', function () {
+            document.querySelectorAll('.chap-seg .vid-seg-btn').forEach(function (o) {
+              o.classList.toggle('on', o === b);
+            });
+            videoSyncSave();
+          });
+        });
+        var chapAdd = $('vid-chap-add');
+        if (chapAdd) chapAdd.addEventListener('click', function () {
+          chapList.insertAdjacentHTML('beforeend', chapRowHTML({ t: 0, title: '' }));
+          var rows = chapList.querySelectorAll('.chap-row');
+          rows[rows.length - 1].querySelector('.chap-title').focus();
+          videoSyncSave();
+        });
+        // the paste box waits behind its door — importing is an occasional
+        // act, not furniture
+        var chapBox = $('vid-chap-importbox');
+        var chapOpen = $('vid-chap-open');
+        function chapCloseImport() {
+          chapBox.hidden = true;
+          chapOpen.hidden = false;
+          $('vid-chap-paste').value = '';
+        }
+        if (chapOpen) chapOpen.addEventListener('click', function () {
+          chapBox.hidden = false;
+          chapOpen.hidden = true;
+          $('vid-chap-paste').focus();
+        });
+        var chapCancel = $('vid-chap-cancel');
+        if (chapCancel) chapCancel.addEventListener('click', chapCloseImport);
+        var chapImport = $('vid-chap-import');
+        if (chapImport) chapImport.addEventListener('click', function () {
+          var parsed = parseChaptersPaste($('vid-chap-paste').value);
+          if (!parsed.length) { toast('Nothing parseable in there — JSON, VTT, or "0:00 Title" lines.'); return; }
+          renderChapterRows(parsed);
+          chapCloseImport();
+          toast(parsed.length + ' chapter' + (parsed.length === 1 ? '' : 's') + ' imported — save to keep them.');
+          videoSyncSave();
+        });
+      }
 
       // ── extra shelves ──
       wireVideoXcats();
@@ -5292,6 +5491,31 @@
         VID.editing = VID.rows.filter(function (r) { return r.id === v.id; })[0] || null;
         if (VID.editing) drawVideos();
       });
+      var upCancel = $('vid-upload-cancel');
+      if (upCancel) upCancel.addEventListener('click', async function () {
+        if (upCancel.dataset.armed !== '1') {
+          upCancel.dataset.armed = '1';
+          upCancel.textContent = 'Sure? The stalled transfer is lost';
+          setTimeout(function () {
+            upCancel.dataset.armed = '0';
+            upCancel.textContent = 'Cancel and start over';
+          }, 4000);
+          return;
+        }
+        upCancel.disabled = true;
+        try {
+          var r = await db.from('videos')
+            .update({ status: 'draft', mux_upload_id: null, mux_asset_status: null, mux_error: null })
+            .eq('id', v.id).select().single();
+          if (r.error) throw r.error;
+          VID.editing = r.data;
+          drawVideos();   // the drop zone comes back, ready for the file
+          toast('Upload cancelled — drop the file again when ready.');
+        } catch (e) {
+          toast(e.message || 'Could not cancel that.');
+          upCancel.disabled = false;
+        }
+      });
       var drop = $('vid-drop'), file = $('vid-file');
       if (drop && file) {
         file.addEventListener('change', function () {
@@ -5309,7 +5533,13 @@
         });
       }
       var start = $('vid-start');
-      if (start) start.addEventListener('click', function () { startVideoUpload(false); });
+      // "Try again" seats the DROP ZONE, not the uploader — with no file in
+      // hand and the component's chrome hidden, starting the upload flow
+      // directly would stall at 0% with nothing to pick a file with
+      if (start) start.addEventListener('click', function () {
+        var host = document.getElementById('vid-upload');
+        if (host) { host.innerHTML = dropZoneHTML(); wireVideoForm(); }
+      });
       var replace = $('vid-replace');
       if (replace) replace.addEventListener('click', function () {
         if (replace.dataset.armed !== '1') {
@@ -5752,8 +5982,15 @@
           if (fill) fill.style.width = p + '%';
           if (pct) pct.textContent = p + '%';
         });
-        // a file the drop zone already has never needs a second dialog
-        if (file) { try { up.uploadFile ? up.uploadFile(file) : (up.file = file); } catch (_) {} }
+        // a file the drop zone already has never needs a second dialog.
+        // mux-uploader's ONLY programmatic hand-off is the file-ready
+        // event (there is no uploadFile method and no file setter — the
+        // old guess at both did nothing, silently, forever).
+        if (file) {
+          up.dispatchEvent(new CustomEvent('file-ready', {
+            composed: true, bubbles: true, detail: file,
+          }));
+        }
         // leaving mid-upload loses the transfer — Mux has no resume for a
         // half-sent direct upload, so it is worth interrupting the admin for
         var guard = function (e) { e.preventDefault(); e.returnValue = ''; };
