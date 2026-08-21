@@ -473,6 +473,11 @@
       cursor: grab; color: var(--text-4); margin-right: -4px;
       align-self: center;
       transition: opacity var(--transition-base), color var(--transition-base);
+      /* a touch on the grip is a drag, never a scroll or a text selection */
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     .cw-grip:hover { color: var(--text-2); }
     .cw-grip:active { cursor: grabbing; }

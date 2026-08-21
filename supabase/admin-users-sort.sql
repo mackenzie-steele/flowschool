@@ -130,23 +130,26 @@ end $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- VERIFY
+-- Steps 1–3 stay COMMENTED: the SQL editor runs as postgres, not a signed-in
+-- admin, so the is_admin() gate raises "not authorized" and rolls back the
+-- whole run. Verify those in the app as yourself.
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- 1. Direction actually reverses (run as an admin). The first email of an
+-- 1. Direction actually reverses. The first email of an
 --    ascending sort should be the last of a descending one:
-select
-  (public.admin_list_users(p_sort=>'signup', p_dir=>'desc', p_limit=>1) -> 'rows' -> 0 ->> 'email') as newest,
-  (public.admin_list_users(p_sort=>'signup', p_dir=>'asc',  p_limit=>1) -> 'rows' -> 0 ->> 'email') as oldest;
+-- select
+--   (public.admin_list_users(p_sort=>'signup', p_dir=>'desc', p_limit=>1) -> 'rows' -> 0 ->> 'email') as newest,
+--   (public.admin_list_users(p_sort=>'signup', p_dir=>'asc',  p_limit=>1) -> 'rows' -> 0 ->> 'email') as oldest;
 --    expect: two different emails (identical only if you have exactly one user)
 
 -- 2. The three new keys return something:
-select
-  jsonb_array_length(public.admin_list_users(p_sort=>'published', p_limit=>5) -> 'rows') as published_ok,
-  jsonb_array_length(public.admin_list_users(p_sort=>'saves',     p_limit=>5) -> 'rows') as saves_ok,
-  jsonb_array_length(public.admin_list_users(p_sort=>'status',    p_limit=>5) -> 'rows') as status_ok;
+-- select
+--   jsonb_array_length(public.admin_list_users(p_sort=>'published', p_limit=>5) -> 'rows') as published_ok,
+--   jsonb_array_length(public.admin_list_users(p_sort=>'saves',     p_limit=>5) -> 'rows') as saves_ok,
+--   jsonb_array_length(public.admin_list_users(p_sort=>'status',    p_limit=>5) -> 'rows') as status_ok;
 
 -- 3. A nonsense direction falls back rather than erroring:
-select (public.admin_list_users(p_sort=>'signup', p_dir=>'sideways', p_limit=>1) -> 'rows' -> 0 ->> 'email');
+-- select (public.admin_list_users(p_sort=>'signup', p_dir=>'sideways', p_limit=>1) -> 'rows' -> 0 ->> 'email');
 --    expect: the newest signup — same as p_dir=>'desc'
 
 -- 4. Only ONE function exists (the drop worked — two would break PostgREST):

@@ -111,8 +111,10 @@ order by count(*) desc;
 --    An empty result means casing isn't splitting anything YET — the fix is
 --    still worth having before it does.
 
--- 2. What the panel will show:
-select jsonb_pretty(public.admin_impact() -> 'reach');
+-- 2. What the panel will show — stays COMMENTED: the SQL editor runs as
+--    postgres, not a signed-in admin, so the is_admin() gate raises "not
+--    authorized" and rolls back the run. Check the Impact tab instead.
+-- select jsonb_pretty(public.admin_impact() -> 'reach');
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- THE REAL FIX IS UPSTREAM

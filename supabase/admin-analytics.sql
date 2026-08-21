@@ -129,49 +129,12 @@ $$;
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ── overview snapshot ───────────────────────────────────────────────────────
-create or replace function public.admin_overview()
-returns jsonb language plpgsql security definer set search_path = public as $$
-declare r jsonb;
-begin
-  if not public.is_admin() then raise exception 'not authorized' using errcode = '42501'; end if;
-  select jsonb_build_object(
-    'generated_at', now(),
-    'total_users',   (select count(*) from auth.users where banned_until is null or banned_until <= now()),
-    'new_users_7d',  (select count(*) from auth.users where created_at >= now() - interval '7 days'),
-    'new_users_30d', (select count(*) from auth.users where created_at >= now() - interval '30 days'),
-    -- "active today" = used the platform in the last 24h by ANY signal.
-    -- last_sign_in_at alone misses persistent sessions (it only updates on a
-    -- fresh password sign-in), so we also credit content updates and events.
-    'active_today', (select count(*) from auth.users u
-        where u.last_sign_in_at >= now() - interval '24 hours'
-           or exists (select 1 from user_data d where d.user_id = u.id and d.updated_at >= now() - interval '24 hours')
-           or exists (select 1 from analytics_events ae where ae.user_id = u.id and ae.created_at >= now() - interval '24 hours')),
-    'signed_in_7d',  (select count(*) from auth.users where last_sign_in_at >= now() - interval '7 days'),
-    'dau', (select count(distinct user_id) from analytics_events
-              where user_id is not null and created_at >= now() - interval '1 day' and admin_is_meaningful(event_name)),
-    'wau', (select count(distinct user_id) from analytics_events
-              where user_id is not null and created_at >= now() - interval '7 days' and admin_is_meaningful(event_name)),
-    'mau', (select count(distinct user_id) from analytics_events
-              where user_id is not null and created_at >= now() - interval '30 days' and admin_is_meaningful(event_name)),
-    'total_public_classes',   (select count(*) from public_classes where published),
-    'total_public_saves',     (select count(*) from class_saves),
-    'total_experiment_saves', (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data where collection = 'flowschool_favs'),
-    'total_saved_items',      (select coalesce(sum(jsonb_arr_len(payload)),0) from user_data),
-    'admin_count',            (select count(*) from admin_users),
-    'inactive_users', (select count(*) from auth.users u
-        where (u.banned_until is null or u.banned_until <= now())
-          and not exists (select 1 from user_data d where d.user_id = u.id and jsonb_arr_len(d.payload) > 0)),
-    'events_tracked_since',   (select min(created_at) from analytics_events),
-    -- prior-period counts, so the UI can show trend deltas
-    'new_users_prev_7d',  (select count(*) from auth.users where created_at >= now() - interval '14 days' and created_at < now() - interval '7 days'),
-    'new_users_prev_30d', (select count(*) from auth.users where created_at >= now() - interval '60 days' and created_at < now() - interval '30 days'),
-    'active_yesterday', (select count(*) from auth.users u
-        where (u.last_sign_in_at >= now() - interval '48 hours' and u.last_sign_in_at < now() - interval '24 hours')
-           or exists (select 1 from user_data d where d.user_id = u.id and d.updated_at >= now() - interval '48 hours' and d.updated_at < now() - interval '24 hours')
-           or exists (select 1 from analytics_events ae where ae.user_id = u.id and ae.created_at >= now() - interval '48 hours' and ae.created_at < now() - interval '24 hours'))
-  ) into r;
-  return r;
-end $$;
+-- The CURRENT admin_overview is the range-aware admin_overview(p_days) in
+-- supabase/admin-overview-range.sql — the UI always calls it with p_days.
+-- The zero-argument version that used to live here is retired; the drop heals
+-- databases still carrying both, where the pair makes any argument-less call
+-- ambiguous ("could not choose the best candidate function").
+drop function if exists public.admin_overview();
 
 -- ── retention by signup-month cohort ────────────────────────────────────────
 -- Historical caveat: we can only place each user by their LAST activity (that's
@@ -529,6 +492,12 @@ begin
                                       where ae.created_at::date = days.d and admin_is_meaningful(ae.event_name))
       when 'created'          then (select count(*) from analytics_events ae
                                       where ae.created_at::date = days.d and ae.event_name in ('item_created','item_saved'))
+      when 'created_class'    then (select count(*) from analytics_events ae
+                                      where ae.created_at::date = days.d and ae.event_name in ('item_created','item_saved')
+                                        and ae.resource_type = 'class')
+      when 'created_flow'     then (select count(*) from analytics_events ae
+                                      where ae.created_at::date = days.d and ae.event_name in ('item_created','item_saved')
+                                        and ae.resource_type = 'flow')
       when 'experiment_saves' then (select count(*) from user_data d2, jsonb_array_elements(d2.payload) e
                                       where d2.collection='flowschool_favs' and jsonb_typeof(d2.payload)='array'
                                         and (e->>'savedAt') is not null
@@ -1033,6 +1002,9 @@ end $$;
 -- C1 (weekly + by-type) reads creation EVENTS (item_created/item_saved); C2
 -- (library) reads the persisted truth in user_data; C3 (class depth) parses
 -- the class payload's blockCount. Content collections are whitelisted below.
+-- the retired zero-argument twin goes first — with both versions present,
+-- any argument-less call is ambiguous
+drop function if exists public.admin_creation();
 create or replace function public.admin_creation(p_days int default 90)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare r jsonb;
@@ -1046,6 +1018,17 @@ begin
   cls as (
     select c from user_data d, jsonb_array_elements(d.payload) c
     where d.collection = 'flowschool_classes' and jsonb_typeof(d.payload) = 'array'
+  ),
+  -- a class's modules are its sections that hold actual writing — the same
+  -- filled-circle count the class editor shows. NOT c->>'blockCount', which
+  -- is how many foam blocks the class wants as a prop.
+  mods as (
+    select (
+      select count(*) from jsonb_each_text(
+        case when jsonb_typeof(c->'sections') = 'object' then c->'sections' else '{}'::jsonb end
+      ) s where btrim(s.value) <> ''
+    )::int as n
+    from cls
   )
   select jsonb_build_object(
     'generated_at', now(),
@@ -1072,12 +1055,36 @@ begin
       ) l
     ),
     'class_depth', jsonb_build_object(
-      'total',       (select count(*) from cls),
-      'avg_blocks',  (select round(avg(nullif(c->>'blockCount','')::numeric), 1) from cls),
-      'avg_length',  (select round(avg(nullif(regexp_replace(c->>'length','[^0-9]','','g'),'')::numeric), 0)
-                        from cls where nullif(regexp_replace(c->>'length','[^0-9]','','g'),'') is not null),
-      'substantial', (select count(*) from cls where coalesce(nullif(c->>'blockCount','')::int, 0) >= 3),
-      'stubs',       (select count(*) from cls where coalesce(nullif(c->>'blockCount','')::int, 0) < 3)
+      'total',        (select count(*) from cls),
+      'flows',        (select coalesce(sum(jsonb_arr_len(d.payload)), 0)::int
+                         from user_data d where d.collection = 'flowschool_flows'),
+      -- the mission number: a notesLog entry is "I taught this class on
+      -- this date" — real rooms, real students
+      'taught',       (select coalesce(sum(case when jsonb_typeof(c->'notesLog') = 'array'
+                                                then jsonb_array_length(c->'notesLog') else 0 end), 0)::int
+                         from cls),
+      -- a flow that lands in a class did its job — sectionMeta carries the link
+      'flows_linked', (select count(*)::int from cls,
+                         jsonb_each(case when jsonb_typeof(c->'sectionMeta') = 'object'
+                                         then c->'sectionMeta' else '{}'::jsonb end) sm
+                         where sm.value->>'flowId' is not null),
+      'avg_modules',  (select round(avg(n), 1) from mods),
+      'avg_length',   (select round(avg(nullif(regexp_replace(c->>'length','[^0-9]','','g'),'')::numeric), 0)
+                         from cls where nullif(regexp_replace(c->>'length','[^0-9]','','g'),'') is not null),
+      'modules_hist', (
+        select coalesce(jsonb_agg(to_jsonb(h) order by h.modules), '[]'::jsonb) from (
+          select n as modules, count(*)::int as classes from mods group by n
+        ) h
+      ),
+      'length_hist', (
+        select coalesce(jsonb_agg(to_jsonb(h) order by h.minutes), '[]'::jsonb) from (
+          select nullif(regexp_replace(c->>'length','[^0-9]','','g'),'')::int as minutes,
+                 count(*)::int as classes
+          from cls
+          where nullif(regexp_replace(c->>'length','[^0-9]','','g'),'') is not null
+          group by 1
+        ) h
+      )
     )
   ) into r;
   return r;

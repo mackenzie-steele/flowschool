@@ -39,7 +39,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execFileSync, spawn } = require('child_process');
+const { spawn } = require('child_process');
 
 const DRIVE_ROOT = path.join(
   process.env.HOME,
@@ -48,11 +48,12 @@ const DRIVE_ROOT = path.join(
 const VIDEO_EXT = new Set(['.mov', '.mp4', '.m4v']);
 const SOURCE_PREFIX = 'source: Drive/Video Library/';
 
-// Mackenzie's explicit exclusions (2026-08-19): she deleted IMG_5510 from the
-// site on purpose, and she is uploading Bridge Flows by hand — the script
-// must never bring either back as a duplicate.
+// Mackenzie's explicit exclusion (2026-08-19): she deleted IMG_5510 from the
+// site on purpose — the script must never bring it back.
+// (Bridge Flows was originally hers to upload by hand; she asked the script
+// to take it over later the same day.)
 const SKIP_FILES = new Set(['Sequence Starters/IMG_5510.mov']);
-const SKIP_FOLDERS = new Set(['Bridge Flows']);
+const SKIP_FOLDERS = new Set([]);
 
 // ── env ──────────────────────────────────────────────────────────────────────
 const envFile = path.join(__dirname, '..', '.env');
@@ -197,27 +198,43 @@ function materialize(localPath) {
 }
 
 // materialization eats system-volume space and macOS gives us no way to evict
-// Drive's cache from a script (this fileproviderctl has no evict command) —
-// so refuse to start a file that would squeeze the disk, and tell Mackenzie
-// the Finder gesture that frees it
-function guardDiskSpace(nextBytes) {
-  const s = fs.statfsSync('/');
-  const free = s.bavail * s.bsize;
+// Drive's cache from a script (this fileproviderctl has no evict command).
+// Free space must cover this file PLUS everything other workers are already
+// materializing — checking one file in isolation is how four 4.5GB downloads
+// once nearly filled the disk together. Space frees up on its own as Drive
+// trims uploaded content, so WAIT for it rather than failing the file; only
+// give up after 30 minutes of no room, with the Finder gesture that fixes it.
+const inFlight = { bytes: 0 };
+async function guardDiskSpace(nextBytes, tag) {
   const cushion = 5e9;
-  if (free < nextBytes + cushion) {
-    throw new Error(
-      'only ' + fmtGB(free) + ' free on disk — in Finder, right-click the already-uploaded ' +
-      'Video Library folders and choose "Remove Download", then re-run (finished files are skipped)'
-    );
+  for (let waited = 0; ; waited += 60) {
+    const s = fs.statfsSync('/');
+    const free = s.bavail * s.bsize;
+    if (free >= nextBytes + inFlight.bytes + cushion) return;
+    if (waited >= 1800) {
+      throw new Error(
+        'only ' + fmtGB(free) + ' free on disk after waiting 30 min — in Finder, right-click the ' +
+        'already-uploaded Video Library folders and choose "Remove Download", then re-run'
+      );
+    }
+    if (waited === 0) console.log(tag + '… waiting for disk space (' + fmtGB(free) + ' free, ' +
+      fmtGB(nextBytes + inFlight.bytes + cushion) + ' needed)');
+    await new Promise(r => setTimeout(r, 60000));
   }
 }
 
 function putFile(localPath, uploadUrl) {
-  execFileSync('curl', [
-    '--fail', '--silent', '--show-error',
-    '--retry', '5', '--retry-all-errors', '--retry-delay', '10',
-    '--upload-file', localPath, uploadUrl,
-  ], { stdio: ['ignore', 'inherit', 'inherit'] });
+  return new Promise((resolve, reject) => {
+    const child = spawn('curl', [
+      '--fail', '--silent', '--show-error',
+      '--retry', '5', '--retry-all-errors', '--retry-delay', '10',
+      '--upload-file', localPath, uploadUrl,
+    ], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let err = '';
+    child.stderr.on('data', d => { err += d; });
+    child.on('close', code => (code === 0 ? resolve() : reject(new Error('upload failed: ' + err.trim().slice(0, 200)))));
+    child.on('error', reject);
+  });
 }
 
 // Mux marks the upload consumed within seconds of the PUT completing;
@@ -275,44 +292,40 @@ async function linkIntoCollection(collectionId, videoId, position) {
 
     const collectionId = await ensureCollection(folderName, bonnie.id, dryRun);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    async function processOne(file, i) {
       const label = (i + 1) + '/' + files.length + '  ' + file.name + ' (' + fmtGB(file.size) + ')';
 
       if (SKIP_FILES.has(file.folder + '/' + file.name)) {
         console.log('  · skipping ' + label + ' (on the exclusion list)');
         summary.push({ file: file.name, title: titleFrom(file.name), result: 'excluded' });
-        continue;
+        return;
       }
       if (dryRun) {
         console.log('  would upload ' + label + '  →  "' + titleFrom(file.name) + '"');
-        continue;
+        return;
       }
 
       const { row, duplicateOf } = await ensureVideoRow(file, bonnie.id);
       if (duplicateOf) {
         console.log('  · skipping ' + label + ' — "' + duplicateOf.title + '" (' + duplicateOf.status + ') already has this slug');
         summary.push({ file: file.name, title: titleFrom(file.name), result: 'skipped (duplicate)' });
-        continue;
+        return;
       }
       if (row.mux_asset_id) {
         console.log('  ✓ already uploaded, skipping ' + label);
         await linkIntoCollection(collectionId, row.id, i + 1);
         summary.push({ file: file.name, title: titleFrom(file.name), result: 'skipped (already up)' });
-        continue;
+        return;
       }
 
-      console.log('  ↑ ' + label);
+      const tag = '  [' + file.name + '] ';
+      let reserved = 0;
       try {
-        guardDiskSpace(file.size);
+        await guardDiskSpace(file.size, tag);
+        inFlight.bytes += file.size; reserved = file.size;
         let t = Date.now();
-        materialize(file.full);
-        console.log('    ↓ downloaded from Drive in ' + Math.round((Date.now() - t) / 1000) + 's');
-        // pull the NEXT file down while this one uploads — the two links
-        // (Drive down, Mux up) are independent, so overlapping them makes
-        // the whole run bound by upload speed alone
-        const next = files[i + 1];
-        if (next && !SKIP_FILES.has(next.folder + '/' + next.name)) materialize(next.full, true);
+        await materialize(file.full);
+        console.log(tag + '↓ downloaded from Drive in ' + Math.round((Date.now() - t) / 1000) + 's');
 
         const upload = await createMuxUpload(row.id);
         await db('videos?id=eq.' + row.id, {
@@ -320,17 +333,32 @@ async function linkIntoCollection(collectionId, videoId, position) {
           body: JSON.stringify({ mux_upload_id: upload.id, status: 'uploading', mux_error: null }),
         });
         t = Date.now();
-        putFile(file.full, upload.url);
-        console.log('    ↑ uploaded to Mux in ' + Math.round((Date.now() - t) / 1000) + 's');
+        await putFile(file.full, upload.url);
+        console.log(tag + '↑ uploaded to Mux in ' + Math.round((Date.now() - t) / 1000) + 's');
         const assetId = await waitForAsset(upload.id);
         await linkIntoCollection(collectionId, row.id, i + 1);
-        console.log('    ✓ asset ' + assetId + ' — Mux is processing; webhook will finish the row');
+        console.log(tag + '✓ asset ' + assetId + ' — webhook will finish the row');
         summary.push({ file: file.name, title: titleFrom(file.name), result: 'uploaded' });
       } catch (err) {
-        console.log('    ✗ ' + err.message);
+        console.log(tag + '✗ ' + err.message);
         summary.push({ file: file.name, title: titleFrom(file.name), result: 'FAILED: ' + err.message });
+      } finally {
+        inFlight.bytes -= reserved;
       }
     }
+
+    // the worker pool: CONCURRENCY file pipelines at once (see speed lesson 2).
+    // Each worker claims the next unclaimed index, so files still start in
+    // playlist order even though they finish in whatever order the network allows.
+    let cursor = 0;
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, files.length) }, async () => {
+        while (cursor < files.length) {
+          const i = cursor++;
+          await processOne(files[i], i);
+        }
+      })
+    );
   }
 
   if (!dryRun) {

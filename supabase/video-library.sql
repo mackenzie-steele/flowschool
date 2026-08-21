@@ -297,12 +297,14 @@ grant insert, update, delete on public.video_categories, public.videos, public.v
 -- behind permanent unauthenticated URLs.
 -- ═══════════════════════════════════════════════════════════════════════════
 
+-- image/png rides along for the first-page thumbnails the admin Resources
+-- library renders and caches beside each PDF ('library/<id>.png')
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('video-resources', 'video-resources', false, 26214400, array['application/pdf'])
+values ('video-resources', 'video-resources', false, 26214400, array['application/pdf', 'image/png'])
 on conflict (id) do update
   set public = false,
       file_size_limit = 26214400,
-      allowed_mime_types = array['application/pdf'];
+      allowed_mime_types = array['application/pdf', 'image/png'];
 
 drop policy if exists "admins manage video resources" on storage.objects;
 create policy "admins manage video resources" on storage.objects

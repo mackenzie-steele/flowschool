@@ -237,6 +237,10 @@
             try {
               var out = await VL.resourceUrl(btn.dataset.res);
               window.open(out.url, '_blank', 'noopener');
+              if (window.fsTrack) fsTrack('resource_opened', {
+                resourceType: 'resource', resourceId: btn.dataset.res,
+                metadata: { title: btn.querySelector('.res-title').textContent, from: 'collection', ctx: c.id },
+              });
             } catch (e) { toast(e.message || 'Could not fetch that file'); }
             btn.disabled = false;
           });

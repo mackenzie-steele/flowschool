@@ -898,6 +898,25 @@
     .adm-tbar-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
     .adm-tbar-legend i.open { background: color-mix(in srgb, var(--accent) 30%, transparent); margin-left: 10px; }
     .adm-tbar-legend i.act { background: var(--accent); margin-left: 10px; }
+    /* watching: the video ledger — thumb + title cell, completion meter,
+       sortable column heads */
+    .adm-vid-cell { display: flex; align-items: center; gap: 10px; min-width: 240px; }
+    .adm-vid-cell a { color: inherit; text-decoration: none; }
+    .adm-vid-cell a:hover { text-decoration: underline; }
+    .adm-vthumb { width: 64px; height: 36px; flex: none; border-radius: var(--rs); overflow: hidden;
+      background: var(--well-bg); box-shadow: var(--well); display: grid; place-items: center; color: var(--text-4); }
+    .adm-vthumb .material-symbols-sharp { font-size: 18px; opacity: .5; }
+    .adm-vthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .adm-cmp { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; }
+    .adm-cmp-num { font-variant-numeric: tabular-nums; min-width: 34px; text-align: right; }
+    .adm-cmp-track { width: 64px; height: 8px; border-radius: 999px; background: var(--well-bg); overflow: hidden; }
+    .adm-cmp-fill { height: 100%; border-radius: 999px; min-width: 2px; }
+    .adm-cmp-fill.hi  { background: #7FA65A; }
+    .adm-cmp-fill.mid { background: #D4AC3E; }
+    .adm-cmp-fill.lo  { background: #D98B4A; }
+    .adm-table th.adm-sort { cursor: pointer; user-select: none; white-space: nowrap; }
+    .adm-table th.adm-sort:hover { color: var(--text-1); }
+    .adm-table th.adm-sort .arr { font-size: 10px; opacity: .6; margin-left: 2px; }
 
     /* table */
     .adm-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1277,6 +1296,9 @@
     }
     .lib-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .lib-thumb .material-symbols-sharp { font-size: var(--icon-lg); opacity: .45; }
+    /* documents stand upright — the page's own proportions, not the video's */
+    .lib-thumb-doc { width: 58px; height: 82px; }
+    .lib-thumb-doc img { object-fit: cover; object-position: top; }
     .lib-dur {
       position: absolute; right: 4px; bottom: 4px;
       font-family: var(--font-mono); font-size: var(--fs-meta);
@@ -1301,6 +1323,7 @@
     @media (max-width: 640px) {
       .lib-row { gap: 10px; }
       .lib-thumb { width: 84px; height: 47px; }
+      .lib-thumb-doc { width: 47px; height: 66px; }
       .lib-meta { white-space: normal; }
     }
 
@@ -1404,23 +1427,24 @@
       { id: 'video-featured',   label: 'Featured',        render: renderFeatured },
       { id: 'video-resources',  label: 'Resources',       render: renderResourceLibrary },
       { id: 'video-filters',    label: 'Filters',         render: renderFilterAdmin },
-      { id: 'overview',    label: 'Overview',            render: renderOverview },
-      { id: 'impact',      label: 'Impact',              render: renderImpact },
-      { id: 'activation',  label: 'Activation',          render: renderActivation },
-      { id: 'users',       label: 'Users',               render: renderUsers },
-      { id: 'retention',   label: 'Retention',           render: renderRetention },
-      { id: 'engagement',  label: 'Engagement',          render: renderEngagement },
-      { id: 'devices',     label: 'Devices',             render: renderDevices },
-      { id: 'friction',    label: 'Friction',            render: renderFriction },
-      { id: 'tools',       label: 'Tool Analytics',      render: renderTools },
-      { id: 'creation',    label: 'Creation',            render: renderCreation },
-      { id: 'experiments', label: 'Movement Experiments',render: renderExperiments },
-      { id: 'public',      label: 'Shared Classes',      render: renderPublic },
-      { id: 'saved',       label: 'Saved Content',       render: renderSaved },
+      // Labels name the question, not the method — every one passes the
+      // say-it-out-loud test (would Bonnie use this word asking the question?)
+      { id: 'overview',    label: 'Today',               render: renderOverview },
+      { id: 'impact',      label: 'Milestones',          render: renderImpact },
+      { id: 'users',       label: 'Everyone',            render: renderUsers },
+      { id: 'activation',  label: 'First Week',          render: renderActivation },
+      { id: 'retention',   label: 'Do They Stay',        render: renderRetention },
+      { id: 'activity',    label: 'Live Feed',           render: renderActivity },
+      { id: 'classes',     label: 'Classes',             render: renderClasses },
+      { id: 'flows',       label: 'Flows',               render: renderFlows },
+      { id: 'watching',    label: 'Videos',              render: renderWatching },
+      { id: 'experiments', label: 'Experiments',         render: renderExperiments },
+      { id: 'public',      label: 'The Circle',          render: renderPublic },
+      { id: 'tools',       label: 'Every Tool',          render: renderTools },
+      { id: 'devices',     label: 'Sessions',            render: renderDevices },
       { id: 'music',       label: 'Music Library',      render: renderMusic },
-      { id: 'activity',    label: 'Activity',            render: renderActivity },
       { id: 'feedback',    label: 'Feedback',            render: renderFeedback },
-      { id: 'health',      label: 'Health',              render: renderHealth },
+      { id: 'health',      label: 'Errors',              render: renderHealth },
       { id: 'admins',      label: 'Admins',              render: renderAdmins },
       { id: 'exports',     label: 'Exports',             render: renderExports },
     ];
@@ -1428,19 +1452,19 @@
     // section groups — top-level nav (a group holds one or more sections)
     // Two areas, because they are two different jobs. Analytics is READING:
     // you go to find out how the app is doing. Content is WRITING: you go to
-    // change what teachers get. Mixing them meant the one place with work
-    // waiting for you sat as the fourteenth tab in a row of dashboards.
+    // change what teachers get.
     //
-    // "Making" (Creation, Shared Classes, Saved Content, Movement Experiments)
-    // stays in Analytics: those measure what teachers made. They report on
-    // content, they do not manage it.
+    // Within Analytics: four questions, in the order Bonnie asks them —
+    // how is it going · who's here · what are they making and watching ·
+    // is anything broken. The middle question is answered BY NOUN (Classes,
+    // Flows, Videos…) — teachers think in the product's nouns, not analyst
+    // concepts. The analytics "Content" group REPORTS on content; the
+    // Content AREA manages it.
     var GROUPS = [
-      { label: 'Overview', area: 'analytics', sections: ['overview'] },
-      { label: 'Impact',   area: 'analytics', sections: ['impact'] },
-      { label: 'People',   area: 'analytics', sections: ['users', 'activation', 'retention', 'activity'] },
-      { label: 'Making',   area: 'analytics', sections: ['creation', 'public', 'saved', 'experiments'] },
-      { label: 'Product',  area: 'analytics', sections: ['engagement', 'devices', 'friction', 'tools'] },
-      { label: 'System',   area: 'analytics', sections: ['feedback', 'health', 'admins', 'exports'] },
+      { label: 'Overview', area: 'analytics', sections: ['overview', 'impact'] },
+      { label: 'Teachers', area: 'analytics', sections: ['users', 'activation', 'retention', 'activity'] },
+      { label: 'Content',  area: 'analytics', sections: ['classes', 'flows', 'watching', 'experiments', 'public', 'tools'] },
+      { label: 'System',   area: 'analytics', sections: ['feedback', 'health', 'devices', 'admins', 'exports'] },
       { label: 'Music',    area: 'content',   sections: ['music'] },
       { label: 'Video',    area: 'content',   sections: ['videos', 'collections', 'video-categories', 'video-featured', 'video-resources', 'video-filters'] },
       { label: 'Notifications', area: 'comms', sections: ['notifs'] },
@@ -1708,10 +1732,10 @@
         // wouldn't be a DAU. Each says its own window so a fixed number never
         // reads as a broken one.
         var engagement =
-          metric('Active today', o.active_today, 'last 24h', 'Distinct users who used the platform in the last 24 hours — signed in, opened a tool, or saved or edited content. Just staying logged in with no activity does not count. Broader than DAU, which counts only meaningful actions. Fixed at 24h — not affected by the date range.', deltaHtml(o.active_today, o.active_yesterday, 'vs prior 24h'), 'activity') +
-          metric('DAU', o.dau, 'last 24h · since ' + since, 'Daily active users: distinct people who took a meaningful action (created, saved, edited, published, printed, or generated) in the last 24 hours. The window is the definition — not affected by the date range.', null, 'activity') +
-          metric('WAU', o.wau, 'last 7 days · since ' + since, 'Weekly active users: distinct people who took a meaningful action in the last 7 days. The window is the definition — not affected by the date range.', null, 'activity') +
-          metric('MAU', o.mau, 'last 30 days · since ' + since, 'Monthly active users: distinct people who took a meaningful action in the last 30 days. The window is the definition — not affected by the date range.', null, 'activity');
+          metric('Here today', o.active_today, 'last 24h', 'Distinct teachers who used the platform in the last 24 hours — signed in, opened a tool, or saved or edited content. Just staying logged in with no activity does not count. Fixed at 24h — not affected by the date range.', deltaHtml(o.active_today, o.active_yesterday, 'vs prior 24h'), 'activity') +
+          metric('Did something today', o.dau, 'last 24h · since ' + since, 'Distinct teachers who took a meaningful action (created, saved, edited, published, printed, or generated) in the last 24 hours. The window is the definition — not affected by the date range.', null, 'activity') +
+          metric('Did something · 7 days', o.wau, 'since ' + since, 'Distinct teachers who took a meaningful action in the last 7 days. The window is the definition — not affected by the date range.', null, 'activity') +
+          metric('Did something · 30 days', o.mau, 'since ' + since, 'Distinct teachers who took a meaningful action in the last 30 days. The window is the definition — not affected by the date range.', null, 'activity');
         // Counted from library blobs, which carry no per-item timestamp —
         // there is no date to filter these on, so they're honestly all-time.
         var contentCards =
@@ -1720,10 +1744,19 @@
           metric('Experiment saves', o.total_experiment_saves, 'all time', 'Total Movement Experiments saved across all users (a saved experiment is a favorite). Counted from library contents, which carry no per-item date — so this can’t follow the date range.', null, 'experiments') +
           metric('Saved items · all', o.total_saved_items, 'all time', 'Every item in every user’s library — classes, flows, cue sheets, stories, playlists, rules, and more. Counted from library contents, which carry no per-item date — so this can’t follow the date range.', null, 'saved');
 
+        // the funnel itself lives on First Week — Today gets the one-line
+        // version so the same chart never renders in two places
+        var funnelLine = '';
+        if (funnel) {
+          var fsigned = Number(funnel.signed_up || 0), fcreated = Number(funnel.created_content || 0);
+          funnelLine = '<div class="adm-panel"><div class="adm-panel-head"><h2>From signup to making</h2>' +
+            '<a href="#activation" class="muted adm-mono" style="font-size:11px">full picture in First Week →</a></div>' +
+            '<div class="adm-intro" style="margin:0">' + num(fsigned) + ' signed up → ' + num(fcreated) + ' made something.</div></div>';
+        }
+
         b.innerHTML =
-          '<div class="adm-intro">A live snapshot of who’s here and what they’re making. The range above drives <strong>New · ' + esc(rangeLbl) + '</strong> and the two charts below; everything marked <em>all time</em> or with its own window is fixed by definition. Active-user metrics (DAU/WAU/MAU) and tool usage count meaningful actions recorded since tracking began (' + esc(since) + '); signups, public saves, and experiment saves are complete historically.</div>' +
-          group('Growth', growth) + group('Engagement', engagement) + group('Content', contentCards) +
-          (funnel ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Activation funnel</h2></div>' + funnelHtml(funnel) + '</div>' : '') +
+          group('Growth', growth) + group('Doing', engagement) + group('Making', contentCards) +
+          funnelLine +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>New users over time · ' + esc(rangeLbl) + '</h2></div>' +
             '<div id="su-chart">' + stateLoading() + '</div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Most-used tools · ' + esc(rangeLbl) + '</h2></div><div id="tools-mini">' + stateLoading() + '</div></div>' +
@@ -1743,7 +1776,8 @@
       activity:       function () { location.hash = '#activity'; },
       public:         function () { location.hash = '#public'; },
       experiments:    function () { location.hash = '#experiments'; },
-      saved:          function () { location.hash = '#saved'; },
+      // Saved Content dissolved — its by-type totals live on Every Tool now
+      saved:          function () { location.hash = '#tools'; },
     };
     function wireMetricLinks(scope) {
       scope.querySelectorAll('.adm-metric--link').forEach(function (card) {
@@ -1778,7 +1812,7 @@
       try {
         var a = await A.rpc('admin_activation').catch(function (e) { console.warn('[admin] activation fetch failed:', e && e.message); return null; });
         if (!a) {
-          b.innerHTML = '<div class="adm-panel"><div class="adm-panel-head"><h2>Activation</h2></div><div class="adm-intro" style="margin:0">Activation metrics need the latest <code>admin-analytics.sql</code> run in Supabase, then they’ll show here.</div></div>';
+          b.innerHTML = '<div class="adm-panel"><div class="adm-panel-head"><h2>First week</h2></div><div class="adm-intro" style="margin:0">First-week metrics need the latest <code>admin-analytics.sql</code> run in Supabase, then they’ll show here.</div></div>';
           return;
         }
         var unc = await A.rpc('admin_unconfirmed', { p_limit: 100, p_offset: 0 }).catch(function () { return { total: 0, rows: [] }; });
@@ -1804,7 +1838,7 @@
             '<div class="adm-fn-conv">' + conv + '</div></div>';
         }).join('');
         var funnelPanel =
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Activation funnel</h2><span class="muted adm-mono" style="font-size:11px">% = kept from the step above</span></div>' +
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>From signup to sharing</h2><span class="muted adm-mono" style="font-size:11px">% = kept from the step above</span></div>' +
           '<div class="adm-funnel">' + fnRows + '</div></div>';
 
         // where teachers come from — signups by acquisition channel + how many
@@ -1837,7 +1871,7 @@
           return '<tr><td>' + A.fmtDate(c.cohort_week) + '</td><td class="num">' + num(c.signups) + '</td><td class="num">' + num(c.activated) + '</td><td class="num">' + (c.pct == null ? '—' : c.pct + '%') + '</td></tr>';
         }).join('');
         var cohortPanel = cohorts.length
-          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>First-week activation by cohort</h2></div>' +
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>First week, cohort by cohort</h2></div>' +
             '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Signup week</th><th class="num">Signups</th><th class="num">Created in wk 1</th><th class="num">Rate</th></tr></thead><tbody>' + cohortRows + '</tbody></table></div></div>'
           : '';
 
@@ -1857,7 +1891,6 @@
           '</div>';
 
         b.innerHTML =
-          '<div class="adm-intro">Where new teachers land in their first week — from signup to their first real creation. The sooner they make something, the more likely they stay.</div>' +
           metrics + funnelPanel + acqPanel + cohortPanel + uncPanel;
 
         // wire the per-row "Resend confirmation" buttons (I1)
@@ -1933,7 +1966,6 @@
         var rs = 0, ra = 0; (ret || []).forEach(function (x) { rs += Number(x.signups || 0); ra += Number(x.active_30d || 0); });
         var overallRet = rs ? Math.round(ra / rs * 100) : 0;
         b.innerHTML =
-          '<div class="adm-intro">The numbers that tell Flow School’s story — what teachers have built, how engaged they are, and who they are. Everything here is aggregate; no individual’s private content is shown. Use “Copy summary” to grab the headline stats for a post or a deck.</div>' +
           '<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn-secondary" id="impact-copy">Copy summary</button></div>' +
           '<div class="adm-group-label">Headline</div><div class="adm-metrics">' +
             card('# of teachers', teachers, null, 'Every account that has ever signed up.', null, 'users_all') +
@@ -2090,7 +2122,6 @@
     async function renderUsers() {
       var b = bodyEl();
       b.innerHTML =
-        '<div class="adm-intro">Everyone who’s signed up. Search, filter by status or signup date, open a row for the full profile, or tick rows to export a subset.</div>' +
         '<div class="adm-controls">' +
           '<div class="search-wrap"><span class="search-icon material-symbols-sharp">search</span>' +
           '<input class="search-input" id="u-search" placeholder="Search name, email, handle" value="' + esc(usersState.search) + '"></div>' +
@@ -2282,9 +2313,9 @@
             }
             return '<tr><td>' + A.fmtDate(c.cohort_week) + '</td><td class="num">' + num(c.size) + '</td>' + tds + '</tr>';
           }).join('');
-          gridPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Retention by weekly cohort</h2><span class="muted adm-mono" style="font-size:11px">% of the cohort active each week · W0 = signup week</span></div><div class="adm-scroll"><table class="adm-table adm-grid"><thead>' + head + '</thead><tbody>' + gridRows + '</tbody></table></div></div>';
+          gridPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Do they stay, week by week</h2><span class="muted adm-mono" style="font-size:11px">share of the cohort active each week · W0 = signup week</span></div><div class="adm-scroll"><table class="adm-table adm-grid"><thead>' + head + '</thead><tbody>' + gridRows + '</tbody></table></div></div>';
         } else {
-          gridPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Retention by weekly cohort</h2></div><div class="adm-intro" style="margin:0">The cohort grid needs the latest <code>admin-analytics.sql</code> run in Supabase.</div></div>';
+          gridPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Do they stay, week by week</h2></div><div class="adm-intro" style="margin:0">The cohort grid needs the latest <code>admin-analytics.sql</code> run in Supabase.</div></div>';
         }
 
         // D2 — at-risk · D3 — resurrected
@@ -2307,7 +2338,6 @@
         }
 
         b.innerHTML =
-          '<div class="adm-intro">Do teachers stick? Each cohort is the week they signed up; the grid tracks how many stay active in the weeks after.</div>' +
           metrics + gridPanel + churnPanels;
       } catch (e) { b.innerHTML = stateError(e && e.message); }
     }
@@ -2431,57 +2461,28 @@
     }
 
     // ── ENGAGEMENT DEPTH — stickiness · tool-usage rate · action depth · reach/return ──
-    async function renderEngagement() {
-      var b = bodyEl(); b.innerHTML = stateLoading();
-      try {
-        var e = await A.rpc('admin_engagement').catch(function (er) { console.warn('[admin] engagement fetch failed:', er && er.message); return null; });
-        if (!e) { b.innerHTML = runSqlNote('Engagement'); return; }
-        var members = Number(e.members) || 0;
-        var pct = function (n, d) { return d ? Math.round(n / d * 100) + '%' : '—'; };
-
-        var metrics = '<div class="adm-metrics">' +
-          mtile('Stickiness (DAU/MAU)', pct(e.dau, e.mau), 'Share of monthly-active teachers who were active today. Higher = more habitual (20%+ is strong).') +
-          card('Daily active', num(e.dau), null, 'Distinct teachers active in the last 24 hours.', deltaHtml(e.dau, e.dau_prev, 'vs prior 24h')) +
-          card('Weekly active', num(e.wau), null, 'Distinct teachers active in the last 7 days.', deltaHtml(e.wau, e.wau_prev, 'vs prior 7 days')) +
-          card('Monthly active', num(e.mau), null, 'Distinct teachers active in the last 30 days.', deltaHtml(e.mau, e.mau_prev, 'vs prior 30 days')) +
-          card('Used a tool · 7d', num(e.tool_users_7d), pct(e.tool_users_7d, e.wau) + ' of weekly-active', 'Teachers who used at least one tool in the last 7 days.', deltaHtml(e.tool_users_7d, e.tool_users_7d_prev, 'vs prior 7 days')) +
-          card('Shared class views · 7d', num(e.shared_class_views_7d), null, 'Times a published class was opened by someone other than the author in the last 7 days. Refreshes count; the author viewing their own class does not.', deltaHtml(e.shared_class_views_7d, e.shared_class_views_7d_prev, 'vs prior 7 days')) +
-          '</div>';
-
-        var dist = e.distribution || [];
-        var maxD = Math.max.apply(null, dist.map(function (d) { return Number(d.users) || 0; }).concat([1]));
-        var distRows = dist.map(function (d) {
-          var c = Number(d.users) || 0;
-          var w = Math.max(2, c / maxD * 100);
-          return '<div class="adm-fn-row"><div class="adm-fn-label">' + esc(d.label) + '</div>' +
-            '<div class="adm-fn-bar"><div class="adm-fn-fill" style="width:' + w.toFixed(1) + '%"></div></div>' +
-            '<div class="adm-fn-count">' + num(c) + '</div>' +
-            '<div class="adm-fn-conv">' + pct(c, members) + '</div></div>';
-        }).join('');
-        var distPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>How deeply teachers engage</h2><span class="muted adm-mono" style="font-size:11px">meaningful actions per teacher · all-time</span></div><div class="adm-funnel">' + distRows + '</div></div>';
-
-        var tools = e.tools || [];
-        var toolRows = tools.map(function (t) {
-          var users = Number(t.users) || 0, ret = Number(t.returned) || 0;
-          return '<tr><td>' + esc(t.tool) + '</td><td class="num">' + num(users) + '</td><td class="num muted">' + pct(users, members) + '</td><td class="num">' + num(ret) + '</td><td class="num">' + pct(ret, users) + '</td></tr>';
-        }).join('');
-        var toolPanel = tools.length
-          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Tool reach &amp; return</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Reach</th><th class="num">% members</th><th class="num">Returned</th><th class="num">Return rate</th></tr></thead><tbody>' + toolRows + '</tbody></table></div></div>'
-          : stateEmpty('No tool usage recorded yet.');
-
-        b.innerHTML =
-          '<div class="adm-intro">How habitual the product is, and which tools teachers actually come back to. Reach = ever used it; Return = used it on two or more days.</div>' +
-          metrics + distPanel + toolPanel;
-      } catch (er) { b.innerHTML = stateError(er && er.message); }
-    }
-
-    // ── DEVICES ──
+    // ── SESSIONS — the visits themselves: how long they run, how often they
+    // bounce, which device they arrive on. (Absorbed the session half of the
+    // old Friction tab and all of Devices; the standalone Engagement tab is
+    // gone — its tool reach & return lives on Every Tool now.)
     async function renderDevices() {
       var b = bodyEl(); b.innerHTML = stateLoading();
       try {
-        var d = await A.rpc('admin_devices', { p_days: admRange }).catch(function (er) { console.warn('[admin] devices fetch failed:', er && er.message); return null; });
-        if (!d) { b.innerHTML = runSqlNote('Devices'); return; }
+        var got = await Promise.all([
+          A.rpc('admin_devices', { p_days: admRange }).catch(function (er) { console.warn('[admin] devices fetch failed:', er && er.message); return null; }),
+          A.rpc('admin_friction', { p_days: admRange }).catch(function (er) { console.warn('[admin] sessions fetch failed:', er && er.message); return null; }),
+        ]);
+        var d = got[0], fr = got[1];
+        if (!d && !fr) { b.innerHTML = runSqlNote('Sessions'); return; }
+        d = d || {};
         var win = admRangeLabel(admRange).toLowerCase();
+
+        var s = (fr && fr.sessions) || {};
+        var sessionTiles = '<div class="adm-metrics">' +
+          card('Sessions', num(s.total || 0), win, 'Distinct tab-sessions in this window (counted from session_start).') +
+          card('Median visit', (s.median_minutes != null ? s.median_minutes + ' min' : '—'), 'engaged visits only', 'Half the visits where a teacher did something run shorter than this, half longer. Bounces are excluded so they don’t drag it to zero.') +
+          card('Bounced', num(s.bounce || 0) + ' of ' + num(s.total || 0), (s.bounce_pct != null ? s.bounce_pct + '%' : null), 'Visits where a teacher landed and left without doing anything — no action, no creation start.') +
+          '</div>';
         var LABELS = { mobile: 'Mobile', tablet: 'Tablet', desktop: 'Desktop', unknown: 'Unknown' };
         var reach = d.reach || [];
         var byDev = {}; reach.forEach(function (x) { byDev[x.device] = x; });
@@ -2506,48 +2507,7 @@
           : '';
 
         b.innerHTML =
-          '<div class="adm-intro">Reach is where teachers show up (share of sessions); depth is how much they do per visit (events per session). The table shows which device each tool leans on — aim feature work accordingly. Device is a best-effort guess from the browser and only counts from when tracking shipped.</div>' +
-          (metrics || toolPanel ? metrics + toolPanel : '<div class="adm-panel"><div class="adm-panel-head"><h2>Devices</h2></div><div class="adm-intro" style="margin:0">No sessions in this window yet — check back once teachers have been active.</div></div>');
-      } catch (er) { b.innerHTML = stateError(er && er.message); }
-    }
-
-    // ── FRICTION ──
-    async function renderFriction() {
-      var b = bodyEl(); b.innerHTML = stateLoading();
-      try {
-        var d = await A.rpc('admin_friction', { p_days: admRange }).catch(function (er) { console.warn('[admin] friction fetch failed:', er && er.message); return null; });
-        if (!d) { b.innerHTML = runSqlNote('Friction'); return; }
-        var win = admRangeLabel(admRange).toLowerCase();
-        var s = d.sessions || {};
-        var metrics = '<div class="adm-metrics">' +
-          card('Median session', (s.median_minutes != null ? s.median_minutes + ' min' : '—'), 'engaged sessions only', 'Half the sessions where a teacher did something run shorter than this, half longer. Bounces are excluded so they don’t drag it to zero.') +
-          card('Bounce rate', (s.bounce_pct != null ? s.bounce_pct + '%' : '—'), num(s.bounce || 0) + ' of ' + num(s.total || 0) + ' sessions', 'Sessions where a teacher landed and left without doing anything — no action, no creation start.') +
-          card('Sessions', num(s.total || 0), win, 'Distinct tab-sessions in this window (counted from session_start).') +
-          '</div>';
-
-        var LABELS = { class: 'Classes', flow: 'Flows', cue_sheet: 'Cue sheets', story: 'Stories', playlist: 'Playlists', arbitrary_rule: 'Arbitrary rules', pose_chain: 'Pose chains' };
-        var ab = d.abandonment || [];
-        var abRows = ab.map(function (x) {
-          var st = Number(x.starts) || 0, cp = Number(x.completed) || 0, lost = st - cp;
-          return '<tr><td>' + esc(LABELS[x.surface] || x.surface) + '</td><td class="num">' + num(st) + '</td><td class="num">' + num(cp) + '</td><td class="num">' + num(lost) + '</td><td class="num">' + (st ? Math.round(lost / st * 100) + '%' : '—') + '</td></tr>';
-        }).join('');
-        var abPanel = ab.length
-          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Abandoned creations</h2><span class="muted adm-mono" style="font-size:11px">started but not saved in the same session · ' + esc(win) + '</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Surface</th><th class="num">Started</th><th class="num">Saved</th><th class="num">Abandoned</th><th class="num">Abandon rate</th></tr></thead><tbody>' + abRows + '</tbody></table></div></div>'
-          : '';
-
-        var es = d.empty_states || [];
-        var esRows = es.map(function (x) {
-          var op = Number(x.opens) || 0, de = Number(x.dead) || 0;
-          return '<tr><td>' + esc(x.tool) + '</td><td class="num">' + num(op) + '</td><td class="num">' + num(de) + '</td><td class="num">' + (op ? Math.round(de / op * 100) + '%' : '—') + '</td></tr>';
-        }).join('');
-        var esPanel = es.length
-          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Empty-state exits</h2><span class="muted adm-mono" style="font-size:11px">opened, did nothing, left · by session · ' + esc(win) + '</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Opened</th><th class="num">Dead-ends</th><th class="num">Exit rate</th></tr></thead><tbody>' + esRows + '</tbody></table></div></div>'
-          : '';
-
-        b.innerHTML =
-          '<div class="adm-intro">Where attention leaks: how long engaged sessions run, how often teachers bounce, where they start creating but don’t finish, and which tools they open then abandon. High rates point straight at what to fix.</div>' +
-          metrics + abPanel + esPanel +
-          (ab.length || es.length ? '' : '<div class="adm-panel"><div class="adm-panel-head"><h2>Friction</h2></div><div class="adm-intro" style="margin:0">No creation starts or tool opens in this window yet.</div></div>');
+          sessionTiles + metrics + toolPanel;
       } catch (er) { b.innerHTML = stateError(er && er.message); }
     }
 
@@ -2571,85 +2531,399 @@
       return '<div class="adm-tbars">' + bars + '</div>' +
         '<div class="adm-tbar-legend"><i class="open"></i>Opens<i class="act"></i>Actions · bar length = total events</div>';
     }
+    // ── EVERY TOOL — the twelve making surfaces on one page. Absorbed the
+    // old Tool Analytics, Engagement's reach & return, Creation's by-type
+    // table, Saved Content's by-type, and Friction's empty-state exits: one
+    // place that answers "which tools earn their keep?"
     async function renderTools() {
       var b = bodyEl();
       b.innerHTML =
-        '<div class="adm-intro">How much each tool is used — opens are page loads, actions are meaningful uses (create, save, generate, publish, print). Counts events recorded since tracking began; use the time range in the header to change the window.</div>' +
-        '<div class="adm-panel-head" style="margin-top:4px"><h2 id="t-title">Most-used tools</h2>' +
+        '<div class="adm-panel-head" style="margin-top:4px"><h2 id="t-title">Every tool</h2>' +
         '<button class="btn-secondary" id="t-export">Export CSV</button></div>' +
         '<div id="t-table">' + stateLoading() + '</div>';
       document.getElementById('t-export').addEventListener('click', function () {
-        A.exportCSV('tool-usage', toolsRows, [{ label: 'Tool', key: 'tool' }, { label: 'Opens', key: 'opens' }, { label: 'Actions', key: 'actions' }, { label: 'Unique users', key: 'unique_users' }]);
+        A.exportCSV('tool-usage', toolsRows, [
+          { label: 'Tool', key: 'tool' }, { label: 'Opens', key: 'opens' },
+          { label: 'Actions', key: 'actions' }, { label: 'Unique users', key: 'unique_users' },
+          { label: 'Ever used it', key: 'reach' }, { label: 'Came back', key: 'returned' },
+        ]);
       });
       loadToolsTable();
     }
     async function loadToolsTable() {
       var t = document.getElementById('t-table'); if (!t) return;
-      var title = document.getElementById('t-title'); if (title) title.textContent = 'Most-used tools · ' + admRangeLabel(admRange).toLowerCase();
+      var rangeLbl = admRangeLabel(admRange).toLowerCase();
+      var title = document.getElementById('t-title'); if (title) title.textContent = 'Every tool · ' + rangeLbl;
       t.innerHTML = stateLoading();
       try {
-        var tools = await A.rpc('admin_top_tools', { p_days: admRange });
-        toolsRows = tools || [];
+        var got = await Promise.all([
+          A.rpc('admin_top_tools', { p_days: admRange }),
+          A.rpc('admin_engagement').catch(function () { return null; }),
+          A.rpc('admin_creation', { p_days: admRange }).catch(function () { return null; }),
+          A.rpc('admin_saved_content').catch(function () { return null; }),
+          A.rpc('admin_friction', { p_days: admRange }).catch(function () { return null; }),
+        ]);
+        var tools = got[0] || [], eng = got[1], crt = got[2], sav = got[3], fr = got[4];
+        // reach & return ride on the usage rows — one table per tool, not four
+        var byTool = {};
+        ((eng && eng.tools) || []).forEach(function (x) { byTool[x.tool] = x; });
+        toolsRows = tools.map(function (r) {
+          var e = byTool[r.tool] || {};
+          return Object.assign({}, r, { reach: Number(e.users) || 0, returned: Number(e.returned) || 0 });
+        });
         if (!toolsRows.length) { t.innerHTML = stateEmpty('No tool events in this range.'); return; }
-        t.innerHTML = toolsBars(toolsRows) +
-          '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Opens</th><th class="num">Actions</th><th class="num">Unique users</th></tr></thead><tbody>' +
-          toolsRows.map(function (t2) { return '<tr><td class="name">' + esc(t2.tool) + '</td><td class="num">' + num(t2.opens) + '</td><td class="num">' + num(t2.actions) + '</td><td class="num">' + num(t2.unique_users) + '</td></tr>'; }).join('') +
-          '</tbody></table></div>';
+
+        var main = toolsBars(toolsRows) +
+          '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Opens</th><th class="num">Actions</th><th class="num">Unique users</th><th class="num">Ever used it</th><th class="num">Came back</th></tr></thead><tbody>' +
+          toolsRows.map(function (t2) {
+            return '<tr><td class="name">' + esc(t2.tool) + '</td><td class="num">' + num(t2.opens) + '</td><td class="num">' + num(t2.actions) + '</td><td class="num">' + num(t2.unique_users) + '</td>' +
+              '<td class="num">' + (t2.reach ? num(t2.reach) : '—') + '</td>' +
+              '<td class="num">' + (t2.reach ? num(t2.returned) + ' of ' + num(t2.reach) : '—') + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+
+        var TYPE_LABEL = { class: 'Classes', flow: 'Flows', story: 'Stories', playlist: 'Playlists', arbitrary_rule: 'Arbitrary Rules', experiment: 'Experiments', pose: 'Poses', pose_chain: 'Pose Chains', story_starter: 'Story Starters', public_class: 'Shared Classes', cue_sheet: 'Cue Sheets', other: 'Other' };
+        var byType = (crt && crt.by_type) || [];
+        var madePanel = byType.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>What they made</h2><span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div>' +
+            '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Type</th><th class="num">Created</th></tr></thead><tbody>' +
+            byType.map(function (x) { return '<tr><td>' + esc(TYPE_LABEL[x.type] || x.type) + '</td><td class="num">' + num(x.created) + '</td></tr>'; }).join('') +
+            '</tbody></table></div></div>'
+          : '';
+
+        var kept = (sav && sav.by_type) || [];
+        var keptPanel = kept.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>What they keep</h2><span class="muted adm-mono" style="font-size:11px">library contents · all time</span></div>' +
+            '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Type</th><th class="num">Items</th><th class="num">Teachers</th></tr></thead><tbody>' +
+            kept.map(function (x) { return '<tr><td>' + esc(x.type) + '</td><td class="num">' + num(x.items) + '</td><td class="num">' + num(x.users) + '</td></tr>'; }).join('') +
+            '</tbody></table></div></div>'
+          : '';
+
+        var es = (fr && fr.empty_states) || [];
+        var deadPanel = es.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Opened, did nothing, left</h2><span class="muted adm-mono" style="font-size:11px">by session · last ' + esc(rangeLbl) + '</span></div>' +
+            '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Tool</th><th class="num">Opened</th><th class="num">Dead-ends</th><th class="num">Exit rate</th></tr></thead><tbody>' +
+            es.map(function (x) {
+              var op = Number(x.opens) || 0, de = Number(x.dead) || 0;
+              return '<tr><td>' + esc(x.tool) + '</td><td class="num">' + num(op) + '</td><td class="num">' + num(de) + '</td><td class="num">' + (op ? Math.round(de / op * 100) + '% (' + num(de) + ' of ' + num(op) + ')' : '—') + '</td></tr>';
+            }).join('') + '</tbody></table></div></div>'
+          : '';
+
+        t.innerHTML = main + madePanel + keptPanel + deadPanel;
       } catch (e) { t.innerHTML = stateError(e && e.message); }
     }
 
-    // ── CREATION OUTPUT — over-time · library composition · class depth ──
-    async function renderCreation() {
+    // ── CLASSES — the class builder's whole story on one page: built, taught,
+    // deep or shallow, started-but-abandoned, and shared to the Circle. The
+    // old Creation tab dissolved into this page, Flows, and Every Tool. ──
+    // shared by Classes and Flows: the little "in the builder" tile row
+    function builderPanel(toolName, surface, tools, fr, rangeLbl) {
+      var tl = (tools || []).filter(function (t) { return t.tool === toolName; })[0];
+      var ab = ((fr && fr.abandonment) || []).filter(function (x) { return x.surface === surface; })[0];
+      var es = ((fr && fr.empty_states) || []).filter(function (x) { return x.tool === toolName; })[0];
+      if (!tl && !ab && !es) return '';
+      var starts = ab ? (Number(ab.starts) || 0) : 0, saved = ab ? (Number(ab.completed) || 0) : 0;
+      return '<div class="adm-panel"><div class="adm-panel-head"><h2>In the builder</h2>' +
+        '<span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div>' +
+        '<div class="adm-metrics">' +
+        (tl ? mtile('Opens', num(tl.opens)) + mtile('Actions', num(tl.actions), 'Meaningful uses — create, save, generate, publish, print.') : '') +
+        (ab ? mtile('Started, not saved', num(starts - saved), 'Creations begun but not saved in the same session.', num(saved) + ' of ' + num(starts) + ' saved') : '') +
+        (es ? mtile('Opened, did nothing', num(es.dead), 'Sessions that opened the tool and left without any action.', 'of ' + num(es.opens) + ' opens') : '') +
+        '</div></div>';
+    }
+    async function renderClasses() {
       var b = bodyEl(); b.innerHTML = stateLoading();
+      var rangeLbl = admRangeLabel(admRange).toLowerCase();
       try {
-        var c = await A.rpc('admin_creation', { p_days: admRange }).catch(function (er) { console.warn('[admin] creation fetch failed:', er && er.message); return null; });
-        if (!c) { b.innerHTML = runSqlNote('Creation'); return; }
-        var series = await A.rpc('admin_series', { p_kind: 'created', p_days: admRange }).catch(function () { return []; });
-        var rangeLbl = admRangeLabel(admRange).toLowerCase();
-        var TYPE_LABEL = { class: 'Classes', flow: 'Flows', story: 'Stories', playlist: 'Playlists', arbitrary_rule: 'Arbitrary Rules', experiment: 'Experiments', pose: 'Poses', story_starter: 'Story Starters', public_class: 'Shared Classes', cue_sheet: 'Cue Sheets', other: 'Other' };
+        var got = await Promise.all([
+          A.rpc('admin_creation', { p_days: admRange }).catch(function (er) { console.warn('[admin] classes fetch failed:', er && er.message); return null; }),
+          A.rpc('admin_series', { p_kind: 'created_class', p_days: admRange }).catch(function () { return null; }),
+          A.rpc('admin_top_tools', { p_days: admRange }).catch(function () { return []; }),
+          A.rpc('admin_friction', { p_days: admRange }).catch(function () { return null; }),
+          A.rpc('admin_public_content', { p_sort: 'most_saved', p_limit: 5, p_offset: 0 }).catch(function () { return { rows: [] }; }),
+        ]);
+        var c = got[0]; if (!c) { b.innerHTML = runSqlNote('Classes'); return; }
+        var series = got[1], tools = got[2] || [], fr = got[3], pub = got[4] || { rows: [] };
+        var cd = c.class_depth || {};
+        var lib = (c.library || []).filter(function (l) { return l.label === 'Classes'; })[0] || {};
 
-        var library = c.library || [];
-        var totalItems = library.reduce(function (s, l) { return s + (Number(l.items) || 0); }, 0);
-        var classesRow = library.filter(function (l) { return l.label === 'Classes'; })[0];
-        var classesBuilt = classesRow ? (Number(classesRow.items) || 0) : 0;
-
-        var metrics = '<div class="adm-metrics">' +
-          mtile('Items created', num(totalItems), 'Every class, flow, story, playlist, and rule teachers have built and kept.') +
-          mtile('Classes built', num(classesBuilt)) +
-          mtile('Teachers creating', num(c.creators)) +
+        var tiles = '<div class="adm-metrics">' +
+          mtile('Classes built', num(lib.items || cd.total || 0), 'Classes sitting in teachers’ libraries right now — the persisted truth.', 'all time') +
+          mtile('Teachers building', num(lib.teachers || 0)) +
+          mtile('Avg modules / class', (cd.avg_modules == null ? '—' : cd.avg_modules), 'Modules are sections with writing in them — the filled circles of a class.') +
+          mtile('Classes taught', (cd.taught == null ? '—' : num(cd.taught)), 'A teaching-log entry means "I taught this class on this date" — real rooms, real students. The number the whole product exists for.', 'from teaching logs · all time') +
           '</div>';
 
-        var trendPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Created over time</h2><span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div>' +
-          seriesChart(series || [], admRange, 'creation') + '</div>';
-
-        var byType = c.by_type || [];
-        var typeRows = byType.map(function (t) {
-          return '<tr><td>' + esc(TYPE_LABEL[t.type] || t.type) + '</td><td class="num">' + num(t.created) + '</td></tr>';
-        }).join('');
-        var typePanel = byType.length
-          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>By type</h2><span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Type</th><th class="num">Created</th></tr></thead><tbody>' + typeRows + '</tbody></table></div></div>'
+        var trend = series
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Built over time</h2><span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div>' +
+            seriesChart(series, admRange, 'creation') + '</div>'
           : '';
 
-        var libRows = library.map(function (l) {
-          return '<tr><td>' + esc(l.label) + '</td><td class="num">' + num(l.items) + '</td><td class="num">' + num(l.teachers) + '</td><td class="num muted">' + (l.avg_each == null ? '—' : l.avg_each) + '</td></tr>';
+        var hist = cd.modules_hist || [];
+        var histRows = hist.map(function (h) {
+          return '<tr><td>' + num(h.modules) + (Number(h.modules) === 1 ? ' module' : ' modules') + '</td><td class="num">' + num(h.classes) + '</td></tr>';
         }).join('');
-        var libPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Library composition</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Type</th><th class="num">Items</th><th class="num">Teachers</th><th class="num">Avg each</th></tr></thead><tbody>' + libRows + '</tbody></table></div></div>';
+        var lenRows = (cd.length_hist || []).map(function (h) {
+          return '<tr><td>' + num(h.minutes) + ' min</td><td class="num">' + num(h.classes) + '</td></tr>';
+        }).join('');
+        var depthPanel = (histRows || lenRows)
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>How deep they go</h2><span class="muted adm-mono" style="font-size:11px">real classes vs stubs · all time</span></div>' +
+            (histRows ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Modules inside</th><th class="num">Classes</th></tr></thead><tbody>' + histRows + '</tbody></table></div>' : '') +
+            (lenRows ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Class length</th><th class="num">Classes</th></tr></thead><tbody>' + lenRows + '</tbody></table></div>' : '') +
+            '</div>'
+          : '';
 
-        var cd = c.class_depth || {};
-        var subPct = cd.total ? Math.round((Number(cd.substantial) || 0) / cd.total * 100) : 0;
-        var depthPanel = cd.total
-          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Class depth</h2><span class="muted adm-mono" style="font-size:11px">are classes real, or stubs?</span></div>' +
-            '<div class="adm-metrics">' +
-              mtile('Avg blocks / class', (cd.avg_blocks == null ? '—' : cd.avg_blocks)) +
-              mtile('Avg length', (cd.avg_length == null ? '—' : cd.avg_length + ' min')) +
-              mtile('Substantial (3+ blocks)', subPct + '%', 'Share of classes with at least 3 blocks — a real class vs an empty stub.', num(cd.substantial) + ' of ' + num(cd.total)) +
-            '</div></div>'
+        var circle = (pub.rows && pub.rows.length)
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>In the Circle</h2><span class="muted adm-mono" style="font-size:11px">most-saved shared classes</span></div>' + pubMini(pub.rows) + '</div>'
           : '';
 
         b.innerHTML =
-          '<div class="adm-intro">What teachers actually build — the truest sign the product is working. Library counts are the persisted truth; the weekly trend and by-type come from creation events.</div>' +
-          metrics + trendPanel + typePanel + libPanel + depthPanel;
+          tiles + trend + depthPanel + builderPanel('Your Classes', 'class', tools, fr, rangeLbl) + circle;
       } catch (er) { b.innerHTML = stateError(er && er.message); }
+    }
+
+    // ── FLOWS — is the flow tool earning its keep? A flow that lands in a
+    // class did its job; that link is this page's headline. ──
+    async function renderFlows() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      var rangeLbl = admRangeLabel(admRange).toLowerCase();
+      try {
+        var got = await Promise.all([
+          A.rpc('admin_creation', { p_days: admRange }).catch(function (er) { console.warn('[admin] flows fetch failed:', er && er.message); return null; }),
+          A.rpc('admin_series', { p_kind: 'created_flow', p_days: admRange }).catch(function () { return null; }),
+          A.rpc('admin_top_tools', { p_days: admRange }).catch(function () { return []; }),
+          A.rpc('admin_friction', { p_days: admRange }).catch(function () { return null; }),
+        ]);
+        var c = got[0]; if (!c) { b.innerHTML = runSqlNote('Flows'); return; }
+        var series = got[1], tools = got[2] || [], fr = got[3];
+        var cd = c.class_depth || {};
+        var lib = (c.library || []).filter(function (l) { return l.label === 'Flows'; })[0] || {};
+        var written = Number(lib.items) || Number(cd.flows) || 0;
+        var seats = cd.flows_linked;
+
+        var tiles = '<div class="adm-metrics">' +
+          mtile('Flows written', num(written), 'Flows sitting in teachers’ libraries right now.', 'all time') +
+          mtile('Teachers writing', num(lib.teachers || 0)) +
+          mtile('Seated in classes', (seats == null ? '—' : num(seats)), 'Times a flow is linked into a class section. A flow that lands in a class did its job — this is the flow tool’s real scoreboard.', 'class sections linked to a flow') +
+          mtile('Avg per teacher', (lib.avg_each == null ? '—' : lib.avg_each)) +
+          '</div>';
+
+        var trend = series
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Written over time</h2><span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div>' +
+            seriesChart(series, admRange, 'creation') + '</div>'
+          : '';
+
+        var linkPanel = (seats != null && written)
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Do they land in classes?</h2><span class="muted adm-mono" style="font-size:11px">a seat in a class = the flow did its job</span></div>' +
+            impactBars([
+              { label: 'Flows written', n: written },
+              { label: 'Seats in classes', n: seats },
+            ], 'label', 'n') + '</div>'
+          : '';
+
+        b.innerHTML =
+          tiles + trend + linkPanel + builderPanel('Your Flows', 'flow', tools, fr, rangeLbl);
+      } catch (er) { b.innerHTML = stateError(er && er.message); }
+    }
+
+    // ── WATCHING — Mux Data + engagement: does the video library earn its place ──
+    // One fetch carries the whole story (api/mux/analytics): Mux's anonymous
+    // view aggregates joined with saves, comments, finishes, worksheet opens,
+    // and search phrases. Views and watch time obey the header range; saves,
+    // comments and finishes are all-time state and the table says so.
+    var watchRows = [];
+    function watchFmt(s) {
+      s = Number(s) || 0;
+      if (!s) return '0m';
+      if (s < 60) return s + 's';
+      var m = Math.round(s / 60);
+      return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+    }
+    // the ledger sorts in place, Uscreen-style — click a head, the arrow moves
+    var watchSort = { key: 'views', dir: -1 };
+    var WATCH_COLS = [
+      { key: 'title',              label: 'Video',      num: false },
+      { key: 'watch_time_seconds', label: 'Watch',      num: true },
+      { key: 'views',              label: 'Views',      num: true },
+      { key: 'viewers',            label: 'Viewers',    num: true },
+      { key: 'avg_view_seconds',   label: 'Avg view',   num: true },
+      { key: 'completion',         label: 'Completion', num: true },
+      { key: 'finished',           label: 'Finished',   num: true },
+      { key: 'saves',              label: 'Saves',      num: true },
+      { key: 'comments',           label: 'Comments',   num: true },
+    ];
+    function watchHead() {
+      return WATCH_COLS.map(function (c) {
+        var on = watchSort.key === c.key;
+        return '<th class="adm-sort' + (c.num ? ' num' : '') + '" data-sort="' + c.key + '">' + c.label +
+          (on ? '<span class="arr">' + (watchSort.dir < 0 ? '▼' : '▲') + '</span>' : '') + '</th>';
+      }).join('');
+    }
+    // same face the video wears everywhere else in the admin — custom art,
+    // else a signed Mux frame once its token arrives, else the quiet well
+    function watchThumb(v) {
+      var img = '';
+      if (v.thumbnail_mode === 'custom' && v.custom_thumbnail_url) {
+        img = '<img alt="" loading="lazy" src="' + esc(v.custom_thumbnail_url) + '">';
+      } else if (v.mux_playback_id && v.thumb_token) {
+        var t = v.thumbnail_mode === 'timestamp' && v.thumbnail_time_seconds != null
+          ? '&time=' + encodeURIComponent(v.thumbnail_time_seconds) : '';
+        img = '<img alt="" loading="lazy" src="https://image.mux.com/' + encodeURIComponent(v.mux_playback_id) +
+          '/thumbnail.webp?width=320' + t + '&token=' + encodeURIComponent(v.thumb_token) + '">';
+      }
+      return '<span class="adm-vthumb">' + (img || '<span class="material-symbols-sharp">movie</span>') + '</span>';
+    }
+    function watchMeter(v) {
+      if (v.completion == null) return '—';
+      var cls = v.completion >= 70 ? 'hi' : v.completion >= 40 ? 'mid' : 'lo';
+      return '<span class="adm-cmp"><span class="adm-cmp-num">' + v.completion + '%</span>' +
+        '<span class="adm-cmp-track"><span class="adm-cmp-fill ' + cls + '" style="width:' + v.completion + '%"></span></span></span>';
+    }
+    function watchBody() {
+      var rows = watchRows.slice().sort(function (a, b) {
+        var k = watchSort.key, d = watchSort.dir;
+        if (k === 'title') return d * a.title.localeCompare(b.title);
+        var av = a[k] == null ? -1 : Number(a[k]), bv = b[k] == null ? -1 : Number(b[k]);
+        return d * (av - bv) || a.title.localeCompare(b.title);
+      });
+      return rows.map(function (v) {
+        var mutedRow = !v.views && !v.started && !v.saves && !v.comments;
+        return '<tr' + (mutedRow ? ' style="opacity:.55"' : '') + '>' +
+          '<td class="name"><span class="adm-vid-cell">' + watchThumb(v) +
+            '<a href="/video/' + esc(v.slug || '') + '" target="_blank" rel="noopener">' + esc(v.title) + '</a>' +
+            (v.status === 'scheduled' ? '<span class="adm-pill">Scheduled</span>' : '') + '</span></td>' +
+          '<td class="num">' + watchFmt(v.watch_time_seconds) + '</td>' +
+          '<td class="num">' + num(v.views) + '</td>' +
+          '<td class="num">' + (v.viewers ? num(v.viewers) : '—') + '</td>' +
+          '<td class="num">' + (v.views ? watchFmt(v.avg_view_seconds) : '—') + '</td>' +
+          '<td class="num">' + watchMeter(v) + '</td>' +
+          '<td class="num">' + (v.started ? num(v.finished) + ' of ' + num(v.started) : '—') + '</td>' +
+          '<td class="num">' + (v.saves ? num(v.saves) : '—') + '</td>' +
+          '<td class="num">' + (v.comments ? num(v.comments) : '—') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+    function wireWatchSort() {
+      var head = document.getElementById('w-head'); if (!head) return;
+      head.querySelectorAll('[data-sort]').forEach(function (th) {
+        th.addEventListener('click', function () {
+          var k = th.dataset.sort;
+          if (watchSort.key === k) watchSort.dir = -watchSort.dir;
+          else watchSort = { key: k, dir: k === 'title' ? 1 : -1 };
+          head.innerHTML = watchHead();
+          var body = document.getElementById('w-body');
+          if (body) body.innerHTML = watchBody();
+          wireWatchSort();
+        });
+      });
+    }
+    // frames arrive after the table draws — the same signed-token door the
+    // Content › Video list uses; the icon well is the designed fallback
+    async function hydrateWatchThumbs() {
+      var need = watchRows.filter(function (v) {
+        return !(v.thumbnail_mode === 'custom' && v.custom_thumbnail_url) && v.mux_playback_id && !v.thumb_token;
+      }).map(function (v) { return v.video_id; });
+      if (!need.length) return;
+      try {
+        var sess = await db.auth.getSession();
+        var tok = sess.data && sess.data.session && sess.data.session.access_token;
+        if (!tok) return;
+        var r = await fetch('/api/mux/playback-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+          body: JSON.stringify({ videoIds: need }),
+        });
+        var out = await r.json();
+        if (!r.ok || !out.thumbnails) return;
+        watchRows.forEach(function (v) {
+          if (out.thumbnails[v.video_id]) v.thumb_token = out.thumbnails[v.video_id];
+        });
+        var body = document.getElementById('w-body');
+        if (body) body.innerHTML = watchBody();
+      } catch (_) { /* the icon well stays */ }
+    }
+    async function renderWatching() {
+      var b = bodyEl(); b.innerHTML = stateLoading();
+      var rangeLbl = admRangeLabel(admRange).toLowerCase();
+      try {
+        var sess = await db.auth.getSession();
+        var tok = sess.data && sess.data.session && sess.data.session.access_token;
+        var r = await fetch('/api/mux/analytics?days=' + admRange, {
+          headers: { Authorization: 'Bearer ' + (tok || '') },
+        });
+        var d = {};
+        try { d = await r.json(); } catch (_) {}
+        if (!r.ok) throw new Error(d.error || 'Could not load video analytics');
+
+        var t = d.totals || {};
+        watchRows = d.videos || [];
+        var watched = watchRows.filter(function (v) { return v.views > 0; });
+
+        var tiles = '<div class="adm-metrics">' +
+          mtile('Views', num(t.views), 'One playback session, counted by Mux. Anonymous by design — no per-member watch data exists here.') +
+          mtile('Watch time', watchFmt(t.watch_time_seconds)) +
+          mtile('Unique viewers', (t.unique_viewers == null ? '—' : num(t.unique_viewers))) +
+          mtile('Watched', num(t.watched_count), null, 'of ' + num(t.video_count) + ' live videos') +
+          '</div>';
+
+        // the headline: where the minutes actually went
+        var top = watched.slice(0, 8).map(function (v) {
+          return { label: v.title, mins: Math.max(1, Math.round(v.watch_time_seconds / 60)) };
+        });
+        var topPanel = watched.length
+          ? '<div class="adm-panel"><div class="adm-panel-head"><h2>Where the minutes went</h2>' +
+            '<span class="muted adm-mono" style="font-size:11px">minutes watched · last ' + esc(rangeLbl) + '</span></div>' +
+            impactBars(top, 'label', 'mins') + '</div>'
+          : '';
+
+        // the ledger: every live video, the unwatched ones included on purpose
+        var tablePanel =
+          '<div class="adm-panel-head"><h2>Every video</h2>' +
+            '<button class="btn-secondary" id="w-export">Export CSV</button></div>' +
+          '<div class="adm-intro" style="margin-top:0">Views, viewers, watch and completion obey the range above. Finished, saves and comments are all-time — state, not events. Click a column to sort.</div>' +
+          '<div class="adm-scroll"><table class="adm-table"><thead><tr id="w-head">' + watchHead() + '</tr></thead>' +
+          '<tbody id="w-body">' + watchBody() + '</tbody></table></div>';
+
+        // search: what teachers ask the library for — zero results is the
+        // content roadmap writing itself
+        var s = d.searches || [];
+        var searchPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>What teachers search for</h2>' +
+          '<span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div>' +
+          (s.length
+            ? '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Phrase</th><th class="num">Searches</th><th class="num">Results</th></tr></thead><tbody>' +
+              s.map(function (q) {
+                return '<tr><td class="name">' + esc(q.phrase) + '</td><td class="num">' + num(q.count) + '</td>' +
+                  '<td class="num">' + (q.results === 0 ? '<span class="adm-pill">nothing found</span>' : (q.results == null ? '—' : num(q.results))) + '</td></tr>';
+              }).join('') + '</tbody></table></div>'
+            : '<div class="adm-intro" style="margin:0">Phrases land here as teachers search the library — logging starts with this deploy.</div>') +
+          '</div>';
+
+        // worksheets: do the PDFs earn their place next to the videos?
+        var res2 = d.resources || [];
+        var resPanel = '<div class="adm-panel"><div class="adm-panel-head"><h2>Worksheets opened</h2>' +
+          '<span class="muted adm-mono" style="font-size:11px">last ' + esc(rangeLbl) + '</span></div>' +
+          (res2.length
+            ? impactBars(res2.slice(0, 10), 'title', 'opens')
+            : '<div class="adm-intro" style="margin:0">Opens land here as teachers download PDFs — logging starts with this deploy.</div>') +
+          '</div>';
+
+        b.innerHTML =
+          tiles + topPanel + tablePanel + searchPanel + resPanel;
+
+        document.getElementById('w-export').addEventListener('click', function () {
+          A.exportCSV('video-engagement', watchRows, [
+            { label: 'Video', key: 'title' }, { label: 'Status', key: 'status' },
+            { label: 'Views', key: 'views' }, { label: 'Viewers', key: 'viewers' },
+            { label: 'Watch time (s)', key: 'watch_time_seconds' },
+            { label: 'Avg view (s)', key: 'avg_view_seconds' },
+            { label: 'Completion (%)', key: 'completion' },
+            { label: 'Duration (s)', key: 'duration_seconds' },
+            { label: 'Started', key: 'started' }, { label: 'Finished', key: 'finished' },
+            { label: 'Saves', key: 'saves' }, { label: 'Comments', key: 'comments' },
+          ]);
+        });
+        wireWatchSort();
+        hydrateWatchThumbs();
+      } catch (e) { b.innerHTML = stateError(e && e.message); }
     }
 
     // ── MOVEMENT EXPERIMENTS ──
@@ -2660,7 +2934,6 @@
         var total = (rows || []).reduce(function (a, r) { return a + Number(r.saves || 0); }, 0);
         if (!rows || !rows.length) { b.innerHTML = stateEmpty('No experiments have been saved yet.'); return; }
         b.innerHTML =
-          '<div class="adm-intro">How Movement Experiments are landing — total saves, how many of the 28 are being saved at all, and the save trend over time.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Experiments saved · total</div><div class="val">' + num(total) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Distinct experiments saved</div><div class="val">' + num(rows.length) + '</div><div class="sub">of 28</div></div>' +
           '<div class="adm-metric"><div class="lbl">Most saved</div><div class="val adm-val-sm">' + esc(rows[0].title || '—') + '</div><div class="sub">' + num(rows[0].saves) + (Number(rows[0].saves) === 1 ? ' save' : ' saves') + '</div></div></div>' +
@@ -2682,15 +2955,18 @@
 
     // ── PUBLIC CONTENT ──
     var pubState = { sort: 'most_saved', search: '', page: 0, limit: 50, total: 0, rows: [] };
+    // ── THE CIRCLE — what teachers share with each other, and who saves it.
+    // (Absorbed the public half of the old Saved Content tab; video and
+    // collection saves live on Videos, by-type library totals on Every Tool.)
     async function renderPublic() {
       var b = bodyEl();
       b.innerHTML =
-        '<div class="adm-note">Public content = shared <strong>classes</strong> only. Flows and cue sheets are private and are never published on their own. Saves are live references to the creator’s class, not copies.</div>' +
-        '<div class="adm-panel"><div class="adm-panel-head"><h2>Public saves over time</h2></div><div id="pubsave-chart">' + stateLoading() + '</div></div>' +
+        '<div class="adm-panel"><div class="adm-panel-head"><h2>Saves over time</h2></div><div id="pubsave-chart">' + stateLoading() + '</div></div>' +
         '<div class="adm-controls" style="margin-top:16px"><div class="search-wrap"><span class="search-icon material-symbols-sharp">search</span>' +
         '<input class="search-input" id="p-search" placeholder="Search title or creator" value="' + esc(pubState.search) + '"></div>' +
         '<select class="adm-select" id="p-sort"><option value="most_saved">Most saved</option><option value="recent_save">Recently saved</option><option value="recent_publish">Recently published</option><option value="title">Title A–Z</option></select><button class="btn-secondary" id="p-export" style="margin-left:auto">Export CSV</button></div>' +
-        '<div id="p-table">' + stateLoading() + '</div>';
+        '<div id="p-table">' + stateLoading() + '</div>' +
+        '<div id="p-recent"></div>';
       document.getElementById('p-sort').value = pubState.sort;
       document.getElementById('p-sort').addEventListener('change', function (e) { pubState.sort = e.target.value; pubState.page = 0; loadPublic(); });
       var pdeb;
@@ -2700,6 +2976,21 @@
       document.getElementById('p-export').addEventListener('click', exportPublic);
       loadPubSaveChart();
       loadPublic();
+      loadCircleRecent();
+    }
+    // who saved what, lately — relocated here from the old Saved Content tab
+    async function loadCircleRecent() {
+      var host = document.getElementById('p-recent'); if (!host) return;
+      try {
+        var s = await A.rpc('admin_saved_content');
+        var recent = (s.recent_public_saves || []).map(function (r) {
+          return '<tr><td class="muted adm-mono">' + esc(r.user_email || '') + '</td><td>' + esc(r.class_title) +
+            (r.active ? '' : ' <span class="adm-pill off">gone</span>') + '</td><td class="muted">' + A.fmtDate(r.saved_at) + '</td></tr>';
+        }).join('');
+        if (recent) host.innerHTML =
+          '<div class="adm-panel"><div class="adm-panel-head"><h2>Recent saves</h2><span class="muted adm-mono" style="font-size:11px">who saved what</span></div>' +
+          '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Teacher</th><th>Class</th><th>Saved</th></tr></thead><tbody>' + recent + '</tbody></table></div></div>';
+      } catch (_) { /* the list above is the page; this panel is a bonus */ }
     }
     async function loadPublic() {
       var t = document.getElementById('p-table'); t.innerHTML = stateLoading();
@@ -2759,25 +3050,6 @@
           { label: 'Saves', key: 'saves' }, { label: 'Unique savers', key: 'unique_savers' }, { label: 'Last save', key: 'last_save' },
         ]);
       } catch (e) { toast('Export failed: ' + (e && e.message)); }
-    }
-
-    // ── SAVED CONTENT ──
-    async function renderSaved() {
-      var b = bodyEl(); b.innerHTML = stateLoading();
-      try {
-        var s = await A.rpc('admin_saved_content');
-        var byType = (s.by_type || []).map(function (t) { return '<tr><td>' + esc(t.type) + '</td><td class="num">' + num(t.items) + '</td><td class="num">' + num(t.users) + '</td></tr>'; }).join('');
-        var savers = (s.top_savers || []).map(function (t) { return '<tr><td>' + esc(t.name || t.email || '—') + '<br><span class="muted adm-mono">' + esc(t.email || '') + '</span></td><td class="num">' + num(t.items) + '</td></tr>'; }).join('');
-        var recent = (s.recent_public_saves || []).map(function (r) { return '<tr><td class="muted adm-mono">' + esc(r.user_email || '') + '</td><td>' + esc(r.class_title) + (r.active ? '' : ' <span class="adm-pill off">gone</span>') + '</td><td class="muted">' + A.fmtDate(r.saved_at) + '</td><td class="muted">reference</td></tr>'; }).join('');
-        b.innerHTML =
-          '<div class="adm-intro">Everything teachers are keeping in their libraries — broken down by type and by who’s saving the most.</div>' +
-          '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Saved items · all</div><div class="val">' + num(s.total_items) + '</div></div>' +
-          '<div class="adm-metric"><div class="lbl">Unique savers</div><div class="val">' + num(s.unique_savers) + '</div></div>' +
-          '<div class="adm-metric"><div class="lbl">Public-content saves</div><div class="val">' + num(s.public_saves) + '</div></div></div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Saved items by type</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>Type</th><th class="num">Items</th><th class="num">Users</th></tr></thead><tbody>' + (byType || '') + '</tbody></table></div></div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Most active savers</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>User</th><th class="num">Items</th></tr></thead><tbody>' + (savers || '') + '</tbody></table></div></div>' +
-          '<div class="adm-panel"><div class="adm-panel-head"><h2>Recent public-content saves</h2></div><div class="adm-scroll"><table class="adm-table"><thead><tr><th>User</th><th>Class</th><th>Saved</th><th>Kind</th></tr></thead><tbody>' + (recent || '') + '</tbody></table></div></div>';
-      } catch (e) { b.innerHTML = stateError(e && e.message); }
     }
 
     // ── MUSIC LIBRARY ──
@@ -3550,7 +3822,6 @@
             audit.map(function (a) { return '<tr><td class="muted">' + A.fmtDateTime(a.created_at) + '</td><td class="muted adm-mono">' + esc(a.actor_email || '') + '</td><td>' + esc(a.action) + '</td><td class="muted adm-mono">' + esc(a.target_email || '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
           : stateEmpty('No admin actions logged yet.');
         b.innerHTML =
-          '<div class="adm-intro">A live pulse of the most recent meaningful actions across every teacher.</div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Recent product activity</h2></div>' + feedHtml + '</div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Admin audit log</h2><button class="btn-secondary" id="a-export">Export CSV</button></div>' + auditHtml + '</div>';
         var ae = document.getElementById('a-export');
@@ -3573,7 +3844,6 @@
               '<td class="adm-actcell">' + (f.id != null ? '<button class="btn-icon adm-del" data-id="' + esc(String(f.id)) + '" data-tooltip="Delete" aria-label="Delete feedback"><span class="material-symbols-sharp">delete</span></button>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>'
           : stateEmpty('No feedback yet.');
         b.innerHTML =
-          '<div class="adm-intro">Everything teachers have sent through the in-app feedback door — bugs, ideas, and love.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Total feedback</div><div class="val">' + num(sum.total) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Last 7 days</div><div class="val">' + num(sum.last_7d) + '</div></div>' + kindCards + '</div>' +
           '<div class="adm-panel-head"><h2>Recent feedback</h2><button class="btn-secondary" id="fb-export">Export CSV</button></div>' + table;
@@ -3615,7 +3885,6 @@
               : '<button class="btn-secondary adm-rmadmin" data-id="' + esc(a.user_id) + '">Remove</button>') + '</td></tr>';
         }).join('');
         b.innerHTML =
-          '<div class="adm-note">Admins can see this dashboard and manage every account. To <strong>grant</strong> admin, open a user from the Users tab and use Account controls. You can remove access here.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Admins</div><div class="val">' + num(rows.length) + '</div></div></div>' +
           '<div class="adm-panel"><div class="adm-panel-head"><h2>Admin roster</h2></div>' +
           '<div class="adm-scroll"><table class="adm-table"><thead><tr><th>Admin</th><th>Granted</th><th>Granted by</th><th></th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
@@ -3676,7 +3945,6 @@
           : stateEmpty('No errors logged — clean bill of health.');
         b.innerHTML =
           capacity +
-          '<div class="adm-intro">Client-side errors teachers have hit, so problems surface here before they reach you.</div>' +
           '<div class="adm-metrics"><div class="adm-metric"><div class="lbl">Errors · 24h</div><div class="val">' + num(sum.today) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Errors · 7 days</div><div class="val">' + num(sum.window) + '</div></div>' +
           '<div class="adm-metric"><div class="lbl">Users affected · 7d</div><div class="val">' + num(sum.affected_users) + '</div></div>' +
@@ -3698,7 +3966,7 @@
         ['Tool usage', 'Opens and actions per tool', function () { A.rpc('admin_top_tools', { p_days: 3650 }).then(function (t) { A.exportCSV('tool-usage', t, [{ label: 'Tool', key: 'tool' }, { label: 'Opens', key: 'opens' }, { label: 'Actions', key: 'actions' }, { label: 'Unique users', key: 'unique_users' }]); }); }],
         ['Admin audit log', 'Every administrative action', function () { A.rpc('admin_audit', { p_limit: 100000 }).then(function (a) { A.exportCSV('admin-audit', a, [{ label: 'When', key: 'created_at' }, { label: 'Admin', key: 'actor_email' }, { label: 'Action', key: 'action' }, { label: 'Target', key: 'target_email' }]); }); }],
       ];
-      b.innerHTML = '<div class="adm-note">Exports are CSV (UTF-8) — open directly in Excel or import to Google Sheets. Cells are sanitized against formula injection. Filenames include today’s date.</div>' +
+      b.innerHTML =
         '<div class="adm-metrics" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">' +
         items.map(function (it, i) { return '<div class="adm-metric"><div class="val" style="font-size:16px">' + esc(it[0]) + '</div><div class="sub">' + esc(it[1]) + '</div><button class="btn-secondary" data-x="' + i + '" style="margin-top:12px">Export CSV</button></div>'; }).join('') + '</div>';
       b.querySelectorAll('[data-x]').forEach(function (btn) { btn.addEventListener('click', function () { toast('Preparing export…'); items[+btn.dataset.x][2](); }); });
@@ -8379,7 +8647,7 @@
     // ── Content › Video › Resources (the library) ───────────────────────────
     // One file, many homes. The library shows every uploaded file and where
     // it is used; attaching happens in the video and collection editors.
-    var RES = { rows: [], links: [], busy: false, editingId: null };
+    var RES = { rows: [], links: [], busy: false, editingId: null, thumbs: {} };
 
     async function renderResourceLibrary() {
       var b = bodyEl(); b.innerHTML = stateLoading();
@@ -8433,7 +8701,7 @@
               var editing = RES.editingId === r.id;
               if (editing) {
                 return '<li class="lib-row" data-rid="' + r.id + '" style="cursor:default">' +
-                  '<span class="lib-thumb"><span class="material-symbols-sharp">note_add</span></span>' +
+                  '<span class="lib-thumb lib-thumb-doc" data-thumb="' + r.id + '"><span class="material-symbols-sharp">note_add</span></span>' +
                   '<span class="lib-main">' +
                     '<input class="modal-input" id="res-edit-title" value="' + esc(r.title) + '" maxlength="120" aria-label="Title">' +
                     '<input class="modal-input" id="res-edit-desc" value="' + esc(r.description || '') + '" maxlength="300" placeholder="Description (optional)" aria-label="Description" style="margin-top:6px">' +
@@ -8451,7 +8719,7 @@
                 resourceUsageLabel(r.id),
               ].filter(Boolean);
               return '<li class="lib-row" data-rid="' + r.id + '" tabindex="0" role="button" aria-label="Open ' + esc(r.title) + '">' +
-                '<span class="lib-thumb"><span class="material-symbols-sharp">note_add</span></span>' +
+                '<span class="lib-thumb lib-thumb-doc" data-thumb="' + r.id + '"><span class="material-symbols-sharp">note_add</span></span>' +
                 '<span class="lib-main">' +
                   '<span class="lib-title">' + esc(r.title) + '</span>' +
                   (r.description ? '<span class="lib-note">' + esc(r.description) + '</span>' : '') +
@@ -8472,6 +8740,80 @@
             '<h3>No files yet</h3>' +
             '<p>Drop a PDF above, or attach one from any video or collection — it lands in this library either way.</p></div>');
       wireResourceLibrary();
+      loadResourceThumbs();
+    }
+
+    // ── PDF thumbnails: the document shows its own face ────────────────────
+    // The first page renders ONCE, then lives in storage beside the file —
+    // 'library/<id>.pdf' owns 'library/<id>.png'. Every later visit is a
+    // signed-URL fetch of a small image, never a re-render of the PDF.
+    var pdfjsReady = null;
+    function loadPdfjs() {
+      if (!pdfjsReady) {
+        pdfjsReady = import('./lib/vendor/pdf-v6.2.108.min.mjs').then(function (m) {
+          m.GlobalWorkerOptions.workerSrc = './lib/vendor/pdf.worker-v6.2.108.min.mjs';
+          return m;
+        });
+      }
+      return pdfjsReady;
+    }
+    function resourceThumbPath(row) {
+      return row.storage_path.replace(/\.pdf$/i, '') + '.png';
+    }
+    function setResourceThumb(id, url) {
+      RES.thumbs[id] = url;
+      document.querySelectorAll('[data-thumb="' + id + '"]').forEach(function (el) {
+        el.innerHTML = '<img src="' + url + '" alt="" loading="lazy">';
+      });
+    }
+
+    async function loadResourceThumbs() {
+      var rows = RES.rows; if (!rows.length) return;
+      // whatever this session already resolved paints straight away
+      rows.forEach(function (r) { if (RES.thumbs[r.id]) setResourceThumb(r.id, RES.thumbs[r.id]); });
+      var want = rows.filter(function (r) { return !RES.thumbs[r.id]; });
+      if (!want.length) return;
+      try {
+        var got = await db.storage.from('video-resources')
+          .createSignedUrls(want.map(resourceThumbPath), 3600);
+        var missing = [];
+        (got.data || []).forEach(function (s, i) {
+          if (s.signedUrl && !s.error) setResourceThumb(want[i].id, s.signedUrl);
+          else missing.push(want[i]);
+        });
+        // files from before thumbnails existed grow one now, one at a time
+        for (var i = 0; i < missing.length; i++) {
+          try { setResourceThumb(missing[i].id, await makeResourceThumb(missing[i])); }
+          catch (e) { console.warn('thumb failed for', missing[i].file_name, e); }
+        }
+      } catch (e) { console.warn('thumbs unavailable', e); }
+    }
+
+    async function makeResourceThumb(row) {
+      var pdfjs = await loadPdfjs();
+      var s = await db.storage.from('video-resources').createSignedUrl(row.storage_path, 600);
+      if (s.error) throw s.error;
+      var task = pdfjs.getDocument({ url: s.data.signedUrl });
+      var pdf = await task.promise;
+      try {
+        var page = await pdf.getPage(1);
+        var vp = page.getViewport({ scale: 240 / page.getViewport({ scale: 1 }).width });
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.round(vp.width);
+        canvas.height = Math.round(vp.height);
+        var ctx = canvas.getContext('2d');
+        // a transparent-background page still reads as paper
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      } finally { task.destroy(); }
+      var blob = await new Promise(function (res) { canvas.toBlob(res, 'image/png'); });
+      if (blob) {
+        var up = await db.storage.from('video-resources')
+          .upload(resourceThumbPath(row), blob, { contentType: 'image/png', upsert: true });
+        if (up.error) console.warn('thumb not cached', up.error);
+      }
+      return canvas.toDataURL('image/png');
     }
 
     // the bucket is private; a short-lived signed URL is how an admin looks
@@ -8579,7 +8921,7 @@
           try {
             // the object first — a row without its file is recoverable, a
             // file with no row is invisible and bills forever
-            if (row) await db.storage.from('video-resources').remove([row.storage_path]);
+            if (row) await db.storage.from('video-resources').remove([row.storage_path, resourceThumbPath(row)]);
             var r = await db.from('resources').delete().eq('id', id);
             if (r.error) throw r.error;
             toast(used ? 'Deleted — it is gone from ' + used + ' piece' + (used === 1 ? '' : 's') + ' of content' : 'Deleted');

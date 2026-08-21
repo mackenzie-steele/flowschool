@@ -330,6 +330,22 @@
       });
     }
 
+    // a search logs only after it settles — prefixes typed on the way to a
+    // phrase never land, and the result count records whether the library
+    // had an answer (zero results = a hole in the catalogue)
+    var logT, lastLogged = '';
+    function logSearch(phrase, count) {
+      clearTimeout(logT);
+      logT = setTimeout(function () {
+        if (phrase === lastLogged) return;
+        lastLogged = phrase;
+        if (window.fsTrack) fsTrack('library_searched', {
+          resourceType: 'search', resourceId: phrase,
+          metadata: { results: count },
+        });
+      }, 2000);
+    }
+
     var searchSeq = 0;
     async function refresh() {
       var results = document.getElementById('vl-results');
@@ -352,7 +368,8 @@
         gallery.hidden = true;
       }
       paintActiveFilters();
-      if (browsing) return;
+      // a phrase abandoned before it settled was mid-typing, not a search
+      if (browsing) { clearTimeout(logT); return; }
 
       var seq = ++searchSeq;
       var items;
@@ -381,6 +398,7 @@
       }
       items = items.filter(function (it) { return VL.matchesFilters(L, valueMap, it, active); });
 
+      if (q) logSearch(q, items.length);
       if (!items.length) {
         results.innerHTML = '<div class="lib-empty"><h3>Nothing matched that' + (q ? ' search' : '') + '.</h3>' +
           '<p>Try another phrase' + (active.size ? ' or remove a filter' : '') + '.</p></div>';

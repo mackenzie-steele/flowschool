@@ -90,27 +90,32 @@ end $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- VERIFY
+-- These stay COMMENTED because the SQL editor runs as postgres, not as a
+-- signed-in admin — the function's is_admin() gate rejects it ("not
+-- authorized ... at RAISE"), and that error rolls back the whole run.
+-- The real verify is step 3, done in the app as yourself.
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- 1. The range actually moves the number (run as an admin):
-select
-  (public.admin_overview(7)   ->> 'new_users')::int as new_7,
-  (public.admin_overview(30)  ->> 'new_users')::int as new_30,
-  (public.admin_overview(365) ->> 'new_users')::int as new_365;
+-- 1. The range actually moves the number:
+-- select
+--   (public.admin_overview(7)   ->> 'new_users')::int as new_7,
+--   (public.admin_overview(30)  ->> 'new_users')::int as new_30,
+--   (public.admin_overview(365) ->> 'new_users')::int as new_365;
 --    expect: non-decreasing left to right. If all three match, every account
 --    you have was created inside the last 7 days — check signup dates before
 --    assuming it's broken.
 
 -- 2. The default still works for any caller that passes nothing:
-select (public.admin_overview() ->> 'range_days')::int;   -- expect 30
+-- select (public.admin_overview() ->> 'range_days')::int;   -- expect 30
 
 -- 3. In the UI: /admin → Overview → change the header range. The Growth
 --    section should now show ONE "New · <range>" tile whose value and delta
 --    both change with the control.
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- TO UNDO
---   Re-run the admin_overview block in supabase/admin-analytics.sql. Note the
---   old version takes no argument, so drop this one first:
---     drop function if exists public.admin_overview(int);
+-- HISTORY
+--   The zero-argument admin_overview() this file replaced is retired for good
+--   (2026-08-21) — admin-analytics.sql now DROPs it rather than defining it,
+--   because carrying both versions made any argument-less call ambiguous.
+--   This ranged function is the only admin_overview.
 -- ═══════════════════════════════════════════════════════════════════════════
